@@ -3,6 +3,7 @@
 #include "VkObjects.h"
 #include "CommandBufferManager.h"
 #include "VulkanUploader.h"
+#include "VulkanCaps.h"
 
 namespace core { namespace Device {
 
@@ -41,7 +42,7 @@ namespace core { namespace Device {
 		CreateFramebuffers();
 		CreateCommandPool();
 
-		command_buffer_manager = std::make_unique<CommandBufferManager>(MAX_FRAMES_IN_FLIGHT);
+		command_buffer_manager = std::make_unique<CommandBufferManager>(caps::MAX_FRAMES_IN_FLIGHT);
 		uploader = std::make_unique<VulkanUploader>();
 
 		CreateSyncObjects();
@@ -294,6 +295,7 @@ namespace core { namespace Device {
 		if (vkCreateCommandPool(device, &poolInfo, nullptr, &commandPool) != VK_SUCCESS) {
 			throw std::runtime_error("failed to create graphics command pool!");
 		}
+
 	}
 
 	VulkanCommandBuffer* VulkanContext::BeginSingleTimeCommandBuffer()
@@ -321,14 +323,12 @@ namespace core { namespace Device {
 
 		vkQueueSubmit(graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
 		vkQueueWaitIdle(graphicsQueue);
-
-		command_buffer->Release();
 	}
 
     void VulkanContext::CreateSyncObjects() {
-        imageAvailableSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
-        renderFinishedSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
-        inFlightFences.resize(MAX_FRAMES_IN_FLIGHT);
+        imageAvailableSemaphores.resize(caps::MAX_FRAMES_IN_FLIGHT);
+        renderFinishedSemaphores.resize(caps::MAX_FRAMES_IN_FLIGHT);
+        inFlightFences.resize(caps::MAX_FRAMES_IN_FLIGHT);
 
         VkSemaphoreCreateInfo semaphoreInfo = {};
         semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
@@ -337,7 +337,7 @@ namespace core { namespace Device {
         fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
         fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
 
-        for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+        for (size_t i = 0; i < caps::MAX_FRAMES_IN_FLIGHT; i++) {
             if (vkCreateSemaphore(device, &semaphoreInfo, nullptr, &imageAvailableSemaphores[i]) != VK_SUCCESS ||
                 vkCreateSemaphore(device, &semaphoreInfo, nullptr, &renderFinishedSemaphores[i]) != VK_SUCCESS ||
                 vkCreateFence(device, &fenceInfo, nullptr, &inFlightFences[i]) != VK_SUCCESS) {
@@ -348,7 +348,8 @@ namespace core { namespace Device {
 
 	void VulkanContext::FrameRenderEnd()
 	{
-		currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
+		currentFrame = (currentFrame + 1) % caps::MAX_FRAMES_IN_FLIGHT;
+		command_buffer_manager->GetDefaultCommandPool()->NextFrame();
 	}
 
 } }

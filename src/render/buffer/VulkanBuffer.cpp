@@ -2,6 +2,7 @@
 #include "Engine.h"
 #include "render/device/Device.h"
 #include "render/device/VulkanContext.h"
+#include "render/device/VulkanUploader.h"
 #include "render/device/CommandBufferManager.h"
 #include "render/device/VkObjects.h"
 #include "render/device/VulkanUtils.h"
@@ -24,12 +25,18 @@ namespace core { namespace Device {
 
 		if (initializer.data)
 		{
-			VulkanBuffer staging_buffer(VulkanBufferInitializer(size).SetStaging());
-			void* staging_data = staging_buffer.Map();
-			memcpy(staging_data, initializer.data, (size_t)size);
-			staging_buffer.Unmap();
+			auto* uploader = Engine::GetVulkanContext()->GetUploader();
+			//VulkanBuffer staging_buffer(VulkanBufferInitializer(size).SetStaging());
 
-			VulkanUtils::CopyBuffer(*Engine::GetVulkanContext(), staging_buffer.Buffer(), buffer, size);
+			// Create temporary staging buffer
+			auto staging_buffer = std::make_unique<VulkanBuffer>(VulkanBufferInitializer(size).SetStaging());
+
+			// Write data to staging buffer
+			void* staging_data = staging_buffer->Map();
+			memcpy(staging_data, initializer.data, (size_t)size);
+			staging_buffer->Unmap();
+
+			uploader->AddToUpload(std::move(staging_buffer), this, size);
 		}
 	}
 

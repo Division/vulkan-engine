@@ -8,11 +8,9 @@ namespace core { namespace Device {
 	class VulkanCommandBuffer;
 	class VulkanUploader;
 
-	class VulkanContext
+	class VulkanContext : public NonCopyable
 	{
 	public:
-		static const uint32_t MAX_FRAMES_IN_FLIGHT = 2;
-
 		VulkanContext(GLFWwindow* window);
 		virtual ~VulkanContext();
 	

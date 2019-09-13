@@ -82,7 +82,7 @@ namespace core
 
 			glfwPollEvents();
 
-			context->GetUploader()->ProcessUpload();
+			//context->GetUploader()->ProcessUpload();
 			game.update(dt);
 
 			context->FrameRenderEnd();

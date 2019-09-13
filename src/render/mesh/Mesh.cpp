@@ -315,7 +315,7 @@ void Mesh::createBuffer() {
   }
 
   auto vertex_initializer = core::Device::VulkanBufferInitializer(data_buffer.size())
-	  .Usage(VK_BUFFER_USAGE_VERTEX_BUFFER_BIT)
+	  .SetVertex()
 	  .MemoryUsage(VMA_MEMORY_USAGE_GPU_ONLY)
 	  .Data(data_buffer.data());
   _vertexBuffer = std::make_shared<core::Device::VulkanBuffer>(vertex_initializer);
@@ -323,7 +323,7 @@ void Mesh::createBuffer() {
   if (_hasIndices) {
     unsigned int indexSize = (unsigned int)_indices.size() * (unsigned int)sizeof(uint16_t);
 	auto index_initializer = core::Device::VulkanBufferInitializer(indexSize)
-		.Usage(VK_BUFFER_USAGE_VERTEX_BUFFER_BIT)
+		.SetIndex()
 		.MemoryUsage(VMA_MEMORY_USAGE_GPU_ONLY)
 		.Data(_indices.data());
 	_indexBuffer = std::make_shared<core::Device::VulkanBuffer>(index_initializer);

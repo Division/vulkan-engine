@@ -30,6 +30,7 @@ set(ENGINE_SOURCES
 	src/render/device/VulkanUploader.cpp
 	src/render/device/VulkanUtils.h
 	src/render/device/VulkanUtils.cpp
+	src/render/device/VulkanCaps.h
 	src/render/mesh/Mesh.h
 	src/render/mesh/Mesh.cpp
 	src/resources/ModelBundle.h

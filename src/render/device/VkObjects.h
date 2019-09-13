@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CommonIncludes.h"
+#include "VulkanCaps.h"
 
 namespace core { namespace Device {
 	
@@ -16,8 +17,6 @@ namespace core { namespace Device {
 		VkCommandBuffer GetCommandBuffer() { return command_buffer; }
 		VulkanCommandPool* GetCommandPool() { return command_pool; }
 
-		void Release();
-
 	private:
 		VkCommandBuffer command_buffer = VK_NULL_HANDLE;
 		VulkanCommandPool* command_pool = nullptr;
@@ -32,12 +31,15 @@ namespace core { namespace Device {
 
 		VkCommandPool GetCommandPool() const { return command_pool; }
 		VulkanCommandBuffer* GetCommandBuffer();
-		void Reset();
-		void Release(VulkanCommandBuffer* buffer);
+		void NextFrame();
 
 	private:
+		typedef std::vector<std::unique_ptr<VulkanCommandBuffer>> CommandBufferList;
+
 		VkCommandPool command_pool = VK_NULL_HANDLE;
-		std::vector<std::unique_ptr<VulkanCommandBuffer>> allocated_command_buffers;
+		std::array<CommandBufferList, caps::MAX_FRAMES_IN_FLIGHT> allocated_command_buffers;
+		uint32_t current_frame_allocated_buffers;
+		uint32_t current_frame;
 	};
 
 } }

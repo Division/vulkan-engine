@@ -6,6 +6,7 @@
 #include "render/device/Device.h"
 #include "render/device/VulkanContext.h"
 #include "render/buffer/VulkanBuffer.h"
+#include "render/device/VulkanUploader.h"
 #include "resources/ModelBundle.h"
 #include "loader/ModelLoader.h"
 #include "render/mesh/Mesh.h"
@@ -83,7 +84,7 @@ void CreateCommandBuffers(const uint32_t in_flight_count) {
 		renderPassInfo.renderArea.offset = { 0, 0 };
 		renderPassInfo.renderArea.extent = context->GetExtent();
 
-		VkClearValue clearColor = { 0.0f, 0.0f, 0.0f, 1.0f };
+		VkClearValue clearColor = { 1.0f, 1.0f, 1.0f, 1.0f };
 		renderPassInfo.clearValueCount = 1;
 		renderPassInfo.pClearValues = &clearColor;
 
@@ -91,15 +92,15 @@ void CreateCommandBuffers(const uint32_t in_flight_count) {
 
 		vkCmdBindPipeline(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, context->GetPipeline());
 
-		VkBuffer vertexBuffers[] = { vertexBuffer->Buffer() };
+		VkBuffer vertexBuffers[] = { vertex_buffer->Buffer() };
 		VkDeviceSize offsets[] = { 0 };
 		vkCmdBindVertexBuffers(commandBuffers[i], 0, 1, vertexBuffers, offsets);
 
-		vkCmdBindIndexBuffer(commandBuffers[i], indexBuffer, 0, VK_INDEX_TYPE_UINT16);
+		vkCmdBindIndexBuffer(commandBuffers[i], index_buffer->Buffer(), 0, VK_INDEX_TYPE_UINT16);
 
 		vkCmdBindDescriptorSets(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, context->GetPipelineLayout(), 0, 1, &descriptorSets[i], 0, nullptr);
 
-		vkCmdDrawIndexed(commandBuffers[i], static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
+		vkCmdDrawIndexed(commandBuffers[i], static_cast<uint32_t>(test_mesh->indexCount()), 1, 0, 0, 0);
 
 		vkCmdEndRenderPass(commandBuffers[i]);
 
@@ -171,6 +172,7 @@ void Game::update(float dt)
 	VkSemaphore render_finished_semaphore = context->GetRenderFinishedSemaphore();
 
 	vkWaitForFences(vk_device, 1, &current_fence, VK_TRUE, std::numeric_limits<uint64_t>::max());
+	context->GetUploader()->ProcessUpload();
 
 	uint32_t imageIndex;
 	VkResult result = vkAcquireNextImageKHR(vk_device, vk_swapchain, std::numeric_limits<uint64_t>::max(), image_available_semaphone, VK_NULL_HANDLE, &imageIndex);
@@ -204,9 +206,11 @@ void Game::update(float dt)
 
 	vkResetFences(vk_device, 1, &current_fence);
 
+	// Queue waits for the image_available_semaphone which is signaled after vkAcquireNextImageKHR succeeds
 	if (vkQueueSubmit(context->GetGraphicsQueue(), 1, &submitInfo, current_fence) != VK_SUCCESS) {
 		throw std::runtime_error("failed to submit draw command buffer!");
 	}
+
 
 	VkPresentInfoKHR presentInfo = {};
 	presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;

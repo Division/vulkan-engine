@@ -1,24 +1,37 @@
 #include <mutex>
+#include "render/buffer/VulkanBuffer.h"
 #include "Engine.h"
 #include "CommonIncludes.h"
 #include "VulkanUploader.h"
 #include "VulkanContext.h"
 #include "VkObjects.h"
-#include "render/buffer/VulkanBuffer.h"
 #include "CommandBufferManager.h"
 
 namespace core { namespace Device {
 
 	std::mutex uploader_mutex;
 
+	VulkanUploader::Upload::Upload(std::unique_ptr<VulkanBuffer> src_buffer, VulkanBuffer* dst_buffer, VkDeviceSize size)
+		: src_buffer(std::move(src_buffer))
+		, dst_buffer(dst_buffer)
+		, size(size)
+	{}
+	
+	VulkanUploader::Upload::Upload(Upload&& other) = default;
+	VulkanUploader::Upload::~Upload() = default;
+	VulkanUploader::VulkanUploader() {};
+	VulkanUploader::~VulkanUploader() {};
+
 	void VulkanUploader::AddToUpload(std::unique_ptr<VulkanBuffer> src_buffer, VulkanBuffer* dst_buffer, VkDeviceSize size)
 	{
 		std::lock_guard<std::mutex> guard(uploader_mutex);
-		current_frame_uploads.emplace_back(Upload{ std::move(src_buffer), dst_buffer, size });
+		current_frame_uploads.emplace_back(std::move(src_buffer), dst_buffer, size);
 	}
 
 	void VulkanUploader::ProcessUpload()
 	{
+		buffers_in_upload[current_frame].clear();
+
 		if (!current_frame_uploads.size())
 			return;
 
@@ -29,6 +42,7 @@ namespace core { namespace Device {
 		}
 
 		auto* context = Engine::GetVulkanContext();
+		// TODO: check if it's better to use different pool
 		auto* command_buffer = context->GetCommandBufferManager()->GetDefaultCommandPool()->GetCommandBuffer();
 
 		VkCommandBufferBeginInfo beginInfo = {};
@@ -37,28 +51,23 @@ namespace core { namespace Device {
 
 		vkBeginCommandBuffer(command_buffer->GetCommandBuffer(), &beginInfo);
 
-		for (int i = 0; i < current_frame_uploads.size(); i++)
+		for (int i = 0; i < uploads_copy.size(); i++)
 		{
-			auto srcBuffer = current_frame_uploads[i].src_buffer->Buffer();
-			auto dstBuffer = current_frame_uploads[i].dst_buffer->Buffer();
-			VkBufferCopy copyRegion = { 0, 0, current_frame_uploads.size() };
+			auto srcBuffer = uploads_copy[i].src_buffer->Buffer();
+			auto dstBuffer = uploads_copy[i].dst_buffer->Buffer();
+			VkBufferCopy copyRegion = { 0, 0, uploads_copy[i].size };
 			vkCmdCopyBuffer(command_buffer->GetCommandBuffer(), srcBuffer, dstBuffer, 1, &copyRegion);
+			buffers_in_upload[current_frame].push_back(std::move(uploads_copy[i].src_buffer));
 		}
-
-		auto vk_command_buffer = command_buffer->GetCommandBuffer();
-		vkEndCommandBuffer(vk_command_buffer);
-
-		VkSubmitInfo submitInfo = {};
-		submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-		submitInfo.commandBufferCount = 1;
-		submitInfo.pCommandBuffers = &vk_command_buffer;
 
 		VkMemoryBarrier memoryBarrier = {
 			VK_STRUCTURE_TYPE_MEMORY_BARRIER, 
 			nullptr,
 			VK_ACCESS_TRANSFER_WRITE_BIT,
-			VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT 
+			VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT
 		};
+
+		auto vk_command_buffer = command_buffer->GetCommandBuffer();
 
 		vkCmdPipelineBarrier(
 			vk_command_buffer,
@@ -71,10 +80,19 @@ namespace core { namespace Device {
 			0, nullptr
 		);
 
+		vkEndCommandBuffer(vk_command_buffer);
+
 		auto graphicsQueue = context->GetGraphicsQueue();
+		VkSubmitInfo submitInfo = {};
+		submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+		submitInfo.commandBufferCount = 1;
+		submitInfo.pCommandBuffers = &vk_command_buffer;
 		vkQueueSubmit(graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
 
-		command_buffer->Release();
+		current_frame = (current_frame + 1) % caps::MAX_FRAMES_IN_FLIGHT;
 	}
 
-} }
+}
+
+
+}

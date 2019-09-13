@@ -19,6 +19,16 @@ namespace core { namespace Device {
 			return MemoryUsage(VMA_MEMORY_USAGE_CPU_ONLY).Usage(VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
 		}
 
+		VulkanBufferInitializer& SetVertex()
+		{
+			return Usage(VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
+		}
+
+		VulkanBufferInitializer& SetIndex()
+		{
+			return Usage(VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
+		}
+
 		VulkanBufferInitializer& MemoryUsage(VmaMemoryUsage memory_usage)
 		{
 			this->memory_usage = memory_usage;

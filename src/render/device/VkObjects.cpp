@@ -7,14 +7,11 @@ namespace core { namespace Device {
 	
 	VulkanCommandBuffer::VulkanCommandBuffer(VulkanCommandPool* command_pool)
 	{
-		VkCommandBufferAllocateInfo allocInfo = {};
-		allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-		allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-		allocInfo.commandPool = command_pool->GetCommandPool();
-		allocInfo.commandBufferCount = 1;
+		vk::CommandBufferAllocateInfo alloc_info(command_pool->GetCommandPool(), vk::CommandBufferLevel::ePrimary, 1);
 
 		this->command_pool = command_pool;
-		vkAllocateCommandBuffers(Engine::GetVulkanDevice(), &allocInfo, &command_buffer);
+		auto device = (vk::Device)Engine::GetVulkanDevice();
+		command_buffer = device.allocateCommandBuffers(alloc_info)[0];
 	}
 
 	VulkanCommandBuffer::VulkanCommandBuffer(VulkanCommandBuffer&& other)
@@ -33,58 +30,55 @@ namespace core { namespace Device {
 		}
 	}
 
-	void VulkanCommandBuffer::Release()
-	{
-		command_pool->Release(this);
-	}
-
 	//-----------------------------------------------------------------------------
 
 	// TODO: queueFamilyIndex as parameter
 	VulkanCommandPool::VulkanCommandPool()
+		: current_frame_allocated_buffers(0)
 	{
 		VulkanUtils::QueueFamilyIndices queueFamilyIndices = VulkanUtils::FindQueueFamilies(
 			Engine::GetVulkanContext()->GetPhysicalDevice(), Engine::GetVulkanContext()->GetSurface());
 
-		VkCommandPoolCreateInfo pool_info = {};
-		pool_info.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-		pool_info.queueFamilyIndex = queueFamilyIndices.graphicsFamily.value();
+		vk::CommandPoolCreateInfo pool_info({ vk::CommandPoolCreateFlagBits::eResetCommandBuffer }, queueFamilyIndices.graphicsFamily.value());
 
-		if (vkCreateCommandPool(Engine::GetVulkanDevice(), &pool_info, nullptr, &command_pool) != VK_SUCCESS) {
-			throw std::runtime_error("failed to create graphics command pool!");
-		}
+		command_pool = ((vk::Device)Engine::GetVulkanDevice()).createCommandPool(pool_info);
 	}
 
 	VulkanCommandPool::~VulkanCommandPool()
 	{
-		allocated_command_buffers.clear();
+		for (int i = 0; i < caps::MAX_FRAMES_IN_FLIGHT; i++)
+		{
+			allocated_command_buffers[i].clear();
+		}
+
 		if (command_pool != VK_NULL_HANDLE)
 		{
-			vkDestroyCommandPool(Engine::GetVulkanDevice(), command_pool, nullptr);
+			((vk::Device)Engine::GetVulkanDevice()).destroyCommandPool(command_pool);
 		}
 	}
 
 	VulkanCommandBuffer* VulkanCommandPool::GetCommandBuffer()
 	{
-		allocated_command_buffers.push_back(std::make_unique<VulkanCommandBuffer>(this));
-		return allocated_command_buffers[allocated_command_buffers.size() - 1].get();
+		VulkanCommandBuffer* result;
+		auto& list = allocated_command_buffers[current_frame % caps::MAX_FRAMES_IN_FLIGHT];
+		if (list.size() > current_frame_allocated_buffers)
+		{
+			result = list[current_frame_allocated_buffers].get();
+		}
+		else 
+		{
+			list.push_back(std::make_unique<VulkanCommandBuffer>(this));
+			result = list.back().get();
+		}
+		
+		current_frame_allocated_buffers += 1;
+		return result;
 	}
 
-	void VulkanCommandPool::Release(VulkanCommandBuffer* buffer)
+	void VulkanCommandPool::NextFrame()
 	{
-		auto new_end = std::remove_if(
-			allocated_command_buffers.begin(), allocated_command_buffers.end(), 
-			[&](std::unique_ptr<VulkanCommandBuffer>& current_buffer) {
-				return buffer == current_buffer.get();
-			}
-		);
-
-		allocated_command_buffers.erase(new_end, allocated_command_buffers.end());
-	}
-
-	void VulkanCommandPool::Reset()
-	{
-		allocated_command_buffers.clear();
+		current_frame += 1;
+		current_frame_allocated_buffers = 0;
 	}
 
 } }
