@@ -42,4 +42,15 @@ namespace core { namespace Device {
 		uint32_t current_frame;
 	};
 
+	struct VulkanImageInitialzier
+	{
+
+	};
+
+	class VulkanImage
+	{
+	public:
+
+	};
+
 } }

@@ -39,10 +39,6 @@ namespace core { namespace Device { namespace VulkanUtils {
 	bool IsDeviceSuitable(VkPhysicalDevice device, VkSurfaceKHR surface);
 	QueueFamilyIndices FindQueueFamilies(VkPhysicalDevice device, VkSurfaceKHR surface);
 	SwapChainSupportDetails QuerySwapChainSupport(VkPhysicalDevice device, VkSurfaceKHR surface);
-	VkSurfaceFormatKHR ChooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats);
-	VkPresentModeKHR ChooseSwapPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes);
-	VkExtent2D ChooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities, int width, int height);
-	VkImageView CreateImageView(VkDevice device, VkImage image, VkFormat format);
 	
 	void CreateRenderPass(VkDevice device, VkFormat swapChainImageFormat, VkRenderPass& out_render_pass);
 	void CreateDescriptorSetLayout(VkDevice device, VkDescriptorSetLayout& out_descriptor_set_layout);

@@ -7,9 +7,13 @@
 #include "render/device/VulkanContext.h"
 #include "render/buffer/VulkanBuffer.h"
 #include "render/device/VulkanUploader.h"
+#include "render/device/VulkanUtils.h"
+#include "render/device/VulkanRenderPass.h"
+#include "render/device/VulkanSwapchain.h"
 #include "resources/ModelBundle.h"
 #include "loader/ModelLoader.h"
 #include "render/mesh/Mesh.h"
+#include "render/shader/Shader.h"
 
 using namespace core;
 using namespace core::Device;
@@ -79,7 +83,7 @@ void CreateCommandBuffers(const uint32_t in_flight_count) {
 
 		VkRenderPassBeginInfo renderPassInfo = {};
 		renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-		renderPassInfo.renderPass = render_pass;
+		renderPassInfo.renderPass = render_pass->GetRenderPass();
 		renderPassInfo.framebuffer = context->GetFramebuffer(i);
 		renderPassInfo.renderArea.offset = { 0, 0 };
 		renderPassInfo.renderArea.extent = context->GetExtent();
@@ -143,6 +147,9 @@ void Game::init()
 	bundle = loader::loadModel("resources/level/props.mdl");
 	test_mesh = bundle->getMesh("Treasure_Chest_lid_01_meshShape");
 
+	auto vertex_data = VulkanUtils::ReadFile("shaders/frag.spv");
+	ShaderModule vertex(vertex_data.data(), vertex_data.size());
+
 	const uint32_t in_flight_count = context->GetSwapchainImageCount(); // check is there a reason for it to be separate
 	CreateTextureImage(textureImage, textureImageMemory);
 	textureImageView = CreateTextureImageView(vk_device, textureImage);
@@ -175,7 +182,7 @@ void Game::update(float dt)
 	context->GetUploader()->ProcessUpload();
 
 	uint32_t imageIndex;
-	VkResult result = vkAcquireNextImageKHR(vk_device, vk_swapchain, std::numeric_limits<uint64_t>::max(), image_available_semaphone, VK_NULL_HANDLE, &imageIndex);
+	VkResult result = vkAcquireNextImageKHR(vk_device, vk_swapchain->GetSwapchain(), std::numeric_limits<uint64_t>::max(), image_available_semaphone, VK_NULL_HANDLE, &imageIndex);
 
 	if (result == VK_ERROR_OUT_OF_DATE_KHR) {
 		throw new std::runtime_error("recreate not supported");
@@ -218,7 +225,7 @@ void Game::update(float dt)
 	presentInfo.waitSemaphoreCount = 1;
 	presentInfo.pWaitSemaphores = signalSemaphores;
 
-	VkSwapchainKHR swapChains[] = { context->GetSwapchain() };
+	VkSwapchainKHR swapChains[] = { context->GetSwapchain()->GetSwapchain() };
 	presentInfo.swapchainCount = 1;
 	presentInfo.pSwapchains = swapChains;
 

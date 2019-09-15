@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CommonIncludes.h"
+#include "murmurhash/MurmurHash3.h"
 
 using namespace glm;
 
@@ -107,5 +108,12 @@ struct Rect {
 inline int32_t getPowerOfTwo(int32_t value) {
 	float result = log2((float)value);
 	return pow(2, (int)ceilf(result));
+}
+
+inline uint32_t FastHash(const void* key, size_t len)
+{
+	uint32_t result;
+	MurmurHash3_x86_32(key, (int)len, 0xdeadbeef, &result);
+	return result;
 }
 

@@ -9,6 +9,8 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 set(ENGINE_SOURCES 
 	main.cpp
 	src/lib/VulkanMemoryAllocator/vk_mem_alloc.h
+	src/lib/murmurhash/MurmurHash3.h
+	src/lib/murmurhash/MurmurHash3.cpp
 	src/Engine.h
 	src/Engine.cpp
 	src/IGame.h
@@ -24,13 +26,27 @@ set(ENGINE_SOURCES
 	src/render/device/Device.cpp
 	src/render/device/VulkanContext.h
 	src/render/device/VulkanContext.cpp
-	src/render/buffer/VulkanBuffer.h
-	src/render/buffer/VulkanBuffer.cpp
 	src/render/device/VulkanUploader.h
 	src/render/device/VulkanUploader.cpp
+	src/render/device/VulkanRenderPass.h
+	src/render/device/VulkanRenderPass.cpp
+	src/render/device/VulkanRenderTarget.h
+	src/render/device/VulkanRenderTarget.cpp
+	src/render/device/VulkanSwapchain.h
+	src/render/device/VulkanSwapchain.cpp
 	src/render/device/VulkanUtils.h
 	src/render/device/VulkanUtils.cpp
 	src/render/device/VulkanCaps.h
+	src/render/buffer/VulkanBuffer.h
+	src/render/buffer/VulkanBuffer.cpp
+	src/render/pass/RenderState.h
+	src/render/pass/RenderState.cpp
+	src/render/pass/RenderPass.h
+	src/render/pass/RenderPass.cpp
+	src/render/pass/Renderer.h
+	src/render/pass/Renderer.cpp
+	src/render/shader/Shader.h
+	src/render/shader/Shader.cpp
 	src/render/mesh/Mesh.h
 	src/render/mesh/Mesh.cpp
 	src/resources/ModelBundle.h
@@ -71,12 +87,17 @@ add_subdirectory(src/lib/glfw-3.3)
 set(EXPORT_TARGETS ${EXPORT_TARGETS} glfw)
 
 add_subdirectory(src/lib/glm)
+add_subdirectory(src/lib/SPIRV-Cross)
 
 add_executable(vk_engine ${ENGINE_SOURCES} ${GAME_SOURCES})
 target_compile_definitions(vk_engine PRIVATE VK_USE_PLATFORM_WIN32_KHR)
 target_include_directories(vk_engine PRIVATE Vulkan::Vulkan)
 target_link_libraries(vk_engine glfw)
 target_link_libraries(vk_engine Vulkan::Vulkan)
+target_link_libraries(vk_engine spirv-cross-core)
+target_link_libraries(vk_engine spirv-cross-glsl)
+target_link_libraries(vk_engine spirv-cross-cpp)
+target_link_libraries(vk_engine spirv-cross-reflect)
 
 add_executable(example_texture samples/25_texture_mapping.cpp src/lib/stb/stb_image.h)
 target_compile_definitions(example_texture PRIVATE VK_USE_PLATFORM_WIN32_KHR)

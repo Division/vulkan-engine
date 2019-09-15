@@ -4,6 +4,9 @@
 #include "CommandBufferManager.h"
 #include "VulkanUploader.h"
 #include "VulkanCaps.h"
+#include "VulkanRenderPass.h"
+#include "VulkanSwapchain.h"
+#include "VulkanRenderTarget.h"
 
 namespace core { namespace Device {
 
@@ -25,21 +28,19 @@ namespace core { namespace Device {
 		allocatorInfo.physicalDevice = physicalDevice;
 		allocatorInfo.device = device;
 		vmaCreateAllocator(&allocatorInfo, &allocator);
+	}
 
-		CreateSwapChain();
+	void VulkanContext::initialize() // todo: remove
+	{
+		RecreateSwapChain();
+		render_pass = std::make_unique<VulkanRenderPass>(VulkanRenderPassInitializer(swapchain->GetImageFormat()));
 
-		swapChainImageViews.resize(swapChainImages.size());
+		auto render_target_initializer = VulkanRenderTargetInitializer(render_pass.get()).Swapchain(swapchain.get());
+		main_render_target = std::make_unique<VulkanRenderTarget>(render_target_initializer);
 
-		// Swapchain image views
-		for (size_t i = 0; i < swapChainImages.size(); i++) {
-			swapChainImageViews[i] = VulkanUtils::CreateImageView(device, swapChainImages[i], swapChainImageFormat);
-		}
-
-		VulkanUtils::CreateRenderPass(device, swapChainImageFormat, render_pass);
 		VulkanUtils::CreateDescriptorSetLayout(device, descriptor_set_layout);
-		VulkanUtils::CreateGraphicsPipeline(device, swapChainExtent, descriptor_set_layout, render_pass, pipelineLayout, graphicsPipeline);
-		
-		CreateFramebuffers();
+		VulkanUtils::CreateGraphicsPipeline(device, swapchain->GetExtent(), descriptor_set_layout, render_pass->GetRenderPass(), pipelineLayout, graphicsPipeline);
+
 		CreateCommandPool();
 
 		command_buffer_manager = std::make_unique<CommandBufferManager>(caps::MAX_FRAMES_IN_FLIGHT);
@@ -51,6 +52,22 @@ namespace core { namespace Device {
 	VulkanContext::~VulkanContext()
 	{
 
+	}
+
+	VkExtent2D VulkanContext::GetExtent() const 
+	{ 
+		return swapchain->GetExtent(); 
+	
+	}
+
+	uint32_t VulkanContext::GetSwapchainImageCount() const 
+	{ 
+		return swapchain->GetImages().size(); 
+	}
+
+	VkFramebuffer VulkanContext::GetFramebuffer(uint32_t index) const
+	{
+		return main_render_target->GetFrame(index).framebuffer.get();
 	}
 
 	void VulkanContext::Cleanup()
@@ -66,25 +83,14 @@ namespace core { namespace Device {
 	}
 
 	void VulkanContext::RecreateSwapChain() {
-		/*int width = 0, height = 0;
+		int width = 0, height = 0;
 		while (width == 0 || height == 0) {
 			glfwGetFramebufferSize(window, &width, &height);
 			glfwWaitEvents();
 		}
 
 		vkDeviceWaitIdle(device);
-
-		cleanupSwapChain();
-
-		createSwapChain();
-		createImageViews();
-		createRenderPass();
-		createGraphicsPipeline();
-		createFramebuffers();
-		createUniformBuffers();
-		createDescriptorPool();
-		createDescriptorSets();
-		createCommandBuffers();*/
+		swapchain = std::make_unique<VulkanSwapchain>(surface, width, height);
 	}
 
 	void VulkanContext::CreateInstance() {
@@ -207,84 +213,6 @@ namespace core { namespace Device {
 		vkGetDeviceQueue(device, indices.presentFamily.value(), 0, &presentQueue);
 	}
 
-	void VulkanContext::CreateSwapChain() {
-		VulkanUtils::SwapChainSupportDetails swapChainSupport = VulkanUtils::QuerySwapChainSupport(physicalDevice, surface);
-
-		int width, height;
-		glfwGetFramebufferSize(window, &width, &height);
-
-		VkSurfaceFormatKHR surfaceFormat = VulkanUtils::ChooseSwapSurfaceFormat(swapChainSupport.formats);
-		VkPresentModeKHR presentMode = VulkanUtils::ChooseSwapPresentMode(swapChainSupport.presentModes);
-		VkExtent2D extent = VulkanUtils::ChooseSwapExtent(swapChainSupport.capabilities, width, height);
-
-		uint32_t imageCount = swapChainSupport.capabilities.minImageCount + 1;
-		if (swapChainSupport.capabilities.maxImageCount > 0 && imageCount > swapChainSupport.capabilities.maxImageCount) {
-			imageCount = swapChainSupport.capabilities.maxImageCount;
-		}
-
-		VkSwapchainCreateInfoKHR createInfo = {};
-		createInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
-		createInfo.surface = surface;
-
-		createInfo.minImageCount = imageCount;
-		createInfo.imageFormat = surfaceFormat.format;
-		createInfo.imageColorSpace = surfaceFormat.colorSpace;
-		createInfo.imageExtent = extent;
-		createInfo.imageArrayLayers = 1;
-		createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
-
-		VulkanUtils::QueueFamilyIndices indices = VulkanUtils::FindQueueFamilies(physicalDevice, surface);
-		uint32_t queueFamilyIndices[] = { indices.graphicsFamily.value(), indices.presentFamily.value() };
-
-		if (indices.graphicsFamily != indices.presentFamily) {
-			createInfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
-			createInfo.queueFamilyIndexCount = 2;
-			createInfo.pQueueFamilyIndices = queueFamilyIndices;
-		}
-		else {
-			createInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
-		}
-
-		createInfo.preTransform = swapChainSupport.capabilities.currentTransform;
-		createInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
-		createInfo.presentMode = presentMode;
-		createInfo.clipped = VK_TRUE;
-
-		if (vkCreateSwapchainKHR(device, &createInfo, nullptr, &swapChain) != VK_SUCCESS) {
-			throw std::runtime_error("failed to create swap chain!");
-		}
-
-		vkGetSwapchainImagesKHR(device, swapChain, &imageCount, nullptr);
-		swapChainImages.resize(imageCount);
-		vkGetSwapchainImagesKHR(device, swapChain, &imageCount, swapChainImages.data());
-
-		swapChainImageFormat = surfaceFormat.format;
-		swapChainExtent = extent;
-	}
-
-	void VulkanContext::CreateFramebuffers() {
-		swapChainFramebuffers.resize(swapChainImageViews.size());
-
-		for (size_t i = 0; i < swapChainImageViews.size(); i++) {
-			VkImageView attachments[] = {
-				swapChainImageViews[i]
-			};
-
-			VkFramebufferCreateInfo framebufferInfo = {};
-			framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-			framebufferInfo.renderPass = render_pass;
-			framebufferInfo.attachmentCount = 1;
-			framebufferInfo.pAttachments = attachments;
-			framebufferInfo.width = swapChainExtent.width;
-			framebufferInfo.height = swapChainExtent.height;
-			framebufferInfo.layers = 1;
-
-			if (vkCreateFramebuffer(device, &framebufferInfo, nullptr, &swapChainFramebuffers[i]) != VK_SUCCESS) {
-				throw std::runtime_error("failed to create framebuffer!");
-			}
-		}
-	}
-
 	void VulkanContext::CreateCommandPool() {
 		VulkanUtils::QueueFamilyIndices queueFamilyIndices = VulkanUtils::FindQueueFamilies(physicalDevice, surface);
 
@@ -295,7 +223,6 @@ namespace core { namespace Device {
 		if (vkCreateCommandPool(device, &poolInfo, nullptr, &commandPool) != VK_SUCCESS) {
 			throw std::runtime_error("failed to create graphics command pool!");
 		}
-
 	}
 
 	VulkanCommandBuffer* VulkanContext::BeginSingleTimeCommandBuffer()

@@ -45,6 +45,7 @@ namespace core
 		//reshape(window, width, height);
 
 		device = std::make_unique<Device::Device>(window);
+		device->GetContext()->initialize();
 		glfwSetTime(0);
 		game.init();
 	}
@@ -99,7 +100,7 @@ namespace core
 		return instance->GetDevice()->GetContext();
 	}
 
-	VkDevice Engine::GetVulkanDevice()
+	vk::Device Engine::GetVulkanDevice()
 	{
 		return instance->GetDevice()->GetContext()->GetDevice();
 	}

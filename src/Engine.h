@@ -16,7 +16,7 @@ namespace core
 	public:
 		static Engine* Get() { return instance; };
 		static Device::VulkanContext* GetVulkanContext();
-		static VkDevice GetVulkanDevice();
+		static vk::Device GetVulkanDevice();
 
 		Engine(IGame& game);
 		~Engine();

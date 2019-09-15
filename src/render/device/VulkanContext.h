@@ -7,35 +7,39 @@ namespace core { namespace Device {
 	class CommandBufferManager;
 	class VulkanCommandBuffer;
 	class VulkanUploader;
+	class VulkanRenderPass;
+	class VulkanSwapchain;
+	class VulkanRenderTarget;
 
 	class VulkanContext : public NonCopyable
 	{
 	public:
 		VulkanContext(GLFWwindow* window);
 		virtual ~VulkanContext();
+		void initialize();
 	
-		VkDevice GetDevice() const { return device; }
-		VkPhysicalDevice GetPhysicalDevice() const { return physicalDevice; }
+		vk::Device GetDevice() const { return device; }
+		vk::PhysicalDevice GetPhysicalDevice() const { return physicalDevice; }
 		VkPipelineLayout GetPipelineLayout() const { return pipelineLayout; }
 		VkPipeline GetPipeline() const { return graphicsPipeline; }
-		VkSwapchainKHR GetSwapchain() const { return swapChain; }
+		VulkanSwapchain* GetSwapchain() const { return swapchain.get(); }
 		VkSurfaceKHR GetSurface() const { return surface; }
 		CommandBufferManager* GetCommandBufferManager() const { return command_buffer_manager.get(); }
 		VulkanUploader* GetUploader() const { return uploader.get(); }
 
 		VkQueue GetGraphicsQueue() const { return graphicsQueue; }
 		VkQueue GetPresentQueue() const { return presentQueue; }
-		VkRenderPass GetRenderPass() { return render_pass; }
+		VulkanRenderPass* GetRenderPass() const { return render_pass.get(); };
 		VkDescriptorSetLayout GetDescriptorSetLayout() const { return descriptor_set_layout; };
 		VkCommandPool GetCommandPool() const { return commandPool; };
 
 		VulkanCommandBuffer* BeginSingleTimeCommandBuffer();
 		void EndSingleTimeCommandBuffer(VulkanCommandBuffer* commandBuffer);
 
-		VkFramebuffer GetFramebuffer(uint32_t index) const { return swapChainFramebuffers[index]; };
-		VkExtent2D GetExtent() const { return swapChainExtent; }
+		VkFramebuffer GetFramebuffer(uint32_t index) const;
+		VkExtent2D GetExtent() const;
 
-		uint32_t GetSwapchainImageCount() const { return swapChainImages.size(); }
+		uint32_t GetSwapchainImageCount() const;
 		VkFence GetInFlightFence() const { return inFlightFences[currentFrame]; }
 		VkSemaphore GetRenderFinishedSemaphore() const { return renderFinishedSemaphores[currentFrame]; }
 		VkSemaphore GetImageAvailableSemaphore() const { return imageAvailableSemaphores[currentFrame]; }
@@ -53,8 +57,6 @@ namespace core { namespace Device {
 		void SetupDebugMessenger();
 		void PickPhysicalDevice();
 		void CreateLogicalDevice();
-		void CreateSwapChain();
-		void CreateFramebuffers();
 		void CreateCommandPool();
 		void CreateSyncObjects();
 
@@ -63,13 +65,14 @@ namespace core { namespace Device {
 		
 		std::unique_ptr<CommandBufferManager> command_buffer_manager;
 		std::unique_ptr<VulkanUploader> uploader;
+		std::unique_ptr<VulkanSwapchain> swapchain;
+		std::unique_ptr<VulkanRenderTarget> main_render_target;
 
 		VkInstance instance;
 		VkDebugUtilsMessengerEXT debugMessenger;
 		VkSurfaceKHR surface;
-		VkSwapchainKHR swapChain;
 
-		VkRenderPass render_pass;
+		std::unique_ptr<VulkanRenderPass> render_pass;
 		VkDescriptorSetLayout descriptor_set_layout;
 		VkCommandPool commandPool;
 
@@ -80,12 +83,6 @@ namespace core { namespace Device {
 
 		VkQueue graphicsQueue;
 		VkQueue presentQueue;
-
-		std::vector<VkImage> swapChainImages;
-		VkFormat swapChainImageFormat;
-		VkExtent2D swapChainExtent;
-		std::vector<VkImageView> swapChainImageViews;
-		std::vector<VkFramebuffer> swapChainFramebuffers;
 
 		std::vector<VkSemaphore> imageAvailableSemaphores;
 		std::vector<VkSemaphore> renderFinishedSemaphores;
