@@ -85,6 +85,7 @@ public:
   bool hasWeights() const { return _hasWeights; }
   bool hasColors() const { return _hasColors; }
 
+  int attribOffsetBytes(VertexAttrib attrib) const;
   int vertexOffsetBytes() const { return _vertexOffsetBytes; };
   int normalOffsetBytes() const { return _normalOffsetBytes; };
   int tangentOffsetBytes() const { return _tangentOffsetBytes; };

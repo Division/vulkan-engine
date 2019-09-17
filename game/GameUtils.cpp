@@ -95,7 +95,7 @@ void CreateTextureImage(VkImage& out_image, VkDeviceMemory& out_image_memory) {
 	auto vk_physical_device = context->GetPhysicalDevice();
 
 	int texWidth, texHeight, texChannels;
-	stbi_uc* pixels = stbi_load("textures/depth_correct.png", &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
+	stbi_uc* pixels = stbi_load("resources/level/Atlas_Props_02.jpg", &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
 	VkDeviceSize imageSize = texWidth * texHeight * 4;
 
 	if (!pixels) {

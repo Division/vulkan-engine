@@ -63,6 +63,50 @@ Mesh::~Mesh() {
   _deleteBuffer();
 }
 
+int Mesh::attribOffsetBytes(VertexAttrib attrib) const
+{
+	switch (attrib)
+	{
+	case VertexAttrib::Position:
+		return vertexOffsetBytes();
+
+	case VertexAttrib::TexCoord0:
+		if (!hasTexCoord0()) throw std::runtime_error("Mesh doesn't have attrib required by shader");
+		return texCoordOffsetBytes();
+
+	case VertexAttrib::Normal:
+		if (!hasNormals()) throw std::runtime_error("Mesh doesn't have attrib required by shader");
+		return normalOffsetBytes();
+
+	case VertexAttrib::Bitangent:
+		if (!hasTBN()) throw std::runtime_error("Mesh doesn't have attrib required by shader");
+		return bitangentOffsetBytes();
+
+	case VertexAttrib::Tangent:
+		if (!hasTBN()) throw std::runtime_error("Mesh doesn't have attrib required by shader");
+		return tangentOffsetBytes();
+
+	case VertexAttrib::Corner:
+		if (!_hasCorners) throw std::runtime_error("Mesh doesn't have attrib required by shader");
+		return cornerOffsetBytes();
+
+	case VertexAttrib::VertexColor:
+		if (!hasColors()) throw std::runtime_error("Mesh doesn't have attrib required by shader");
+		return colorOffsetBytes();
+
+	case VertexAttrib::JointWeights:
+		if (!hasWeights()) throw std::runtime_error("Mesh doesn't have attrib required by shader");
+		return weightOffsetBytes();
+
+	case VertexAttrib::JointIndices:
+		if (!hasWeights()) throw std::runtime_error("Mesh doesn't have attrib required by shader");
+		return jointIndexOffsetBytes();
+
+	default:
+		throw std::runtime_error("unsupported vertex attrib");
+	}
+}
+
 // Setting mesh data
 
 void Mesh::setVertices(const vec3 *vertices, int vertexCount) {

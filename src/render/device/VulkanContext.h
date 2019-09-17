@@ -20,8 +20,6 @@ namespace core { namespace Device {
 	
 		vk::Device GetDevice() const { return device; }
 		vk::PhysicalDevice GetPhysicalDevice() const { return physicalDevice; }
-		VkPipelineLayout GetPipelineLayout() const { return pipelineLayout; }
-		VkPipeline GetPipeline() const { return graphicsPipeline; }
 		VulkanSwapchain* GetSwapchain() const { return swapchain.get(); }
 		VkSurfaceKHR GetSurface() const { return surface; }
 		CommandBufferManager* GetCommandBufferManager() const { return command_buffer_manager.get(); }
@@ -30,7 +28,6 @@ namespace core { namespace Device {
 		VkQueue GetGraphicsQueue() const { return graphicsQueue; }
 		VkQueue GetPresentQueue() const { return presentQueue; }
 		VulkanRenderPass* GetRenderPass() const { return render_pass.get(); };
-		VkDescriptorSetLayout GetDescriptorSetLayout() const { return descriptor_set_layout; };
 		VkCommandPool GetCommandPool() const { return commandPool; };
 
 		VulkanCommandBuffer* BeginSingleTimeCommandBuffer();
@@ -73,13 +70,10 @@ namespace core { namespace Device {
 		VkSurfaceKHR surface;
 
 		std::unique_ptr<VulkanRenderPass> render_pass;
-		VkDescriptorSetLayout descriptor_set_layout;
 		VkCommandPool commandPool;
 
 		VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
 		VkDevice device;
-		VkPipelineLayout pipelineLayout;
-		VkPipeline graphicsPipeline;
 
 		VkQueue graphicsQueue;
 		VkQueue presentQueue;

@@ -38,9 +38,6 @@ namespace core { namespace Device {
 		auto render_target_initializer = VulkanRenderTargetInitializer(render_pass.get()).Swapchain(swapchain.get());
 		main_render_target = std::make_unique<VulkanRenderTarget>(render_target_initializer);
 
-		VulkanUtils::CreateDescriptorSetLayout(device, descriptor_set_layout);
-		VulkanUtils::CreateGraphicsPipeline(device, swapchain->GetExtent(), descriptor_set_layout, render_pass->GetRenderPass(), pipelineLayout, graphicsPipeline);
-
 		CreateCommandPool();
 
 		command_buffer_manager = std::make_unique<CommandBufferManager>(caps::MAX_FRAMES_IN_FLIGHT);

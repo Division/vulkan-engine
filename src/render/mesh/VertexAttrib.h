@@ -13,7 +13,8 @@ enum class VertexAttrib : uint32_t {
 	VertexColor,
 	TexCoord1,
 	JointWeights,
-	JointIndices
+	JointIndices,
+	Unknown
 };
 
 typedef CapsSet<VertexAttrib> VertexAttribSet;

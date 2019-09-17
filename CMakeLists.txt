@@ -34,6 +34,8 @@ set(ENGINE_SOURCES
 	src/render/device/VulkanRenderTarget.cpp
 	src/render/device/VulkanSwapchain.h
 	src/render/device/VulkanSwapchain.cpp
+	src/render/device/VulkanPipeline.h
+	src/render/device/VulkanPipeline.cpp
 	src/render/device/VulkanUtils.h
 	src/render/device/VulkanUtils.cpp
 	src/render/device/VulkanCaps.h
@@ -47,6 +49,13 @@ set(ENGINE_SOURCES
 	src/render/pass/Renderer.cpp
 	src/render/shader/Shader.h
 	src/render/shader/Shader.cpp
+	src/render/shader/ReflectionInfo.h
+	src/render/shader/ReflectionInfo.cpp
+	src/render/shader/ShaderDefines.h
+	src/render/shader/ShaderDefines.cpp
+	src/render/shader/ShaderResource.h
+	src/render/shader/ShaderResource.cpp
+	src/render/shader/ShaderCaps.h
 	src/render/mesh/Mesh.h
 	src/render/mesh/Mesh.cpp
 	src/resources/ModelBundle.h

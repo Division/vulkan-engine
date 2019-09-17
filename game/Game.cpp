@@ -10,6 +10,7 @@
 #include "render/device/VulkanUtils.h"
 #include "render/device/VulkanRenderPass.h"
 #include "render/device/VulkanSwapchain.h"
+#include "render/device/VulkanPipeline.h"
 #include "resources/ModelBundle.h"
 #include "loader/ModelLoader.h"
 #include "render/mesh/Mesh.h"
@@ -39,15 +40,14 @@ std::vector<VkCommandBuffer> commandBuffers;
 std::shared_ptr<ModelBundle> bundle;
 std::shared_ptr<const Mesh> test_mesh;
 
+ShaderProgram program;
+std::unique_ptr<VulkanPipeline> pipeline;
+
 const std::vector<Vertex> vertices = {
 	{{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {1.0f, 0.0f}},
 	{{0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f}},
 	{{0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}, {0.0f, 1.0f}},
 	{{-0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}, {1.0f, 1.0f}}
-};
-
-const std::vector<uint16_t> indices = {
-	0, 1, 2, 2, 3, 0
 };
 
 void CreateCommandBuffers(const uint32_t in_flight_count) {
@@ -94,7 +94,8 @@ void CreateCommandBuffers(const uint32_t in_flight_count) {
 
 		vkCmdBeginRenderPass(commandBuffers[i], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-		vkCmdBindPipeline(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, context->GetPipeline());
+		//vkCmdBindPipeline(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, context->GetPipeline());
+		vkCmdBindPipeline(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->GetPipeline());
 
 		VkBuffer vertexBuffers[] = { vertex_buffer->Buffer() };
 		VkDeviceSize offsets[] = { 0 };
@@ -102,7 +103,8 @@ void CreateCommandBuffers(const uint32_t in_flight_count) {
 
 		vkCmdBindIndexBuffer(commandBuffers[i], index_buffer->Buffer(), 0, VK_INDEX_TYPE_UINT16);
 
-		vkCmdBindDescriptorSets(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, context->GetPipelineLayout(), 0, 1, &descriptorSets[i], 0, nullptr);
+		//vkCmdBindDescriptorSets(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, context->GetPipelineLayout(), 0, 1, &descriptorSets[i], 0, nullptr);
+		vkCmdBindDescriptorSets(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->GetPipelineLayout(), 0, 1, &descriptorSets[i], 0, nullptr);
 
 		vkCmdDrawIndexed(commandBuffers[i], static_cast<uint32_t>(test_mesh->indexCount()), 1, 0, 0, 0);
 
@@ -145,10 +147,16 @@ void Game::init()
 	auto vk_physical_device = context->GetPhysicalDevice();
 
 	bundle = loader::loadModel("resources/level/props.mdl");
-	test_mesh = bundle->getMesh("Treasure_Chest_lid_01_meshShape");
+	test_mesh = bundle->getMesh("Drawer_Preset_02_meshShape");
 
-	auto vertex_data = VulkanUtils::ReadFile("shaders/frag.spv");
+	auto vertex_data = VulkanUtils::ReadFile("shaders/vert.spv");
+	auto fragment_data = VulkanUtils::ReadFile("shaders/frag.spv");
 	ShaderModule vertex(vertex_data.data(), vertex_data.size());
+	ShaderModule fragment(fragment_data.data(), fragment_data.size());
+	
+	program.AddModule(std::move(vertex), ShaderProgram::Stage::Vertex);
+	program.AddModule(std::move(fragment), ShaderProgram::Stage::Fragment);
+	program.Prepare();
 
 	const uint32_t in_flight_count = context->GetSwapchainImageCount(); // check is there a reason for it to be separate
 	CreateTextureImage(textureImage, textureImageMemory);
@@ -156,14 +164,17 @@ void Game::init()
 	CreateTextureSampler(vk_device, textureSampler);
 	vertexBuffer = std::move(CreateVertexBuffer(vertices));
 	//CreateVertexBuffer(vertices, vertexBuffer, vertexBufferMemory);
-	CreateIndexBuffer(indices, indexBuffer, indexBufferMemory);
+	//CreateIndexBuffer(indices, indexBuffer, indexBufferMemory);
 	CreateUniformBuffers(in_flight_count, uniformBuffers, uniformBuffersMemory);
 	CreateDescriptorPool(in_flight_count, descriptorPool);
+
 	CreateDescriptorSets(in_flight_count, textureImageView, textureSampler,
-		uniformBuffers, descriptorPool, context->GetDescriptorSetLayout(), descriptorSets);
+		uniformBuffers, descriptorPool, program.GetDescriptorSetLayout(), descriptorSets);
+
+	VulkanPipelineInitializer pipeline_initializer(&program, context->GetRenderPass(), test_mesh.get());
+	pipeline = std::make_unique<VulkanPipeline>(pipeline_initializer);
 
 	CreateCommandBuffers(in_flight_count);
-
 }
 
 void Game::update(float dt)
