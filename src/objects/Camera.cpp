@@ -4,20 +4,20 @@
 
 #include "Camera.h"
 #include "Engine.h"
-#include "EngineMath.h"
+#include "render/device/VulkanContext.h"
 //#include "render/renderer/Renderer.h"
-#include "system/Window.h"
+//#include "system/Window.h"
 
 void Camera::_updateProjection() {
   //auto engine = getEngine();
-  auto window = Engine::Get()->window();
+  //auto window = Engine::Get()->window();
 
   float width = 800.0f;
   float height = 600.0f;
   float aspect = width / height;
   switch (_mode) {
     case Mode::Perspective:
-      _projectionMatrix = glm::perspective(glm::radians(_fov), window->aspect(), 0.1f, 100.0f);
+      _projectionMatrix = glm::perspective(glm::radians(_fov), aspect, 0.1f, 100.0f);
       break;
 
     case Mode::Ortho: {
@@ -39,8 +39,8 @@ void Camera::_updateView() {
 }
 
 void Camera::_updateViewport() {
-	auto window = Engine::Get()->window();
-  _viewport = window->viewport(); // TODO: modify if camera rendertarget support is required
+	auto extent = core::Engine::Get()->GetVulkanContext()->GetExtent();
+	_viewport = vec4(0, 0, extent.width, extent.height);
 }
 
 void Camera::postUpdate() {

@@ -5,14 +5,16 @@
 #ifndef CPPWRAPPER_HIERARCHYLOADER_H
 #define CPPWRAPPER_HIERARCHYLOADER_H
 
+#include "CommonIncludes.h"
 #include "resources/ModelBundle.h"
 #include "resources/HierarchyData.h"
 #include "objects/MeshObject.h"
 //#include <render/material/MaterialTypes.h>
-#include "EngineTypes.h"
 #include <memory>
 #include "resources/SkinningData.h"
 #include "objects/SkinnedMeshObject.h"
+
+class SkinnedMeshObject;
 
 namespace loader {
 
@@ -36,7 +38,7 @@ namespace loader {
     return skinnedMeshObject;
   }
 
-  SkinnedMeshObjectPtr loadSkinnedMesh(ModelBundlePtr bundle, const SkinningDataPtr skinningData = nullptr);
+  std::shared_ptr<SkinnedMeshObject> loadSkinnedMesh(ModelBundlePtr bundle, const SkinningDataPtr skinningData = nullptr);
 }
 
 

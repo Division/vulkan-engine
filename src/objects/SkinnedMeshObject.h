@@ -6,9 +6,8 @@
 #define CPPWRAPPER_SKINNEDMESHOBJECT_H
 
 #include "MeshObject.h"
-#include "render/shader/ConstantBufferStruct.h"
+#include "render/shader/ShaderBufferStruct.h"
 #include "resources/SkinningData.h"
-#include "EngineTypes.h"
 #include <unordered_map>
 #include <string>
 #include <vector>
@@ -32,7 +31,7 @@ protected:
 protected:
   GameObjectPtr _rootJoint = nullptr;
   SkinningDataPtr _skinningData;
-  ConstantBufferStruct::SkinningMatrices _skinningMatrices;
+  ShaderBufferStruct::SkinningMatrices _skinningMatrices;
   std::unordered_map<std::string, GameObjectPtr> _jointMap;
   std::vector<GameObjectPtr> _jointList;
 };

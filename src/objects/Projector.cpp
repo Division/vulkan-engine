@@ -4,8 +4,7 @@
 //
 
 #include "Projector.h"
-#include "render/shader/ConstantBufferStruct.h"
-#include "EngineMath.h"
+#include "render/shader/ShaderBufferStruct.h"
 #include "render/renderer/SceneRenderer.h"
 
 void Projector::postUpdate() {
@@ -43,8 +42,8 @@ mat4 Projector::_getProjection() const {
   }
 }
 
-ConstantBufferStruct::Projector Projector::getProjectorStruct() const {
-  ConstantBufferStruct::Projector result;
+ShaderBufferStruct::Projector Projector::getProjectorStruct() const {
+	ShaderBufferStruct::Projector result;
 
   result.position = transform()->worldPosition();
   result.attenuation = _squareAttenuation;
@@ -55,8 +54,9 @@ ConstantBufferStruct::Projector Projector::getProjectorStruct() const {
   result.mask = cameraVisibilityMask();
 
   if (castShadows()) {
-	  result.shadowmapScale = vec2(_viewport.z, _viewport.w) / (float)SceneRenderer::shadowAtlasSize();
-	  result.shadowmapOffset = vec2(_viewport.x, _viewport.y) / (float)SceneRenderer::shadowAtlasSize();
+	  throw std::runtime_error("not supported");
+	  //result.shadowmapScale = vec2(_viewport.z, _viewport.w) / (float)SceneRenderer::shadowAtlasSize();
+	  //result.shadowmapOffset = vec2(_viewport.x, _viewport.y) / (float)SceneRenderer::shadowAtlasSize();
   } else {
     result.shadowmapScale = vec2(0, 0);
   }

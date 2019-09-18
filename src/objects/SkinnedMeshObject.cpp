@@ -93,8 +93,8 @@ void SkinnedMeshObject::render(IRenderer &renderer) {
   }
 
   RenderOperation rop = _getDefaultRenderOp();
-  rop.skinningMatrices = &_skinningMatrices;
+  rop.skinning_matrices= &_skinningMatrices;
   rop.mesh = _mesh;
   rop.material = _material;
-  renderer.addRenderOperation(rop, _renderQueue);
+  renderer.AddRenderOperation(rop, _renderQueue);
 }

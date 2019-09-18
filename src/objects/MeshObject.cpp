@@ -19,7 +19,7 @@ void MeshObject::render(IRenderer &renderer) {
   RenderOperation rop = _getDefaultRenderOp();
   rop.mesh = _mesh;
   rop.material = _material;
-  renderer.addRenderOperation(rop, _renderQueue);
+  renderer.AddRenderOperation(rop, _renderQueue);
 }
 
 void MeshObject::start() {

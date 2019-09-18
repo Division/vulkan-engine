@@ -1,23 +1,20 @@
-//
-// Created by Sidorenko Nikita on 3/28/18.
-//
+#pragma once
 
-#ifndef CPPWRAPPER_SCENE_H
-#define CPPWRAPPER_SCENE_H
-
-#include <vector>
-#include <unordered_map>
-#include "EngTypes.h"
+#include "CommonIncludes.h"
 #include "GameObject.h"
 #include "render/renderer/ICameraParamsProvider.h"
+
+class Projector;
+class LightObject;
+class Camera;
 
 class Scene : public IGameObjectManager {
 public:
 
   struct Visibility {
     std::vector<GameObjectPtr> objects;
-    std::vector<ProjectorPtr> projectors;
-    std::vector<LightObjectPtr> lights;
+    std::vector<std::shared_ptr<Projector>> projectors;
+    std::vector<std::shared_ptr<LightObject>> lights;
     bool hasData = false; // when false, cache values are recalculated
   };
 
@@ -28,7 +25,7 @@ public:
   const std::unordered_map<GameObjectID, GameObjectPtr> *const gameObjectMap() const { return &_objectMap; };
   const std::vector<GameObjectPtr> *const gameObjects() const { return &_gameObjects; }
 
-  const std::vector<ProjectorPtr> &visibleProjectors(const std::shared_ptr<ICameraParamsProvider> &camera) const {
+  const std::vector<std::shared_ptr<Projector>> &visibleProjectors(const std::shared_ptr<ICameraParamsProvider> &camera) const {
     if (!_visibilityMap[camera].hasData) { return _getVisibilityForCamera(camera).projectors; }
     return _visibilityMap.at(camera).projectors;
   }
@@ -36,7 +33,7 @@ public:
     if (!_visibilityMap[camera].hasData) { return _getVisibilityForCamera(camera).objects; }
     return _visibilityMap.at(camera).objects;
   }
-  const std::vector<LightObjectPtr> &visibleLights(const std::shared_ptr<ICameraParamsProvider> &camera) const {
+  const std::vector<std::shared_ptr<LightObject>> &visibleLights(const std::shared_ptr<ICameraParamsProvider> &camera) const {
     if (!_visibilityMap[camera].hasData) { return _getVisibilityForCamera(camera).lights; }
     return _visibilityMap.at(camera).lights;
   }
@@ -74,9 +71,9 @@ protected:
 
   std::unordered_map<GameObjectID, GameObjectPtr> _objectMap; // maps GameObject::id() to GameObject
 
-  std::vector<CameraPtr> _cameras; // maps GameObject::id() to Camera
-  std::vector<ProjectorPtr> _projectors; // Array of projectors
-  std::vector<LightObjectPtr> _lights; // Array of scene lights
+  std::vector<std::shared_ptr<Camera>> _cameras; // maps GameObject::id() to Camera
+  std::vector<std::shared_ptr<Projector>> _projectors; // Array of projectors
+  std::vector<std::shared_ptr<LightObject>> _lights; // Array of scene lights
   std::vector<GameObjectPtr> _gameObjects; // Full list of scene game objects
   std::unordered_map<GameObjectID, TransformPtr>_rootTransformMap; // maps GameObject::id() to the top level transforms
   mutable std::unordered_map<std::shared_ptr<ICameraParamsProvider>, Scene::Visibility> _visibilityMap; // maps camera to a visible object list
@@ -85,5 +82,3 @@ protected:
   void _processAddedObject(GameObjectPtr object);
   void _processRemovedObject(GameObjectPtr object);
 };
-
-#endif //CPPWRAPPER_SCENE_H

@@ -7,16 +7,16 @@
 
 #include "scene/GameObject.h"
 #include <memory>
-#include "render/shader/ConstantBufferStruct.h"
+#include "render/shader/ShaderBufferStruct.h"
 #include "utils/MeshGeneration.h"
-//#include "render/material/MaterialTypes.h"
-#include "EngineTypes.h"
 #include "render/shading/IShadowCaster.h"
 
 enum class LightObjectType : int {
   Point = 0,
   Spot
 };
+
+class Texture;
 
 class LightObject : public GameObject, public IShadowCaster {
 public:
@@ -40,7 +40,7 @@ public:
   float coneAngle() const { return _coneAngle; }
   void coneAngle(float value) { _coneAngle = value; }
 
-  void setFlare(const TexturePtr &texture, float size);
+  void setFlare(const std::shared_ptr<Texture>& texture, float size);
 
   float getSpotRadius(float height);
 
@@ -54,7 +54,7 @@ public:
   void enableDebug();
   //bool debugEnabled() { return _debugMesh && _debugMaterial; }
 
-  ConstantBufferStruct::Light getLightStruct() const;
+  ShaderBufferStruct::Light getLightStruct() const;
 
   void render(IRenderer &renderer) override;
   void postUpdate() override;
@@ -91,7 +91,7 @@ private:
   // Flare
   //MeshPtr _flareMesh; // Right now the mesh is not shared. Will be improved after particle render implemented.
   float _flareSize = 0;
-  TexturePtr _flareTexture;
+  std::shared_ptr<Texture> _flareTexture;
   //std::shared_ptr<MaterialBillboard> _flareMaterial;
 
   // Shadows

@@ -4,7 +4,7 @@
 
 #include "HierarchyLoader.h"
 #include <system/Logging.h>
-//#include "objects/SkinnedMeshObject.h"
+#include "objects/SkinnedMeshObject.h"
 
 GameObjectPtr
 loader::loadHierarchy(ModelBundlePtr bundle, const HierarchyDataPtr hierarchyToLoad) {
@@ -52,6 +52,6 @@ loader::loadHierarchy(ModelBundlePtr bundle, const HierarchyDataPtr hierarchyToL
 }
 
 
-SkinnedMeshObjectPtr loadSkinnedMesh(ModelBundlePtr bundle, SkinningDataPtr skinningData = nullptr) {
+std::shared_ptr<SkinnedMeshObject> loadSkinnedMesh(ModelBundlePtr bundle, SkinningDataPtr skinningData) {
   return loader::loadSkinnedMesh<SkinnedMeshObject>(bundle, skinningData);
 }

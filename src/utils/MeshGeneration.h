@@ -1,12 +1,6 @@
-//
-// Created by Sidorenko Nikita on 4/19/18.
-//
+#pragma once
 
-#ifndef CPPWRAPPER_MESHGENERATION_H
-#define CPPWRAPPER_MESHGENERATION_H
-
-#include "EngineMath.h"
-#include <vector>
+#include "CommonIncludes.h"
 #include "render/mesh/Mesh.h"
 
 namespace MeshGeneration {
@@ -19,5 +13,3 @@ namespace MeshGeneration {
   
 };
 
-
-#endif //CPPWRAPPER_MESHGENERATION_H

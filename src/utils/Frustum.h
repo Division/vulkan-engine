@@ -1,7 +1,6 @@
-#ifndef H_FRUSTUM
-#define H_FRUSTUM
+#pragma once
 
-#include "EngineMath.h"
+#include "CommonIncludes.h"
 
 #define MAX_CLIP_PLANES 16
 
@@ -84,5 +83,3 @@ struct Frustum {
   }
 
 };
-
-#endif

@@ -86,7 +86,7 @@ namespace core { namespace Device {
 		vk::PresentModeKHR presentMode = vk::PresentModeKHR(ChooseSwapPresentMode(support.present_modes));
 		VkExtent2D extent = ChooseSwapExtent(support.capabilities, width, height);
 
-		uint32_t image_count = support.capabilities.minImageCount + 1;
+		uint32_t image_count = std::max(support.capabilities.minImageCount, 2u);
 		if (support.capabilities.maxImageCount > 0 && image_count > support.capabilities.maxImageCount) 
 			image_count = support.capabilities.maxImageCount;
 

@@ -3,6 +3,8 @@
 #include "CommonIncludes.h"
 #include "IGame.h"
 
+class Scene;
+
 namespace core 
 {
 	namespace Device 
@@ -10,6 +12,12 @@ namespace core
 		class Device;
 		class VulkanContext;
 	}
+
+	namespace render
+	{
+		class SceneRenderer;
+	}
+
 
 	class Engine : public NonCopyable
 	{
@@ -24,6 +32,7 @@ namespace core
 		double time() const { return current_time; }
 
 		Device::Device* GetDevice() { return device.get(); }
+		Scene* GetScene() const { return scene.get(); }
 
 		void MainLoop();
 
@@ -32,6 +41,8 @@ namespace core
 		IGame& game;
 		GLFWwindow* window;
 		std::unique_ptr<Device::Device> device;
+		std::unique_ptr<Scene> scene;
+		std::unique_ptr<render::SceneRenderer> scene_renderer;
 
 		bool loop_started = false;
 		double last_time = 0;

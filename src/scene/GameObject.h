@@ -1,9 +1,4 @@
-//
-// Created by Sidorenko Nikita on 3/28/18.
-//
-
-#ifndef CPPWRAPPER_GAMEOBJECT_H
-#define CPPWRAPPER_GAMEOBJECT_H
+#pragma once
 
 #include <memory>
 #include "Transform.h"
@@ -11,7 +6,7 @@
 #include "system/Logging.h"
 #include <string>
 #include "AnimationController.h"
-#include "render/shader/UniformBufferStruct.h"
+#include "render/shader/ShaderBufferStruct.h"
 
 class GameObject;
 typedef std::shared_ptr<GameObject> GameObjectPtr;
@@ -35,6 +30,8 @@ public:
   virtual void addGameObject(GameObjectPtr addGameObject) = 0;
   virtual void destroyGameObject(GameObjectPtr addGameObject) = 0;
 };
+
+using namespace core::Device;
 
 class GameObject {
 protected:
@@ -86,8 +83,8 @@ protected:
     _objectParamsStruct.layer = layer();
 
     RenderOperation result;
-    result.objectParams = &_objectParamsStruct;
-    result.debugInfo = &_name;
+    result.object_params = &_objectParamsStruct;
+    result.debug_info= &_name;
     return result;
   };
 
@@ -98,7 +95,7 @@ protected:
 
   AnimationControllerPtr _animation;
 
-  UBOStruct::ObjectParams _objectParamsStruct;
+  ShaderBufferStruct::ObjectParams _objectParamsStruct;
 
   CullingData _cullingData;
   bool _isRenderable = false;
@@ -132,5 +129,3 @@ std::shared_ptr<T> CreateGameObject() {
 }
 
 extern void DestroyGameObject(GameObjectPtr object);
-
-#endif //CPPWRAPPER_GAMEOBJECT_H

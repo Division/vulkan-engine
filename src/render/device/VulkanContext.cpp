@@ -67,6 +67,11 @@ namespace core { namespace Device {
 		return main_render_target->GetFrame(index).framebuffer.get();
 	}
 
+	void VulkanContext::AddFrameCommandBuffer(vk::CommandBuffer command_buffer)
+	{
+		frame_command_buffers.push_back(command_buffer);
+	}
+
 	void VulkanContext::Cleanup()
 	{
 		command_buffer_manager = nullptr;
@@ -79,7 +84,8 @@ namespace core { namespace Device {
 		return VK_FALSE;
 	}
 
-	void VulkanContext::RecreateSwapChain() {
+	void VulkanContext::RecreateSwapChain() 
+	{
 		int width = 0, height = 0;
 		while (width == 0 || height == 0) {
 			glfwGetFramebufferSize(window, &width, &height);
@@ -90,7 +96,8 @@ namespace core { namespace Device {
 		swapchain = std::make_unique<VulkanSwapchain>(surface, width, height);
 	}
 
-	void VulkanContext::CreateInstance() {
+	void VulkanContext::CreateInstance() 
+	{
 		if (ENABLE_VALIDATION_LAYERS && !VulkanUtils::CheckValidationLayerSupport())
 			throw std::runtime_error("validation layers requested, but not available!");
 
@@ -130,7 +137,8 @@ namespace core { namespace Device {
 		}
 	}
 
-	void VulkanContext::SetupDebugMessenger() {
+	void VulkanContext::SetupDebugMessenger() 
+	{
 		if (!ENABLE_VALIDATION_LAYERS) return;
 
 		VkDebugUtilsMessengerCreateInfoEXT createInfo;
@@ -141,7 +149,8 @@ namespace core { namespace Device {
 		}
 	}
 
-	void VulkanContext::PickPhysicalDevice() {
+	void VulkanContext::PickPhysicalDevice() 
+	{
 		uint32_t deviceCount = 0;
 		vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr);
 
@@ -164,7 +173,8 @@ namespace core { namespace Device {
 		}
 	}
 
-	void VulkanContext::CreateLogicalDevice() {
+	void VulkanContext::CreateLogicalDevice() 
+	{
 		VulkanUtils::QueueFamilyIndices indices = VulkanUtils::FindQueueFamilies(physicalDevice, surface);
 
 		std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
@@ -210,7 +220,8 @@ namespace core { namespace Device {
 		vkGetDeviceQueue(device, indices.presentFamily.value(), 0, &presentQueue);
 	}
 
-	void VulkanContext::CreateCommandPool() {
+	void VulkanContext::CreateCommandPool() 
+	{
 		VulkanUtils::QueueFamilyIndices queueFamilyIndices = VulkanUtils::FindQueueFamilies(physicalDevice, surface);
 
 		VkCommandPoolCreateInfo poolInfo = {};
@@ -249,7 +260,8 @@ namespace core { namespace Device {
 		vkQueueWaitIdle(graphicsQueue);
 	}
 
-    void VulkanContext::CreateSyncObjects() {
+    void VulkanContext::CreateSyncObjects() 
+	{
         imageAvailableSemaphores.resize(caps::MAX_FRAMES_IN_FLIGHT);
         renderFinishedSemaphores.resize(caps::MAX_FRAMES_IN_FLIGHT);
         inFlightFences.resize(caps::MAX_FRAMES_IN_FLIGHT);
@@ -270,8 +282,77 @@ namespace core { namespace Device {
         }
     }
 
-	void VulkanContext::FrameRenderEnd()
+	void VulkanContext::Present()
 	{
+		auto vk_swapchain = GetSwapchain();
+		VkFence current_fence = GetInFlightFence();
+		VkSemaphore image_available_semaphone = GetImageAvailableSemaphore();
+		VkSemaphore render_finished_semaphore = GetRenderFinishedSemaphore();
+
+		vkWaitForFences(device, 1, &current_fence, VK_TRUE, std::numeric_limits<uint64_t>::max());
+
+		uint32_t imageIndex;
+		VkResult result = vkAcquireNextImageKHR(device, swapchain->GetSwapchain(), std::numeric_limits<uint64_t>::max(), image_available_semaphone, VK_NULL_HANDLE, &imageIndex);
+
+		if (result == VK_ERROR_OUT_OF_DATE_KHR) {
+			throw new std::runtime_error("recreate not supported");
+			//recreateSwapChain();
+			return;
+		}
+		else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
+			throw std::runtime_error("failed to acquire swap chain image!");
+		}
+
+		GetUploader()->ProcessUpload();
+
+		VkSubmitInfo submitInfo = {};
+		submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+
+		VkSemaphore waitSemaphores[] = { image_available_semaphone };
+		VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
+		submitInfo.waitSemaphoreCount = 1;
+		submitInfo.pWaitSemaphores = waitSemaphores;
+		submitInfo.pWaitDstStageMask = waitStages;
+
+		submitInfo.commandBufferCount = frame_command_buffers.size();
+		submitInfo.pCommandBuffers = frame_command_buffers.data();
+
+		VkSemaphore signalSemaphores[] = { render_finished_semaphore };
+		submitInfo.signalSemaphoreCount = 1;
+		submitInfo.pSignalSemaphores = signalSemaphores;
+
+		vkResetFences(device, 1, &current_fence);
+
+		// Queue waits for the image_available_semaphone which is signaled after vkAcquireNextImageKHR succeeds
+		if (vkQueueSubmit(GetGraphicsQueue(), 1, &submitInfo, current_fence) != VK_SUCCESS) {
+			throw std::runtime_error("failed to submit draw command buffer!");
+		}
+
+
+		VkPresentInfoKHR presentInfo = {};
+		presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+
+		presentInfo.waitSemaphoreCount = 1;
+		presentInfo.pWaitSemaphores = signalSemaphores;
+
+		VkSwapchainKHR swapChains[] = { swapchain->GetSwapchain() };
+		presentInfo.swapchainCount = 1;
+		presentInfo.pSwapchains = swapChains;
+
+		presentInfo.pImageIndices = &imageIndex;
+
+		result = vkQueuePresentKHR(GetPresentQueue(), &presentInfo);
+
+		if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR /*|| framebufferResized*/) {
+			throw new std::runtime_error("recreate not supported");
+			//framebufferResized = false;
+			//recreateSwapChain();
+		}
+		else if (result != VK_SUCCESS) {
+			throw std::runtime_error("failed to present swap chain image!");
+		}
+
+		frame_command_buffers.clear();
 		currentFrame = (currentFrame + 1) % caps::MAX_FRAMES_IN_FLIGHT;
 		command_buffer_manager->GetDefaultCommandPool()->NextFrame();
 	}

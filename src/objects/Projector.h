@@ -1,16 +1,8 @@
-//
-// Created by Sidorenko Nikita on 11/15/18.
-//
+#pragma once
 
-#ifndef CPPWRAPPER_DECAL_H
-#define CPPWRAPPER_DECAL_H
-
+#include "CommonIncludes.h"
 #include "scene/GameObject.h"
-#include <memory>
 #include "utils/MeshGeneration.h"
-//#include "render/material/MaterialTypes.h"
-#include "EngineTypes.h"
-#include "EngineMath.h"
 #include "render/shading/IShadowCaster.h"
 
 enum class ProjectorType : int {
@@ -72,7 +64,7 @@ public:
 
   void setDebugEnabled(bool enabled) { _debugEnabled = enabled; }
 
-  ConstantBufferStruct::Projector getProjectorStruct() const;
+  core::Device::ShaderBufferStruct::Projector getProjectorStruct() const;
 
   void postUpdate() override;
 
@@ -131,5 +123,3 @@ private:
 private:
   mat4 _getProjection() const;
 };
-
-#endif //CPPWRAPPER_DECAL_H

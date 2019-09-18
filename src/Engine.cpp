@@ -3,6 +3,8 @@
 #include "render/device/VulkanContext.h"
 #include "render/device/VulkanUploader.h"
 #include "system/Logging.h"
+#include "scene/Scene.h"
+#include "render/renderer/SceneRenderer.h"
 
 namespace core
 {
@@ -47,6 +49,10 @@ namespace core
 		device = std::make_unique<Device::Device>(window);
 		device->GetContext()->initialize();
 		glfwSetTime(0);
+
+		scene_renderer = std::make_unique<render::SceneRenderer>();
+		scene = std::make_unique<Scene>();
+
 		game.init();
 	}
 
@@ -82,11 +88,9 @@ namespace core
 			float dt = (float)(current_time - last_time);
 
 			glfwPollEvents();
-
-			//context->GetUploader()->ProcessUpload();
 			game.update(dt);
-
-			context->FrameRenderEnd();
+			scene_renderer->RenderScene(scene.get());
+			context->Present();
 
 			glfwSwapBuffers(window);
 			last_time = current_time;

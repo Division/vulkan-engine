@@ -16,8 +16,8 @@ LightObject::LightObject() : GameObject() {
 }
 
 
-ConstantBufferStruct::Light LightObject::getLightStruct() const {
-	ConstantBufferStruct::Light result;
+ShaderBufferStruct::Light LightObject::getLightStruct() const {
+	ShaderBufferStruct::Light result;
 
   result.position = transform()->worldPosition();
   result.attenuation = attenuation();
@@ -30,8 +30,9 @@ ConstantBufferStruct::Light LightObject::getLightStruct() const {
   result.direction = glm::normalize(transform()->forward());
 
   if (castShadows()) {
-    result.shadowmapScale = vec2(_viewport.z, _viewport.w) / (float)SceneRenderer::shadowAtlasSize();
-    result.shadowmapOffset= vec2(_viewport.x, _viewport.y) / (float)SceneRenderer::shadowAtlasSize();
+	  throw std::runtime_error("not supported");
+    //result.shadowmapScale = vec2(_viewport.z, _viewport.w) / (float)SceneRenderer::shadowAtlasSize();
+    //result.shadowmapOffset= vec2(_viewport.x, _viewport.y) / (float)SceneRenderer::shadowAtlasSize();
     result.projectionMatrix = cameraViewProjectionMatrix();
   } else {
     result.shadowmapScale = vec2(0, 0);
@@ -107,7 +108,7 @@ void LightObject::postUpdate() {
   };
 }
 
-void LightObject::setFlare(const TexturePtr &texture, float size) {
+void LightObject::setFlare(const std::shared_ptr<Texture> &texture, float size) {
   _flareTexture = texture;
 
   /*

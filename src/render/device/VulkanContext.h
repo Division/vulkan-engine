@@ -36,17 +36,19 @@ namespace core { namespace Device {
 		VkFramebuffer GetFramebuffer(uint32_t index) const;
 		VkExtent2D GetExtent() const;
 
+		size_t GetCurrentFrame() const { return currentFrame; }
 		uint32_t GetSwapchainImageCount() const;
 		VkFence GetInFlightFence() const { return inFlightFences[currentFrame]; }
 		VkSemaphore GetRenderFinishedSemaphore() const { return renderFinishedSemaphores[currentFrame]; }
 		VkSemaphore GetImageAvailableSemaphore() const { return imageAvailableSemaphores[currentFrame]; }
 
 		VmaAllocator GetAllocator() { return allocator; }
-		
+		void AddFrameCommandBuffer(vk::CommandBuffer command_buffer);
+
 		void Cleanup();
 
 		void RecreateSwapChain();
-		void FrameRenderEnd();
+		void Present();
 	private:
 		static VKAPI_ATTR VkBool32 VKAPI_CALL DebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData);
 
@@ -81,6 +83,7 @@ namespace core { namespace Device {
 		std::vector<VkSemaphore> imageAvailableSemaphores;
 		std::vector<VkSemaphore> renderFinishedSemaphores;
 		std::vector<VkFence> inFlightFences;
+		std::vector<VkCommandBuffer> frame_command_buffers;
 
 		VmaAllocator allocator;
 

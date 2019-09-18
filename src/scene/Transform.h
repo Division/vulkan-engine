@@ -2,13 +2,9 @@
 // Created by Sidorenko Nikita on 3/28/18.
 //
 
-#ifndef CPPWRAPPER_TRANSFORM_H
-#define CPPWRAPPER_TRANSFORM_H
+#pragma once
 
-#include "EngMath.h"
-#include <vector>
-#include <functional>
-#include <memory>
+#include "CommonIncludes.h"
 
 class GameObject;
 class Transform;
@@ -93,5 +89,3 @@ private:
 };
 
 typedef std::shared_ptr<Transform> TransformPtr;
-
-#endif //CPPWRAPPER_TRANSFORM_H

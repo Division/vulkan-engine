@@ -6,8 +6,6 @@
 #include "objects/Projector.h"
 #include "objects/Camera.h"
 #include "objects/LightObject.h"
-#include <algorithm>
-#include "EngineMain.h"
 
 #define IS_CAMERA(object) (bool)(dynamic_cast<Camera *>((object).get()))
 #define IS_LIGHT(object) (bool)(dynamic_cast<LightObject *>((object).get()))
@@ -53,7 +51,7 @@ void Scene::_processAddedObject(GameObjectPtr object) {
 
     // Object is projector
   else if (IS_PROJECTOR(object)) {
-    ProjectorPtr projector = std::dynamic_pointer_cast<Projector>(object);
+    auto projector = std::dynamic_pointer_cast<Projector>(object);
     _projectors.push_back(projector);
   }
 }

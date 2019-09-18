@@ -45,8 +45,13 @@ set(ENGINE_SOURCES
 	src/render/pass/RenderState.cpp
 	src/render/pass/RenderPass.h
 	src/render/pass/RenderPass.cpp
-	src/render/pass/Renderer.h
-	src/render/pass/Renderer.cpp
+	src/render/renderer/IRenderer.h
+	src/render/renderer/ICameraParamsProvider.h
+	src/render/renderer/Renderer.h
+	src/render/renderer/Renderer.cpp
+	src/render/renderer/SceneRenderer.h
+	src/render/renderer/SceneRenderer.cpp
+	src/render/renderer/RenderOperation.h
 	src/render/shader/Shader.h
 	src/render/shader/Shader.cpp
 	src/render/shader/ReflectionInfo.h
@@ -56,14 +61,44 @@ set(ENGINE_SOURCES
 	src/render/shader/ShaderResource.h
 	src/render/shader/ShaderResource.cpp
 	src/render/shader/ShaderCaps.h
+	src/render/shading/IShadowCaster.h
 	src/render/mesh/Mesh.h
 	src/render/mesh/Mesh.cpp
+	src/render/texture/Texture.h
+	src/render/texture/Texture.cpp
+	src/render/texture/SpriteSheet.h
+	src/render/texture/SpriteSheet.cpp
+	src/scene/AnimationController.h
+	src/scene/AnimationController.cpp
+	src/scene/GameObject.h
+	src/scene/GameObject.cpp
+	src/scene/Scene.h
+	src/scene/Scene.cpp
+	src/scene/Transform.h
+	src/scene/Transform.cpp
+	src/objects/Camera.h
+	src/objects/Camera.cpp
+	src/objects/LightObject.h
+	src/objects/LightObject.cpp
+	src/objects/MeshObject.h
+	src/objects/MeshObject.cpp
+	src/objects/Projector.h
+	src/objects/Projector.cpp
+	src/objects/SkinnedMeshObject.h
+	src/objects/SkinnedMeshObject.cpp
 	src/resources/ModelBundle.h
 	src/resources/ModelBundle.cpp
 	src/resources/HierarchyData.h
 	src/resources/HierarchyData.cpp
 	src/resources/SkinningData.h
 	src/resources/SkinningData.cpp
+	src/loader/FileLoader.h
+	src/loader/FileLoader.cpp
+	src/loader/HierarchyLoader.h
+	src/loader/HierarchyLoader.cpp
+	src/loader/SpritesheetLoader.h
+	src/loader/SpritesheetLoader.cpp
+
 	src/loader/ModelLoader.h
 	src/loader/ModelLoader.cpp
 	src/loader/ModelLoaderUtils.h

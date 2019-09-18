@@ -5,9 +5,10 @@
 #ifndef CPPWRAPPER_SPRITESHEETLOADER_H
 #define CPPWRAPPER_SPRITESHEETLOADER_H
 
-#include <EngineTypes.h>
 #include <string>
 #include <memory>
+
+class SpriteSheet;
 
 namespace loader {
 

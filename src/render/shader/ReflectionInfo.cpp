@@ -7,6 +7,18 @@ namespace core { namespace Device {
 		: compiler(spirv_data, count)
 	{
 		auto resources = compiler.get_shader_resources();
+		std::stringstream str;
+		str << resources.uniform_buffers.size(); // 0 // 1
+		str << resources.storage_buffers.size(); // 0 // 0
+		str << resources.stage_inputs.size(); // 2 // 3
+		str << resources.stage_outputs.size(); // 1 // 2
+		str << resources.subpass_inputs.size(); // 0 // 0
+		str << resources.storage_images.size(); // 0 // 0
+		str << resources.sampled_images.size(); // 1 // 0
+		str << resources.separate_images.size(); // 0 // 0
+		str << resources.separate_samplers.size(); // 0 // 0
+
+		OutputDebugStringA(str.str().c_str());
 
 		for (auto& ubo : resources.uniform_buffers)
 		{

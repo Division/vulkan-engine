@@ -5,8 +5,8 @@
 #ifndef CPPWRAPPER_CAMERA_H
 #define CPPWRAPPER_CAMERA_H
 
+#include "CommonIncludes.h"
 #include "scene/GameObject.h"
-#include "EngineMath.h"
 #include "render/renderer/ICameraParamsProvider.h"
 #include "utils/Frustum.h"
 
