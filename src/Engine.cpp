@@ -89,6 +89,7 @@ namespace core
 
 			glfwPollEvents();
 			game.update(dt);
+			context->WaitForRenderFence();
 			scene_renderer->RenderScene(scene.get());
 			context->Present();
 

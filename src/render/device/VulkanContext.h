@@ -51,6 +51,7 @@ namespace core { namespace Device {
 		void Cleanup();
 
 		void RecreateSwapChain();
+		void WaitForRenderFence();
 		void Present();
 	private:
 		static VKAPI_ATTR VkBool32 VKAPI_CALL DebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData);

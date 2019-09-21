@@ -302,14 +302,19 @@ namespace core { namespace Device {
         }
     }
 
+	void VulkanContext::WaitForRenderFence()
+	{
+		vk::Fence current_fence = GetInFlightFence(); 
+		GetDevice().waitForFences(1, &current_fence, VK_TRUE, std::numeric_limits<uint64_t>::max());
+		GetDevice().resetFences(1, &current_fence);
+	}
+
 	void VulkanContext::Present()
 	{
 		auto vk_swapchain = GetSwapchain();
 		VkFence current_fence = GetInFlightFence();
 		VkSemaphore image_available_semaphone = GetImageAvailableSemaphore();
 		VkSemaphore render_finished_semaphore = GetRenderFinishedSemaphore();
-
-		vkWaitForFences(device, 1, &current_fence, VK_TRUE, std::numeric_limits<uint64_t>::max());
 
 		uint32_t imageIndex;
 		VkResult result = vkAcquireNextImageKHR(device, swapchain->GetSwapchain(), std::numeric_limits<uint64_t>::max(), image_available_semaphone, VK_NULL_HANDLE, &imageIndex);
@@ -340,8 +345,6 @@ namespace core { namespace Device {
 		VkSemaphore signalSemaphores[] = { render_finished_semaphore };
 		submitInfo.signalSemaphoreCount = 1;
 		submitInfo.pSignalSemaphores = signalSemaphores;
-
-		vkResetFences(device, 1, &current_fence);
 
 		// Queue waits for the image_available_semaphone which is signaled after vkAcquireNextImageKHR succeeds
 		if (vkQueueSubmit(GetGraphicsQueue(), 1, &submitInfo, current_fence) != VK_SUCCESS) {
@@ -376,8 +379,6 @@ namespace core { namespace Device {
 		currentFrame = (currentFrame + 1) % caps::MAX_FRAMES_IN_FLIGHT;
 		command_buffer_manager->GetDefaultCommandPool()->NextFrame();
 		current_render_state = 0;
-
-		vkDeviceWaitIdle(device);
 	}
 
 } }
