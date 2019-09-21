@@ -10,6 +10,7 @@ namespace core { namespace Device {
 	class VulkanRenderPass;
 	class VulkanSwapchain;
 	class VulkanRenderTarget;
+	class VulkanRenderState;
 
 	class VulkanContext : public NonCopyable
 	{
@@ -41,6 +42,8 @@ namespace core { namespace Device {
 		VkFence GetInFlightFence() const { return inFlightFences[currentFrame]; }
 		VkSemaphore GetRenderFinishedSemaphore() const { return renderFinishedSemaphores[currentFrame]; }
 		VkSemaphore GetImageAvailableSemaphore() const { return imageAvailableSemaphores[currentFrame]; }
+		VulkanRenderState* GetRenderState();
+		VulkanRenderTarget* GetMainRenderTarget() const { return main_render_target.get(); }
 
 		VmaAllocator GetAllocator() { return allocator; }
 		void AddFrameCommandBuffer(vk::CommandBuffer command_buffer);
@@ -80,6 +83,8 @@ namespace core { namespace Device {
 		VkQueue graphicsQueue;
 		VkQueue presentQueue;
 
+		std::vector<std::unique_ptr<VulkanRenderState>> render_states;
+		uint32_t current_render_state = 0;
 		std::vector<VkSemaphore> imageAvailableSemaphores;
 		std::vector<VkSemaphore> renderFinishedSemaphores;
 		std::vector<VkFence> inFlightFences;

@@ -43,6 +43,7 @@ public:
 
   void setIndices(const uint16_t *indices, int indexCount);
   void setIndices(const std::vector<uint16_t> &indices);
+  uint32_t GetVertexAttribHash() const;
 
   void calculateNormals();
   void calculateTBN();

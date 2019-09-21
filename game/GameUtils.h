@@ -72,5 +72,5 @@ void CreateDescriptorSets(
 	const std::vector<VkBuffer>& uniformBuffers,
 	VkDescriptorPool pool,
 	VkDescriptorSetLayout layout,
-	std::vector<VkDescriptorSet>& descriptorSets
+	std::vector<vk::DescriptorSet>& descriptorSets
 );

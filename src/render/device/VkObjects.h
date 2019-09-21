@@ -14,7 +14,7 @@ namespace core { namespace Device {
 		explicit VulkanCommandBuffer(VulkanCommandBuffer&& other);
 		~VulkanCommandBuffer();
 
-		VkCommandBuffer GetCommandBuffer() { return command_buffer; }
+		vk::CommandBuffer GetCommandBuffer() { return command_buffer; }
 		VulkanCommandPool* GetCommandPool() { return command_pool; }
 
 	private:

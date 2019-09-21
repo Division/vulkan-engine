@@ -6,15 +6,19 @@
 #include "Engine.h"
 #include "render/device/VulkanContext.h"
 #include "render/device/VulkanSwapchain.h"
+#include "VulkanRenderState.h"
+#include "utils/Math.h"
 
 namespace core { namespace Device {
 
-	VulkanPipelineInitializer::VulkanPipelineInitializer(const ShaderProgram* shader_program, const VulkanRenderPass* render_pass, const Mesh* mesh)
+	VulkanPipelineInitializer::VulkanPipelineInitializer(const ShaderProgram* shader_program, const VulkanRenderPass* render_pass, const Mesh* mesh, const RenderMode* render_mode)
 		: shader_program(shader_program)
 		, render_pass(render_pass)
 		, mesh(mesh)
+		, render_mode(render_mode)
 	{
-		
+		size_t hashes[] = { this->mesh->GetVertexAttribHash(), reinterpret_cast<size_t>(render_pass), shader_program->GetHash(), render_mode->GetHash() };
+		hash = FastHash(hashes, sizeof(hashes));
 	}
 
 	VulkanPipeline::VulkanPipeline(VulkanPipelineInitializer initializer)
@@ -70,13 +74,26 @@ namespace core { namespace Device {
 		vk::Rect2D scissor(vk::Offset2D(0, 0), context->GetSwapchain()->GetExtent());
 		vk::PipelineViewportStateCreateInfo viewport_state({}, 1, &viewport, 1, &scissor);
 
-		vk::PipelineRasterizationStateCreateInfo rasterization_state_create_info({}, VK_FALSE, VK_FALSE, vk::PolygonMode::eFill, vk::CullModeFlagBits::eBack, vk::FrontFace::eCounterClockwise, VK_FALSE, 0, 0, 0.0f, 1.0f);
+		auto* render_mode = initializer.render_mode;
+		vk::PipelineRasterizationStateCreateInfo rasterization_state_create_info(
+			{}, VK_FALSE, VK_FALSE, 
+			vk::PolygonMode::eFill, 
+			vk::CullModeFlagBits(render_mode->GetCullMode()), 
+			vk::FrontFace::eCounterClockwise, VK_FALSE, 0, 0, 0.0f, 1.0f
+		);
 
 		vk::PipelineMultisampleStateCreateInfo multisampling_state_create_info({}, vk::SampleCountFlagBits::e1, VK_FALSE, 0, nullptr, VK_FALSE, VK_FALSE);
 
-		vk::PipelineColorBlendAttachmentState color_blend_attachment;
+		vk::PipelineColorBlendAttachmentState color_blend_attachment(
+			vk::Bool32(render_mode->GetAlphaBlendEnabled()),
+			vk::BlendFactor(render_mode->GetSrcBlend()), 
+			vk::BlendFactor(render_mode->GetDestBlend()), 
+			vk::BlendOp(render_mode->GetBlend()),
+			vk::BlendFactor(render_mode->GetSrcBlendAlpha()), 
+			vk::BlendFactor(render_mode->GetDestBlendAlpha()), 
+			vk::BlendOp(render_mode->GetBlendAlpha())
+		);
 		color_blend_attachment.colorWriteMask = vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA;
-		color_blend_attachment.blendEnable = VK_FALSE;
 
 		vk::PipelineColorBlendStateCreateInfo color_blending({}, VK_FALSE, vk::LogicOp::eCopy, 1, &color_blend_attachment);
 

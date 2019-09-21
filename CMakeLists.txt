@@ -38,11 +38,11 @@ set(ENGINE_SOURCES
 	src/render/device/VulkanPipeline.cpp
 	src/render/device/VulkanUtils.h
 	src/render/device/VulkanUtils.cpp
+	src/render/device/VulkanRenderState.h
+	src/render/device/VulkanRenderState.cpp
 	src/render/device/VulkanCaps.h
 	src/render/buffer/VulkanBuffer.h
 	src/render/buffer/VulkanBuffer.cpp
-	src/render/pass/RenderState.h
-	src/render/pass/RenderState.cpp
 	src/render/pass/RenderPass.h
 	src/render/pass/RenderPass.cpp
 	src/render/renderer/IRenderer.h

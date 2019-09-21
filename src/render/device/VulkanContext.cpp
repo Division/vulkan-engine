@@ -7,6 +7,8 @@
 #include "VulkanRenderPass.h"
 #include "VulkanSwapchain.h"
 #include "VulkanRenderTarget.h"
+#include "VulkanRenderState.h"
+#include <mutex>
 
 namespace core { namespace Device {
 
@@ -49,6 +51,24 @@ namespace core { namespace Device {
 	VulkanContext::~VulkanContext()
 	{
 
+	}
+
+	VulkanRenderState* VulkanContext::GetRenderState()
+	{
+		static std::mutex mutex;
+		std::lock_guard<std::mutex> lock(mutex);
+
+		VulkanRenderState* result = nullptr;
+		if (current_render_state < render_states.size())
+			result = render_states[current_render_state].get();
+		else
+		{
+			render_states.push_back(std::make_unique<VulkanRenderState>());
+			result = render_states.back().get();
+		}
+
+		current_render_state += 1;
+		return result;
 	}
 
 	VkExtent2D VulkanContext::GetExtent() const 
@@ -254,7 +274,7 @@ namespace core { namespace Device {
 		VkSubmitInfo submitInfo = {};
 		submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 		submitInfo.commandBufferCount = 1;
-		submitInfo.pCommandBuffers = &vk_command_buffer;
+		submitInfo.pCommandBuffers = (VkCommandBuffer*)&vk_command_buffer;
 
 		vkQueueSubmit(graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
 		vkQueueWaitIdle(graphicsQueue);
@@ -355,6 +375,9 @@ namespace core { namespace Device {
 		frame_command_buffers.clear();
 		currentFrame = (currentFrame + 1) % caps::MAX_FRAMES_IN_FLIGHT;
 		command_buffer_manager->GetDefaultCommandPool()->NextFrame();
+		current_render_state = 0;
+
+		vkDeviceWaitIdle(device);
 	}
 
 } }

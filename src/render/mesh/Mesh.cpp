@@ -107,6 +107,11 @@ int Mesh::attribOffsetBytes(VertexAttrib attrib) const
 	}
 }
 
+uint32_t Mesh::GetVertexAttribHash() const
+{
+	return _attribSet.getBitmask() | ((1u * (unsigned)hasIndices()) << 31u);
+}
+
 // Setting mesh data
 
 void Mesh::setVertices(const vec3 *vertices, int vertexCount) {

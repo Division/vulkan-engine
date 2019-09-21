@@ -254,7 +254,7 @@ void CreateDescriptorSets(
 	const std::vector<VkBuffer>& uniformBuffers, 
 	VkDescriptorPool pool, 
 	VkDescriptorSetLayout layout, 
-	std::vector<VkDescriptorSet>& descriptorSets
+	std::vector<vk::DescriptorSet>& descriptorSets
 ) {
 	auto* engine = Engine::Get();
 	auto* device = engine->GetDevice();
@@ -262,17 +262,11 @@ void CreateDescriptorSets(
 	auto vk_device = context->GetDevice();
 	auto vk_physical_device = context->GetPhysicalDevice();
 
-	std::vector<VkDescriptorSetLayout> layouts(in_flight_count, layout);
-	VkDescriptorSetAllocateInfo allocInfo = {};
-	allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-	allocInfo.descriptorPool = pool;
-	allocInfo.descriptorSetCount = in_flight_count;
-	allocInfo.pSetLayouts = layouts.data();
+	std::vector<vk::DescriptorSetLayout> layouts(in_flight_count, layout);
+	vk::DescriptorSetAllocateInfo allocInfo((vk::DescriptorPool)pool, in_flight_count, layouts.data());
 
 	descriptorSets.resize(in_flight_count);
-	if (vkAllocateDescriptorSets(vk_device, &allocInfo, descriptorSets.data()) != VK_SUCCESS) {
-		throw std::runtime_error("failed to allocate descriptor sets!");
-	}
+	vk_device.allocateDescriptorSets(&allocInfo, descriptorSets.data());
 
 	for (size_t i = 0; i < in_flight_count; i++) {
 		VkDescriptorBufferInfo bufferInfo = {};

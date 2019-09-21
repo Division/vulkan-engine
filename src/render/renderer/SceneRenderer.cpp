@@ -15,6 +15,9 @@
 #include "render/device/VulkanRenderPass.h"
 #include "render/device/VulkanSwapchain.h"
 #include "render/device/VulkanPipeline.h"
+#include "render/device/VulkanRenderState.h"
+#include "render/device/VulkanRenderTarget.h"
+#include "render/device/VkObjects.h"
 #include "resources/ModelBundle.h"
 #include "loader/ModelLoader.h"
 #include "render/mesh/Mesh.h"
@@ -38,80 +41,18 @@ std::vector<VkBuffer> uniformBuffers;
 std::vector<VkDeviceMemory> uniformBuffersMemory;
 
 VkDescriptorPool descriptorPool;
-std::vector<VkDescriptorSet> descriptorSets;
 
-std::vector<VkCommandBuffer> commandBuffers;
+namespace core {
+	namespace render {
+		std::vector<vk::DescriptorSet> descriptorSets;
+	}
+}
+
 std::shared_ptr<ModelBundle> bundle;
 std::shared_ptr<const Mesh> test_mesh;
 
 ShaderProgram program;
 std::unique_ptr<VulkanPipeline> pipeline;
-
-void CreateCommandBuffers(const uint32_t in_flight_count) {
-	auto* engine = Engine::Get();
-	auto* device = engine->GetDevice();
-	auto* context = device->GetContext();
-	auto commandPool = context->GetCommandPool();
-	auto render_pass = context->GetRenderPass();
-
-	auto vertex_buffer = test_mesh->vertexBuffer();
-	auto index_buffer = test_mesh->indexBuffer();
-
-	commandBuffers.resize(in_flight_count);
-
-	VkCommandBufferAllocateInfo allocInfo = {};
-	allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-	allocInfo.commandPool = commandPool;
-	allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-	allocInfo.commandBufferCount = (uint32_t)commandBuffers.size();
-	auto vk_device = context->GetDevice();
-
-	if (vkAllocateCommandBuffers(vk_device, &allocInfo, commandBuffers.data()) != VK_SUCCESS) {
-		throw std::runtime_error("failed to allocate command buffers!");
-	}
-
-	for (size_t i = 0; i < commandBuffers.size(); i++) {
-		VkCommandBufferBeginInfo beginInfo = {};
-		beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-
-		if (vkBeginCommandBuffer(commandBuffers[i], &beginInfo) != VK_SUCCESS) {
-			throw std::runtime_error("failed to begin recording command buffer!");
-		}
-
-		VkRenderPassBeginInfo renderPassInfo = {};
-		renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-		renderPassInfo.renderPass = render_pass->GetRenderPass();
-		renderPassInfo.framebuffer = context->GetFramebuffer(i);
-		renderPassInfo.renderArea.offset = { 0, 0 };
-		renderPassInfo.renderArea.extent = context->GetExtent();
-
-		VkClearValue clearColor = { 1.0f, 1.0f, 1.0f, 1.0f };
-		renderPassInfo.clearValueCount = 1;
-		renderPassInfo.pClearValues = &clearColor;
-
-		vkCmdBeginRenderPass(commandBuffers[i], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
-
-		//vkCmdBindPipeline(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, context->GetPipeline());
-		vkCmdBindPipeline(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->GetPipeline());
-
-		VkBuffer vertexBuffers[] = { vertex_buffer->Buffer() };
-		VkDeviceSize offsets[] = { 0 };
-		vkCmdBindVertexBuffers(commandBuffers[i], 0, 1, vertexBuffers, offsets);
-
-		vkCmdBindIndexBuffer(commandBuffers[i], index_buffer->Buffer(), 0, VK_INDEX_TYPE_UINT16);
-
-		//vkCmdBindDescriptorSets(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, context->GetPipelineLayout(), 0, 1, &descriptorSets[i], 0, nullptr);
-		vkCmdBindDescriptorSets(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->GetPipelineLayout(), 0, 1, &descriptorSets[i], 0, nullptr);
-
-		vkCmdDrawIndexed(commandBuffers[i], static_cast<uint32_t>(test_mesh->indexCount()), 1, 0, 0, 0);
-
-		vkCmdEndRenderPass(commandBuffers[i]);
-
-		if (vkEndCommandBuffer(commandBuffers[i]) != VK_SUCCESS) {
-			throw std::runtime_error("failed to record command buffer!");
-		}
-	}
-}
 
 void UpdateUniformBuffer(uint32_t currentImage) {
 	auto* engine = Engine::Get();
@@ -158,7 +99,7 @@ namespace core { namespace render {
 		program.AddModule(std::move(fragment), ShaderProgram::Stage::Fragment);
 		program.Prepare();
 
-		const uint32_t in_flight_count = context->GetSwapchainImageCount(); // check is there a reason for it to be separate
+		const uint32_t in_flight_count = context->GetSwapchainImageCount();
 		CreateTextureImage(textureImage, textureImageMemory);
 		textureImageView = CreateTextureImageView(vk_device, textureImage);
 		CreateTextureSampler(vk_device, textureSampler);
@@ -168,10 +109,9 @@ namespace core { namespace render {
 		CreateDescriptorSets(in_flight_count, textureImageView, textureSampler,
 			uniformBuffers, descriptorPool, program.GetDescriptorSetLayout(), descriptorSets);
 
-		VulkanPipelineInitializer pipeline_initializer(&program, context->GetRenderPass(), test_mesh.get());
+		::RenderMode render_mode;
+		VulkanPipelineInitializer pipeline_initializer(&program, context->GetRenderPass(), test_mesh.get(), &render_mode);
 		pipeline = std::make_unique<VulkanPipeline>(pipeline_initializer);
-
-		CreateCommandBuffers(in_flight_count);
 	}
 
 	void SceneRenderer::RenderScene(Scene* scene)
@@ -183,8 +123,16 @@ namespace core { namespace render {
 		auto vk_physical_device = context->GetPhysicalDevice();
 		auto vk_swapchain = context->GetSwapchain();
 
+		auto* render_state = context->GetRenderState();
+
 		UpdateUniformBuffer(context->GetCurrentFrame());
-		context->AddFrameCommandBuffer(commandBuffers[context->GetCurrentFrame()]);
+
+		auto* command_buffer = render_state->BeginRendering(*context->GetMainRenderTarget());
+		render_state->SetShader(program);
+		render_state->RenderMesh(*test_mesh.get());
+		render_state->EndRendering();
+
+		context->AddFrameCommandBuffer(command_buffer->GetCommandBuffer());
 	}
 
 } }

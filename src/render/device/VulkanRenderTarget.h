@@ -73,6 +73,9 @@ namespace core { namespace Device {
 
 		void Resize(uint32_t width, uint32_t height);
 		const Frame& GetFrame(int index) const { return frames.at(index); }
+		uint32_t GetWidth() const { return  width; }
+		uint32_t GetHeight() const { return  height; }
+		VulkanRenderPass* GetRenderPass() const { return render_pass; }
 
 	private:
 		std::vector<Frame> frames;

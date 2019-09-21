@@ -60,4 +60,9 @@ namespace core { namespace Device {
 		descriptor_set_layout = device.createDescriptorSetLayoutUnique(layout_info);
 	}
 
+	uint64_t ShaderProgram::GetHash() const
+	{
+		return (uint64_t)this;
+	}
+
 } }

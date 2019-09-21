@@ -54,6 +54,9 @@ namespace core { namespace Device {
 			vk::FramebufferCreateInfo framebuffer_create_info({}, render_pass->GetRenderPass(), 1, attachments, width, height, 1);
 			frame.framebuffer = device.createFramebufferUnique(framebuffer_create_info);
 		}
+
+		this->width = width;
+		this->height = height;
 	}
 
 } }

@@ -38,6 +38,7 @@ namespace core { namespace Device {
 		const ShaderModule& VertexModule() const { return vertex_module; }
 		const ShaderModule& FragmentModule() const { return fragment_module; }
 		vk::DescriptorSetLayout GetDescriptorSetLayout() const { return descriptor_set_layout.get(); }
+		uint64_t GetHash() const;
 
 	private:
 		ShaderModule vertex_module;

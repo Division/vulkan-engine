@@ -83,11 +83,8 @@ namespace core { namespace Device {
 		vkEndCommandBuffer(vk_command_buffer);
 
 		auto graphicsQueue = context->GetGraphicsQueue();
-		VkSubmitInfo submitInfo = {};
-		submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-		submitInfo.commandBufferCount = 1;
-		submitInfo.pCommandBuffers = &vk_command_buffer;
-		vkQueueSubmit(graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
+		vk::SubmitInfo submitInfo(0, nullptr, nullptr, 1, &vk_command_buffer);
+		((vk::Queue)graphicsQueue).submit(1u, &submitInfo, vk::Fence());
 
 		current_frame = (current_frame + 1) % caps::MAX_FRAMES_IN_FLIGHT;
 	}

@@ -6,6 +6,9 @@ class Scene;
 
 namespace core { namespace render {
 
+	// TODO: remove
+	extern std::vector<vk::DescriptorSet> descriptorSets;
+
 	class SceneRenderer
 	{
 	public:

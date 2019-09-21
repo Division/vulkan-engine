@@ -8,14 +8,21 @@ namespace core { namespace Device {
 
 	class ShaderProgram;
 	class VulkanRenderPass;
+	class RenderMode;
 
 	struct VulkanPipelineInitializer
 	{
-		VulkanPipelineInitializer(const ShaderProgram* shader_program, const VulkanRenderPass* render_pass, const Mesh* mesh);
+		VulkanPipelineInitializer(const ShaderProgram* shader_program, const VulkanRenderPass* render_pass, const Mesh* mesh, const RenderMode* render_mode);
 
-		const ShaderProgram* shader_program;
-		const VulkanRenderPass* render_pass;
-		const Mesh* mesh;
+		const ShaderProgram const* shader_program;
+		const VulkanRenderPass const* render_pass;
+		const Mesh const* mesh;
+		const RenderMode const* render_mode;
+
+		uint32_t GetHash() const { return hash; }
+
+	private:
+		uint32_t hash;
 	};
 
 	class VulkanPipeline
