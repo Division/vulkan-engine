@@ -1,40 +1,42 @@
-//
-// Created by Sidorenko Nikita on 3/25/18.
-//
-
 #pragma once
 
 #include "CommonIncludes.h"
 
-struct TextureParams {
+namespace core { namespace Device {
+	
+	struct TextureInitializer
+	{
+		enum Mode
+		{
+			RAW_RGB_A
+		};
 
-};
+		TextureInitializer(uint32_t width, uint32_t height, uint32_t channel_count, void* data, bool sRGB) // simple RGBA
+			: mode(RAW_RGB_A), channel_count(channel_count), width(width), height(height), data(data), sRGB(sRGB) {}
 
-class Texture {
-public:
-  Texture() = default;
-  ~Texture();
+		Mode mode;
+		bool sRGB = false;
+		void* data = nullptr;
+		uint32_t channel_count = 0;
+		size_t data_size = 0;
+		bool is_from_file = false;
+		uint32_t width = 0;
+		uint32_t height = 0;
+	};
 
-  /*ID3D11Texture2D *texture() const { return _texture; };
-  ID3D11Texture2D **texturePointer() { return &_texture; };
-  ID3D11Texture2D *const *texturePointer() const { return &_texture; };
-  ID3D11ShaderResourceView *resource() const { return _textureView; };
-  ID3D11ShaderResourceView *const *resourcePointer() const { return &_textureView; };
-  ID3D11SamplerState *samplerState() const { return _samplerState; };
-  ID3D11SamplerState *const *samplerStatePointer() const { return &_samplerState; }; 
+	class Texture {
+	public:
+		Texture(const TextureInitializer& initializer);
+		~Texture();
 
-  /void initTexture2D(int32_t width, int32_t height, int32_t channels, bool sRGB, void *data, bool mipmaps = true);
-  void initTexture2D(int width, int height, DXGI_FORMAT format, void *data, bool mipmaps, UINT bindFlags = D3D11_BIND_SHADER_RESOURCE, DXGI_FORMAT shaderResourceFormat = DXGI_FORMAT_UNKNOWN, uint32_t sampleCount = 1);
-  */
+		const vk::Image& GetImage() const { return image; }
+		const vk::ImageView& GetImageView() const { return image_view.get(); }
 
-private:
-	/*ID3D11Texture2D *_texture = 0;
-	ID3D11ShaderResourceView *_textureView = 0;
-	ID3D11SamplerState *_samplerState = 0;*/
+	private:
+		VmaAllocation allocation;
+		vk::Image image;
+		vk::UniqueImageView image_view;
 
-private:
-	void _release();
-	void _uploadData();
-};
+	};
 
-typedef std::shared_ptr<Texture> TexturePtr;
+} }

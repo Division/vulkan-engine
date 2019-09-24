@@ -20,6 +20,8 @@
 #include "render/device/VkObjects.h"
 #include "resources/ModelBundle.h"
 #include "loader/ModelLoader.h"
+#include "loader/TextureLoader.h"
+#include "render/texture/Texture.h"
 #include "render/mesh/Mesh.h"
 #include "render/shader/Shader.h"
 
@@ -31,16 +33,11 @@ VkDeviceMemory textureImageMemory;
 VkImageView textureImageView;
 VkSampler textureSampler;
 
-std::unique_ptr<VulkanBuffer> vertexBuffer;
-//VkBuffer vertexBuffer;
-VkDeviceMemory vertexBufferMemory;
-VkBuffer indexBuffer;
-VkDeviceMemory indexBufferMemory;
-
 std::vector<VkBuffer> uniformBuffers;
 std::vector<VkDeviceMemory> uniformBuffersMemory;
 
 VkDescriptorPool descriptorPool;
+std::shared_ptr<core::Device::Texture> texture;
 
 namespace core {
 	namespace render {
@@ -90,6 +87,8 @@ namespace core { namespace render {
 		bundle = loader::loadModel("resources/level/props.mdl");
 		test_mesh = bundle->getMesh("Drawer_Preset_02_meshShape");
 
+		texture = loader::LoadTexture("resources/level/Atlas_Props_02.jpg");
+		
 		auto vertex_data = VulkanUtils::ReadFile("shaders/vert.spv");
 		auto fragment_data = VulkanUtils::ReadFile("shaders/frag.spv");
 		ShaderModule vertex(vertex_data.data(), vertex_data.size());
@@ -106,7 +105,7 @@ namespace core { namespace render {
 		CreateUniformBuffers(in_flight_count, uniformBuffers, uniformBuffersMemory);
 		CreateDescriptorPool(in_flight_count, descriptorPool);
 
-		CreateDescriptorSets(in_flight_count, textureImageView, textureSampler,
+		CreateDescriptorSets(in_flight_count, texture->GetImageView(), textureSampler,
 			uniformBuffers, descriptorPool, program.GetDescriptorSetLayout(), descriptorSets);
 
 		::RenderMode render_mode;

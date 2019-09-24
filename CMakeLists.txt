@@ -92,13 +92,14 @@ set(ENGINE_SOURCES
 	src/resources/HierarchyData.cpp
 	src/resources/SkinningData.h
 	src/resources/SkinningData.cpp
+	src/loader/TextureLoader.h
+	src/loader/TextureLoader.cpp
 	src/loader/FileLoader.h
 	src/loader/FileLoader.cpp
 	src/loader/HierarchyLoader.h
 	src/loader/HierarchyLoader.cpp
 	src/loader/SpritesheetLoader.h
 	src/loader/SpritesheetLoader.cpp
-
 	src/loader/ModelLoader.h
 	src/loader/ModelLoader.cpp
 	src/loader/ModelLoaderUtils.h

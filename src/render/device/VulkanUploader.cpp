@@ -11,66 +11,35 @@ namespace core { namespace Device {
 
 	std::mutex uploader_mutex;
 
-	VulkanUploader::Upload::Upload(std::unique_ptr<VulkanBuffer> src_buffer, VulkanBuffer* dst_buffer, VkDeviceSize size)
-		: src_buffer(std::move(src_buffer))
+	VulkanUploader::UploadBase::UploadBase() = default;
+	VulkanUploader::UploadBase::~UploadBase() = default;
+	VulkanUploader::UploadBase::UploadBase(UploadBase&&) = default;
+
+	VulkanUploader::BufferUpload::BufferUpload(std::unique_ptr<VulkanBuffer> src_buffer, VulkanBuffer* dst_buffer, VkDeviceSize size) : UploadBase()
 		, dst_buffer(dst_buffer)
 		, size(size)
-	{}
-	
-	VulkanUploader::Upload::Upload(Upload&& other) = default;
-	VulkanUploader::Upload::~Upload() = default;
-	VulkanUploader::VulkanUploader() {};
-	VulkanUploader::~VulkanUploader() {};
-
-	void VulkanUploader::AddToUpload(std::unique_ptr<VulkanBuffer> src_buffer, VulkanBuffer* dst_buffer, VkDeviceSize size)
 	{
-		std::lock_guard<std::mutex> guard(uploader_mutex);
-		current_frame_uploads.emplace_back(std::move(src_buffer), dst_buffer, size);
+		this->src_buffer = std::move(src_buffer);
 	}
-
-	void VulkanUploader::ProcessUpload()
+	
+	VulkanUploader::BufferUpload::BufferUpload(BufferUpload&& other) = default;
+	VulkanUploader::BufferUpload::~BufferUpload() = default;
+	
+	void VulkanUploader::BufferUpload::Process(vk::CommandBuffer& command_buffer, std::vector<std::unique_ptr<VulkanBuffer>>& buffers_in_upload)
 	{
-		buffers_in_upload[current_frame].clear();
-
-		if (!current_frame_uploads.size())
-			return;
-
-		std::vector<Upload> uploads_copy;
-		{
-			std::lock_guard<std::mutex> guard(uploader_mutex);
-			uploads_copy = std::move(current_frame_uploads);
-		}
-
-		auto* context = Engine::GetVulkanContext();
-		// TODO: check if it's better to use different pool
-		auto* command_buffer = context->GetCommandBufferManager()->GetDefaultCommandPool()->GetCommandBuffer();
-
-		VkCommandBufferBeginInfo beginInfo = {};
-		beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-		beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-
-		vkBeginCommandBuffer(command_buffer->GetCommandBuffer(), &beginInfo);
-
-		for (int i = 0; i < uploads_copy.size(); i++)
-		{
-			auto srcBuffer = uploads_copy[i].src_buffer->Buffer();
-			auto dstBuffer = uploads_copy[i].dst_buffer->Buffer();
-			VkBufferCopy copyRegion = { 0, 0, uploads_copy[i].size };
-			vkCmdCopyBuffer(command_buffer->GetCommandBuffer(), srcBuffer, dstBuffer, 1, &copyRegion);
-			buffers_in_upload[current_frame].push_back(std::move(uploads_copy[i].src_buffer));
-		}
+		VkBufferCopy copy_region = { 0, 0, size };
+		vkCmdCopyBuffer(command_buffer, src_buffer->Buffer(), dst_buffer->Buffer(), 1, &copy_region);
+		buffers_in_upload.push_back(std::move(src_buffer));
 
 		VkMemoryBarrier memoryBarrier = {
-			VK_STRUCTURE_TYPE_MEMORY_BARRIER, 
+			VK_STRUCTURE_TYPE_MEMORY_BARRIER,
 			nullptr,
 			VK_ACCESS_TRANSFER_WRITE_BIT,
 			VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT
 		};
 
-		auto vk_command_buffer = command_buffer->GetCommandBuffer();
-
 		vkCmdPipelineBarrier(
-			vk_command_buffer,
+			command_buffer,
 			VK_PIPELINE_STAGE_TRANSFER_BIT,      // srcStageMask
 			VK_PIPELINE_STAGE_VERTEX_INPUT_BIT,   // dstStageMask
 			0,
@@ -79,11 +48,116 @@ namespace core { namespace Device {
 			0, nullptr,
 			0, nullptr
 		);
+	}
 
-		vkEndCommandBuffer(vk_command_buffer);
+	void TransitionImageLayout(vk::CommandBuffer& command_buffer, vk::Image& image, vk::ImageLayout old_layout, vk::ImageLayout new_layout)
+	{
+		vk::ImageMemoryBarrier barrier;
+		barrier.oldLayout = old_layout;
+		barrier.newLayout = new_layout;
+		barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+		barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+		barrier.image = image;
+		barrier.subresourceRange.aspectMask = vk::ImageAspectFlagBits::eColor;
+		barrier.subresourceRange.baseMipLevel = 0;
+		barrier.subresourceRange.levelCount = 1;
+		barrier.subresourceRange.baseArrayLayer = 0;
+		barrier.subresourceRange.layerCount = 1;
 
+		vk::PipelineStageFlags source_stage;
+		vk::PipelineStageFlags destination_stage;
+
+		if (old_layout == vk::ImageLayout::eUndefined && new_layout == vk::ImageLayout::eTransferDstOptimal) {
+			barrier.srcAccessMask = vk::AccessFlags();
+			barrier.dstAccessMask = vk::AccessFlagBits::eTransferWrite;
+
+			source_stage = vk::PipelineStageFlagBits::eTopOfPipe;
+			destination_stage = vk::PipelineStageFlagBits::eTransfer;
+		}
+		else if (old_layout == vk::ImageLayout::eTransferDstOptimal && new_layout == vk::ImageLayout::eShaderReadOnlyOptimal) {
+			barrier.srcAccessMask = vk::AccessFlagBits::eTransferWrite;
+			barrier.dstAccessMask = vk::AccessFlagBits::eShaderRead;
+
+			source_stage = vk::PipelineStageFlagBits::eTransfer;
+			destination_stage = vk::PipelineStageFlagBits::eFragmentShader;
+		}
+		else {
+			throw std::invalid_argument("unsupported layout transition!");
+		}
+
+		command_buffer.pipelineBarrier(source_stage, destination_stage, vk::DependencyFlags(), 0, nullptr, 0, nullptr, 1, &barrier);
+	}
+	
+	VulkanUploader::ImageUpload::ImageUpload(std::unique_ptr<VulkanBuffer> src_buffer, vk::Image dst_image, uint32_t mip_count, uint32_t array_count, std::vector<vk::BufferImageCopy> copies)
+		: src_buffer(std::move(src_buffer))
+		, dst_image(dst_image)
+		, mip_count(mip_count)
+		, array_count(array_count)
+		, copies(std::move(copies))
+	{}
+
+	VulkanUploader::ImageUpload::ImageUpload(ImageUpload&& other) = default;
+	VulkanUploader::ImageUpload::~ImageUpload() = default;
+
+	void VulkanUploader::ImageUpload::Process(vk::CommandBuffer& command_buffer, std::vector<std::unique_ptr<VulkanBuffer>>& buffers_in_upload)
+	{
+		TransitionImageLayout(command_buffer, dst_image, vk::ImageLayout::eUndefined, vk::ImageLayout::eTransferDstOptimal);
+		command_buffer.copyBufferToImage(src_buffer->Buffer(), dst_image, vk::ImageLayout::eTransferDstOptimal, copies.size(), copies.data());
+		TransitionImageLayout(command_buffer, dst_image, vk::ImageLayout::eTransferDstOptimal, vk::ImageLayout::eShaderReadOnlyOptimal);
+
+		buffers_in_upload.push_back(std::move(src_buffer));
+	}
+
+	VulkanUploader::VulkanUploader() 
+	{
+		command_pool = std::make_unique<VulkanCommandPool>();
+		for (int i = 0; i < caps::MAX_FRAMES_IN_FLIGHT; i++)
+			command_buffers[i] = command_pool->GetCommandBuffer();
+	};
+
+	VulkanUploader::~VulkanUploader() {};
+
+	void VulkanUploader::AddToUpload(std::unique_ptr<VulkanBuffer> src_buffer, VulkanBuffer* dst_buffer, vk::DeviceSize size)
+	{
+		std::lock_guard<std::mutex> lock(uploader_mutex);
+		current_frame_uploads.emplace_back(std::make_unique<BufferUpload>(std::move(src_buffer), dst_buffer, size));
+	}
+
+	void VulkanUploader::AddImageToUpload(std::unique_ptr<VulkanBuffer> src_buffer, vk::Image dst_image, uint32_t mip_count, uint32_t array_count, std::vector<vk::BufferImageCopy> copies)
+	{
+		std::lock_guard<std::mutex> lock(uploader_mutex);
+		current_frame_uploads.emplace_back(std::make_unique<ImageUpload>(std::move(src_buffer), dst_image, mip_count, array_count, std::move(copies)));
+	}
+
+	void VulkanUploader::ProcessUpload()
+	{
+		buffers_in_upload[current_frame].clear();
+
+		std::vector<std::unique_ptr<UploadBase>> uploads_copy;
+		{
+			std::lock_guard<std::mutex> lock(uploader_mutex);
+			if (!current_frame_uploads.size())
+				return;
+
+			uploads_copy = std::move(current_frame_uploads);
+		}
+
+		auto* context = Engine::GetVulkanContext();
+		auto command_buffer = command_buffers[current_frame]->GetCommandBuffer();
+
+		VkCommandBufferBeginInfo begin_info = {};
+		begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+		begin_info.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+
+		vkBeginCommandBuffer(command_buffer, &begin_info);
+
+		for (auto& upload : uploads_copy)
+			upload->Process(command_buffer, buffers_in_upload[current_frame]);
+
+		vkEndCommandBuffer(command_buffer);
+		
 		auto graphicsQueue = context->GetGraphicsQueue();
-		vk::SubmitInfo submitInfo(0, nullptr, nullptr, 1, &vk_command_buffer);
+		vk::SubmitInfo submitInfo(0, nullptr, nullptr, 1, &command_buffer);
 		((vk::Queue)graphicsQueue).submit(1u, &submitInfo, vk::Fence());
 
 		current_frame = (current_frame + 1) % caps::MAX_FRAMES_IN_FLIGHT;

@@ -25,18 +25,25 @@ namespace core { namespace Device {
 
 		if (initializer.data)
 		{
-			auto* uploader = Engine::GetVulkanContext()->GetUploader();
-			//VulkanBuffer staging_buffer(VulkanBufferInitializer(size).SetStaging());
+			if (usage & VK_BUFFER_USAGE_TRANSFER_SRC_BIT)
+			{
+				// Write data to staging buffer
+				void* staging_data = Map();
+				memcpy(staging_data, initializer.data, (size_t)size);
+				Unmap();
+			}
+			else {
 
-			// Create temporary staging buffer
-			auto staging_buffer = std::make_unique<VulkanBuffer>(VulkanBufferInitializer(size).SetStaging());
+				// Create temporary staging buffer
+				auto staging_buffer = std::make_unique<VulkanBuffer>(
+					VulkanBufferInitializer(size).SetStaging().Data(initializer.data)
+				);
 
-			// Write data to staging buffer
-			void* staging_data = staging_buffer->Map();
-			memcpy(staging_data, initializer.data, (size_t)size);
-			staging_buffer->Unmap();
+				// Upload from staging to current buffer
+				auto* uploader = Engine::GetVulkanContext()->GetUploader();
+				uploader->AddToUpload(std::move(staging_buffer), this, size);
+			}
 
-			uploader->AddToUpload(std::move(staging_buffer), this, size);
 		}
 	}
 

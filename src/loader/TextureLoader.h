@@ -1,16 +1,12 @@
-//
-// Created by Sidorenko Nikita on 3/25/18.
-//
+#pragma once
 
-#ifndef CPPWRAPPER_TEXTURELOADER_H
-#define CPPWRAPPER_TEXTURELOADER_H
-
-#include <string>
+#include "CommonIncludes.h"
 #include "render/texture/Texture.h"
 
 namespace loader {
-  TexturePtr loadTexture(const std::string &name, bool sRGB = true);
+
+  std::shared_ptr<core::Device::Texture> LoadTexture(const std::string &name, bool sRGB = true);
+
 };
 
 
-#endif //CPPWRAPPER_TEXTURELOADER_H
