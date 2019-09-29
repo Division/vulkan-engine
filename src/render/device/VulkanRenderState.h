@@ -2,18 +2,31 @@
 
 #include "CommonIncludes.h"
 #include "VulkanCaps.h"
+#include "render/shader/Shader.h"
 
 class Mesh;
+
+namespace core
+{
+	namespace render
+	{
+		struct DrawCall;
+	}
+}
+
 
 namespace core { namespace Device {
 
 	class ShaderProgram;
+	class ShaderBindings;
 	class VulkanPipeline;
 	struct VulkanPipelineInitializer;
 	class VulkanCommandPool;
 	class VulkanCommandBuffer;
 	class VulkanRenderPass;
 	class VulkanRenderTarget;
+	class RenderOperation;
+	class Texture;
 
 	enum class BlendFactor : int
 	{
@@ -67,6 +80,12 @@ namespace core { namespace Device {
 		FrontAndBack
 	};
 
+	class SamplerMode
+	{
+		// todo: implement
+	public:
+		uint32_t GetHash() const { return 123; }
+	};
 
 	class RenderMode
 	{
@@ -120,6 +139,8 @@ namespace core { namespace Device {
 	class VulkanRenderState : NonCopyable
 	{
 	public:
+		static const size_t max_texture_bindings = 16;
+		static const size_t max_ubo_bindings = 8;
 
 		enum class DirtyFlags : uint32_t
 		{
@@ -128,6 +149,7 @@ namespace core { namespace Device {
 			RenderMode = 1 << 2,
 			Shader = 1 << 3,
 			RenderPass = 1 << 4,
+			DescriptorSet = 1 << 5,
 			All = ~0u
 		};
 
@@ -138,16 +160,38 @@ namespace core { namespace Device {
 		void SetRenderPass(const VulkanRenderPass& render_pass);
 		void SetViewport(vec4 viewport);
 		void SetShader(const ShaderProgram& program);
-		void RenderMesh(const Mesh& mesh);
+		void SetBindings(ShaderBindings& bindings);
+		void RenderDrawCall(const core::render::DrawCall* draw_call);
 		VulkanCommandBuffer* GetCurrentCommandBuffer() const { return command_buffers[current_frame]; }
 
 		VulkanCommandBuffer* BeginRendering(const VulkanRenderTarget& render_target);
 		void EndRendering();
 		
 	private:
+		struct DescriptorSetData
+		{
+			struct BufferData
+			{
+				size_t offset = 0;
+				size_t size = 0;
+			};
+
+			std::vector<vk::WriteDescriptorSet> writes;
+			std::array<vk::ImageView, max_texture_bindings> texture_bindings;
+			std::array<vk::Buffer, max_ubo_bindings> buffer_bindings; // todo: BufferView?
+			std::array<BufferData, max_ubo_bindings> buffer_binding_data;
+
+			bool active;
+			bool dirty;
+			uint32_t hash;
+		};
+
+	private:
 		void UpdateState();
 		void SetMesh(const Mesh& mesh);
 		VulkanPipeline* GetPipeline(const VulkanPipelineInitializer& initializer);
+		vk::DescriptorSet GetDescriptorSet(DescriptorSetData& set_data, const vk::DescriptorSetLayout& layout);
+		vk::Sampler GetSampler(const SamplerMode& sampler_mode);
 
 		uint32_t dirty_flags = 0;
 		uint32_t current_frame = 0;
@@ -159,8 +203,16 @@ namespace core { namespace Device {
 		const ShaderProgram* current_shader = nullptr;
 		const VulkanPipeline* current_pipeline = nullptr;
 
+		std::array<DescriptorSetData, ShaderProgram::max_descriptor_sets> descriptor_sets;
+		std::array<vk::DescriptorSet, ShaderProgram::max_descriptor_sets> frame_descriptor_sets;
+
+
+		std::unordered_map<uint32_t, vk::UniqueSampler> sampler_cache;
+		std::unordered_map<uint32_t, vk::DescriptorSet> descriptor_set_cache;
 		std::unordered_map<uint32_t, std::unique_ptr<VulkanPipeline>> pipeline_cache;
+
 		std::unique_ptr<VulkanCommandPool> command_pool;
+		vk::UniqueDescriptorPool descriptor_pool;
 		std::array<VulkanCommandBuffer*, caps::MAX_FRAMES_IN_FLIGHT> command_buffers;
 	};
 

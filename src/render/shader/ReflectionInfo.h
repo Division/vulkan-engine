@@ -12,13 +12,16 @@ namespace core { namespace Device {
 	public:
 		struct UniformBufferData
 		{
+			uint32_t id;
 			std::string name;
 			unsigned set;
 			unsigned binding;
+			ShaderBufferName shader_buffer;
 		};
 
 		struct VertexAttribData
 		{
+			uint32_t id;
 			std::string name;
 			unsigned set;
 			unsigned location;
@@ -27,9 +30,11 @@ namespace core { namespace Device {
 
 		struct SamplerData
 		{
+			uint32_t id;
 			std::string name;
+			unsigned set;
 			unsigned binding;
-			ShaderResourceName shader_resource;
+			ShaderTextureName shader_texture;
 		};
 
 		ReflectionInfo(uint32_t* spirv_data, size_t count);

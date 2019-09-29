@@ -3,7 +3,8 @@
 #include <map>
 #include <string>
 
-enum class ShaderResourceName : uint32_t {
+enum class ShaderTextureName : uint32_t 
+{
 	Texture0,
 	Texture1,
 	NormalMap,
@@ -11,15 +12,21 @@ enum class ShaderResourceName : uint32_t {
 	ShadowMap,
 	ProjectorTexture,
 	LightGrid,
-	LightIndices
+	LightIndices,
+	Unknown,
+	Count
 };
 
-enum class ConstantBufferName : uint32_t {
+enum class ShaderBufferName : uint32_t 
+{
 	ObjectParams,
 	Camera,
 	SkinningMatrices,
 	Light,
-	Projector
+	Projector,
+	Unknown,
+	Count
 };
 
-extern const std::map<std::string, ShaderResourceName> SHADER_SAMPLER_NAMES;
+extern const std::map<std::string, ShaderTextureName> SHADER_SAMPLER_NAMES;
+extern const std::map<std::string, ShaderBufferName> SHADER_BUFFER_NAMES;

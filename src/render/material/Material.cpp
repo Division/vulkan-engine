@@ -4,7 +4,7 @@
 std::unordered_set<ShaderCapsSet::Bitmask> Material::_capsVariations;
 std::vector<ShaderCapsSet::Bitmask> Material::_uninitializedCaps;
 
-void Material::texture0(TexturePtr texture) {
+void Material::texture0(std::shared_ptr<Texture> texture) {
 	_texture0 = texture;
 	
 	if ((bool)texture != _hasTexture0) {
@@ -13,7 +13,7 @@ void Material::texture0(TexturePtr texture) {
 	}
 }
 
-void Material::normalMap(TexturePtr normalMap) {
+void Material::normalMap(std::shared_ptr<Texture> normalMap) {
 	_normalMap = normalMap;
 
 	if ((bool)normalMap != _hasNormalMap) {

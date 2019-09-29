@@ -30,7 +30,6 @@ namespace core { namespace Device { namespace VulkanUtils {
 	extern const std::vector<const char*> DEVICE_EXTENSIONS;
 
 	std::vector<char> ReadFile(const std::string& filename);
-	VkShaderModule CreateShaderModule(VkDevice device, const std::vector<char>& code);
 
 	bool CheckValidationLayerSupport();
 	std::vector<const char*> GetRequiredExtensions(bool enable_validation_layers);
@@ -42,7 +41,5 @@ namespace core { namespace Device { namespace VulkanUtils {
 	
 	uint32_t FindMemoryType(VkPhysicalDevice physicalDevice, uint32_t typeFilter, VkMemoryPropertyFlags properties);
 	void CreateBuffer(VkDevice device, VkPhysicalDevice physicalDevice, VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory);
-	void CopyBufferToImage(VulkanContext& context, VkBuffer buffer, VkImage image, uint32_t width, uint32_t height);
-	void TransitionImageLayout(VulkanContext& context, VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout);
 	void CopyBuffer(VulkanContext& context, VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
 } } }

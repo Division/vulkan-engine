@@ -2,13 +2,18 @@
 #include "Engine.h"
 #include "render/device/VkObjects.h"
 #include "utils/Math.h"
-#include "render/shader/Shader.h"
 #include "render/mesh/Mesh.h"
 #include "render/buffer/VulkanBuffer.h"
 #include "render/device/VulkanRenderPass.h"
 #include "render/device/VulkanPipeline.h"
 #include "render/device/VulkanRenderTarget.h"
 #include "render/renderer/SceneRenderer.h"
+#include "render/shader/ShaderBindings.h"
+#include "render/shader/ShaderResource.h"
+#include "render/renderer/RenderOperation.h"
+#include "render/renderer/DrawCall.h"
+#include "render/mesh/Mesh.h"
+#include "render/texture/Texture.h"
 
 namespace core { namespace Device {
 
@@ -117,6 +122,24 @@ namespace core { namespace Device {
 		{
 			command_buffers[i] = command_pool->GetCommandBuffer();
 		}
+
+		const unsigned max_count = 1024;
+		const unsigned SamplerSlotCount = 20;
+		
+		std::array<vk::DescriptorPoolSize, 6> pool_sizes = {
+			vk::DescriptorPoolSize(vk::DescriptorType::eUniformBufferDynamic, (int)ShaderBufferName::Count * max_count),
+			vk::DescriptorPoolSize(vk::DescriptorType::eUniformTexelBuffer, (int)ShaderTextureName::Count * max_count),
+			vk::DescriptorPoolSize(vk::DescriptorType::eUniformBuffer, SamplerSlotCount * max_count),
+			vk::DescriptorPoolSize(vk::DescriptorType::eSampler, SamplerSlotCount * max_count),
+			vk::DescriptorPoolSize(vk::DescriptorType::eSampledImage, (int)ShaderTextureName::Count * max_count),
+			vk::DescriptorPoolSize(vk::DescriptorType::eCombinedImageSampler, (int)ShaderTextureName::Count * max_count)
+		};
+
+		const auto descriptor_pool_info = vk::DescriptorPoolCreateInfo(
+			vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet, max_count, (uint32_t)pool_sizes.size(), pool_sizes.data()
+		);
+
+		descriptor_pool = Engine::GetVulkanDevice().createDescriptorPoolUnique(descriptor_pool_info);
 	}
 
 	VulkanRenderState::~VulkanRenderState()
@@ -161,6 +184,21 @@ namespace core { namespace Device {
 		if (dirty_flags & (int)DirtyFlags::Shader)
 		{
 			update_pipeline = true;
+		}
+
+		if (dirty_flags & (int)DirtyFlags::DescriptorSet)
+		{
+			for (auto& set : frame_descriptor_sets)
+				set = vk::DescriptorSet();
+
+			for (int i = 0; i < descriptor_sets.size(); i++)
+			{
+				auto& descriptor_set = descriptor_sets[i];
+				if (!descriptor_set.active) continue;
+				
+				auto* shader_set_data = current_shader->GetDescriptorSet(i);
+				frame_descriptor_sets[i] = GetDescriptorSet(descriptor_set, shader_set_data->layout.get());
+			}
 		}
 
 		if (update_pipeline)
@@ -219,25 +257,149 @@ namespace core { namespace Device {
 		}
 	}
 
-	void VulkanRenderState::RenderMesh(const Mesh& mesh)
+	vk::DescriptorSet VulkanRenderState::GetDescriptorSet(DescriptorSetData& set_data, const vk::DescriptorSetLayout& layout)
 	{
-		SetMesh(mesh);
+		auto iter = descriptor_set_cache.find(set_data.hash);
+		if (iter != descriptor_set_cache.end())
+			return iter->second;
+
+		vk::DescriptorSet descriptor_set;
+		vk::DescriptorSetAllocateInfo alloc_info(descriptor_pool.get(), 1, &layout);
+
+		auto& device = Engine::GetVulkanDevice();
+		device.allocateDescriptorSets(&alloc_info, &descriptor_set);
+		// todo: handle failure
+
+		set_data.writes.clear();
+
+		for (uint32_t i = 0; i < set_data.texture_bindings.size(); i++)
+		{
+			if (!set_data.texture_bindings[i]) continue;
+
+			vk::DescriptorImageInfo image_info(GetSampler(SamplerMode()), set_data.texture_bindings[i], vk::ImageLayout::eShaderReadOnlyOptimal);
+			set_data.writes.push_back(vk::WriteDescriptorSet(
+				descriptor_set,
+				i, 0, 1, vk::DescriptorType::eCombinedImageSampler,
+				&image_info
+			));
+		}
+
+		for (uint32_t i = 0; i < set_data.buffer_bindings.size(); i++)
+		{
+			if (!set_data.buffer_bindings[i]) continue;
+
+			auto& binding_data = set_data.buffer_binding_data[i];
+			vk::DescriptorBufferInfo buffer_info(set_data.buffer_bindings[i], binding_data.offset, binding_data.size);
+			set_data.writes.push_back(vk::WriteDescriptorSet(
+				descriptor_set,
+				i, 0, 1, vk::DescriptorType::eUniformBuffer,
+				nullptr, &buffer_info
+			));
+		}
+
+		device.updateDescriptorSets(set_data.writes.size(), set_data.writes.data(), 0, nullptr);
+		descriptor_set_cache[set_data.hash] = descriptor_set;
+
+		return descriptor_set;
+	}
+
+	vk::Sampler VulkanRenderState::GetSampler(const SamplerMode& sampler_mode)
+	{
+		auto hash = sampler_mode.GetHash();
+		auto iter = sampler_cache.find(hash);
+		if (iter != sampler_cache.end())
+			return iter->second.get();
+
+		vk::SamplerCreateInfo sampler_info(
+			{}, vk::Filter::eLinear, vk::Filter::eLinear, vk::SamplerMipmapMode::eNearest,
+			vk::SamplerAddressMode::eRepeat, vk::SamplerAddressMode::eRepeat, vk::SamplerAddressMode::eRepeat,
+			0.0f, true, 16, false);
+
+		auto device = Engine::GetVulkanDevice();
+		auto sampler = device.createSamplerUnique(sampler_info);
+		auto result = sampler.get();
+		sampler_cache[hash] = std::move(sampler);
+		return result;
+	}
+
+	void VulkanRenderState::SetBindings(ShaderBindings& bindings)
+	{
+		for (auto& set_data : descriptor_sets)
+		{
+			memset(set_data.texture_bindings.data(), 0, sizeof(set_data.texture_bindings));
+			memset(set_data.buffer_bindings.data(), 0, sizeof(set_data.buffer_bindings));
+			set_data.writes.clear();
+			set_data.active = false;
+			set_data.dirty = false;
+		}
+
+		// Getting hash for descriptor sets
+		for (auto& binding : bindings.GetTextureBindings())
+		{
+			descriptor_sets[binding.set].texture_bindings[binding.index] = binding.texture->GetImageView();
+			descriptor_sets[binding.set].active = true;
+		}
+
+		for (auto& binding : bindings.GetBufferBindings())
+		{
+			auto& descriptor_set = descriptor_sets[binding.set];
+			descriptor_set.buffer_bindings[binding.index] = binding.buffer;
+			descriptor_set.buffer_binding_data[binding.index].offset = 0;
+			descriptor_set.buffer_binding_data[binding.index].size = binding.size;
+			descriptor_set.active = true;
+		}
+
+		for (auto& set_data : descriptor_sets)
+		{
+			if (!set_data.active) continue;
+
+			uint32_t hashes[] =
+			{
+				FastHash(set_data.texture_bindings.data(), sizeof(set_data.texture_bindings)),
+				FastHash(set_data.buffer_bindings.data(), sizeof(set_data.buffer_bindings))
+			};
+
+			uint32_t hash = FastHash(hashes, sizeof(hashes));
+			if (set_data.hash != hash)
+			{
+				dirty_flags |= (int)DirtyFlags::DescriptorSet;
+				set_data.dirty = true;
+				set_data.hash = hash;
+			}
+		}
+	}
+
+	void VulkanRenderState::RenderDrawCall(const core::render::DrawCall* draw_call)
+	{
+		auto* mesh = draw_call->mesh;
+
+		SetMesh(*mesh);
+		SetShader(*draw_call->shader);
+		SetBindings(*draw_call->shader_bindings);
+
+		bool descriptor_set_dirty = dirty_flags & (int)DirtyFlags::DescriptorSet;
 		UpdateState();
 
-		if (!mesh.hasIndices())
+		if (!mesh->hasIndices())
 		{
 			throw std::runtime_error("mesh should have indices");
 		}
-		
+
 		vk::DeviceSize offset = { 0 };
-		vk::Buffer vertex_buffer = mesh.vertexBuffer()->Buffer();
-		vk::Buffer index_buffer = mesh.indexBuffer()->Buffer();
+		vk::Buffer vertex_buffer = mesh->vertexBuffer()->Buffer();
+		vk::Buffer index_buffer = mesh->indexBuffer()->Buffer();
 		auto command_buffer = GetCurrentCommandBuffer()->GetCommandBuffer();
 		command_buffer.bindVertexBuffers(0, 1, &vertex_buffer, &offset);
 		command_buffer.bindIndexBuffer(index_buffer, offset, vk::IndexType::eUint16);
 
-		command_buffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, current_pipeline->GetPipelineLayout(), 0u, 1u, &core::render::descriptorSets[current_frame], 0, nullptr);
-		command_buffer.drawIndexed(static_cast<uint32_t>(mesh.indexCount()), 1, 0, 0, 0);
+		// todo: set only changed descriptor sets
+		for (int i = 0; i < frame_descriptor_sets.size(); i++)
+		{
+			if (frame_descriptor_sets[i])
+				command_buffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, current_pipeline->GetPipelineLayout(), i, 1u, &frame_descriptor_sets[i], 0, nullptr);
+		}
+
+		command_buffer.drawIndexed(static_cast<uint32_t>(mesh->indexCount()), 1, 0, 0, 0);
 	}
 
 	VulkanCommandBuffer* VulkanRenderState::BeginRendering(const VulkanRenderTarget& render_target)
@@ -250,6 +412,9 @@ namespace core { namespace Device {
 		current_shader = nullptr;
 		current_pipeline = nullptr;
 		current_render_target = &render_target;
+
+		for (auto& set_data : descriptor_sets)
+			set_data.hash = 0;
 
 		SetRenderPass(*render_target.GetRenderPass());
 

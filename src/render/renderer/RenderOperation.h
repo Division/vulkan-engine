@@ -5,17 +5,20 @@
 #include "render/shader/ShaderBufferStruct.h"
 #include "render/material/Material.h"
 
-namespace core {namespace Device {
+namespace core { namespace Device {
+
+	class ShaderProgram;
 
 	struct RenderOperation 
 	{
-		std::shared_ptr<Mesh> mesh;
+		std::shared_ptr<const Mesh> mesh;
 		std::shared_ptr<Material> material;
+		ShaderProgram* shader;
 		ShaderBufferStruct::ObjectParams *object_params = nullptr;
 		ShaderBufferStruct::SkinningMatrices *skinning_matrices = nullptr;
 
-		//GLenum mode = GL_TRIANGLES;
-		bool depth_test = true;
+		size_t object_params_buffer_offset = 0;
+		size_t skinning_matrices_buffer_offset = 0;
 		//MultiBufferAddress objectParamsBlockOffset;
 		//MultiBufferAddress skinningOffset;
 		std::string *debug_info = nullptr;

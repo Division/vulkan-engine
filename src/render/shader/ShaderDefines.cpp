@@ -40,23 +40,23 @@ namespace core { namespace Device {
 		{ VertexAttrib::JointIndices, vk::Format::eR32G32B32Sfloat }
 	};
 
-	const std::map<ShaderResourceName, std::string> SHADER_RESOURCE_DEFINES = {
-		{ ShaderResourceName::Texture0, "RESOURCE_TEXTURE0" },
-		{ ShaderResourceName::Texture1, "RESOURCE_TEXTURE1" },
-		{ ShaderResourceName::NormalMap, "RESOURCE_NORMAL_MAP" },
-		{ ShaderResourceName::SpecularMap, "RESOURCE_SPECULAR_MAP" },
-		{ ShaderResourceName::ShadowMap, "RESOURCE_SHADOW_MAP" },
-		{ ShaderResourceName::ProjectorTexture, "RESOURCE_PROJECTOR_TEXTURE" },
-		{ ShaderResourceName::LightGrid, "RESOURCE_LIGHT_GRID" },
-		{ ShaderResourceName::LightIndices, "RESOURCE_LIGHT_INDICES" }
+	const std::map<ShaderTextureName, std::string> SHADER_RESOURCE_DEFINES = {
+		{ ShaderTextureName::Texture0, "RESOURCE_TEXTURE0" },
+		{ ShaderTextureName::Texture1, "RESOURCE_TEXTURE1" },
+		{ ShaderTextureName::NormalMap, "RESOURCE_NORMAL_MAP" },
+		{ ShaderTextureName::SpecularMap, "RESOURCE_SPECULAR_MAP" },
+		{ ShaderTextureName::ShadowMap, "RESOURCE_SHADOW_MAP" },
+		{ ShaderTextureName::ProjectorTexture, "RESOURCE_PROJECTOR_TEXTURE" },
+		{ ShaderTextureName::LightGrid, "RESOURCE_LIGHT_GRID" },
+		{ ShaderTextureName::LightIndices, "RESOURCE_LIGHT_INDICES" }
 	};
 
-	const std::map<ConstantBufferName, std::string> CONSTANT_BUFFER_DEFINES = {
-		{ ConstantBufferName::ObjectParams, "CONSTANT_BUFFER_OBJECT_PARAMS" },
-		{ ConstantBufferName::SkinningMatrices, "CONSTANT_BUFFER_SKINNING_MATRICES" },
-		{ ConstantBufferName::Light, "CONSTANT_BUFFER_LIGHT" },
-		{ ConstantBufferName::Camera, "CONSTANT_BUFFER_CAMERA" },
-		{ ConstantBufferName::Projector, "CONSTANT_BUFFER_PROJECTOR" }
+	const std::map<ShaderBufferName, std::string> CONSTANT_BUFFER_DEFINES = {
+		{ ShaderBufferName::ObjectParams, "CONSTANT_BUFFER_OBJECT_PARAMS" },
+		{ ShaderBufferName::SkinningMatrices, "CONSTANT_BUFFER_SKINNING_MATRICES" },
+		{ ShaderBufferName::Light, "CONSTANT_BUFFER_LIGHT" },
+		{ ShaderBufferName::Camera, "CONSTANT_BUFFER_CAMERA" },
+		{ ShaderBufferName::Projector, "CONSTANT_BUFFER_PROJECTOR" }
 	};
 
 	const std::map<ShaderCaps, std::string> SHADER_CAPS_DEFINES = {

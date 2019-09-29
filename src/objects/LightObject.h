@@ -16,7 +16,15 @@ enum class LightObjectType : int {
   Spot
 };
 
-class Texture;
+namespace core
+{
+	namespace Device
+	{
+		class Texture;
+	}
+}
+
+using namespace core::Device;
 
 class LightObject : public GameObject, public IShadowCaster {
 public:

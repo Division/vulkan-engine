@@ -97,7 +97,14 @@ namespace core { namespace Device {
 
 		vk::PipelineColorBlendStateCreateInfo color_blending({}, VK_FALSE, vk::LogicOp::eCopy, 1, &color_blend_attachment);
 
-		vk::PipelineLayoutCreateInfo pipeline_layout_info({}, 1, &shader_program->GetDescriptorSetLayout());
+		std::vector<vk::DescriptorSetLayout> descriptor_set_layouts;
+		for (auto& set : shader_program->GetDescriptorSets())
+		{
+			if (set.Empty()) continue;
+			descriptor_set_layouts.push_back(set.layout.get());
+		}
+
+		vk::PipelineLayoutCreateInfo pipeline_layout_info({}, descriptor_set_layouts.size(), descriptor_set_layouts.data());
 		pipeline_layout = device.createPipelineLayoutUnique(pipeline_layout_info);
 
 		vk::GraphicsPipelineCreateInfo pipeline_info(

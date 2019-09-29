@@ -43,12 +43,16 @@ set(ENGINE_SOURCES
 	src/render/device/VulkanCaps.h
 	src/render/buffer/VulkanBuffer.h
 	src/render/buffer/VulkanBuffer.cpp
+	src/render/buffer/UniformBuffer.h
+	src/render/buffer/UniformBuffer.cpp
 	src/render/pass/RenderPass.h
 	src/render/pass/RenderPass.cpp
+	src/render/material/Material.h
+	src/render/material/Material.cpp
 	src/render/renderer/IRenderer.h
 	src/render/renderer/ICameraParamsProvider.h
-	src/render/renderer/Renderer.h
-	src/render/renderer/Renderer.cpp
+	src/render/renderer/DrawCall.h
+	src/render/renderer/DrawCall.cpp
 	src/render/renderer/SceneRenderer.h
 	src/render/renderer/SceneRenderer.cpp
 	src/render/renderer/RenderOperation.h
@@ -56,10 +60,14 @@ set(ENGINE_SOURCES
 	src/render/shader/Shader.cpp
 	src/render/shader/ReflectionInfo.h
 	src/render/shader/ReflectionInfo.cpp
+	src/render/shader/ShaderBindings.h
+	src/render/shader/ShaderBindings.cpp
 	src/render/shader/ShaderDefines.h
 	src/render/shader/ShaderDefines.cpp
 	src/render/shader/ShaderResource.h
 	src/render/shader/ShaderResource.cpp
+	src/render/shader/ShaderBindings.h
+	src/render/shader/ShaderBindings.cpp
 	src/render/shader/ShaderCaps.h
 	src/render/shading/IShadowCaster.h
 	src/render/mesh/Mesh.h
@@ -109,6 +117,7 @@ set(ENGINE_SOURCES
 	src/system/utils.h
 	src/utils/Math.h
 	src/utils/Math.cpp
+	src/utils/Pool.h
 	src/utils/CapsSet.h
 	src/utils/Frustum.h
 )
@@ -116,8 +125,6 @@ set(ENGINE_SOURCES
 set(GAME_SOURCES
 	game/Game.h
 	game/Game.cpp
-	game/GameUtils.h
-	game/GameUtils.cpp
 )
  
 include_directories(src)

@@ -3,7 +3,15 @@
 #include "CommonIncludes.h"
 #include "render/shader/ShaderCaps.h"
 
-class Texture;
+namespace core 
+{ 
+	namespace Device 
+	{
+		class Texture;
+	}
+}
+
+using namespace core::Device;
 
 class Material {
 public:

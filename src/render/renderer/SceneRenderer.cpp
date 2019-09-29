@@ -4,7 +4,6 @@
 #include "render/shader/Shader.h"
 #include "../game/Game.h"
 #include "CommonIncludes.h"
-#include "../game/GameUtils.h"
 #include "render/device/Device.h"
 #include "Engine.h"
 #include "render/device/Device.h"
@@ -24,19 +23,16 @@
 #include "render/texture/Texture.h"
 #include "render/mesh/Mesh.h"
 #include "render/shader/Shader.h"
+#include "render/shader/ShaderBindings.h"
+#include "render/renderer/RenderOperation.h"
+#include "render/material/Material.h"
 
 using namespace core;
 using namespace core::Device;
 
-VkImage textureImage;
-VkDeviceMemory textureImageMemory;
-VkImageView textureImageView;
-VkSampler textureSampler;
-
 std::vector<VkBuffer> uniformBuffers;
 std::vector<VkDeviceMemory> uniformBuffersMemory;
 
-VkDescriptorPool descriptorPool;
 std::shared_ptr<core::Device::Texture> texture;
 
 namespace core {
@@ -49,7 +45,12 @@ std::shared_ptr<ModelBundle> bundle;
 std::shared_ptr<const Mesh> test_mesh;
 
 ShaderProgram program;
-std::unique_ptr<VulkanPipeline> pipeline;
+
+struct UniformBufferObject {
+	alignas(16) glm::mat4 model;
+	alignas(16) glm::mat4 view;
+	alignas(16) glm::mat4 proj;
+};
 
 void UpdateUniformBuffer(uint32_t currentImage) {
 	auto* engine = Engine::Get();
@@ -75,7 +76,26 @@ void UpdateUniformBuffer(uint32_t currentImage) {
 
 namespace core { namespace render {
 
-	Device::ShaderProgram program;
+	ShaderProgram program;
+
+	static void CreateUniformBuffers(uint32_t in_flight_count, std::vector<VkBuffer>& uniformBuffers, std::vector<VkDeviceMemory>& uniformBuffersMemory) {
+		auto* engine = Engine::Get();
+		auto* device = engine->GetDevice();
+		auto* context = device->GetContext();
+		auto vk_device = context->GetDevice();
+		auto vk_physical_device = context->GetPhysicalDevice();
+
+		VkDeviceSize bufferSize = sizeof(UniformBufferObject);
+
+		uniformBuffers.resize(in_flight_count);
+		uniformBuffersMemory.resize(in_flight_count);
+
+		for (size_t i = 0; i < in_flight_count; i++) {
+			VulkanUtils::CreateBuffer(vk_device, vk_physical_device, bufferSize,
+				VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+				uniformBuffers[i], uniformBuffersMemory[i]);
+		}
+	}
 
 	SceneRenderer::SceneRenderer()
 	{
@@ -99,18 +119,7 @@ namespace core { namespace render {
 		program.Prepare();
 
 		const uint32_t in_flight_count = context->GetSwapchainImageCount();
-		CreateTextureImage(textureImage, textureImageMemory);
-		textureImageView = CreateTextureImageView(vk_device, textureImage);
-		CreateTextureSampler(vk_device, textureSampler);
 		CreateUniformBuffers(in_flight_count, uniformBuffers, uniformBuffersMemory);
-		CreateDescriptorPool(in_flight_count, descriptorPool);
-
-		CreateDescriptorSets(in_flight_count, texture->GetImageView(), textureSampler,
-			uniformBuffers, descriptorPool, program.GetDescriptorSetLayout(), descriptorSets);
-
-		::RenderMode render_mode;
-		VulkanPipelineInitializer pipeline_initializer(&program, context->GetRenderPass(), test_mesh.get(), &render_mode);
-		pipeline = std::make_unique<VulkanPipeline>(pipeline_initializer);
 	}
 
 	void SceneRenderer::RenderScene(Scene* scene)
@@ -125,13 +134,103 @@ namespace core { namespace render {
 		auto* render_state = context->GetRenderState();
 
 		UpdateUniformBuffer(context->GetCurrentFrame());
+		
+		RenderOperation rop;
+		auto material = std::make_shared<Material>();
+		material->texture0(texture);
+		rop.material = material;
+		rop.mesh = test_mesh;
 
 		auto* command_buffer = render_state->BeginRendering(*context->GetMainRenderTarget());
-		render_state->SetShader(program);
-		render_state->RenderMesh(*test_mesh.get());
+		auto* draw_call = GetDrawCall(rop);
+		render_state->RenderDrawCall(draw_call);
 		render_state->EndRendering();
 
 		context->AddFrameCommandBuffer(command_buffer->GetCommandBuffer());
+	}
+	
+	Texture* GetTextureFromROP(RenderOperation& rop, ShaderTextureName texture_name)
+	{
+		auto* material = rop.material.get();
+		switch (texture_name)
+		{
+		case ShaderTextureName::Texture0:
+			return material->texture0().get();
+		}
+
+		return nullptr;
+	}
+
+	vk::Buffer GetBufferFromROP(RenderOperation& rop, ShaderBufferName buffer_name)
+	{
+		vk::Buffer result = nullptr;
+		switch (buffer_name)
+		{
+		case ShaderBufferName::ObjectParams:
+			result = uniformBuffers[Engine::GetVulkanContext()->GetCurrentFrame()];
+			break;
+
+		default:
+			throw std::runtime_error("unknown shader buffer");
+		}
+
+		assert(result && "buffer should bne defined");
+
+		return result;
+	}
+
+	void SetupShaderBindings(RenderOperation& rop, ShaderProgram& shader, ShaderBindings& bindings)
+	{
+		for (auto& set : shader.GetDescriptorSets())
+		{
+			for (auto& binding : set.bindings)
+			{
+				auto& address = binding.address;
+				switch (binding.type)
+				{
+				case ShaderProgram::BindingType::Sampler:
+					bindings.AddTextureBinding(address.set, address.binding, GetTextureFromROP(rop, (ShaderTextureName)binding.id));
+					break;
+
+				case ShaderProgram::BindingType::UniformBuffer:
+					bindings.AddBufferBinding(address.set, address.binding, sizeof(ShaderBufferName), GetBufferFromROP(rop, (ShaderBufferName)binding.id));
+					break;
+				}
+			}
+		}
+	}
+
+	DrawCall* SceneRenderer::GetDrawCall(RenderOperation& rop)
+	{
+		auto draw_call = draw_call_pool.Obtain();
+		draw_call->mesh = nullptr;
+		draw_call->shader = nullptr;
+		draw_call->shader_bindings->Clear();
+		
+		if (rop.shader)
+			draw_call->shader = rop.shader;
+		else
+		{
+			throw std::runtime_error("shader from material not supported");
+		}
+
+		draw_call->mesh = rop.mesh.get();
+		draw_call->shader = &program; // TODO: use material
+		SetupShaderBindings(rop, *draw_call->shader, *draw_call->shader_bindings);
+
+		auto* result = draw_call.get();
+		used_draw_calls.push_back(std::move(draw_call));
+		return result;
+	}
+
+	void SceneRenderer::ReleaseDrawCalls()
+	{
+		for (auto& draw_call : used_draw_calls)
+		{
+			draw_call_pool.Release(std::move(draw_call));
+		}
+
+		used_draw_calls.clear();
 	}
 
 } }
