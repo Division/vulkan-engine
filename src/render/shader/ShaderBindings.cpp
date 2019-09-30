@@ -10,9 +10,9 @@ namespace core { namespace Device {
 		texture_bindings.emplace_back(TextureBinding{ set, index, texture });
 	}
 
-	void ShaderBindings::AddBufferBinding(unsigned set, unsigned index, size_t size, vk::Buffer buffer)
+	void ShaderBindings::AddBufferBinding(unsigned set, unsigned index, size_t offset, size_t size, vk::Buffer buffer)
 	{
-		buffer_bindings.emplace_back(BufferBinding{ set, index, size, buffer });
+		buffer_bindings.emplace_back(BufferBinding{ set, index, offset, size, buffer });
 	}
 
 	void ShaderBindings::Clear()

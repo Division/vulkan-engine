@@ -286,10 +286,10 @@ namespace core { namespace Device {
 
 		for (uint32_t i = 0; i < set_data.buffer_bindings.size(); i++)
 		{
-			if (!set_data.buffer_bindings[i]) continue;
+			if (!set_data.buffer_bindings[i].buffer) continue;
 
-			auto& binding_data = set_data.buffer_binding_data[i];
-			vk::DescriptorBufferInfo buffer_info(set_data.buffer_bindings[i], binding_data.offset, binding_data.size);
+			auto& binding_data = set_data.buffer_bindings[i];
+			vk::DescriptorBufferInfo buffer_info(binding_data.buffer, binding_data.offset, binding_data.size);
 			set_data.writes.push_back(vk::WriteDescriptorSet(
 				descriptor_set,
 				i, 0, 1, vk::DescriptorType::eUniformBuffer,
@@ -310,6 +310,7 @@ namespace core { namespace Device {
 		if (iter != sampler_cache.end())
 			return iter->second.get();
 
+		// todo: proper sampler creation
 		vk::SamplerCreateInfo sampler_info(
 			{}, vk::Filter::eLinear, vk::Filter::eLinear, vk::SamplerMipmapMode::eNearest,
 			vk::SamplerAddressMode::eRepeat, vk::SamplerAddressMode::eRepeat, vk::SamplerAddressMode::eRepeat,
@@ -343,9 +344,9 @@ namespace core { namespace Device {
 		for (auto& binding : bindings.GetBufferBindings())
 		{
 			auto& descriptor_set = descriptor_sets[binding.set];
-			descriptor_set.buffer_bindings[binding.index] = binding.buffer;
-			descriptor_set.buffer_binding_data[binding.index].offset = 0;
-			descriptor_set.buffer_binding_data[binding.index].size = binding.size;
+			descriptor_set.buffer_bindings[binding.index].buffer = binding.buffer;
+			descriptor_set.buffer_bindings[binding.index].offset = binding.offset;
+			descriptor_set.buffer_bindings[binding.index].size = binding.size;
 			descriptor_set.active = true;
 		}
 

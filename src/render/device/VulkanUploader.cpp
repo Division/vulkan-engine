@@ -5,7 +5,6 @@
 #include "VulkanUploader.h"
 #include "VulkanContext.h"
 #include "VkObjects.h"
-#include "CommandBufferManager.h"
 
 namespace core { namespace Device {
 
@@ -20,6 +19,14 @@ namespace core { namespace Device {
 		, size(size)
 	{
 		this->src_buffer = std::move(src_buffer);
+		this->src_buffer_pointer = this->src_buffer.get();
+	}
+
+	VulkanUploader::BufferUpload::BufferUpload(VulkanBuffer* src_buffer, VulkanBuffer* dst_buffer, VkDeviceSize size) : UploadBase()
+		, dst_buffer(dst_buffer)
+		, size(size)
+	{
+		this->src_buffer_pointer = src_buffer;
 	}
 	
 	VulkanUploader::BufferUpload::BufferUpload(BufferUpload&& other) = default;
@@ -28,8 +35,10 @@ namespace core { namespace Device {
 	void VulkanUploader::BufferUpload::Process(vk::CommandBuffer& command_buffer, std::vector<std::unique_ptr<VulkanBuffer>>& buffers_in_upload)
 	{
 		VkBufferCopy copy_region = { 0, 0, size };
-		vkCmdCopyBuffer(command_buffer, src_buffer->Buffer(), dst_buffer->Buffer(), 1, &copy_region);
-		buffers_in_upload.push_back(std::move(src_buffer));
+		vkCmdCopyBuffer(command_buffer, src_buffer_pointer->Buffer(), dst_buffer->Buffer(), 1, &copy_region);
+		
+		if (src_buffer)
+			buffers_in_upload.push_back(std::move(src_buffer));
 
 		VkMemoryBarrier memoryBarrier = {
 			VK_STRUCTURE_TYPE_MEMORY_BARRIER,
@@ -121,6 +130,12 @@ namespace core { namespace Device {
 	{
 		std::lock_guard<std::mutex> lock(uploader_mutex);
 		current_frame_uploads.emplace_back(std::make_unique<BufferUpload>(std::move(src_buffer), dst_buffer, size));
+	}
+
+	void VulkanUploader::AddToUpload(VulkanBuffer* src_buffer, VulkanBuffer* dst_buffer, vk::DeviceSize size)
+	{
+		std::lock_guard<std::mutex> lock(uploader_mutex);
+		current_frame_uploads.emplace_back(std::make_unique<BufferUpload>(src_buffer, dst_buffer, size));
 	}
 
 	void VulkanUploader::AddImageToUpload(std::unique_ptr<VulkanBuffer> src_buffer, vk::Image dst_image, uint32_t mip_count, uint32_t array_count, std::vector<vk::BufferImageCopy> copies)

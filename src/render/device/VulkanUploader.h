@@ -20,11 +20,13 @@ namespace core { namespace Device {
 
 			virtual void Process(vk::CommandBuffer& command_buffer, std::vector<std::unique_ptr<VulkanBuffer>>& buffers_in_upload) {};
 			std::unique_ptr<VulkanBuffer> src_buffer;
+			VulkanBuffer* src_buffer_pointer = nullptr;
 		};
 
 		struct BufferUpload : public UploadBase
 		{
 			BufferUpload(std::unique_ptr<VulkanBuffer> src_buffer, VulkanBuffer* dst_buffer, VkDeviceSize size);
+			BufferUpload(VulkanBuffer* src_buffer, VulkanBuffer* dst_buffer, VkDeviceSize size);
 			BufferUpload(BufferUpload&& other);
 			~BufferUpload();
 
@@ -49,7 +51,8 @@ namespace core { namespace Device {
 			std::vector<vk::BufferImageCopy> copies;
 		};
 
-		void AddToUpload(std::unique_ptr<VulkanBuffer>, VulkanBuffer* dstBuffer, vk::DeviceSize size);
+		void AddToUpload(std::unique_ptr<VulkanBuffer> src_buffer, VulkanBuffer* dst_buffer, vk::DeviceSize size);
+		void AddToUpload(VulkanBuffer* src_buffer, VulkanBuffer* dst_buffer, vk::DeviceSize size);
 		void AddImageToUpload(std::unique_ptr<VulkanBuffer> src_buffer, vk::Image dst_image, uint32_t mip_count, uint32_t array_count, std::vector<vk::BufferImageCopy> copies);
 		void ProcessUpload();
 		

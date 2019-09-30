@@ -26,25 +26,15 @@
 #include "render/shader/ShaderBindings.h"
 #include "render/renderer/RenderOperation.h"
 #include "render/material/Material.h"
+#include "render/buffer/UniformBuffer.h"
 
 using namespace core;
 using namespace core::Device;
 
-std::vector<VkBuffer> uniformBuffers;
-std::vector<VkDeviceMemory> uniformBuffersMemory;
-
 std::shared_ptr<core::Device::Texture> texture;
-
-namespace core {
-	namespace render {
-		std::vector<vk::DescriptorSet> descriptorSets;
-	}
-}
-
 std::shared_ptr<ModelBundle> bundle;
 std::shared_ptr<const Mesh> test_mesh;
 
-ShaderProgram program;
 
 struct UniformBufferObject {
 	alignas(16) glm::mat4 model;
@@ -52,50 +42,25 @@ struct UniformBufferObject {
 	alignas(16) glm::mat4 proj;
 };
 
-void UpdateUniformBuffer(uint32_t currentImage) {
-	auto* engine = Engine::Get();
-	auto* device = engine->GetDevice();
-	auto* context = device->GetContext();
-	auto vk_device = context->GetDevice();
-	auto vk_physical_device = context->GetPhysicalDevice();
+ShaderProgram program;
+std::unique_ptr<UniformBuffer<UniformBufferObject>> uniform_buffer;
 
+void UpdateUniformBuffer(RenderOperation& rop, float index) {
+	auto* engine = Engine::Get();
+	auto* context = Engine::GetVulkanContext();
 	float time = engine->time();
 	auto swapChainExtent = context->GetExtent();
-
 	UniformBufferObject ubo = {};
-	ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+	ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f) + index, glm::vec3(0.0f, 0.0f, 1.0f));
 	ubo.view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 	ubo.proj = glm::perspective(glm::radians(45.0f), swapChainExtent.width / (float)swapChainExtent.height, 0.1f, 10.0f);
 	ubo.proj[1][1] *= -1;
 
-	void* data;
-	vkMapMemory(vk_device, uniformBuffersMemory[currentImage], 0, sizeof(ubo), 0, &data);
-	memcpy(data, &ubo, sizeof(ubo));
-	vkUnmapMemory(vk_device, uniformBuffersMemory[currentImage]);
+	rop.object_params_buffer = uniform_buffer->GetBuffer()->Buffer();
+	rop.object_params_buffer_offset = uniform_buffer->Append(ubo);
 }
 
 namespace core { namespace render {
-
-	ShaderProgram program;
-
-	static void CreateUniformBuffers(uint32_t in_flight_count, std::vector<VkBuffer>& uniformBuffers, std::vector<VkDeviceMemory>& uniformBuffersMemory) {
-		auto* engine = Engine::Get();
-		auto* device = engine->GetDevice();
-		auto* context = device->GetContext();
-		auto vk_device = context->GetDevice();
-		auto vk_physical_device = context->GetPhysicalDevice();
-
-		VkDeviceSize bufferSize = sizeof(UniformBufferObject);
-
-		uniformBuffers.resize(in_flight_count);
-		uniformBuffersMemory.resize(in_flight_count);
-
-		for (size_t i = 0; i < in_flight_count; i++) {
-			VulkanUtils::CreateBuffer(vk_device, vk_physical_device, bufferSize,
-				VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-				uniformBuffers[i], uniformBuffersMemory[i]);
-		}
-	}
 
 	SceneRenderer::SceneRenderer()
 	{
@@ -118,8 +83,7 @@ namespace core { namespace render {
 		program.AddModule(std::move(fragment), ShaderProgram::Stage::Fragment);
 		program.Prepare();
 
-		const uint32_t in_flight_count = context->GetSwapchainImageCount();
-		CreateUniformBuffers(in_flight_count, uniformBuffers, uniformBuffersMemory);
+		uniform_buffer = std::make_unique<UniformBuffer<UniformBufferObject>>(1024);
 	}
 
 	void SceneRenderer::RenderScene(Scene* scene)
@@ -133,7 +97,6 @@ namespace core { namespace render {
 
 		auto* render_state = context->GetRenderState();
 
-		UpdateUniformBuffer(context->GetCurrentFrame());
 		
 		RenderOperation rop;
 		auto material = std::make_shared<Material>();
@@ -142,8 +105,16 @@ namespace core { namespace render {
 		rop.mesh = test_mesh;
 
 		auto* command_buffer = render_state->BeginRendering(*context->GetMainRenderTarget());
-		auto* draw_call = GetDrawCall(rop);
-		render_state->RenderDrawCall(draw_call);
+
+		uniform_buffer->Map();
+		for (int i = 0; i < 4; i++)
+		{
+			UpdateUniformBuffer(rop, i * M_PI / 2);
+			auto* draw_call = GetDrawCall(rop);
+			render_state->RenderDrawCall(draw_call);
+		}
+		uniform_buffer->Unmap();
+
 		render_state->EndRendering();
 
 		context->AddFrameCommandBuffer(command_buffer->GetCommandBuffer());
@@ -161,22 +132,26 @@ namespace core { namespace render {
 		return nullptr;
 	}
 
-	vk::Buffer GetBufferFromROP(RenderOperation& rop, ShaderBufferName buffer_name)
+	std::tuple<vk::Buffer, size_t, size_t> GetBufferFromROP(RenderOperation& rop, ShaderBufferName buffer_name)
 	{
-		vk::Buffer result = nullptr;
+		vk::Buffer buffer = nullptr;
+		size_t offset;
+		size_t size;
 		switch (buffer_name)
 		{
 		case ShaderBufferName::ObjectParams:
-			result = uniformBuffers[Engine::GetVulkanContext()->GetCurrentFrame()];
+			buffer = rop.object_params_buffer;
+			offset = rop.object_params_buffer_offset;
+			size = sizeof(UniformBufferObject); // todo: fix
 			break;
 
 		default:
 			throw std::runtime_error("unknown shader buffer");
 		}
 
-		assert(result && "buffer should bne defined");
+		assert(buffer && "buffer should be defined");
 
-		return result;
+		return std::make_tuple(buffer, offset, size);
 	}
 
 	void SetupShaderBindings(RenderOperation& rop, ShaderProgram& shader, ShaderBindings& bindings)
@@ -188,13 +163,21 @@ namespace core { namespace render {
 				auto& address = binding.address;
 				switch (binding.type)
 				{
-				case ShaderProgram::BindingType::Sampler:
-					bindings.AddTextureBinding(address.set, address.binding, GetTextureFromROP(rop, (ShaderTextureName)binding.id));
-					break;
+					case ShaderProgram::BindingType::Sampler:
+						bindings.AddTextureBinding(address.set, address.binding, GetTextureFromROP(rop, (ShaderTextureName)binding.id));
+						break;
 
-				case ShaderProgram::BindingType::UniformBuffer:
-					bindings.AddBufferBinding(address.set, address.binding, sizeof(ShaderBufferName), GetBufferFromROP(rop, (ShaderBufferName)binding.id));
-					break;
+					case ShaderProgram::BindingType::UniformBuffer:
+					{
+						auto buffer_data = GetBufferFromROP(rop, (ShaderBufferName)binding.id);
+						vk::Buffer buffer;
+						size_t offset;
+						size_t size;
+						std::tie(buffer, offset, size) = buffer_data;
+
+						bindings.AddBufferBinding(address.set, address.binding, offset, size, buffer);
+						break;
+					}
 				}
 			}
 		}

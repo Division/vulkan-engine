@@ -4,7 +4,6 @@
 
 namespace core { namespace Device {
 
-	class CommandBufferManager;
 	class VulkanCommandBuffer;
 	class VulkanUploader;
 	class VulkanRenderPass;
@@ -23,16 +22,12 @@ namespace core { namespace Device {
 		vk::PhysicalDevice GetPhysicalDevice() const { return physicalDevice; }
 		VulkanSwapchain* GetSwapchain() const { return swapchain.get(); }
 		VkSurfaceKHR GetSurface() const { return surface; }
-		CommandBufferManager* GetCommandBufferManager() const { return command_buffer_manager.get(); }
 		VulkanUploader* GetUploader() const { return uploader.get(); }
 
 		VkQueue GetGraphicsQueue() const { return graphicsQueue; }
 		VkQueue GetPresentQueue() const { return presentQueue; }
 		VulkanRenderPass* GetRenderPass() const { return render_pass.get(); };
 		VkCommandPool GetCommandPool() const { return commandPool; };
-
-		VulkanCommandBuffer* BeginSingleTimeCommandBuffer();
-		void EndSingleTimeCommandBuffer(VulkanCommandBuffer* commandBuffer);
 
 		VkFramebuffer GetFramebuffer(uint32_t index) const;
 		VkExtent2D GetExtent() const;
@@ -66,7 +61,6 @@ namespace core { namespace Device {
 	private:
 		GLFWwindow* window;
 		
-		std::unique_ptr<CommandBufferManager> command_buffer_manager;
 		std::unique_ptr<VulkanUploader> uploader;
 		std::unique_ptr<VulkanSwapchain> swapchain;
 		std::unique_ptr<VulkanRenderTarget> main_render_target;

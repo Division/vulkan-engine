@@ -174,12 +174,12 @@ namespace core { namespace Device {
 			{
 				size_t offset = 0;
 				size_t size = 0;
+				vk::Buffer buffer;
 			};
 
 			std::vector<vk::WriteDescriptorSet> writes;
 			std::array<vk::ImageView, max_texture_bindings> texture_bindings;
-			std::array<vk::Buffer, max_ubo_bindings> buffer_bindings; // todo: BufferView?
-			std::array<BufferData, max_ubo_bindings> buffer_binding_data;
+			std::array<BufferData, max_ubo_bindings> buffer_bindings;
 
 			bool active;
 			bool dirty;

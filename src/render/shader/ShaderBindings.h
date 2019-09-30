@@ -21,6 +21,7 @@ namespace core { namespace Device {
 		{
 			unsigned set;
 			unsigned index;
+			size_t offset;
 			size_t size;
 			vk::Buffer buffer;
 		};
@@ -29,7 +30,7 @@ namespace core { namespace Device {
 		const std::vector<BufferBinding>& GetBufferBindings() const { return buffer_bindings; }
 
 		void AddTextureBinding(unsigned set, unsigned index, Texture* texture);
-		void AddBufferBinding(unsigned set, unsigned index, size_t size, vk::Buffer buffer);
+		void AddBufferBinding(unsigned set, unsigned index, size_t offset, size_t size, vk::Buffer buffer);
 		void Clear();
 
 	private:

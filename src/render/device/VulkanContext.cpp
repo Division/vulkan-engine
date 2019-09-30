@@ -1,7 +1,6 @@
 #include "VulkanContext.h"
 #include "VulkanUtils.h"
 #include "VkObjects.h"
-#include "CommandBufferManager.h"
 #include "VulkanUploader.h"
 #include "VulkanCaps.h"
 #include "VulkanRenderPass.h"
@@ -42,7 +41,6 @@ namespace core { namespace Device {
 
 		CreateCommandPool();
 
-		command_buffer_manager = std::make_unique<CommandBufferManager>(caps::MAX_FRAMES_IN_FLIGHT);
 		uploader = std::make_unique<VulkanUploader>();
 
 		CreateSyncObjects();
@@ -74,7 +72,6 @@ namespace core { namespace Device {
 	VkExtent2D VulkanContext::GetExtent() const 
 	{ 
 		return swapchain->GetExtent(); 
-	
 	}
 
 	uint32_t VulkanContext::GetSwapchainImageCount() const 
@@ -94,7 +91,6 @@ namespace core { namespace Device {
 
 	void VulkanContext::Cleanup()
 	{
-		command_buffer_manager = nullptr;
 		vmaDestroyAllocator(allocator);
 	}
 
@@ -253,33 +249,6 @@ namespace core { namespace Device {
 		}
 	}
 
-	VulkanCommandBuffer* VulkanContext::BeginSingleTimeCommandBuffer()
-	{
-		auto* command_buffer = command_buffer_manager->GetDefaultCommandPool()->GetCommandBuffer();
-
-		VkCommandBufferBeginInfo beginInfo = {};
-		beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-		beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-
-		vkBeginCommandBuffer(command_buffer->GetCommandBuffer(), &beginInfo);
-
-		return command_buffer;
-	}
-
-	void VulkanContext::EndSingleTimeCommandBuffer(VulkanCommandBuffer* command_buffer)
-	{
-		vkEndCommandBuffer(command_buffer->GetCommandBuffer());
-		auto vk_command_buffer = command_buffer->GetCommandBuffer();
-
-		VkSubmitInfo submitInfo = {};
-		submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-		submitInfo.commandBufferCount = 1;
-		submitInfo.pCommandBuffers = (VkCommandBuffer*)&vk_command_buffer;
-
-		vkQueueSubmit(graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
-		vkQueueWaitIdle(graphicsQueue);
-	}
-
     void VulkanContext::CreateSyncObjects() 
 	{
         imageAvailableSemaphores.resize(caps::MAX_FRAMES_IN_FLIGHT);
@@ -377,7 +346,6 @@ namespace core { namespace Device {
 
 		frame_command_buffers.clear();
 		currentFrame = (currentFrame + 1) % caps::MAX_FRAMES_IN_FLIGHT;
-		command_buffer_manager->GetDefaultCommandPool()->NextFrame();
 		current_render_state = 0;
 	}
 

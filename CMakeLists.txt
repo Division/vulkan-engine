@@ -21,8 +21,6 @@ set(ENGINE_SOURCES
 	src/render/device/Device.h
 	src/render/device/VkObjects.h
 	src/render/device/VkObjects.cpp
-	src/render/device/CommandBufferManager.h
-	src/render/device/CommandBufferManager.cpp
 	src/render/device/Device.cpp
 	src/render/device/VulkanContext.h
 	src/render/device/VulkanContext.cpp
@@ -44,7 +42,6 @@ set(ENGINE_SOURCES
 	src/render/buffer/VulkanBuffer.h
 	src/render/buffer/VulkanBuffer.cpp
 	src/render/buffer/UniformBuffer.h
-	src/render/buffer/UniformBuffer.cpp
 	src/render/pass/RenderPass.h
 	src/render/pass/RenderPass.cpp
 	src/render/material/Material.h
@@ -150,9 +147,3 @@ target_link_libraries(vk_engine spirv-cross-core)
 target_link_libraries(vk_engine spirv-cross-glsl)
 target_link_libraries(vk_engine spirv-cross-cpp)
 target_link_libraries(vk_engine spirv-cross-reflect)
-
-add_executable(example_texture samples/25_texture_mapping.cpp src/lib/stb/stb_image.h)
-target_compile_definitions(example_texture PRIVATE VK_USE_PLATFORM_WIN32_KHR)
-target_include_directories(example_texture PRIVATE Vulkan::Vulkan)
-target_link_libraries(example_texture glfw)
-target_link_libraries(example_texture Vulkan::Vulkan)

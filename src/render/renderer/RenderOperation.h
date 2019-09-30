@@ -14,12 +14,12 @@ namespace core { namespace Device {
 		std::shared_ptr<const Mesh> mesh;
 		std::shared_ptr<Material> material;
 		ShaderProgram* shader;
+		vk::Buffer object_params_buffer;
 		ShaderBufferStruct::ObjectParams *object_params = nullptr;
 		ShaderBufferStruct::SkinningMatrices *skinning_matrices = nullptr;
 
 		size_t object_params_buffer_offset = 0;
 		size_t skinning_matrices_buffer_offset = 0;
-		//MultiBufferAddress objectParamsBlockOffset;
 		//MultiBufferAddress skinningOffset;
 		std::string *debug_info = nullptr;
 	};
