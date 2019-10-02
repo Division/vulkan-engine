@@ -18,6 +18,11 @@ namespace core
 		class SceneRenderer;
 	}
 
+	namespace system
+	{
+		class Input;
+	}
+
 
 	class Engine : public NonCopyable
 	{
@@ -33,6 +38,7 @@ namespace core
 
 		Device::Device* GetDevice() { return device.get(); }
 		Scene* GetScene() const { return scene.get(); }
+		system::Input* GetInput() const { return input.get(); }
 
 		void MainLoop();
 
@@ -43,6 +49,7 @@ namespace core
 		std::unique_ptr<Device::Device> device;
 		std::unique_ptr<Scene> scene;
 		std::unique_ptr<render::SceneRenderer> scene_renderer;
+		std::unique_ptr<system::Input> input;
 
 		bool loop_started = false;
 		double last_time = 0;

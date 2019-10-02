@@ -4,17 +4,15 @@
 
 #include "PlayerController.h"
 #include "render/texture/Texture.h"
-#include "EngineTypes.h"
 #include "loader/TextureLoader.h"
 #include "render/material/Material.h"
 #include "objects/LightObject.h"
-#include <memory>
 #include "Engine.h"
 #include "system/Input.h"
 
-TexturePtr PlayerController::diffuse;
-TexturePtr PlayerController::normal;
-TexturePtr PlayerController::specular;
+std::shared_ptr<core::Device::Texture> PlayerController::diffuse;
+std::shared_ptr<core::Device::Texture> PlayerController::normal;
+std::shared_ptr<core::Device::Texture> PlayerController::specular;
 
 const float MAX_SPEED = 9.0f;
 const vec3 DIRECTION_LEFT = vec3(1, 0, -1);
@@ -22,11 +20,14 @@ const vec3 DIRECTION_RIGHT = -DIRECTION_LEFT;
 const vec3 DIRECTION_TOP = vec3(1, 0, 1);
 const vec3 DIRECTION_BOTTOM = -DIRECTION_TOP;
 
+using namespace core;
+using namespace core::system;
+
 void PlayerController::start() {
   if (!diffuse) {
-    diffuse = loader::loadTexture("resources/models/dwarf/dwarf_texture_diffuse.jpg");
-    normal = loader::loadTexture("resources/models/dwarf/dwarf_texture_normal.jpg", false);
-    specular = loader::loadTexture("resources/models/dwarf/dwarf_texture_specular.jpg");
+    diffuse = loader::LoadTexture("resources/models/dwarf/dwarf_texture_diffuse.jpg");
+    normal = loader::LoadTexture("resources/models/dwarf/dwarf_texture_normal.jpg", false);
+    specular = loader::LoadTexture("resources/models/dwarf/dwarf_texture_specular.jpg");
   }
 
   _runPlayback = animation()->getPlayback("run");
@@ -60,7 +61,7 @@ void PlayerController::start() {
 }
 
 void PlayerController::update(float dt) {
-	auto input = Engine::Get()->input();
+	auto input = Engine::Get()->GetInput();
 
   bool shouldSlowDown = true;
 

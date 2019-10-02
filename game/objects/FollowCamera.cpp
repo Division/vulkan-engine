@@ -1,11 +1,11 @@
-//
-// Created by Sidorenko Nikita on 2018-12-23.
-//
-
 #include "FollowCamera.h"
 #include "PlayerController.h"
 #include "Engine.h"
 #include "system/Input.h"
+#include "scene/Scene.h"
+
+using namespace core;
+using namespace core::system;
 
 void FollowCamera::start() {
   auto container = CreateGameObject<GameObject>();
@@ -25,8 +25,8 @@ void FollowCamera::setPlayer(std::shared_ptr<PlayerController> player) {
 void FollowCamera::update(float dt) {
   auto player = _player.lock();
 
-  if (_isFreeCamera) {
-    auto input = Engine::Get()->input();
+  if (_isFreeCamera || _player.lock() == nullptr) {
+    auto input = Engine::Get()->GetInput();
     vec3 posDelta = vec3(0, 0, 0);
 	if (input->keyDown(Key::E)) {
 		posDelta += transform()->up();
@@ -64,6 +64,8 @@ void FollowCamera::update(float dt) {
     _container.lock()->transform()->position(player->transform()->position() + vec3(0, 1, 0));
   }
 
+  auto* scene_camera = Engine::Get()->GetScene()->GetCamera();
+  scene_camera->transform()->setMatrix(transform()->worldMatrix());
 }
 
 void FollowCamera::setFreeCamera(bool isFree) {

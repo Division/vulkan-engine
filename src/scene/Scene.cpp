@@ -19,6 +19,8 @@ Scene::Scene() {
   if (!GameObject::_defaultManager) {
     setAsDefault();
   }
+
+  camera = CreateGameObject<Camera>();
 }
 
 void Scene::addGameObject(GameObjectPtr object) {
@@ -36,14 +38,8 @@ void Scene::addGameObject(GameObjectPtr object) {
 void Scene::_processAddedObject(GameObjectPtr object) {
   _startList.push_back(object);
 
-  // Object is camera
-  if (IS_CAMERA(object)) {
-    CameraPtr camera = std::dynamic_pointer_cast<Camera>(object);
-    _cameras.push_back(camera);
-  }
-
   // Object is light
-  else if (IS_LIGHT(object)) {
+  if (IS_LIGHT(object)) {
     LightObjectPtr light = std::dynamic_pointer_cast<LightObject>(object);
     _lights.push_back(light); // TODO: try to find free empty index
     _lightCount += 1;
@@ -167,7 +163,7 @@ void Scene::_updateTransforms() {
   }
 }
 
-Scene::Visibility &Scene::_getVisibilityForCamera(const std::shared_ptr<ICameraParamsProvider> &camera) const {
+Scene::Visibility &Scene::_getVisibilityForCamera(const ICameraParamsProvider* camera) const {
   auto &visibility = _visibilityMap[camera];
   visibility.hasData = true;
   visibility.projectors.clear();

@@ -114,6 +114,8 @@ set(ENGINE_SOURCES
 	src/system/Logging.h
 	src/system/Logging.cpp
 	src/system/utils.h
+	src/system/Input.h
+	src/system/Input.cpp
 	src/utils/Math.h
 	src/utils/Math.cpp
 	src/utils/Pool.h
@@ -126,6 +128,10 @@ set(GAME_SOURCES
 	game/Game.cpp
 	game/level/Level.h
 	game/level/Level.cpp
+	game/objects/FollowCamera.h
+	game/objects/FollowCamera.cpp
+	game/objects/PlayerController.h
+	game/objects/PlayerController.cpp
 )
  
 include_directories(src)

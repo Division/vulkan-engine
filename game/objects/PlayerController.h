@@ -1,19 +1,14 @@
-//
-// Created by Sidorenko Nikita on 2018-12-22.
-//
-
-#ifndef CPPWRAPPER_PLAYERCONTROLLER_H
-#define CPPWRAPPER_PLAYERCONTROLLER_H
+#pragma once
 
 #include "objects/SkinnedMeshObject.h"
-#include "EngineTypes.h"
 
+class LightObject;
 
 class PlayerController : public SkinnedMeshObject {
 public:
-  static TexturePtr diffuse;
-  static TexturePtr normal;
-  static TexturePtr specular;
+  static std::shared_ptr<core::Device::Texture> diffuse;
+  static std::shared_ptr<core::Device::Texture> normal;
+  static std::shared_ptr<core::Device::Texture> specular;
 
 public:
   void start() override;
@@ -26,8 +21,5 @@ private:
   AnimationPlaybackPtr _idlePlayback;
   vec3 _speed = vec3(0);
   vec3 _acceleration = vec3(0);
-  LightObjectPtr _topLight; // spot light always above the player
+  std::shared_ptr<LightObject> _topLight; // spot light always above the player
 };
-
-
-#endif //CPPWRAPPER_PLAYERCONTROLLER_H

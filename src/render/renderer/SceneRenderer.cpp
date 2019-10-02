@@ -28,6 +28,7 @@
 #include "render/material/Material.h"
 #include "render/buffer/UniformBuffer.h"
 #include "SceneBuffers.h"
+#include "objects/Camera.h"
 
 using namespace core;
 using namespace core::Device;
@@ -35,31 +36,7 @@ using namespace core::Device;
 std::shared_ptr<core::Device::Texture> texture;
 std::shared_ptr<ModelBundle> bundle;
 std::shared_ptr<const Mesh> test_mesh;
-
-
-struct UniformBufferObject {
-	alignas(16) glm::mat4 model;
-	alignas(16) glm::mat4 view;
-	alignas(16) glm::mat4 proj;
-};
-
 ShaderProgram program;
-std::unique_ptr<UniformBuffer<UniformBufferObject>> uniform_buffer;
-
-void UpdateUniformBuffer(RenderOperation& rop, float index) {
-	auto* engine = Engine::Get();
-	auto* context = Engine::GetVulkanContext();
-	float time = engine->time();
-	auto swapChainExtent = context->GetExtent();
-	UniformBufferObject ubo = {};
-	ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f) + index, glm::vec3(0.0f, 0.0f, 1.0f));
-	ubo.view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-	ubo.proj = glm::perspective(glm::radians(45.0f), swapChainExtent.width / (float)swapChainExtent.height, 0.1f, 10.0f);
-	ubo.proj[1][1] *= -1;
-
-	rop.object_params_buffer = uniform_buffer->GetBuffer()->Buffer();
-	rop.object_params_buffer_offset = uniform_buffer->Append(ubo);
-}
 
 namespace core { namespace render {
 
@@ -86,12 +63,28 @@ namespace core { namespace render {
 		program.AddModule(std::move(fragment), ShaderProgram::Stage::Fragment);
 		program.Prepare();
 
-		uniform_buffer = std::make_unique<UniformBuffer<UniformBufferObject>>(1024);
 		scene_buffers = std::make_unique<SceneBuffers>();
 	}
 
 	ShaderBufferStruct::Camera camera_data;
 	ShaderBufferStruct::ObjectParams object_data[4];
+
+	static ShaderBufferStruct::Camera GetCameraData(ICameraParamsProvider* camera)
+	{
+		ShaderBufferStruct::Camera result;
+		result.projectionMatrix = camera->cameraProjectionMatrix();
+		result.projectionMatrix[1][1] *= -1;
+		result.position = camera->cameraPosition();
+		result.viewMatrix = camera->cameraViewMatrix();
+		result.screenSize = camera->cameraViewport();
+		return result;
+	}
+
+	void SceneRenderer::AddRenderOperation(core::Device::RenderOperation& rop, RenderQueue queue)
+	{
+		auto* draw_call = GetDrawCall(rop);
+		render_queues[(size_t)queue].push_back(draw_call);
+	}
 
 	void SceneRenderer::RenderScene(Scene* scene)
 	{
@@ -102,38 +95,33 @@ namespace core { namespace render {
 		auto vk_physical_device = context->GetPhysicalDevice();
 		auto vk_swapchain = context->GetSwapchain();
 
-		auto* render_state = context->GetRenderState();
+		for (auto& queue : render_queues)
+			queue.clear();
 
-		RenderOperation rop;
-		auto material = std::make_shared<Material>();
-		material->texture0(texture);
-		rop.material = material;
-		rop.mesh = test_mesh;
+		rop_transform_cache.clear();
+		auto visible_objects = scene->visibleObjects(scene->GetCamera());
+		if (!visible_objects.size())
+			return;
 
-		auto* command_buffer = render_state->BeginRendering(*context->GetMainRenderTarget());
-
-		camera_data.viewMatrix = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-		auto swapChainExtent = context->GetExtent();
-		camera_data.projectionMatrix = glm::perspective(glm::radians(45.0f), swapChainExtent.width / (float)swapChainExtent.height, 0.1f, 10.0f);
-		camera_data.projectionMatrix[1][1] *= -1;
-		
 		auto* camera_buffer = scene_buffers->GetCameraBuffer();
 		camera_buffer->Map();
-		camera_buffer->Append(camera_data);
+		camera_buffer->Append(GetCameraData(scene->GetCamera()));
 		camera_buffer->Unmap();
 
 		auto* object_params_buffer = scene_buffers->GetObjectParamsBuffer();
 		object_params_buffer->Map();
-		for (int i = 0; i < 4; i++)
+		for (auto& object : visible_objects)
 		{
-			object_data[i].transform = glm::rotate(glm::mat4(1.0f), (float)engine->time() * glm::radians(90.0f) + i * (float)M_PI / 2.0f, glm::vec3(0.0f, 0.0f, 1.0f));
-			rop.object_params = &object_data[i];
-
-			auto* draw_call = GetDrawCall(rop);
-			render_state->RenderDrawCall(draw_call);
+			object->render(*this);
 		}
 		object_params_buffer->Unmap();
 
+		auto* render_state = context->GetRenderState();
+		auto* command_buffer = render_state->BeginRendering(*context->GetMainRenderTarget());
+		for (auto* draw_call : render_queues[(size_t)RenderQueue::Opaque])
+		{
+			render_state->RenderDrawCall(draw_call);
+		}
 		render_state->EndRendering();
 
 		context->AddFrameCommandBuffer(command_buffer->GetCommandBuffer());

@@ -5,6 +5,7 @@
 #include "system/Logging.h"
 #include "scene/Scene.h"
 #include "render/renderer/SceneRenderer.h"
+#include "system/Input.h"
 
 namespace core
 {
@@ -53,6 +54,7 @@ namespace core
 		scene_renderer = std::make_unique<render::SceneRenderer>();
 		scene = std::make_unique<Scene>();
 
+		input = std::make_unique<system::Input>(window);
 		game.init();
 	}
 
@@ -88,6 +90,8 @@ namespace core
 			float dt = (float)(current_time - last_time);
 
 			glfwPollEvents();
+			input->update();
+			scene->update(dt);
 			game.update(dt);
 			context->WaitForRenderFence();
 			scene_renderer->RenderScene(scene.get());

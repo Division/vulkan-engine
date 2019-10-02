@@ -1,12 +1,7 @@
-//
-// Created by Sidorenko Nikita on 2018-12-23.
-//
+#pragma once
 
-#ifndef CPPWRAPPER_FOLLOWCAMERA_H
-#define CPPWRAPPER_FOLLOWCAMERA_H
-
+#include "CommonIncludes.h"
 #include "objects/Camera.h"
-#include <memory>
 
 class PlayerController;
 
@@ -23,6 +18,3 @@ private:
 	std::weak_ptr<PlayerController> _player;
 	std::weak_ptr<GameObject> _container;
 };
-
-
-#endif //CPPWRAPPER_FOLLOWCAMERA_H

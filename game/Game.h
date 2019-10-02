@@ -7,6 +7,8 @@ namespace game
 	class Level;
 }
 
+class FollowCamera;
+
 class Game : public core::IGame {
 public:
 	Game();
@@ -17,4 +19,5 @@ public:
 
 private:
 	std::unique_ptr<game::Level> level;
+	std::shared_ptr<FollowCamera> camera;
 };

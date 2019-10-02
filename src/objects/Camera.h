@@ -10,7 +10,6 @@
 #include "render/renderer/ICameraParamsProvider.h"
 #include "utils/Frustum.h"
 
-// Right now only one camera's render target can only be the main framebuffer
 class Camera : public GameObject, public ICameraParamsProvider {
 public:
   enum class Mode : int {

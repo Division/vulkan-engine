@@ -1,61 +1,55 @@
 #pragma once
 
-#include "glm/glm.hpp"
-#include <memory>
-#include <windows.h>
+#include "CommonIncludes.h"
 
-using namespace glm;
+namespace core { namespace system {
 
-enum class Key : int {
-  Down = 0,
-  Up,
-  Left,
-  Right,
-  A,
-  D,
-  W,
-  S,
-  E,
-  Q,
-  C,
-  X,
-  Z,
-  V,
-  B,
-  F,
-  R,
-  T,
-  G,
-  Space,
-  Esc,
-  Equal,
-  Tab,
+	enum class Key : int {
+		Down = 0,
+		Up,
+		Left,
+		Right,
+		A,
+		D,
+		W,
+		S,
+		E,
+		Q,
+		C,
+		X,
+		Z,
+		V,
+		B,
+		F,
+		R,
+		T,
+		G,
+		Space,
+		Esc,
+		Equal,
+		Tab,
 
-  MouseLeft,
-  MouseRight,
-};
+		MouseLeft,
+		MouseRight,
+	};
 
-class Window;
+	class Input {
+	public:
+		Input(GLFWwindow* window) : window(window) {};
+		int keyDown(Key key) const;
+		int keyDown(int key) const { return glfwGetKey(window, key); }
+		int mouseDown(int key) const { return glfwGetMouseButton(window, key); }
+		const vec2 mousePosition() const { return _mousePos; }
+		const vec2 mouseDelta() const { return _mouseDelta; }
+		void update();
 
-class Input {
-public:
-  friend class Window;
+	private:
+		GLFWwindow* window;
+		vec2 _mousePos;
+		vec2 _prevMousePos;
+		vec2 _mouseDelta;
+	};
 
-  int keyDown(Key key) const;
-  const vec2 mousePosition() const { return _mousePos; }
-  const vec2 mouseDelta() const { return _mouseDelta; }
-private:
-	void _update();
-	void _processMouseEvent(UINT message, WPARAM wParam, LPARAM lParam);
-	void _processKeyboardEvent(UINT message, WPARAM wParam, LPARAM lParam);
+} }
 
-private:
-  std::shared_ptr<Window>_window;
-
-  bool _keyState[256];
-
-  vec2 _mousePos;
-  vec2 _prevMousePos;
-  vec2 _mouseDelta;
-};
 
