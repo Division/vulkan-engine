@@ -289,11 +289,10 @@ namespace core { namespace Device {
 			if (!set_data.buffer_bindings[i].buffer) continue;
 
 			auto& binding_data = set_data.buffer_bindings[i];
-			vk::DescriptorBufferInfo buffer_info(binding_data.buffer, binding_data.offset, binding_data.size);
 			set_data.writes.push_back(vk::WriteDescriptorSet(
 				descriptor_set,
 				i, 0, 1, vk::DescriptorType::eUniformBuffer,
-				nullptr, &buffer_info
+				nullptr, &binding_data
 			));
 		}
 
@@ -346,7 +345,7 @@ namespace core { namespace Device {
 			auto& descriptor_set = descriptor_sets[binding.set];
 			descriptor_set.buffer_bindings[binding.index].buffer = binding.buffer;
 			descriptor_set.buffer_bindings[binding.index].offset = binding.offset;
-			descriptor_set.buffer_bindings[binding.index].size = binding.size;
+			descriptor_set.buffer_bindings[binding.index].range = binding.size;
 			descriptor_set.active = true;
 		}
 

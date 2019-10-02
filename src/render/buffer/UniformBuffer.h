@@ -54,7 +54,7 @@ namespace core { namespace Device {
 			
 			memcpy((char*)mapped_pointer + frame_data_size, &element, sizeof(T));
 			SetFrameDataSize(
-				(size_t)ceilf((frame_data_size + sizeof(T)) / (float)alignment) * alignment
+				std::min(((size_t)ceilf((frame_data_size + sizeof(T)) / (float)alignment) * alignment), size)
 			);
 
 			return result;
@@ -62,7 +62,8 @@ namespace core { namespace Device {
 
 		void SetFrameDataSize(size_t data_size)
 		{
-			frame_data_size = data_size;
+			assert(data_size <= size);
+			frame_data_size = std::min(data_size, size);
 		}
 
 	private:

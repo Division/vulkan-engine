@@ -170,16 +170,9 @@ namespace core { namespace Device {
 	private:
 		struct DescriptorSetData
 		{
-			struct BufferData
-			{
-				size_t offset = 0;
-				size_t size = 0;
-				vk::Buffer buffer;
-			};
-
 			std::vector<vk::WriteDescriptorSet> writes;
 			std::array<vk::ImageView, max_texture_bindings> texture_bindings;
-			std::array<BufferData, max_ubo_bindings> buffer_bindings;
+			std::array<vk::DescriptorBufferInfo, max_ubo_bindings> buffer_bindings;
 
 			bool active;
 			bool dirty;

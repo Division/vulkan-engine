@@ -2,13 +2,19 @@
 
 #include "Engine.h"
 
+namespace game
+{
+	class Level;
+}
+
 class Game : public core::IGame {
 public:
-	~Game() = default;
+	Game();
+	~Game();
 	void init();
 	void update(float dt);
 	void cleanup();
 
 private:
-
+	std::unique_ptr<game::Level> level;
 };

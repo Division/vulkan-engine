@@ -53,9 +53,9 @@ namespace core { namespace Device { namespace ShaderBufferStruct {
 	struct Camera 
 	{
 		vec3 position; // offset = 0, size = 12
-		float padding1;
-		uvec2 screenSize;
-		vec2 padding23;
+		float padding1 = 0;
+		uvec2 screenSize = {0,0};
+		vec2 padding23 = {0,0};
 		mat4 viewMatrix;
 		mat4 projectionMatrix;
 	};

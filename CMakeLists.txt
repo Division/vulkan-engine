@@ -52,6 +52,8 @@ set(ENGINE_SOURCES
 	src/render/renderer/DrawCall.cpp
 	src/render/renderer/SceneRenderer.h
 	src/render/renderer/SceneRenderer.cpp
+	src/render/renderer/SceneBuffers.h
+	src/render/renderer/SceneBuffers.cpp
 	src/render/renderer/RenderOperation.h
 	src/render/shader/Shader.h
 	src/render/shader/Shader.cpp
@@ -122,6 +124,8 @@ set(ENGINE_SOURCES
 set(GAME_SOURCES
 	game/Game.h
 	game/Game.cpp
+	game/level/Level.h
+	game/level/Level.cpp
 )
  
 include_directories(src)

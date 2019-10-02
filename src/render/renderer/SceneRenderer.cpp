@@ -27,6 +27,7 @@
 #include "render/renderer/RenderOperation.h"
 #include "render/material/Material.h"
 #include "render/buffer/UniformBuffer.h"
+#include "SceneBuffers.h"
 
 using namespace core;
 using namespace core::Device;
@@ -62,6 +63,8 @@ void UpdateUniformBuffer(RenderOperation& rop, float index) {
 
 namespace core { namespace render {
 
+	SceneRenderer::~SceneRenderer() = default;
+
 	SceneRenderer::SceneRenderer()
 	{
 		auto* engine = Engine::Get();
@@ -84,7 +87,11 @@ namespace core { namespace render {
 		program.Prepare();
 
 		uniform_buffer = std::make_unique<UniformBuffer<UniformBufferObject>>(1024);
+		scene_buffers = std::make_unique<SceneBuffers>();
 	}
+
+	ShaderBufferStruct::Camera camera_data;
+	ShaderBufferStruct::ObjectParams object_data[4];
 
 	void SceneRenderer::RenderScene(Scene* scene)
 	{
@@ -97,7 +104,6 @@ namespace core { namespace render {
 
 		auto* render_state = context->GetRenderState();
 
-		
 		RenderOperation rop;
 		auto material = std::make_shared<Material>();
 		material->texture0(texture);
@@ -106,14 +112,27 @@ namespace core { namespace render {
 
 		auto* command_buffer = render_state->BeginRendering(*context->GetMainRenderTarget());
 
-		uniform_buffer->Map();
+		camera_data.viewMatrix = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+		auto swapChainExtent = context->GetExtent();
+		camera_data.projectionMatrix = glm::perspective(glm::radians(45.0f), swapChainExtent.width / (float)swapChainExtent.height, 0.1f, 10.0f);
+		camera_data.projectionMatrix[1][1] *= -1;
+		
+		auto* camera_buffer = scene_buffers->GetCameraBuffer();
+		camera_buffer->Map();
+		camera_buffer->Append(camera_data);
+		camera_buffer->Unmap();
+
+		auto* object_params_buffer = scene_buffers->GetObjectParamsBuffer();
+		object_params_buffer->Map();
 		for (int i = 0; i < 4; i++)
 		{
-			UpdateUniformBuffer(rop, i * M_PI / 2);
+			object_data[i].transform = glm::rotate(glm::mat4(1.0f), (float)engine->time() * glm::radians(90.0f) + i * (float)M_PI / 2.0f, glm::vec3(0.0f, 0.0f, 1.0f));
+			rop.object_params = &object_data[i];
+
 			auto* draw_call = GetDrawCall(rop);
 			render_state->RenderDrawCall(draw_call);
 		}
-		uniform_buffer->Unmap();
+		object_params_buffer->Unmap();
 
 		render_state->EndRendering();
 
@@ -132,7 +151,7 @@ namespace core { namespace render {
 		return nullptr;
 	}
 
-	std::tuple<vk::Buffer, size_t, size_t> GetBufferFromROP(RenderOperation& rop, ShaderBufferName buffer_name)
+	std::tuple<vk::Buffer, size_t, size_t> SceneRenderer::GetBufferFromROP(RenderOperation& rop, ShaderBufferName buffer_name)
 	{
 		vk::Buffer buffer = nullptr;
 		size_t offset;
@@ -140,10 +159,22 @@ namespace core { namespace render {
 		switch (buffer_name)
 		{
 		case ShaderBufferName::ObjectParams:
-			buffer = rop.object_params_buffer;
-			offset = rop.object_params_buffer_offset;
-			size = sizeof(UniformBufferObject); // todo: fix
+			{
+				auto* object_params_buffer = scene_buffers->GetObjectParamsBuffer();
+				buffer = object_params_buffer->GetBuffer()->Buffer();
+				offset = object_params_buffer->Append(*rop.object_params);
+				size = object_params_buffer->GetElementSize();
+				break;
+			}
+
+		case ShaderBufferName::Camera:
+		{
+			auto* camera_buffer = scene_buffers->GetCameraBuffer();
+			buffer = camera_buffer->GetBuffer()->Buffer();
+			offset = 0;
+			size = camera_buffer->GetElementSize();
 			break;
+		}
 
 		default:
 			throw std::runtime_error("unknown shader buffer");
@@ -154,7 +185,7 @@ namespace core { namespace render {
 		return std::make_tuple(buffer, offset, size);
 	}
 
-	void SetupShaderBindings(RenderOperation& rop, ShaderProgram& shader, ShaderBindings& bindings)
+	void SceneRenderer::SetupShaderBindings(RenderOperation& rop, ShaderProgram& shader, ShaderBindings& bindings)
 	{
 		for (auto& set : shader.GetDescriptorSets())
 		{
@@ -189,7 +220,8 @@ namespace core { namespace render {
 		draw_call->mesh = nullptr;
 		draw_call->shader = nullptr;
 		draw_call->shader_bindings->Clear();
-		
+		assert(rop.object_params && "Object params data must be set");
+
 		if (rop.shader)
 			draw_call->shader = rop.shader;
 		else
