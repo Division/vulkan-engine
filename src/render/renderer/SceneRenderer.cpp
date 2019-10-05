@@ -4,9 +4,7 @@
 #include "render/shader/Shader.h"
 #include "../game/Game.h"
 #include "CommonIncludes.h"
-#include "render/device/Device.h"
 #include "Engine.h"
-#include "render/device/Device.h"
 #include "render/device/VulkanContext.h"
 #include "render/buffer/VulkanBuffer.h"
 #include "render/device/VulkanUploader.h"
@@ -33,10 +31,6 @@
 using namespace core;
 using namespace core::Device;
 
-std::shared_ptr<core::Device::Texture> texture;
-std::shared_ptr<ModelBundle> bundle;
-std::shared_ptr<const Mesh> test_mesh;
-ShaderProgram program;
 
 namespace core { namespace render {
 
@@ -44,13 +38,8 @@ namespace core { namespace render {
 
 	SceneRenderer::SceneRenderer()
 	{
-		auto* engine = Engine::Get();
-		auto* device = engine->GetDevice();
-		auto* context = device->GetContext();
+		auto* context = Engine::GetVulkanContext();
 		auto vk_device = context->GetDevice();
-
-		bundle = loader::loadModel("resources/level/props.mdl");
-		test_mesh = bundle->getMesh("Drawer_Preset_02_meshShape");
 
 		texture = loader::LoadTexture("resources/level/Atlas_Props_02.jpg");
 		
@@ -58,10 +47,11 @@ namespace core { namespace render {
 		auto fragment_data = VulkanUtils::ReadFile("shaders/frag.spv");
 		ShaderModule vertex(vertex_data.data(), vertex_data.size());
 		ShaderModule fragment(fragment_data.data(), fragment_data.size());
+		program = std::make_unique<ShaderProgram>();
 
-		program.AddModule(std::move(vertex), ShaderProgram::Stage::Vertex);
-		program.AddModule(std::move(fragment), ShaderProgram::Stage::Fragment);
-		program.Prepare();
+		program->AddModule(std::move(vertex), ShaderProgram::Stage::Vertex);
+		program->AddModule(std::move(fragment), ShaderProgram::Stage::Fragment);
+		program->Prepare();
 
 		scene_buffers = std::make_unique<SceneBuffers>();
 	}
@@ -88,9 +78,7 @@ namespace core { namespace render {
 
 	void SceneRenderer::RenderScene(Scene* scene)
 	{
-		auto* engine = Engine::Get();
-		auto* device = engine->GetDevice();
-		auto* context = device->GetContext();
+		auto* context = Engine::GetVulkanContext();
 		auto vk_device = context->GetDevice();
 		auto vk_physical_device = context->GetPhysicalDevice();
 		auto vk_swapchain = context->GetSwapchain();
@@ -100,8 +88,6 @@ namespace core { namespace render {
 
 		rop_transform_cache.clear();
 		auto visible_objects = scene->visibleObjects(scene->GetCamera());
-		if (!visible_objects.size())
-			return;
 
 		auto* camera_buffer = scene_buffers->GetCameraBuffer();
 		camera_buffer->Map();
@@ -227,7 +213,7 @@ namespace core { namespace render {
 		}
 
 		draw_call->mesh = rop.mesh.get();
-		draw_call->shader = &program; // TODO: use material
+		draw_call->shader = program.get(); // TODO: use material
 		SetupShaderBindings(rop, *draw_call->shader, *draw_call->shader_bindings);
 
 		auto* result = draw_call.get();

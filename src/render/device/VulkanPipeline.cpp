@@ -71,7 +71,6 @@ namespace core { namespace Device {
 		vk::PipelineInputAssemblyStateCreateInfo input_assembly_create_info({}, vk::PrimitiveTopology::eTriangleList, VK_FALSE);
 		
 		vk::Viewport viewport(0, 0, (float)context->GetSwapchain()->GetWidth(), (float)context->GetSwapchain()->GetHeight(), 0, 1);
-		OutputDebugStringA((std::string("Pipeline state viewport: ") + std::to_string(viewport.width) + ", " + std::to_string(viewport.height) + "\n").c_str());
 		vk::Rect2D scissor(vk::Offset2D(0, 0), context->GetSwapchain()->GetExtent());
 		vk::PipelineViewportStateCreateInfo viewport_state({}, 1, &viewport, 1, &scissor);
 

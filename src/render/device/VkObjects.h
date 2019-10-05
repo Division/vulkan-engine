@@ -18,7 +18,7 @@ namespace core { namespace Device {
 		VulkanCommandPool* GetCommandPool() { return command_pool; }
 
 	private:
-		VkCommandBuffer command_buffer = VK_NULL_HANDLE;
+		vk::CommandBuffer command_buffer;
 		VulkanCommandPool* command_pool = nullptr;
 	};
 
@@ -29,14 +29,14 @@ namespace core { namespace Device {
 		VulkanCommandPool();
 		virtual ~VulkanCommandPool();
 
-		VkCommandPool GetCommandPool() const { return command_pool; }
+		vk::CommandPool GetCommandPool() const { return command_pool.get(); }
 		VulkanCommandBuffer* GetCommandBuffer();
 		void NextFrame();
 
 	private:
 		typedef std::vector<std::unique_ptr<VulkanCommandBuffer>> CommandBufferList;
 
-		VkCommandPool command_pool = VK_NULL_HANDLE;
+		vk::UniqueCommandPool command_pool;
 		std::array<CommandBufferList, caps::MAX_FRAMES_IN_FLIGHT> allocated_command_buffers;
 		uint32_t current_frame_allocated_buffers;
 		uint32_t current_frame;

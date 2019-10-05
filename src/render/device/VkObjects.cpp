@@ -18,16 +18,13 @@ namespace core { namespace Device {
 	{
 		command_buffer = other.command_buffer;
 		command_pool = other.command_pool;
-		other.command_buffer = VK_NULL_HANDLE;
-		other.command_pool = VK_NULL_HANDLE;
+		other.command_buffer = vk::CommandBuffer();
+		other.command_pool = nullptr;
 	}
 
 	VulkanCommandBuffer::~VulkanCommandBuffer()
 	{
-		if (command_buffer != VK_NULL_HANDLE)
-		{
-			vkFreeCommandBuffers(Engine::GetVulkanDevice(), command_pool->GetCommandPool(), 1, &command_buffer);
-		}
+		Engine::GetVulkanDevice().freeCommandBuffers(command_pool->GetCommandPool(), 1, &command_buffer);
 	}
 
 	//-----------------------------------------------------------------------------
@@ -41,7 +38,7 @@ namespace core { namespace Device {
 
 		vk::CommandPoolCreateInfo pool_info({ vk::CommandPoolCreateFlagBits::eResetCommandBuffer }, queueFamilyIndices.graphicsFamily.value());
 
-		command_pool = ((vk::Device)Engine::GetVulkanDevice()).createCommandPool(pool_info);
+		command_pool = Engine::GetVulkanDevice().createCommandPoolUnique(pool_info);
 	}
 
 	VulkanCommandPool::~VulkanCommandPool()
@@ -49,11 +46,6 @@ namespace core { namespace Device {
 		for (int i = 0; i < caps::MAX_FRAMES_IN_FLIGHT; i++)
 		{
 			allocated_command_buffers[i].clear();
-		}
-
-		if (command_pool != VK_NULL_HANDLE)
-		{
-			((vk::Device)Engine::GetVulkanDevice()).destroyCommandPool(command_pool);
 		}
 	}
 

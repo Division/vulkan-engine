@@ -10,11 +10,9 @@
 //#include "system/Window.h"
 
 void Camera::_updateProjection() {
-  //auto engine = getEngine();
-  //auto window = Engine::Get()->window();
-
-  float width = 800.0f;
-  float height = 600.0f;
+  auto* swapchain = core::Engine::Get()->GetVulkanContext()->GetSwapchain();
+  float width = swapchain->GetWidth();
+  float height = swapchain->GetHeight();
   float aspect = width / height;
   switch (_mode) {
     case Mode::Perspective:
@@ -41,8 +39,7 @@ void Camera::_updateView() {
 
 void Camera::_updateViewport() {
 	auto* swapchain = core::Engine::Get()->GetVulkanContext()->GetSwapchain();
-	if (swapchain)
-		_viewport = vec4(0, 0, swapchain->GetWidth(), swapchain->GetHeight());
+	_viewport = vec4(0, 0, swapchain->GetWidth(), swapchain->GetHeight());
 }
 
 void Camera::postUpdate() {

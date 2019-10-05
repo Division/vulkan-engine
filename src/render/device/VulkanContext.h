@@ -76,10 +76,9 @@ namespace core { namespace Device {
 		std::vector<VkFence> inFlightFences;
 		std::vector<VkCommandBuffer> frame_command_buffers;
 
-		VmaAllocator allocator;
-
 		bool framebuffer_resized = false;
 		size_t currentFrame = 0;
+		VmaAllocator allocator;
 	};
 
 } }

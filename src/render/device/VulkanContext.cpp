@@ -34,13 +34,12 @@ namespace core { namespace Device {
 	void VulkanContext::initialize() // todo: remove
 	{
 		uploader = std::make_unique<VulkanUploader>();
-
 		CreateSyncObjects();
 	}
 
 	VulkanContext::~VulkanContext()
 	{
-
+		vmaDestroyAllocator(allocator);
 	}
 
 	VulkanRenderState* VulkanContext::GetRenderState()
@@ -73,7 +72,9 @@ namespace core { namespace Device {
 
 	void VulkanContext::Cleanup()
 	{
-		vmaDestroyAllocator(allocator);
+		render_states.clear();
+		uploader = nullptr;
+		swapchain = nullptr;
 	}
 
 	VKAPI_ATTR VkBool32 VKAPI_CALL VulkanContext::DebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData) {
@@ -296,7 +297,6 @@ namespace core { namespace Device {
 		if (vkQueueSubmit(GetGraphicsQueue(), 1, &submitInfo, current_fence) != VK_SUCCESS) {
 			throw std::runtime_error("failed to submit draw command buffer!");
 		}
-
 
 		VkPresentInfoKHR presentInfo = {};
 		presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;

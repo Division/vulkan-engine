@@ -31,12 +31,12 @@ namespace core
 		static Device::VulkanContext* GetVulkanContext();
 		static vk::Device GetVulkanDevice();
 
-		Engine(IGame& game);
+		Engine(std::unique_ptr<IGame> game);
 		~Engine();
 		
 		double time() const { return current_time; }
 
-		Device::Device* GetDevice() { return device.get(); }
+		Device::VulkanContext* GetContext() const { return vulkan_context.get(); }
 		Scene* GetScene() const { return scene.get(); }
 		system::Input* GetInput() const { return input.get(); }
 
@@ -48,9 +48,9 @@ namespace core
 
 	private:
 		static Engine* instance;
-		IGame& game;
+		std::unique_ptr<IGame> game;
 		GLFWwindow* window;
-		std::unique_ptr<Device::Device> device;
+		std::unique_ptr<Device::VulkanContext> vulkan_context;
 		std::unique_ptr<Scene> scene;
 		std::unique_ptr<render::SceneRenderer> scene_renderer;
 		std::unique_ptr<system::Input> input;

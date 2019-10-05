@@ -1,6 +1,5 @@
 #include "VulkanBuffer.h"
 #include "Engine.h"
-#include "render/device/Device.h"
 #include "render/device/VulkanContext.h"
 #include "render/device/VulkanUploader.h"
 #include "render/device/VkObjects.h"
@@ -19,7 +18,7 @@ namespace core { namespace Device {
 		VmaAllocationCreateInfo allocInfo = {};
 		allocInfo.usage = initializer.memory_usage;
 		
-		auto allocator = Engine::Get()->GetDevice()->GetContext()->GetAllocator();
+		auto allocator = Engine::GetVulkanContext()->GetAllocator();
 		vmaCreateBuffer(allocator, &bufferInfo, &allocInfo, &buffer, &allocation, nullptr);
 
 		if (initializer.data)
@@ -63,7 +62,7 @@ namespace core { namespace Device {
 
 	void VulkanBuffer::Unmap()
 	{
-		auto allocator = Engine::Get()->GetDevice()->GetContext()->GetAllocator();
+		auto allocator = Engine::GetVulkanContext()->GetAllocator();
 		vmaUnmapMemory(allocator, allocation);
 	}
 

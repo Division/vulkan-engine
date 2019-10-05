@@ -1,5 +1,4 @@
 #include "Engine.h"
-#include "render/device/Device.h"
 #include "render/device/VulkanContext.h"
 #include "render/device/VulkanUploader.h"
 #include "system/Logging.h"
@@ -12,7 +11,7 @@ namespace core
 
 	Engine* Engine::instance;
 
-	Engine::Engine(IGame& game) : game(game)
+	Engine::Engine(std::unique_ptr<IGame> game) : game(std::move(game))
 	{
 		instance = this;
 		ENGLogSetOutputFile("log.txt");
@@ -42,23 +41,27 @@ namespace core
 		int32_t width, height;
 		glfwGetFramebufferSize(window, &width, &height);
 
-		device = std::make_unique<Device::Device>(window);
-		device->GetContext()->initialize();
-		device->GetContext()->RecreateSwapChain();
+		vulkan_context = std::make_unique<Device::VulkanContext>(window);
+		vulkan_context->initialize();
+		vulkan_context->RecreateSwapChain();
 		glfwSetTime(0);
 
 		scene_renderer = std::make_unique<render::SceneRenderer>();
 		scene = std::make_unique<Scene>();
 
 		input = std::make_unique<system::Input>(window);
-		game.init();
+		this->game->init();
 	}
 
 	Engine::~Engine()
 	{
-		game.cleanup();
-		GetVulkanContext()->Cleanup();
-		device = nullptr;
+		game->cleanup();
+		game = nullptr;
+		input = nullptr;
+		scene = nullptr;
+		scene_renderer = nullptr;
+		vulkan_context->Cleanup();
+		vulkan_context = nullptr;
 
 		if (window)
 			glfwDestroyWindow(window);
@@ -70,12 +73,11 @@ namespace core
 	{
 		auto* engine = (Engine*)glfwGetWindowUserPointer(window);
 		engine->WindowResize(width, height);
-		OutputDebugStringA((std::string() + std::to_string(width) + ", " + std::to_string(height) + "\n").c_str());
 	}
 
 	void Engine::WindowResize(int32_t width, int32_t height)
 	{
-		device->GetContext()->WindowResized();
+		GetContext()->WindowResized();
 	}
 
 	void Engine::MainLoop()
@@ -92,7 +94,7 @@ namespace core
 
 		while (!glfwWindowShouldClose(window))
 		{
-			auto* context = device->GetContext();
+			auto* context = GetContext();
 
 			current_time = glfwGetTime();
 			float dt = (float)(current_time - last_time);
@@ -100,7 +102,7 @@ namespace core
 			glfwPollEvents();
 			input->update();
 			scene->update(dt);
-			game.update(dt);
+			game->update(dt);
 
 			context->WaitForRenderFence();
 			scene_renderer->RenderScene(scene.get());
@@ -111,17 +113,17 @@ namespace core
 		}
 
 		// Wait idle before shutdown
-		vkDeviceWaitIdle(device->GetContext()->GetDevice());
+		vkDeviceWaitIdle(GetContext()->GetDevice());
 	}
 
 	Device::VulkanContext* Engine::GetVulkanContext()
 	{
-		return instance->GetDevice()->GetContext();
+		return instance->GetContext();
 	}
 
 	vk::Device Engine::GetVulkanDevice()
 	{
-		return instance->GetDevice()->GetContext()->GetDevice();
+		return instance->GetContext()->GetDevice();
 	}
 
 }

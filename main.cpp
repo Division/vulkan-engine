@@ -1,14 +1,11 @@
-#include <iostream>
-//#include <debugapi.h>
 #include "src/Engine.h"
 #include "game/Game.h"
 
-int main(int argc, char *argv[]) {
+int main(int argc, char* argv[]) {
 
-	Game game;
-	core::Engine engine(game);
-	engine.MainLoop();
-
-	std::cout << "asd";
+	{
+		core::Engine engine(std::make_unique<Game>());
+		engine.MainLoop();
+	}
 	return 0;
 }

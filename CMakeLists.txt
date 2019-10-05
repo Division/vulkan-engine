@@ -18,10 +18,8 @@ set(ENGINE_SOURCES
 	src/CommonIncludes.h
 	src/utils/NonCopyable.h
 	src/render/DataStructures.h
-	src/render/device/Device.h
 	src/render/device/VkObjects.h
 	src/render/device/VkObjects.cpp
-	src/render/device/Device.cpp
 	src/render/device/VulkanContext.h
 	src/render/device/VulkanContext.cpp
 	src/render/device/VulkanUploader.h
