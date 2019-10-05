@@ -107,16 +107,19 @@ namespace core { namespace Device {
 		vk::PipelineLayoutCreateInfo pipeline_layout_info({}, descriptor_set_layouts.size(), descriptor_set_layouts.data());
 		pipeline_layout = device.createPipelineLayoutUnique(pipeline_layout_info);
 
+		// todo: Add stencil if required
+		vk::PipelineDepthStencilStateCreateInfo pipeline_depth_stencil_info({}, render_mode->GetDepthTestEnabled(), render_mode->GetDepthWriteEnabled(), (vk::CompareOp)render_mode->GetDepthFunc());
+
 		vk::GraphicsPipelineCreateInfo pipeline_info(
 			{},
 			shader_stage_count, shader_stages.data(), 
 			&vertex_input_state_create_info, 
-			&input_assembly_create_info, 
-			nullptr, 
+			&input_assembly_create_info,
+			nullptr,
 			&viewport_state, 
 			&rasterization_state_create_info, 
 			&multisampling_state_create_info, 
-			nullptr, 
+			&pipeline_depth_stencil_info, 
 			&color_blending, 
 			nullptr, 
 			pipeline_layout.get(),

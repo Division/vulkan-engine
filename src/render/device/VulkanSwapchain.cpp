@@ -2,6 +2,8 @@
 #include "Engine.h"
 #include "VulkanContext.h"
 #include "VulkanUtils.h"
+#include "VulkanRenderPass.h"
+#include "VulkanRenderTarget.h"
 
 namespace core { namespace Device {
 
@@ -132,6 +134,12 @@ namespace core { namespace Device {
 		height = extent.height;
 
 		images = device.getSwapchainImagesKHR(swapchain.get());
+
+		// Render target and render pass
+		render_pass = std::make_unique<VulkanRenderPass>(VulkanRenderPassInitializer(GetImageFormat(), true));
+
+		auto render_target_initializer = VulkanRenderTargetInitializer(render_pass.get()).Swapchain(this);
+		render_target = std::make_unique<VulkanRenderTarget>(render_target_initializer);
 	}
 
 } }

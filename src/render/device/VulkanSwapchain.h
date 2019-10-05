@@ -4,6 +4,9 @@
 
 namespace core { namespace Device {
 
+	class VulkanRenderPass;
+	class VulkanRenderTarget;
+
 	class VulkanSwapchain : NonCopyable
 	{
 	public:
@@ -15,6 +18,8 @@ namespace core { namespace Device {
 		uint32_t GetWidth() const { return width; }
 		uint32_t GetHeight() const { return height; }
 		const std::vector<vk::Image>& GetImages() const { return images; }
+		VulkanRenderPass* GetRenderPass() const { return render_pass.get(); }
+		VulkanRenderTarget* GetRenderTarget() const { return render_target.get(); }
 
 	private:
 		vk::UniqueSwapchainKHR swapchain;
@@ -23,6 +28,8 @@ namespace core { namespace Device {
 		uint32_t height;
 		std::vector<vk::Image> images;
 		vk::Format image_format;
+		std::unique_ptr<VulkanRenderPass> render_pass;
+		std::unique_ptr<VulkanRenderTarget> render_target;
 	};
 
 } }

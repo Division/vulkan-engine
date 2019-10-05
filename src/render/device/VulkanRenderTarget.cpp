@@ -1,7 +1,9 @@
+#include "Engine.h"
+#include "render/texture/Texture.h"
+
 #include "VulkanRenderTarget.h"
 #include "VulkanRenderPass.h"
 #include "VulkanSwapchain.h"
-#include "Engine.h"
 
 namespace core { namespace Device {
 
@@ -38,6 +40,14 @@ namespace core { namespace Device {
 			throw std::runtime_error("Offscreen render targets not supported yet");
 		}
 
+		has_depth = render_pass->HasDepth();
+
+		if (has_depth)
+		{
+			TextureInitializer depth_texture_init(width, height, render_pass->GetDepthFormat());
+			depth_texture = std::make_shared<Texture>(depth_texture_init);
+		}
+
 		// Frame data: image views and framebuffers
 		for (size_t i = 0; i < frames.size(); i++)
 		{
@@ -48,10 +58,13 @@ namespace core { namespace Device {
 			frame.image_view = device.createImageViewUnique(view_create_info);
 
 			vk::ImageView attachments[] = {
-				frame.image_view.get()
+				frame.image_view.get(),
+				has_depth ? depth_texture->GetImageView() : vk::ImageView()
 			};
 
-			vk::FramebufferCreateInfo framebuffer_create_info({}, render_pass->GetRenderPass(), 1, attachments, width, height, 1);
+			uint32_t attachment_count = has_depth ? 2 : 1;
+
+			vk::FramebufferCreateInfo framebuffer_create_info({}, render_pass->GetRenderPass(), attachment_count, attachments, width, height, 1);
 			frame.framebuffer = device.createFramebufferUnique(framebuffer_create_info);
 		}
 

@@ -5,6 +5,7 @@
 #include "Camera.h"
 #include "Engine.h"
 #include "render/device/VulkanContext.h"
+#include "render/device/VulkanSwapchain.h"
 //#include "render/renderer/Renderer.h"
 //#include "system/Window.h"
 
@@ -39,7 +40,7 @@ void Camera::_updateView() {
 }
 
 void Camera::_updateViewport() {
-	auto extent = core::Engine::Get()->GetVulkanContext()->GetExtent();
+	auto extent = core::Engine::Get()->GetVulkanContext()->GetSwapchain()->GetExtent();
 	_viewport = vec4(0, 0, extent.width, extent.height);
 }
 

@@ -6,6 +6,8 @@ namespace core { namespace Device {
 
 	VulkanRenderPass::VulkanRenderPass(const VulkanRenderPassInitializer& initializer)
 	{
+		has_depth = initializer.has_depth;
+
 		vk::AttachmentDescription color_attachment(
 			{},
 			initializer.format,
@@ -17,8 +19,21 @@ namespace core { namespace Device {
 			vk::ImageLayout::eUndefined,
 			vk::ImageLayout::ePresentSrcKHR
 		);
-
 		vk::AttachmentReference color_attachment_ref(0, vk::ImageLayout::eColorAttachmentOptimal);
+		
+		vk::AttachmentDescription depth_attachment(
+			{},
+			depth_format,
+			vk::SampleCountFlagBits::e1,
+			vk::AttachmentLoadOp::eClear,
+			vk::AttachmentStoreOp::eStore,
+			vk::AttachmentLoadOp::eDontCare,
+			vk::AttachmentStoreOp::eDontCare,
+			vk::ImageLayout::eUndefined,
+			vk::ImageLayout::eDepthStencilAttachmentOptimal
+		);
+
+		vk::AttachmentReference depth_attachment_ref(1, vk::ImageLayout::eDepthStencilAttachmentOptimal);
 
 		vk::SubpassDescription subpass_desc(
 			{},
@@ -26,8 +41,13 @@ namespace core { namespace Device {
 			0,
 			nullptr,
 			1,
-			&color_attachment_ref
+			&color_attachment_ref,
+			nullptr,
+			has_depth ? &depth_attachment_ref : nullptr
 		);
+
+		vk::AttachmentDescription attachments[] = { color_attachment, depth_attachment };
+		uint32_t attachment_count = has_depth ? 2 : 1;
 
 		vk::SubpassDependency subpass_dependency(
 			VK_SUBPASS_EXTERNAL,
@@ -38,7 +58,7 @@ namespace core { namespace Device {
 			vk::AccessFlagBits::eColorAttachmentRead | vk::AccessFlagBits::eColorAttachmentWrite
 		);
 
-		vk::RenderPassCreateInfo render_pass_info({}, 1, &color_attachment, 1, &subpass_desc, 1, &subpass_dependency);
+		vk::RenderPassCreateInfo render_pass_info({}, attachment_count, attachments, 1, &subpass_desc, 1, &subpass_dependency);
 		
 		render_pass = Engine::GetVulkanContext()->GetDevice().createRenderPassUnique(render_pass_info);
 	}

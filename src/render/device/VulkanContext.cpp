@@ -34,12 +34,6 @@ namespace core { namespace Device {
 	void VulkanContext::initialize() // todo: remove
 	{
 		RecreateSwapChain();
-		render_pass = std::make_unique<VulkanRenderPass>(VulkanRenderPassInitializer(swapchain->GetImageFormat()));
-
-		auto render_target_initializer = VulkanRenderTargetInitializer(render_pass.get()).Swapchain(swapchain.get());
-		main_render_target = std::make_unique<VulkanRenderTarget>(render_target_initializer);
-
-		CreateCommandPool();
 
 		uploader = std::make_unique<VulkanUploader>();
 
@@ -69,19 +63,9 @@ namespace core { namespace Device {
 		return result;
 	}
 
-	VkExtent2D VulkanContext::GetExtent() const 
-	{ 
-		return swapchain->GetExtent(); 
-	}
-
 	uint32_t VulkanContext::GetSwapchainImageCount() const 
 	{ 
 		return swapchain->GetImages().size(); 
-	}
-
-	VkFramebuffer VulkanContext::GetFramebuffer(uint32_t index) const
-	{
-		return main_render_target->GetFrame(index).framebuffer.get();
 	}
 
 	void VulkanContext::AddFrameCommandBuffer(vk::CommandBuffer command_buffer)
@@ -234,19 +218,6 @@ namespace core { namespace Device {
 
 		vkGetDeviceQueue(device, indices.graphicsFamily.value(), 0, &graphicsQueue);
 		vkGetDeviceQueue(device, indices.presentFamily.value(), 0, &presentQueue);
-	}
-
-	void VulkanContext::CreateCommandPool() 
-	{
-		VulkanUtils::QueueFamilyIndices queueFamilyIndices = VulkanUtils::FindQueueFamilies(physicalDevice, surface);
-
-		VkCommandPoolCreateInfo poolInfo = {};
-		poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-		poolInfo.queueFamilyIndex = queueFamilyIndices.graphicsFamily.value();
-
-		if (vkCreateCommandPool(device, &poolInfo, nullptr, &commandPool) != VK_SUCCESS) {
-			throw std::runtime_error("failed to create graphics command pool!");
-		}
 	}
 
     void VulkanContext::CreateSyncObjects() 

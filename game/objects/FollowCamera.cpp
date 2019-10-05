@@ -24,48 +24,51 @@ void FollowCamera::setPlayer(std::shared_ptr<PlayerController> player) {
 
 void FollowCamera::update(float dt) {
   auto player = _player.lock();
+  auto* scene_camera = Engine::Get()->GetScene()->GetCamera();
 
   if (_isFreeCamera || _player.lock() == nullptr) {
     auto input = Engine::Get()->GetInput();
     vec3 posDelta = vec3(0, 0, 0);
 	if (input->keyDown(Key::E)) {
-		posDelta += transform()->up();
+		posDelta += scene_camera->transform()->up();
 	}
 
 	if (input->keyDown(Key::Q)) {
-		posDelta += transform()->down();
+		posDelta += scene_camera->transform()->down();
 	}
 
     if (input->keyDown(Key::A)) {
-      posDelta += transform()->left();
+      posDelta += scene_camera->transform()->left();
     }
 
     if (input->keyDown(Key::D)) {
-      posDelta += transform()->right();
+      posDelta += scene_camera->transform()->right();
     }
 
     if (input->keyDown(Key::W)) {
-      posDelta += transform()->forward();
+      posDelta += scene_camera->transform()->forward();
     }
 
     if (input->keyDown(Key::S)) {
-      posDelta += transform()->backward();
+      posDelta += scene_camera->transform()->backward();
     }
 
     if (input->keyDown(Key::MouseLeft)) {
-      _angleX += input->mouseDelta().y * 0.004f;
-      _angleY += input->mouseDelta().x * 0.004f;
+		//scene_camera->transform()->rotate(vec3(1, 0, 0), -input->mouseDelta().y * 0.008f);
+		//scene_camera->transform()->rotate(vec3(0, 1, 0), -input->mouseDelta().x * 0.008f);
+		_angleX -= input->mouseDelta().y * 0.008f;
+		_angleY -= input->mouseDelta().x * 0.008f;
     }
 
-    transform()->translate(posDelta * dt * 20.0f);
-    quat rotation(vec3(_angleX, _angleY, 0));
-    transform()->rotation(rotation);
+	scene_camera->transform()->translate(posDelta * dt * 20.0f);
+	quat rotation(vec3(_angleX, _angleY, 0));
+	scene_camera->transform()->rotation(rotation);
   } else if (player) {
     _container.lock()->transform()->position(player->transform()->position() + vec3(0, 1, 0));
   }
 
-  auto* scene_camera = Engine::Get()->GetScene()->GetCamera();
-  scene_camera->transform()->setMatrix(transform()->worldMatrix());
+  //auto* scene_camera = Engine::Get()->GetScene()->GetCamera();
+  //scene_camera->transform()->setMatrix(transform()->worldMatrix());
 }
 
 void FollowCamera::setFreeCamera(bool isFree) {

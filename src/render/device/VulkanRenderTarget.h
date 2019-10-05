@@ -6,6 +6,7 @@ namespace core { namespace Device {
 
 	class VulkanRenderPass;
 	class VulkanSwapchain;
+	class Texture;
 
 	struct VulkanRenderTargetInitializer {
 
@@ -40,7 +41,7 @@ namespace core { namespace Device {
 			return *this;
 		}
 
-		VulkanRenderTargetInitializer& DepthTarget(bool bindShaderResource, vk::Format depthFormat = vk::Format::eD24UnormS8Uint) 
+		VulkanRenderTargetInitializer& DepthTarget(vk::Format depthFormat = vk::Format::eD24UnormS8Uint)
 		{
 			has_depth = true;
 			this->depth_format = depthFormat;
@@ -87,6 +88,8 @@ namespace core { namespace Device {
 		bool has_color = false;
 		bool has_depth = false;
 		VulkanRenderPass* render_pass;
+		std::shared_ptr<Texture> depth_texture;
+
 		vk::Format color_format = vk::Format::eB8G8R8A8Snorm;
 		vk::Format depth_format = vk::Format::eD24UnormS8Uint;
 	};

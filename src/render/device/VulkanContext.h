@@ -26,11 +26,6 @@ namespace core { namespace Device {
 
 		VkQueue GetGraphicsQueue() const { return graphicsQueue; }
 		VkQueue GetPresentQueue() const { return presentQueue; }
-		VulkanRenderPass* GetRenderPass() const { return render_pass.get(); };
-		VkCommandPool GetCommandPool() const { return commandPool; };
-
-		VkFramebuffer GetFramebuffer(uint32_t index) const;
-		VkExtent2D GetExtent() const;
 
 		size_t GetCurrentFrame() const { return currentFrame; }
 		uint32_t GetSwapchainImageCount() const;
@@ -38,7 +33,6 @@ namespace core { namespace Device {
 		VkSemaphore GetRenderFinishedSemaphore() const { return renderFinishedSemaphores[currentFrame]; }
 		VkSemaphore GetImageAvailableSemaphore() const { return imageAvailableSemaphores[currentFrame]; }
 		VulkanRenderState* GetRenderState();
-		VulkanRenderTarget* GetMainRenderTarget() const { return main_render_target.get(); }
 
 		VmaAllocator GetAllocator() { return allocator; }
 		void AddFrameCommandBuffer(vk::CommandBuffer command_buffer);
@@ -55,7 +49,6 @@ namespace core { namespace Device {
 		void SetupDebugMessenger();
 		void PickPhysicalDevice();
 		void CreateLogicalDevice();
-		void CreateCommandPool();
 		void CreateSyncObjects();
 
 	private:
@@ -63,14 +56,10 @@ namespace core { namespace Device {
 		
 		std::unique_ptr<VulkanUploader> uploader;
 		std::unique_ptr<VulkanSwapchain> swapchain;
-		std::unique_ptr<VulkanRenderTarget> main_render_target;
 
 		VkInstance instance;
 		VkDebugUtilsMessengerEXT debugMessenger;
 		VkSurfaceKHR surface;
-
-		std::unique_ptr<VulkanRenderPass> render_pass;
-		VkCommandPool commandPool;
 
 		VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
 		VkDevice device;

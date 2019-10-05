@@ -117,7 +117,14 @@ namespace core { namespace render {
 		object_params_buffer->Unmap();
 
 		auto* render_state = context->GetRenderState();
-		auto* command_buffer = render_state->BeginRendering(*context->GetMainRenderTarget());
+		auto* swapchain = context->GetSwapchain();
+		RenderMode mode;
+		mode.SetDepthWriteEnabled(true);
+		mode.SetDepthTestEnabled(true);
+		mode.SetDepthFunc(CompareOp::Less);
+
+		auto* command_buffer = render_state->BeginRendering(*swapchain->GetRenderTarget());
+		render_state->SetRenderMode(mode);
 		for (auto* draw_call : render_queues[(size_t)RenderQueue::Opaque])
 		{
 			render_state->RenderDrawCall(draw_call);

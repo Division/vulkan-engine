@@ -29,7 +29,7 @@ mat4 loader::getMatrixFromJSON(json matrix) {
 
 //    ENGLog("JSON Matrix:\n%s\nParsed matrix:\n%s", matrix.dump().c_str(), to_string(result).c_str());
 
-  flipMatrix(result);
+  //flipMatrix(result);
   return result;
 }
 

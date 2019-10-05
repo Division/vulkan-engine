@@ -51,7 +51,7 @@ public:
   void translate(const vec3 &delta) { position(_position + delta); }
   void setMatrix(const mat4 &matrix);
 
-  const mat4 &worldMatrix() const { return _worldMatrix; }
+  const mat4& worldMatrix() const { return _worldMatrix; }
 
   void setDirty() { _dirty = true; }
 

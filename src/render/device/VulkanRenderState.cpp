@@ -167,12 +167,16 @@ namespace core { namespace Device {
 		if (dirty_flags & (int)DirtyFlags::RenderPass)
 		{
 			auto* context = Engine::GetVulkanContext();
-			vk::ClearValue clear_color(vk::ClearColorValue(std::array<float, 4>{ 1.0f, 1.0f, 1.0f, 1.0f }));
+			vk::ClearValue clear_value[] = { 
+				vk::ClearColorValue(std::array<float, 4>{ 1.0f, 1.0f, 1.0f, 1.0f }),
+				vk::ClearDepthStencilValue(1, 0)
+			};
+
 			vk::RenderPassBeginInfo render_pass_begin_info(
 				current_render_pass->GetRenderPass(),
 				current_render_target->GetFrame(context->GetCurrentFrame()).framebuffer.get(),
 				vk::Rect2D(vk::Offset2D(0, 0), vk::Extent2D(current_render_target->GetWidth(), current_render_target->GetHeight())),
-				1, &clear_color
+				2, clear_value
 			);
 
 			auto command_buffer = GetCurrentCommandBuffer()->GetCommandBuffer();

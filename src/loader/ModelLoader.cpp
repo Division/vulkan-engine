@@ -91,7 +91,7 @@ void loadGeometry(std::istream &stream, json geometryJson, ModelBundlePtr bundle
 
     indices.resize(indexCount);
     loadArray<unsigned short>(stream, indices, indexCount);
-	flipIndices(indices);
+	//flipIndices(indices);
     mesh->setIndices(indices);
 
     for (auto &attribID : attributes) {
@@ -101,7 +101,7 @@ void loadGeometry(std::istream &stream, json geometryJson, ModelBundlePtr bundle
       loadArray<float>(stream, attribData, totalAttribCount);
 
       if (attribID == ATTRIB_POSITION) {
-		flipVertices(attribData);
+		//flipVertices(attribData);
         mesh->setVertices(&attribData[0], vertexCount);
       }
 
