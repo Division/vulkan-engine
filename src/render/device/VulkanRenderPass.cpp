@@ -7,6 +7,7 @@ namespace core { namespace Device {
 	VulkanRenderPass::VulkanRenderPass(const VulkanRenderPassInitializer& initializer)
 	{
 		has_depth = initializer.has_depth;
+		hash = counter.fetch_add(1);
 
 		vk::AttachmentDescription color_attachment(
 			{},
@@ -63,6 +64,6 @@ namespace core { namespace Device {
 		render_pass = Engine::GetVulkanContext()->GetDevice().createRenderPassUnique(render_pass_info);
 	}
 
-
+	std::atomic_int VulkanRenderPass::counter = 0;
 
 } }

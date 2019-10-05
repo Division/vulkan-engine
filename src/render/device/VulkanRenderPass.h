@@ -22,7 +22,11 @@ namespace core { namespace Device {
 		bool HasDepth() const { return has_depth; }
 		vk::Format GetDepthFormat() const { return depth_format; }
 
+		uint32_t GetHash() const { return hash; };
+
 	private:
+		static std::atomic_int counter;
+		uint32_t hash;
 		vk::UniqueRenderPass render_pass;
 		bool has_depth;
 		vk::Format depth_format = vk::Format::eD24UnormS8Uint;

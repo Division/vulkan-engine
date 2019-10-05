@@ -10,7 +10,7 @@ namespace core { namespace Device {
 	class VulkanSwapchain : NonCopyable
 	{
 	public:
-		VulkanSwapchain(vk::SurfaceKHR surface, uint32_t width, uint32_t height);
+		VulkanSwapchain(vk::SurfaceKHR surface, uint32_t width, uint32_t height, VulkanSwapchain* old_swapchain = nullptr);
 
 		vk::SwapchainKHR GetSwapchain() const { return swapchain.get(); }
 		vk::Format GetImageFormat() const { return image_format; }

@@ -40,8 +40,9 @@ void Camera::_updateView() {
 }
 
 void Camera::_updateViewport() {
-	auto extent = core::Engine::Get()->GetVulkanContext()->GetSwapchain()->GetExtent();
-	_viewport = vec4(0, 0, extent.width, extent.height);
+	auto* swapchain = core::Engine::Get()->GetVulkanContext()->GetSwapchain();
+	if (swapchain)
+		_viewport = vec4(0, 0, swapchain->GetWidth(), swapchain->GetHeight());
 }
 
 void Camera::postUpdate() {

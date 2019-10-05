@@ -21,6 +21,7 @@ namespace core { namespace Device {
 		vk::Device GetDevice() const { return device; }
 		vk::PhysicalDevice GetPhysicalDevice() const { return physicalDevice; }
 		VulkanSwapchain* GetSwapchain() const { return swapchain.get(); }
+
 		VkSurfaceKHR GetSurface() const { return surface; }
 		VulkanUploader* GetUploader() const { return uploader.get(); }
 
@@ -39,6 +40,7 @@ namespace core { namespace Device {
 
 		void Cleanup();
 
+		void WindowResized();
 		void RecreateSwapChain();
 		void WaitForRenderFence();
 		void Present();
@@ -76,6 +78,7 @@ namespace core { namespace Device {
 
 		VmaAllocator allocator;
 
+		bool framebuffer_resized = false;
 		size_t currentFrame = 0;
 	};
 

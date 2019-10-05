@@ -43,6 +43,10 @@ namespace core
 		void MainLoop();
 
 	private:
+		void WindowResize(int32_t width, int32_t height);
+		static void SizeCallback(GLFWwindow* window, int32_t width, int32_t height);
+
+	private:
 		static Engine* instance;
 		IGame& game;
 		GLFWwindow* window;

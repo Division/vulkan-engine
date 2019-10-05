@@ -59,7 +59,7 @@ namespace core { namespace Device {
 	}
 
 	VkExtent2D ChooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities, int width, int height) {
-		if (capabilities.currentExtent.width != std::numeric_limits<uint32_t>::max()) {
+		if (capabilities.currentExtent.width != std::numeric_limits<uint32_t>::max() && capabilities.currentExtent.width > 0) {
 			return capabilities.currentExtent;
 		}
 		else {
@@ -75,7 +75,7 @@ namespace core { namespace Device {
 		}
 	}
 
-	VulkanSwapchain::VulkanSwapchain(vk::SurfaceKHR surface, uint32_t width, uint32_t height)
+	VulkanSwapchain::VulkanSwapchain(vk::SurfaceKHR surface, uint32_t width, uint32_t height, VulkanSwapchain* old_swapchain)
 		: surface(surface)
 		, width(width)
 		, height(height)
@@ -83,7 +83,7 @@ namespace core { namespace Device {
 		auto physical_device = Engine::GetVulkanContext()->GetPhysicalDevice();
 		auto device = Engine::GetVulkanDevice();
 		auto support = QuerySwapChainSupport(physical_device, surface );
-		
+
 		VkSurfaceFormatKHR surfaceFormat = ChooseSwapSurfaceFormat(support.formats);
 		vk::PresentModeKHR presentMode = vk::PresentModeKHR(ChooseSwapPresentMode(support.present_modes));
 		VkExtent2D extent = ChooseSwapExtent(support.capabilities, width, height);
@@ -126,7 +126,8 @@ namespace core { namespace Device {
 			pre_transform,
 			composite_alpha,
 			presentMode,
-			VK_TRUE
+			VK_TRUE,
+			old_swapchain ? old_swapchain->GetSwapchain() : vk::SwapchainKHR()
 		);
 
 		swapchain = device.createSwapchainKHRUnique(create_info);

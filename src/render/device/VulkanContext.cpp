@@ -33,8 +33,6 @@ namespace core { namespace Device {
 
 	void VulkanContext::initialize() // todo: remove
 	{
-		RecreateSwapChain();
-
 		uploader = std::make_unique<VulkanUploader>();
 
 		CreateSyncObjects();
@@ -84,16 +82,25 @@ namespace core { namespace Device {
 		return VK_FALSE;
 	}
 
+	void VulkanContext::WindowResized()
+	{
+		framebuffer_resized = true;
+	}
+
 	void VulkanContext::RecreateSwapChain() 
 	{
-		int width = 0, height = 0;
-		while (width == 0 || height == 0) {
-			glfwGetFramebufferSize(window, &width, &height);
+		int32_t width = 0;
+		int32_t height = 0;
+		glfwGetFramebufferSize(window, &width, &height);
+
+		while (width == 0 || height == 0)
+		{
 			glfwWaitEvents();
+			glfwGetFramebufferSize(window, &width, &height);
 		}
 
 		vkDeviceWaitIdle(device);
-		swapchain = std::make_unique<VulkanSwapchain>(surface, width, height);
+		swapchain = std::make_unique<VulkanSwapchain>(surface, width, height, swapchain.get());
 	}
 
 	void VulkanContext::CreateInstance() 
@@ -260,8 +267,7 @@ namespace core { namespace Device {
 		VkResult result = vkAcquireNextImageKHR(device, swapchain->GetSwapchain(), std::numeric_limits<uint64_t>::max(), image_available_semaphone, VK_NULL_HANDLE, &imageIndex);
 
 		if (result == VK_ERROR_OUT_OF_DATE_KHR) {
-			throw new std::runtime_error("recreate not supported");
-			//recreateSwapChain();
+			RecreateSwapChain();
 			return;
 		}
 		else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
@@ -306,10 +312,10 @@ namespace core { namespace Device {
 
 		result = vkQueuePresentKHR(GetPresentQueue(), &presentInfo);
 
-		if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR /*|| framebufferResized*/) {
-			throw new std::runtime_error("recreate not supported");
-			//framebufferResized = false;
-			//recreateSwapChain();
+		if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || framebuffer_resized) {
+			framebuffer_resized = false;
+			RecreateSwapChain();
+			currentFrame = 1; // todo: understand why it removes validation layer message
 		}
 		else if (result != VK_SUCCESS) {
 			throw std::runtime_error("failed to present swap chain image!");

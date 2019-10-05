@@ -33,22 +33,18 @@ namespace core
 		glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 		window = glfwCreateWindow(800, 600, "Vulkan engine", NULL, NULL);
 
-		/*
-		setInputCallbacksGLFW(mWindow);
-		glfwSetWindowUserPointer(mWindow, this);
+		glfwSetWindowUserPointer(window, this);
 
 		// Set callback functions
-		glfwSetFramebufferSizeCallback(mWindow, reshape);
-		glfwSetWindowFocusCallback(mWindow, focus);
-		*/
-
-		int32_t width = 0;
-		int32_t height = 0;
+		glfwSetFramebufferSizeCallback(window, SizeCallback);
+		//glfwSetWindowFocusCallback(mWindow, focus);
+		
+		int32_t width, height;
 		glfwGetFramebufferSize(window, &width, &height);
-		//reshape(window, width, height);
 
 		device = std::make_unique<Device::Device>(window);
 		device->GetContext()->initialize();
+		device->GetContext()->RecreateSwapChain();
 		glfwSetTime(0);
 
 		scene_renderer = std::make_unique<render::SceneRenderer>();
@@ -68,6 +64,18 @@ namespace core
 			glfwDestroyWindow(window);
 
 		glfwTerminate();
+	}
+
+	void Engine::SizeCallback(GLFWwindow* window, int32_t width, int32_t height)
+	{
+		auto* engine = (Engine*)glfwGetWindowUserPointer(window);
+		engine->WindowResize(width, height);
+		OutputDebugStringA((std::string() + std::to_string(width) + ", " + std::to_string(height) + "\n").c_str());
+	}
+
+	void Engine::WindowResize(int32_t width, int32_t height)
+	{
+		device->GetContext()->WindowResized();
 	}
 
 	void Engine::MainLoop()
@@ -93,14 +101,16 @@ namespace core
 			input->update();
 			scene->update(dt);
 			game.update(dt);
+
 			context->WaitForRenderFence();
 			scene_renderer->RenderScene(scene.get());
 			context->Present();
-
 			glfwSwapBuffers(window);
+
 			last_time = current_time;
 		}
 
+		// Wait idle before shutdown
 		vkDeviceWaitIdle(device->GetContext()->GetDevice());
 	}
 

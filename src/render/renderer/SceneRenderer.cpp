@@ -132,6 +132,8 @@ namespace core { namespace render {
 		render_state->EndRendering();
 
 		context->AddFrameCommandBuffer(command_buffer->GetCommandBuffer());
+
+		ReleaseDrawCalls();
 	}
 	
 	Texture* GetTextureFromROP(RenderOperation& rop, ShaderTextureName texture_name)
