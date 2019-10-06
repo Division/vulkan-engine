@@ -1,0 +1,60 @@
+{"frames": [
+
+{
+	"filename": "explosion",
+	"frame": {"x":1,"y":1371,"w":256,"h":256},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":256,"h":256},
+	"sourceSize": {"w":256,"h":256}
+},
+{
+	"filename": "flashlight",
+	"frame": {"x":1,"y":1,"w":512,"h":512},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":512,"h":512},
+	"sourceSize": {"w":512,"h":512}
+},
+{
+	"filename": "highlight1",
+	"frame": {"x":1,"y":1029,"w":340,"h":340},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":340,"h":340},
+	"sourceSize": {"w":340,"h":340}
+},
+{
+	"filename": "pentagram",
+	"frame": {"x":1,"y":515,"w":512,"h":512},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":512,"h":512},
+	"sourceSize": {"w":512,"h":512}
+},
+{
+	"filename": "stain1",
+	"frame": {"x":515,"y":1,"w":400,"h":762},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":400,"h":762},
+	"sourceSize": {"w":400,"h":762}
+},
+{
+	"filename": "stain3",
+	"frame": {"x":515,"y":765,"w":400,"h":762},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":400,"h":762},
+	"sourceSize": {"w":400,"h":762}
+}],
+"meta": {
+	"app": "https://www.codeandweb.com/texturepacker",
+	"version": "1.0",
+	"image": "decals.png",
+	"format": "RGBA8888",
+	"size": {"w":1024,"h":2048},
+	"scale": "1",
+	"smartupdate": "$TexturePacker:SmartUpdate:2fc2bc923e391f646c3e63083d4693a7:1a1f59026d0bf859a1deb9d64da61c22:0d0818806965f5213550c37931ccf0cc$"
+}
+}
