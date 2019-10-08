@@ -4,7 +4,6 @@
 
 enum class ShaderCaps : uint32_t {
 	Color = 0,
-	ObjectData,
 	VertexColor,
 	PointSize,
 	Billboard,
@@ -13,7 +12,6 @@ enum class ShaderCaps : uint32_t {
 	Texture1,
 	NormalMap,
 	SpecularMap,
-	ProjectedTexture,
 	Skinning,
 	Count
 };

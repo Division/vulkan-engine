@@ -67,6 +67,8 @@ set(ENGINE_SOURCES
 	render/shader/ShaderBindings.h
 	render/shader/ShaderBindings.cpp
 	render/shader/ShaderCaps.h
+	render/shader/ShaderCache.h
+	render/shader/ShaderCache.cpp
 	render/shading/IShadowCaster.h
 	render/mesh/Mesh.h
 	render/mesh/Mesh.cpp

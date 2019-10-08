@@ -61,7 +61,6 @@ namespace core { namespace Device {
 
 	const std::map<ShaderCaps, std::string> SHADER_CAPS_DEFINES = {
 		{ ShaderCaps::Color, "COLOR" },
-		{ ShaderCaps::ObjectData, "OBJECT_DATA" },
 		{ ShaderCaps::VertexColor, "VERTEX_COLOR" },
 		{ ShaderCaps::PointSize, "POINT_SIZE" },
 		{ ShaderCaps::Billboard, "BILLBOARD" },
@@ -70,7 +69,6 @@ namespace core { namespace Device {
 		{ ShaderCaps::Texture1, "TEXTURE1" },
 		{ ShaderCaps::NormalMap, "NORMAL_MAP" },
 		{ ShaderCaps::SpecularMap, "SPECULAR_MAP" },
-		{ ShaderCaps::ProjectedTexture, "PROJECTED_TEXTURE" },
 		{ ShaderCaps::Skinning, "SKINNING" }
 	};
 
