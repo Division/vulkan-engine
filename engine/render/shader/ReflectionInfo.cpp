@@ -43,6 +43,18 @@ namespace core { namespace Device {
 			data.shader_texture = SHADER_SAMPLER_NAMES.at(data.name);
 			samplers.push_back(data);
 		}
+
+		for (auto& storage_buffer : resources.storage_buffers)
+		{
+			StorageBufferData data;
+			data.id = storage_buffer.id;
+			data.name = storage_buffer.name;
+			data.set = compiler.get_decoration(storage_buffer.id, spv::DecorationDescriptorSet);
+			data.binding = compiler.get_decoration(storage_buffer.id, spv::DecorationBinding);
+			data.ssbo_name = SHADER_BUFFER_NAMES.at(storage_buffer.name);
+
+			storage_buffers.push_back(data);
+		}
 	}
 
 } }

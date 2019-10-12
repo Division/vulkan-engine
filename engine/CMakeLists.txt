@@ -37,6 +37,8 @@ set(ENGINE_SOURCES
 	render/device/VulkanRenderState.h
 	render/device/VulkanRenderState.cpp
 	render/device/VulkanCaps.h
+	render/device/Types.h
+	render/device/Types.cpp
 	render/buffer/VulkanBuffer.h
 	render/buffer/VulkanBuffer.cpp
 	render/buffer/UniformBuffer.h

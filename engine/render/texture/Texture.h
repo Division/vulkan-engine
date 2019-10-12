@@ -1,25 +1,45 @@
 #pragma once
 
 #include "CommonIncludes.h"
+#include "render/device/VulkanCaps.h"
+#include "render/device/Types.h"
 
 namespace core { namespace Device {
 	
+	class VulkanBuffer;
+
 	struct TextureInitializer
 	{
 		enum Mode
 		{
-			Unknown,
-			RAW_RGB_A,
+			Default,
 			DepthBuffer
 		};
 
 		TextureInitializer(uint32_t width, uint32_t height, uint32_t channel_count, void* data, bool sRGB) // simple RGBA
-			: mode(RAW_RGB_A), channel_count(channel_count), width(width), height(height), data(data), sRGB(sRGB) {}
+			: width(width), height(height), data(data), sRGB(sRGB) 
+		{
+			format = channel_count == 4 ? Format::R8G8B8A8_unorm : Format::R8G8B8_unorm;
+		}
 
-		TextureInitializer(uint32_t width, uint32_t height, vk::Format depth_format)
-			: mode(DepthBuffer), width(width), height(height), format(depth_format) {}
+		TextureInitializer(uint32_t width, uint32_t height, uint32_t depth, uint32_t array_layers, Format format)
+			: width(width), height(height), depth(depth), array_layers(array_layers), format(format) {}
 
-		Mode mode = Unknown;
+		TextureInitializer& TextureInitializer::SetDepth()
+		{
+			mode = DepthBuffer;
+			return *this;
+		}
+
+		// Allows mapping and dynamic uploading
+		TextureInitializer& SetDynamic()
+		{
+			dynamic = true;
+			return *this;
+		}
+
+		bool dynamic = false;
+		Mode mode = Default;
 		bool sRGB = false;
 		void* data = nullptr;
 		uint32_t channel_count = 0;
@@ -27,7 +47,9 @@ namespace core { namespace Device {
 		bool is_from_file = false;
 		uint32_t width = 0;
 		uint32_t height = 0;
-		vk::Format format = vk::Format::eUndefined;
+		uint32_t depth = 1;
+		uint32_t array_layers = 1;
+		Format format = Format::Undefined;
 	};
 
 	class Texture {
@@ -37,16 +59,28 @@ namespace core { namespace Device {
 
 		const vk::Image& GetImage() const { return image; }
 		const vk::ImageView& GetImageView() const { return image_view.get(); }
+		void* Texture::Map();
+		void Texture::Unmap();
 
 	private:
 		void SetupRGBA(const TextureInitializer& initializer);
-		void SetupDepth(const TextureInitializer& initializer);
+		void SetupDefault(const TextureInitializer& initializer);
+		std::vector<vk::BufferImageCopy> GetCopies();
 
 	private:
+		uint32_t width = 0;
+		uint32_t height = 0;
+		uint32_t depth = 0;
+		uint32_t array_layers = 0;
+		vk::DeviceSize size;
+		Format format;
 		VmaAllocation allocation;
 		vk::Image image;
 		vk::UniqueImageView image_view;
-
+		bool dynamic;
+		std::array<std::unique_ptr<VulkanBuffer>, caps::MAX_FRAMES_IN_FLIGHT> staging_buffers;
+		uint32_t current_staging_buffer = 0;
+		void* mapped_pointer = nullptr;
 	};
 
 } }

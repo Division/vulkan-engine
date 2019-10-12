@@ -39,12 +39,12 @@ namespace core { namespace Device {
 		struct ImageUpload : public UploadBase
 		{
 			ImageUpload(std::unique_ptr<VulkanBuffer> src_buffer, vk::Image dst_image, uint32_t mip_count, uint32_t array_count, std::vector<vk::BufferImageCopy> copies);
+			ImageUpload(VulkanBuffer* src_buffer, vk::Image dst_image, uint32_t mip_count, uint32_t array_count, std::vector<vk::BufferImageCopy> copies);
 			ImageUpload(ImageUpload&& other);
 			~ImageUpload();
 
 			void Process(vk::CommandBuffer& command_buffer, std::vector<std::unique_ptr<VulkanBuffer>>& buffers_in_upload) override;
 
-			std::unique_ptr<VulkanBuffer> src_buffer;
 			vk::Image dst_image;
 			uint32_t mip_count;
 			uint32_t array_count;
@@ -54,6 +54,7 @@ namespace core { namespace Device {
 		void AddToUpload(std::unique_ptr<VulkanBuffer> src_buffer, VulkanBuffer* dst_buffer, vk::DeviceSize size);
 		void AddToUpload(VulkanBuffer* src_buffer, VulkanBuffer* dst_buffer, vk::DeviceSize size);
 		void AddImageToUpload(std::unique_ptr<VulkanBuffer> src_buffer, vk::Image dst_image, uint32_t mip_count, uint32_t array_count, std::vector<vk::BufferImageCopy> copies);
+		void AddImageToUpload(VulkanBuffer* src_buffer, vk::Image dst_image, uint32_t mip_count, uint32_t array_count, std::vector<vk::BufferImageCopy> copies);
 		void ProcessUpload();
 		
 		VulkanUploader();

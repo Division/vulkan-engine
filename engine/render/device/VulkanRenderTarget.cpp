@@ -44,7 +44,8 @@ namespace core { namespace Device {
 
 		if (has_depth)
 		{
-			TextureInitializer depth_texture_init(width, height, render_pass->GetDepthFormat());
+			TextureInitializer depth_texture_init(width, height, 1, 1, (Format)render_pass->GetDepthFormat());
+			depth_texture_init.SetDepth();
 			depth_texture = std::make_shared<Texture>(depth_texture_init);
 		}
 

@@ -11,11 +11,16 @@ namespace core { namespace Device {
 	class UniformBuffer
 	{
 	public:
-		UniformBuffer(size_t size)
+		UniformBuffer(size_t size, bool ssbo = false)
 			: size(size)
 		{
 			assert(size >= sizeof(T) && "buffer size must be greater than the element size");
-			auto main_initializer = VulkanBufferInitializer(size).SetUniform();
+			auto main_initializer = VulkanBufferInitializer(size);
+			if (ssbo)
+				main_initializer.SetStorage();
+			else
+				main_initializer.SetUniform();
+
 			buffer = std::make_unique<VulkanBuffer>(main_initializer);
 
 			auto staging_initializer = VulkanBufferInitializer(size).SetStaging();

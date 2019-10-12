@@ -37,6 +37,15 @@ namespace core { namespace Device {
 			ShaderTextureName shader_texture;
 		};
 
+		struct StorageBufferData
+		{
+			uint32_t id;
+			std::string name;
+			unsigned set;
+			unsigned binding;
+			ShaderBufferName ssbo_name;
+		};
+
 		ReflectionInfo(uint32_t* spirv_data, size_t count);
 
 		const std::vector<UniformBufferData>& UniformBuffers() const { return uniform_buffers; }
@@ -47,6 +56,7 @@ namespace core { namespace Device {
 		spirv_cross::CompilerGLSL compiler;
 		std::vector<UniformBufferData> uniform_buffers;
 		std::vector<VertexAttribData> vertex_attribs;
+		std::vector<StorageBufferData> storage_buffers;
 		std::vector<SamplerData> samplers;
 
 	};

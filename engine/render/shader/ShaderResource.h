@@ -24,9 +24,12 @@ enum class ShaderBufferName : uint32_t
 	SkinningMatrices,
 	Light,
 	Projector,
+	LightIndices, // SSBO
 	Unknown,
 	Count
 };
+
+
 
 extern const std::map<std::string, ShaderTextureName> SHADER_SAMPLER_NAMES;
 extern const std::map<std::string, ShaderBufferName> SHADER_BUFFER_NAMES;
