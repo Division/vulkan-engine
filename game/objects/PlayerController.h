@@ -6,16 +6,15 @@ class LightObject;
 
 class PlayerController : public SkinnedMeshObject {
 public:
-  static std::shared_ptr<core::Device::Texture> diffuse;
-  static std::shared_ptr<core::Device::Texture> normal;
-  static std::shared_ptr<core::Device::Texture> specular;
-
-public:
   void start() override;
   void update(float dt) override;
   void controlsEnabled(bool enabled) { _controlsEnabled = enabled; }
 
 private:
+  std::shared_ptr<core::Device::Texture> diffuse;
+  std::shared_ptr<core::Device::Texture> normal;
+  std::shared_ptr<core::Device::Texture> specular;
+
   bool _controlsEnabled = true;
   AnimationPlaybackPtr _runPlayback;
   AnimationPlaybackPtr _idlePlayback;

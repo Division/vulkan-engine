@@ -7,7 +7,7 @@
 
 namespace loader {
 
-	// Returns null pointer in case of error
-	std::shared_ptr<std::vector<char>> loadFile(const std::string &filename);
+	// Returns empty vector in case of error
+	std::vector<char> LoadFile(const std::wstring &filename);
 
 }

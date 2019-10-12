@@ -18,7 +18,6 @@ set(ENGINE_SOURCES
 	lib.cpp
 	CommonIncludes.h
 	utils/NonCopyable.h
-	render/DataStructures.h
 	render/device/VkObjects.h
 	render/device/VkObjects.cpp
 	render/device/VulkanContext.h
@@ -118,7 +117,10 @@ set(ENGINE_SOURCES
 	system/Input.h
 	system/Input.cpp
 	utils/Math.h
+	utils/StringUtils.h
 	utils/Math.cpp
+	utils/MeshGeneration.h
+	utils/MeshGeneration.cpp
 	utils/Pool.h
 	utils/CapsSet.h
 	utils/Frustum.h

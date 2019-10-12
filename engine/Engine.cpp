@@ -5,6 +5,7 @@
 #include "scene/Scene.h"
 #include "render/renderer/SceneRenderer.h"
 #include "system/Input.h"
+#include "render/shader/ShaderCache.h"
 
 namespace core
 {
@@ -49,7 +50,8 @@ namespace core
 		vulkan_context->RecreateSwapChain();
 		glfwSetTime(0);
 
-		scene_renderer = std::make_unique<render::SceneRenderer>();
+		shader_cache = std::make_unique<Device::ShaderCache>();
+		scene_renderer = std::make_unique<render::SceneRenderer>(shader_cache.get());
 		scene = std::make_unique<Scene>();
 
 		input = std::make_unique<system::Input>(window);
@@ -63,6 +65,7 @@ namespace core
 		input = nullptr;
 		scene = nullptr;
 		scene_renderer = nullptr;
+		shader_cache = nullptr;
 		vulkan_context->Cleanup();
 		vulkan_context = nullptr;
 

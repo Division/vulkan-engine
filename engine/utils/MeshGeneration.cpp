@@ -50,7 +50,7 @@ void MeshGeneration::generateBox(MeshPtr mesh, float sizeX, float sizeY, float s
     -halfX, halfY, halfZ,
   };
 
-  int srcIndices[] = {
+  std::vector<uint16_t> srcIndices = {
     3, 0, 2, 0, 1, 2, // +y
     4, 7, 6, 4, 6, 5, // -y
     7, 4, 0, 7, 0, 3, // -x
@@ -60,15 +60,20 @@ void MeshGeneration::generateBox(MeshPtr mesh, float sizeX, float sizeY, float s
   };
 
   std::vector<vec3> vertices;
+  std::vector<uint16_t> indices;
 
   // duplicate vertices
   for (int i = 0; i < 36; i++) {
     vertices.emplace_back(vec3(srcVertices[srcIndices[i] * 3],
                             srcVertices[srcIndices[i] * 3 + 1],
                             srcVertices[srcIndices[i] * 3 + 2]));
+	indices.push_back(srcIndices[i] * 3);
+	indices.push_back(srcIndices[i] * 3 + 1);
+	indices.push_back(srcIndices[i] * 3 + 2);
   }
 
   mesh->setVertices(vertices);
+  mesh->setIndices(indices);
 }
 
 void MeshGeneration::generateCone(MeshPtr mesh, float height, float radius, int segments) {

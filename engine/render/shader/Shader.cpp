@@ -1,23 +1,25 @@
 #include "Shader.h"
 #include "CommonIncludes.h"
 #include "Engine.h"
+#include "utils/Math.h"
 
 namespace core { namespace Device {
 	
-	ShaderModule::ShaderModule(void* data, size_t size)
+	ShaderModule::ShaderModule(void* data, size_t size, uint32_t hash)
+		: hash(hash)
 	{
 		vk::ShaderModuleCreateInfo create_info(vk::ShaderModuleCreateFlags(), size, (uint32_t*)data);
 		shader_module = Engine::GetVulkanContext()->GetDevice().createShaderModuleUnique(create_info);
 		reflection_info = std::make_unique<ReflectionInfo>((uint32_t*)data, size / sizeof(uint32_t));
 	}
 	
-	void ShaderProgram::AddModule(ShaderModule shader_module, Stage stage)
+	void ShaderProgram::AddModule(ShaderModule* shader_module, Stage stage)
 	{
 		auto& module_var = stage == Stage::Vertex ? vertex_module : fragment_module;
-		if (module_var.HasModule())
+		if (module_var)
 			throw std::runtime_error("Shader module already set");
 
-		module_var = std::move(shader_module);
+		module_var = shader_module;
 	}
 
 	std::map<ShaderProgram::Stage, vk::ShaderStageFlagBits> shader_stage_flag_map =
@@ -99,11 +101,21 @@ namespace core { namespace Device {
 	{
 		std::map<std::pair<unsigned, unsigned>, int> existing_bindings;
 
-		if (vertex_module.HasModule())
-			AppendBindings(vertex_module, Stage::Vertex, existing_bindings);
+		uint32_t vertex_hash = 0;
+		uint32_t fragment_hash = 0;
+		if (vertex_module)
+		{
+			vertex_hash = vertex_module->GetHash();
+			AppendBindings(*vertex_module, Stage::Vertex, existing_bindings);
+		}
 
-		if (fragment_module.HasModule())
-			AppendBindings(fragment_module, Stage::Fragment, existing_bindings);
+		if (fragment_module)
+		{
+			fragment_hash = fragment_module->GetHash();
+			AppendBindings(*fragment_module, Stage::Fragment, existing_bindings);
+		}
+
+		hash = ShaderProgram::CalculateHash(fragment_hash, vertex_hash);
 
 		auto device = Engine::GetVulkanDevice();
 
@@ -125,11 +137,18 @@ namespace core { namespace Device {
 			vk::DescriptorSetLayoutCreateInfo layout_info({}, set.layout_bindings.size(), set.layout_bindings.data());
 			set.layout = device.createDescriptorSetLayoutUnique(layout_info);
 		}
+
 	}
 
-	uint64_t ShaderProgram::GetHash() const
+	uint32_t ShaderProgram::CalculateHash(uint32_t fragment_hash, uint32_t vertex_hash)
 	{
-		return (uint64_t)this;
+		std::array<uint32_t, 2> combined = { vertex_hash, fragment_hash };
+		return FastHash(combined.data(), sizeof(combined));
+	}
+
+	uint32_t ShaderProgram::GetHash() const
+	{
+		return hash;
 	}
 
 	const ShaderProgram::BindingData* ShaderProgram::GetBinding(unsigned set, unsigned binding) const

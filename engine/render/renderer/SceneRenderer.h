@@ -14,6 +14,7 @@ namespace core
 	{
 		class ShaderProgram;
 		class ShaderBindings;
+		class ShaderCache;
 		struct RenderOperation;
 	}
 }
@@ -25,22 +26,22 @@ namespace core { namespace render {
 	class SceneRenderer : IRenderer
 	{
 	public:
-		SceneRenderer();
+		SceneRenderer(ShaderCache* shader_cache);
 		~SceneRenderer();
 
 		void RenderScene(Scene* scene);
 		void AddRenderOperation(core::Device::RenderOperation& rop, RenderQueue queue) override;
 
 	private:
-		DrawCall* GetDrawCall(RenderOperation& rop);
+		DrawCall* GetDrawCall(RenderOperation& rop, bool depth_only = false);
 		void ReleaseDrawCalls();
 		void SetupShaderBindings(RenderOperation& rop, ShaderProgram& shader, ShaderBindings& bindings);
 		std::tuple<vk::Buffer, size_t, size_t> GetBufferFromROP(RenderOperation& rop, ShaderBufferName buffer_name);
 
 	private:
-		std::shared_ptr<core::Device::Texture> texture;
+		ShaderCache* shader_cache;
 		std::unique_ptr<SceneBuffers> scene_buffers;
-		std::unique_ptr<ShaderProgram> program;
+		//std::unique_ptr<ShaderProgram> program;
 		core::utils::Pool<DrawCall> draw_call_pool;
 		std::vector<std::unique_ptr<DrawCall>> used_draw_calls;
 		std::unordered_map<RenderOperation*, vk::DescriptorBufferInfo> rop_transform_cache; // cleared every frame. Allows reusing same object transform buffer in multiple draw calls.

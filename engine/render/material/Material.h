@@ -18,7 +18,7 @@ public:
 	friend class SceneRenderer;
 	friend class PassRenderer;
 
-	Material() = default;
+	Material();
 
 	void texture0(std::shared_ptr<Texture> texture);
 	const std::shared_ptr<Texture>& texture0() const { return _texture0; };
@@ -32,8 +32,11 @@ public:
 	void vertexColorEnabled(bool vertexColorEnabled);
 	bool vertexColorEnabled() const { return _vertexColorEnabled; }
 	
-	const ShaderCapsSet &shaderCaps() const { return _shaderCaps; }
-	const ShaderCapsSet &shaderCapsSkinning() const { return _shaderCapsSkinning; }
+	const ShaderCapsSet& shaderCaps() { if (_capsDirty) _updateCaps(); return _shaderCaps; }
+	const ShaderCapsSet &shaderCapsSkinning() { if (_capsDirty) _updateCaps(); return _shaderCapsSkinning; }
+
+	uint32_t GetVertexShaderNameHash() const { return vertex_hash; }
+	uint32_t GetFragmentShaderNameHash() const { return fragment_hash; }
 
 protected:
 	void _updateCaps();
@@ -43,9 +46,13 @@ protected:
 	static std::unordered_set<ShaderCapsSet::Bitmask> _capsVariations;
 	static std::vector<ShaderCapsSet::Bitmask> _uninitializedCaps;
 
-	bool _capsDirty = true;
+	mutable bool _capsDirty = true;
+	std::wstring shader_path = L"shaders/material_main";
 	ShaderCapsSet _shaderCaps;
 	ShaderCapsSet _shaderCapsSkinning;
+
+	uint32_t vertex_hash = 0;
+	uint32_t fragment_hash = 0;
 
 	bool _hasObjectParams = true;
 

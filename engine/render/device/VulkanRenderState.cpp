@@ -168,7 +168,7 @@ namespace core { namespace Device {
 		{
 			auto* context = Engine::GetVulkanContext();
 			vk::ClearValue clear_value[] = { 
-				vk::ClearColorValue(std::array<float, 4>{ 1.0f, 1.0f, 1.0f, 1.0f }),
+				vk::ClearColorValue(std::array<float, 4>{ 0.0f, 0.0f, 0.0f, 1.0f }),
 				vk::ClearDepthStencilValue(1, 0)
 			};
 

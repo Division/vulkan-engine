@@ -1,15 +1,22 @@
 ﻿#include "FileLoader.h"
 
-std::shared_ptr<std::vector<char>> loader::loadFile(const std::string &filename) {
-	std::ifstream file(filename, std::ios::binary | std::ios::ate);
-	std::streamsize size = file.tellg();
-	file.seekg(0, std::ios::beg);
+namespace loader 
+{
+	std::vector<char> LoadFile(const std::wstring& filename) 
+	{
+		std::ifstream file(filename, std::ios::binary | std::ios::ate);
+		file.exceptions(std::ios::failbit);
+		std::streamsize size = file.tellg();
+		file.seekg(0, std::ios::beg);
 
-	std::shared_ptr<std::vector<char>> result = std::make_shared<std::vector<char>>(size);
+		auto result = std::vector<char>(size);
 
-	if (file.read(result->data(), size)) {
-		return result;
-	} else {
-		return nullptr;
+		if (file.read(result.data(), size)) {
+			return result;
+		}
+		else {
+			return std::vector<char>();
+		}
 	}
+
 }

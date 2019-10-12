@@ -1,7 +1,6 @@
 #pragma once
 
 #include "CommonIncludes.h"
-#include "render/DataStructures.h"
 
 namespace core { namespace Device {
 

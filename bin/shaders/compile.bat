@@ -1,1 +1,0 @@
-for /r %%i in (*.frag, *.vert) do %VULKAN_SDK%/Bin/glslangValidator.exe -Dtest_macro -Dtest2 -V %%i

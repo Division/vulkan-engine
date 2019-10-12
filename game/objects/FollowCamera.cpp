@@ -10,8 +10,8 @@ using namespace core::system;
 void FollowCamera::start() {
   auto container = CreateGameObject<GameObject>();
 
-  container->transform()->rotate(vec3(0, 1, 0), -RAD(225));
-  container->transform()->rotate(vec3(1, 0, 0), RAD(55));
+  container->transform()->rotate(vec3(0, 1, 0), RAD(225));
+  container->transform()->rotate(vec3(1, 0, 0), RAD(-55));
 
   _container = container;
   setFreeCamera(false);
@@ -65,6 +65,7 @@ void FollowCamera::update(float dt) {
 	scene_camera->transform()->rotation(rotation);
   } else if (player) {
     _container.lock()->transform()->position(player->transform()->position() + vec3(0, 1, 0));
+	  //scene_camera->transform()->position(player->transform()->position() + vec3(0, 1, 0));
   }
 
   //auto* scene_camera = Engine::Get()->GetScene()->GetCamera();
@@ -73,15 +74,17 @@ void FollowCamera::update(float dt) {
 
 void FollowCamera::setFreeCamera(bool isFree) {
   _isFreeCamera = isFree;
+  auto* scene_camera = Engine::Get()->GetScene()->GetCamera();
   if (isFree) {
     vec3 position = transform()->worldPosition();
-    transform()->parent(nullptr);
+	scene_camera->transform()->parent(nullptr);
     //transform()->position(position);
    // _angleX = -(float)M_PI / 8;
     //_angleY = (float)M_PI;
   } else {
-    transform()->parent(_container.lock()->transform());
-    transform()->position(vec3(0, 0, -15));
-    transform()->rotation(quat());
+	scene_camera->transform()->parent(_container.lock()->transform());
+    //transform()->parent(_container.lock()->transform());
+	scene_camera->transform()->position(vec3(0, 0, 15));
+	scene_camera->transform()->rotation(quat());
   }
 }

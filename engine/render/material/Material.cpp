@@ -1,8 +1,15 @@
 ﻿#include "Material.h"
 #include "render/texture/Texture.h"
+#include "render/shader/ShaderCache.h"
 
 std::unordered_set<ShaderCapsSet::Bitmask> Material::_capsVariations;
 std::vector<ShaderCapsSet::Bitmask> Material::_uninitializedCaps;
+
+Material::Material()
+{
+	vertex_hash = ShaderCache::GetShaderPathHash(shader_path + L".vert");
+	fragment_hash = ShaderCache::GetShaderPathHash(shader_path + L".frag");
+}
 
 void Material::texture0(std::shared_ptr<Texture> texture) {
 	_texture0 = texture;

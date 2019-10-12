@@ -35,17 +35,17 @@ namespace core { namespace Device {
 		vk::PipelineShaderStageCreateInfo vertex_shader_stage_info(
 			{}, 
 			vk::ShaderStageFlagBits::eVertex, 
-			shader_program->VertexModule().GetModule(), 
+			shader_program->VertexModule()->GetModule(), 
 			"main"
 		);
 		shader_stages[shader_stage_count++] = vertex_shader_stage_info;
 
-		if (shader_program->FragmentModule().HasModule())
+		if (shader_program->FragmentModule()->HasModule())
 		{
 			vk::PipelineShaderStageCreateInfo fragment_shader_stage_info(
 				{},
 				vk::ShaderStageFlagBits::eFragment,
-				shader_program->FragmentModule().GetModule(),
+				shader_program->FragmentModule()->GetModule(),
 				"main"
 			);
 			shader_stages[shader_stage_count++] = fragment_shader_stage_info;
@@ -54,7 +54,7 @@ namespace core { namespace Device {
 		vk::VertexInputBindingDescription vertex_binding_description(0, mesh->strideBytes(), vk::VertexInputRate::eVertex);
 
 		std::vector<vk::VertexInputAttributeDescription> vertex_attribute_descriptions;
-		auto& vertex_attribs = shader_program->VertexModule().GetReflectionInfo()->VertexAttribs();
+		auto& vertex_attribs = shader_program->VertexModule()->GetReflectionInfo()->VertexAttribs();
 		for (auto& attrib : vertex_attribs)
 		{
 			vertex_attribute_descriptions.push_back(

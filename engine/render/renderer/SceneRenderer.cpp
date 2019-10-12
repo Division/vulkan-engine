@@ -21,6 +21,7 @@
 #include "render/texture/Texture.h"
 #include "render/mesh/Mesh.h"
 #include "render/shader/Shader.h"
+#include "render/shader/ShaderCache.h"
 #include "render/shader/ShaderBindings.h"
 #include "render/renderer/RenderOperation.h"
 #include "render/material/Material.h"
@@ -36,22 +37,11 @@ namespace core { namespace render {
 
 	SceneRenderer::~SceneRenderer() = default;
 
-	SceneRenderer::SceneRenderer()
+	SceneRenderer::SceneRenderer(ShaderCache* shader_cache)
+		: shader_cache(shader_cache)
 	{
 		auto* context = Engine::GetVulkanContext();
 		auto vk_device = context->GetDevice();
-
-		texture = loader::LoadTexture("resources/level/Atlas_Props_02.jpg");
-		
-		auto vertex_data = VulkanUtils::ReadFile("shaders/vert.spv");
-		auto fragment_data = VulkanUtils::ReadFile("shaders/frag.spv");
-		ShaderModule vertex(vertex_data.data(), vertex_data.size());
-		ShaderModule fragment(fragment_data.data(), fragment_data.size());
-		program = std::make_unique<ShaderProgram>();
-
-		program->AddModule(std::move(vertex), ShaderProgram::Stage::Vertex);
-		program->AddModule(std::move(fragment), ShaderProgram::Stage::Fragment);
-		program->Prepare();
 
 		scene_buffers = std::make_unique<SceneBuffers>();
 	}
@@ -95,12 +85,15 @@ namespace core { namespace render {
 		camera_buffer->Unmap();
 
 		auto* object_params_buffer = scene_buffers->GetObjectParamsBuffer();
+		auto* skinning_matrices_buffer = scene_buffers->GetSkinningMatricesBuffer();
 		object_params_buffer->Map();
+		skinning_matrices_buffer->Map();
 		for (auto& object : visible_objects)
 		{
 			object->render(*this);
 		}
 		object_params_buffer->Unmap();
+		skinning_matrices_buffer->Unmap();
 
 		auto* render_state = context->GetRenderState();
 		auto* swapchain = context->GetSwapchain();
@@ -159,6 +152,15 @@ namespace core { namespace render {
 			break;
 		}
 
+		case ShaderBufferName::SkinningMatrices:
+		{
+			auto* skinning_matrices_buffer = scene_buffers->GetSkinningMatricesBuffer();
+			buffer = skinning_matrices_buffer->GetBuffer()->Buffer();
+			offset = skinning_matrices_buffer->Append(*rop.skinning_matrices);
+			size = skinning_matrices_buffer->GetElementSize();
+			break;
+		}
+
 		default:
 			throw std::runtime_error("unknown shader buffer");
 		}
@@ -197,7 +199,7 @@ namespace core { namespace render {
 		}
 	}
 
-	DrawCall* SceneRenderer::GetDrawCall(RenderOperation& rop)
+	DrawCall* SceneRenderer::GetDrawCall(RenderOperation& rop, bool depth_only)
 	{
 		auto draw_call = draw_call_pool.Obtain();
 		draw_call->mesh = nullptr;
@@ -205,15 +207,16 @@ namespace core { namespace render {
 		draw_call->shader_bindings->Clear();
 		assert(rop.object_params && "Object params data must be set");
 
-		if (rop.shader)
-			draw_call->shader = rop.shader;
-		else
-		{
-			throw std::runtime_error("shader from material not supported");
-		}
-
 		draw_call->mesh = rop.mesh.get();
-		draw_call->shader = program.get(); // TODO: use material
+
+		auto caps = depth_only ? ShaderCapsSet() : rop.material->shaderCaps();
+		if (rop.skinning_matrices)
+			caps.addCap(ShaderCaps::Skinning);
+
+		auto vertex_hash =  ShaderCache::GetCombinedHash(rop.material->GetVertexShaderNameHash(), caps);
+		auto fragment_hash = ShaderCache::GetCombinedHash(rop.material->GetFragmentShaderNameHash(), caps);
+
+		draw_call->shader = shader_cache->GetShaderProgram(vertex_hash, fragment_hash);
 		SetupShaderBindings(rop, *draw_call->shader, *draw_call->shader_bindings);
 
 		auto* result = draw_call.get();

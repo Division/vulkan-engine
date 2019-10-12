@@ -11,6 +11,7 @@ namespace core
 	{
 		class Device;
 		class VulkanContext;
+		class ShaderCache;
 	}
 
 	namespace render
@@ -50,6 +51,7 @@ namespace core
 		static Engine* instance;
 		std::unique_ptr<IGame> game;
 		GLFWwindow* window;
+		std::unique_ptr<Device::ShaderCache> shader_cache;
 		std::unique_ptr<Device::VulkanContext> vulkan_context;
 		std::unique_ptr<Scene> scene;
 		std::unique_ptr<render::SceneRenderer> scene_renderer;
