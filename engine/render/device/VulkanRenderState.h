@@ -168,9 +168,11 @@ namespace core { namespace Device {
 	private:
 		struct DescriptorSetData
 		{
+
 			std::vector<vk::WriteDescriptorSet> writes;
 			std::array<vk::DescriptorImageInfo, caps::max_texture_bindings> texture_bindings;
 			std::array<vk::DescriptorBufferInfo, caps::max_ubo_bindings> buffer_bindings;
+			std::array<uint32_t, caps::max_ubo_bindings> dynamic_offsets;
 
 			bool active;
 			bool dirty;
@@ -183,6 +185,7 @@ namespace core { namespace Device {
 		VulkanPipeline* GetPipeline(const VulkanPipelineInitializer& initializer);
 		vk::DescriptorSet GetDescriptorSet(DescriptorSetData& set_data, const uint32_t set_index, const ShaderProgram* current_shader);
 		vk::Sampler GetSampler(const SamplerMode& sampler_mode);
+		const std::vector<uint32_t>& GetDynamicOffsets(uint32_t first_set, uint32_t last_set);
 
 		uint32_t dirty_flags = 0;
 		uint32_t current_frame = 0;
@@ -197,7 +200,7 @@ namespace core { namespace Device {
 		std::array<DescriptorSetData, ShaderProgram::max_descriptor_sets> descriptor_sets;
 		std::array<vk::DescriptorSet, ShaderProgram::max_descriptor_sets> frame_descriptor_sets;
 
-
+		std::vector<uint32_t> dynamic_offsets;
 		std::unordered_map<uint32_t, vk::UniqueSampler> sampler_cache;
 		std::unordered_map<uint32_t, vk::DescriptorSet> descriptor_set_cache;
 		std::unordered_map<uint32_t, std::unique_ptr<VulkanPipeline>> pipeline_cache;

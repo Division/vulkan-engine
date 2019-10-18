@@ -31,8 +31,8 @@ namespace core { namespace Device {
 	std::unordered_map<ShaderProgram::BindingType, vk::DescriptorType> binding_type_map =
 	{
 		{ ShaderProgram::BindingType::Sampler, vk::DescriptorType::eCombinedImageSampler },
-		{ ShaderProgram::BindingType::UniformBuffer, vk::DescriptorType::eUniformBuffer },
-		{ ShaderProgram::BindingType::StorageBuffer, vk::DescriptorType::eStorageBuffer },
+		{ ShaderProgram::BindingType::UniformBuffer, vk::DescriptorType::eUniformBufferDynamic },
+		{ ShaderProgram::BindingType::StorageBuffer, vk::DescriptorType::eStorageBufferDynamic },
 	};
 
 	vk::ShaderStageFlags GetShaderStageFlags(unsigned stage_flags)

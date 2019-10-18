@@ -133,7 +133,7 @@ namespace core { namespace Device {
 			vk::DescriptorPoolSize(vk::DescriptorType::eSampler, SamplerSlotCount * max_count),
 			vk::DescriptorPoolSize(vk::DescriptorType::eSampledImage, (int)ShaderTextureName::Count * max_count),
 			vk::DescriptorPoolSize(vk::DescriptorType::eCombinedImageSampler, (int)ShaderTextureName::Count * max_count),
-			vk::DescriptorPoolSize(vk::DescriptorType::eStorageBuffer, (int)ShaderBufferName::Count * max_count)
+			vk::DescriptorPoolSize(vk::DescriptorType::eStorageBufferDynamic, (int)ShaderBufferName::Count * max_count)
 		};
 
 		const auto descriptor_pool_info = vk::DescriptorPoolCreateInfo(
@@ -309,8 +309,8 @@ namespace core { namespace Device {
 					assert(set_data.buffer_bindings[binding_index].buffer);
 
 					vk::DescriptorType buffer_descriptor_type = binding.type == ShaderProgram::BindingType::UniformBuffer 
-																	? vk::DescriptorType::eUniformBuffer 
-																	: vk::DescriptorType::eStorageBuffer;
+																	? vk::DescriptorType::eUniformBufferDynamic 
+																	: vk::DescriptorType::eStorageBufferDynamic;
 
 					auto& binding_data = set_data.buffer_bindings[binding_index];
 					set_data.writes.push_back(vk::WriteDescriptorSet(
@@ -359,6 +359,7 @@ namespace core { namespace Device {
 		{
 			memset(set_data.texture_bindings.data(), 0, sizeof(set_data.texture_bindings));
 			memset(set_data.buffer_bindings.data(), 0, sizeof(set_data.buffer_bindings));
+			memset(set_data.dynamic_offsets.data(), 0, sizeof(set_data.dynamic_offsets));
 			set_data.writes.clear();
 			set_data.active = false;
 			set_data.dirty = false;
@@ -375,8 +376,9 @@ namespace core { namespace Device {
 		{
 			auto& descriptor_set = descriptor_sets[binding.set];
 			descriptor_set.buffer_bindings[binding.index].buffer = binding.buffer;
-			descriptor_set.buffer_bindings[binding.index].offset = binding.offset;
+			descriptor_set.buffer_bindings[binding.index].offset = 0;
 			descriptor_set.buffer_bindings[binding.index].range = binding.size;
+			descriptor_set.dynamic_offsets[binding.index] = binding.offset;
 			descriptor_set.active = true;
 		}
 
@@ -398,6 +400,25 @@ namespace core { namespace Device {
 				set_data.hash = hash;
 			}
 		}
+	}
+
+	const std::vector<uint32_t>& VulkanRenderState::GetDynamicOffsets(uint32_t first_set, uint32_t last_set)
+	{
+		dynamic_offsets.clear();
+		for (int set = first_set; set <= last_set; set++)
+		{
+			assert(frame_descriptor_sets[set]);
+			for (int i = 0; i < descriptor_sets[set].buffer_bindings.size(); i++)
+			{
+				auto& buffer_binding = descriptor_sets[set].buffer_bindings[i];
+				if (!buffer_binding.buffer)
+					continue;
+
+				dynamic_offsets.push_back(descriptor_sets[set].dynamic_offsets[i]);
+			}
+		}
+
+		return dynamic_offsets;
 	}
 
 	void VulkanRenderState::RenderDrawCall(const core::render::DrawCall* draw_call)
@@ -427,7 +448,10 @@ namespace core { namespace Device {
 		for (int i = 0; i < frame_descriptor_sets.size(); i++)
 		{
 			if (frame_descriptor_sets[i])
-				command_buffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, current_pipeline->GetPipelineLayout(), i, 1u, &frame_descriptor_sets[i], 0, nullptr);
+			{
+				auto& dynamic_offsets = GetDynamicOffsets(i, i);
+				command_buffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, current_pipeline->GetPipelineLayout(), i, 1u, &frame_descriptor_sets[i], dynamic_offsets.size(), dynamic_offsets.data());
+			}
 		}
 
 		command_buffer.drawIndexed(static_cast<uint32_t>(mesh->indexCount()), 1, 0, 0, 0);
