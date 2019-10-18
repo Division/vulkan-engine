@@ -14,6 +14,8 @@ namespace core { namespace Device {
 	class VulkanContext : public NonCopyable
 	{
 	public:
+		typedef std::function<void(int32_t width, int32_t height)> RecreateSwapchainCallback;
+
 		VulkanContext(GLFWwindow* window);
 		virtual ~VulkanContext();
 		void initialize();
@@ -37,6 +39,8 @@ namespace core { namespace Device {
 
 		VmaAllocator GetAllocator() { return allocator; }
 		void AddFrameCommandBuffer(vk::CommandBuffer command_buffer);
+
+		void AddRecreateSwapchainCallback(RecreateSwapchainCallback callback);
 
 		void Cleanup();
 
@@ -75,6 +79,8 @@ namespace core { namespace Device {
 		std::vector<VkSemaphore> renderFinishedSemaphores;
 		std::vector<VkFence> inFlightFences;
 		std::vector<VkCommandBuffer> frame_command_buffers;
+		
+		std::vector<RecreateSwapchainCallback> recreate_swapchain_callbacks;
 
 		bool framebuffer_resized = false;
 		size_t currentFrame = 0;

@@ -139,8 +139,6 @@ namespace core { namespace Device {
 	class VulkanRenderState : NonCopyable
 	{
 	public:
-		static const size_t max_texture_bindings = 16;
-		static const size_t max_ubo_bindings = 8;
 
 		enum class DirtyFlags : uint32_t
 		{
@@ -171,8 +169,8 @@ namespace core { namespace Device {
 		struct DescriptorSetData
 		{
 			std::vector<vk::WriteDescriptorSet> writes;
-			std::array<vk::ImageView, max_texture_bindings> texture_bindings;
-			std::array<vk::DescriptorBufferInfo, max_ubo_bindings> buffer_bindings;
+			std::array<vk::DescriptorImageInfo, caps::max_texture_bindings> texture_bindings;
+			std::array<vk::DescriptorBufferInfo, caps::max_ubo_bindings> buffer_bindings;
 
 			bool active;
 			bool dirty;
@@ -183,7 +181,7 @@ namespace core { namespace Device {
 		void UpdateState();
 		void SetMesh(const Mesh& mesh);
 		VulkanPipeline* GetPipeline(const VulkanPipelineInitializer& initializer);
-		vk::DescriptorSet GetDescriptorSet(DescriptorSetData& set_data, const vk::DescriptorSetLayout& layout);
+		vk::DescriptorSet GetDescriptorSet(DescriptorSetData& set_data, const uint32_t set_index, const ShaderProgram* current_shader);
 		vk::Sampler GetSampler(const SamplerMode& sampler_mode);
 
 		uint32_t dirty_flags = 0;

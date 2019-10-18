@@ -22,6 +22,7 @@ namespace core
 namespace core { namespace render {
 
 	class SceneBuffers;
+	class LightGrid;
 
 	class SceneRenderer : IRenderer
 	{
@@ -41,7 +42,7 @@ namespace core { namespace render {
 	private:
 		ShaderCache* shader_cache;
 		std::unique_ptr<SceneBuffers> scene_buffers;
-		//std::unique_ptr<ShaderProgram> program;
+		std::unique_ptr<LightGrid> light_grid;
 		core::utils::Pool<DrawCall> draw_call_pool;
 		std::vector<std::unique_ptr<DrawCall>> used_draw_calls;
 		std::unordered_map<RenderOperation*, vk::DescriptorBufferInfo> rop_transform_cache; // cleared every frame. Allows reusing same object transform buffer in multiple draw calls.

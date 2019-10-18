@@ -102,6 +102,8 @@ namespace core { namespace Device {
 
 		vkDeviceWaitIdle(device);
 		swapchain = std::make_unique<VulkanSwapchain>(surface, width, height, swapchain.get());
+		for (auto& callback : recreate_swapchain_callbacks)
+			callback(width, height);
 	}
 
 	void VulkanContext::CreateInstance() 
@@ -324,6 +326,11 @@ namespace core { namespace Device {
 		frame_command_buffers.clear();
 		currentFrame = (currentFrame + 1) % caps::MAX_FRAMES_IN_FLIGHT;
 		current_render_state = 0;
+	}
+
+	void VulkanContext::AddRecreateSwapchainCallback(RecreateSwapchainCallback callback)
+	{
+		recreate_swapchain_callbacks.push_back(callback);
 	}
 
 } }

@@ -71,6 +71,8 @@ set(ENGINE_SOURCES
 	render/shader/ShaderCache.h
 	render/shader/ShaderCache.cpp
 	render/shading/IShadowCaster.h
+	render/shading/LightGrid.h
+	render/shading/LightGrid.cpp
 	render/mesh/Mesh.h
 	render/mesh/Mesh.cpp
 	render/texture/Texture.h

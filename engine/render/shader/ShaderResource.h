@@ -11,8 +11,6 @@ enum class ShaderTextureName : uint32_t
 	SpecularMap,
 	ShadowMap,
 	ProjectorTexture,
-	LightGrid,
-	LightIndices,
 	Unknown,
 	Count
 };
@@ -25,6 +23,7 @@ enum class ShaderBufferName : uint32_t
 	Light,
 	Projector,
 	LightIndices, // SSBO
+	LightGrid, // SSBO
 	Unknown,
 	Count
 };

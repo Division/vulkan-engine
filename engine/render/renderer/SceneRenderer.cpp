@@ -2,7 +2,6 @@
 #include "scene/Scene.h"
 #include "render/device/VulkanUtils.h"
 #include "render/shader/Shader.h"
-#include "../game/Game.h"
 #include "CommonIncludes.h"
 #include "Engine.h"
 #include "render/device/VulkanContext.h"
@@ -18,6 +17,7 @@
 #include "resources/ModelBundle.h"
 #include "loader/ModelLoader.h"
 #include "loader/TextureLoader.h"
+#include "render/shading/LightGrid.h"
 #include "render/texture/Texture.h"
 #include "render/mesh/Mesh.h"
 #include "render/shader/Shader.h"
@@ -26,6 +26,8 @@
 #include "render/renderer/RenderOperation.h"
 #include "render/material/Material.h"
 #include "render/buffer/UniformBuffer.h"
+#include "objects/LightObject.h"
+#include "objects/Projector.h"
 #include "SceneBuffers.h"
 #include "objects/Camera.h"
 
@@ -40,10 +42,8 @@ namespace core { namespace render {
 	SceneRenderer::SceneRenderer(ShaderCache* shader_cache)
 		: shader_cache(shader_cache)
 	{
-		auto* context = Engine::GetVulkanContext();
-		auto vk_device = context->GetDevice();
-
 		scene_buffers = std::make_unique<SceneBuffers>();
+		light_grid = std::make_unique<LightGrid>();
 	}
 
 	ShaderBufferStruct::Camera camera_data;
@@ -56,7 +56,7 @@ namespace core { namespace render {
 		result.projectionMatrix[1][1] *= -1;
 		result.position = camera->cameraPosition();
 		result.viewMatrix = camera->cameraViewMatrix();
-		result.screenSize = camera->cameraViewport();
+		result.screenSize = camera->cameraViewSize();
 		return result;
 	}
 
@@ -83,6 +83,33 @@ namespace core { namespace render {
 		camera_buffer->Map();
 		camera_buffer->Append(GetCameraData(scene->GetCamera()));
 		camera_buffer->Unmap();
+
+		// Shadow casters
+		auto &visibleLights = scene->visibleLights(scene->GetCamera());
+		//_shadowCasters.clear();
+		for (auto &light : visibleLights) {
+			if (light->castShadows()) {
+				//_shadowCasters.push_back(std::static_pointer_cast<IShadowCaster>(light));
+			}
+		}
+
+		auto &visibleProjectors = scene->visibleProjectors(scene->GetCamera());
+		for (auto &projector : visibleProjectors) {
+			if (projector->castShadows()) {
+				//_shadowCasters.push_back(std::static_pointer_cast<IShadowCaster>(projector));
+			}
+		}
+
+		// Light grid setup
+		auto window_size = scene->GetCamera()->cameraViewSize();
+		light_grid->Update(window_size.x, window_size.y);
+		//_shadowMap->setupRenderPasses(_shadowCasters); // Should go BEFORE lightgrid setup
+
+		auto lights = scene->visibleLights(scene->GetCamera());
+		light_grid->appendLights(lights, scene->GetCamera());
+		auto projectors = scene->visibleProjectors(scene->GetCamera());
+		light_grid->appendProjectors(projectors, scene->GetCamera());
+		light_grid->upload();
 
 		auto* object_params_buffer = scene_buffers->GetObjectParamsBuffer();
 		auto* skinning_matrices_buffer = scene_buffers->GetSkinningMatricesBuffer();
@@ -161,6 +188,42 @@ namespace core { namespace render {
 			break;
 		}
 
+		case ShaderBufferName::Projector:
+		{
+			auto* uniform_buffer = light_grid->GetProjectorBuffer();
+			buffer = uniform_buffer->GetBuffer()->Buffer();
+			offset = 0;
+			size = uniform_buffer->GetSize();
+			break;
+		}
+
+		case ShaderBufferName::Light:
+		{
+			auto* uniform_buffer = light_grid->GetLightsBuffer();
+			buffer = uniform_buffer->GetBuffer()->Buffer();
+			offset = 0;
+			size = uniform_buffer->GetSize();
+			break;
+		}
+
+		case ShaderBufferName::LightIndices:
+		{
+			auto* uniform_buffer = light_grid->GetLightIndexBuffer();
+			buffer = uniform_buffer->GetBuffer()->Buffer();
+			offset = 0;
+			size = uniform_buffer->GetSize();
+			break;
+		}
+
+		case ShaderBufferName::LightGrid:
+		{
+			auto* uniform_buffer = light_grid->GetLightGridBuffer();
+			buffer = uniform_buffer->GetBuffer()->Buffer();
+			offset = 0;
+			size = uniform_buffer->GetSize();
+			break;
+		}
+
 		default:
 			throw std::runtime_error("unknown shader buffer");
 		}
@@ -184,6 +247,7 @@ namespace core { namespace render {
 						break;
 
 					case ShaderProgram::BindingType::UniformBuffer:
+					case ShaderProgram::BindingType::StorageBuffer:
 					{
 						auto buffer_data = GetBufferFromROP(rop, (ShaderBufferName)binding.id);
 						vk::Buffer buffer;
@@ -194,6 +258,9 @@ namespace core { namespace render {
 						bindings.AddBufferBinding(address.set, address.binding, offset, size, buffer);
 						break;
 					}
+
+					default:
+						throw std::runtime_error("unknown shader binding");
 				}
 			}
 		}

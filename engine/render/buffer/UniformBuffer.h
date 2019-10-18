@@ -3,6 +3,7 @@
 #include "CommonIncludes.h"
 #include "VulkanBuffer.h"
 #include "render/device/VulkanCaps.h"
+#include "render/device/VulkanUploader.h"
 #include "Engine.h"
 
 namespace core { namespace Device {
@@ -11,8 +12,8 @@ namespace core { namespace Device {
 	class UniformBuffer
 	{
 	public:
-		UniformBuffer(size_t size, bool ssbo = false)
-			: size(size)
+		UniformBuffer(size_t size, bool ssbo = false, bool align = true)
+			: size(size), alignment(align ? 256 : 1) // TODO: get from API
 		{
 			assert(size >= sizeof(T) && "buffer size must be greater than the element size");
 			auto main_initializer = VulkanBufferInitializer(size);
@@ -65,6 +66,8 @@ namespace core { namespace Device {
 			return result;
 		}
 
+		size_t GetSize() const { return size; }
+
 		void SetFrameDataSize(size_t data_size)
 		{
 			assert(data_size <= size);
@@ -75,7 +78,7 @@ namespace core { namespace Device {
 		void* mapped_pointer = nullptr;
 		size_t frame_data_size = 0;
 		size_t size = 0;
-		size_t alignment = 256; // TODO: get from API
+		size_t alignment;
 		unsigned current_staging_buffer = 0;
 		std::unique_ptr<VulkanBuffer> buffer;
 		std::array<std::unique_ptr<VulkanBuffer>, caps::MAX_FRAMES_IN_FLIGHT> staging_buffers;

@@ -22,16 +22,17 @@ namespace core { namespace Device {
 		module_var = shader_module;
 	}
 
-	std::map<ShaderProgram::Stage, vk::ShaderStageFlagBits> shader_stage_flag_map =
+	std::unordered_map<ShaderProgram::Stage, vk::ShaderStageFlagBits> shader_stage_flag_map =
 	{
 		{ ShaderProgram::Stage::Vertex, vk::ShaderStageFlagBits::eVertex },
 		{ ShaderProgram::Stage::Fragment, vk::ShaderStageFlagBits::eFragment },
 	};
 
-	std::map<ShaderProgram::BindingType, vk::DescriptorType> binding_type_map =
+	std::unordered_map<ShaderProgram::BindingType, vk::DescriptorType> binding_type_map =
 	{
 		{ ShaderProgram::BindingType::Sampler, vk::DescriptorType::eCombinedImageSampler },
 		{ ShaderProgram::BindingType::UniformBuffer, vk::DescriptorType::eUniformBuffer },
+		{ ShaderProgram::BindingType::StorageBuffer, vk::DescriptorType::eStorageBuffer },
 	};
 
 	vk::ShaderStageFlags GetShaderStageFlags(unsigned stage_flags)
@@ -88,6 +89,11 @@ namespace core { namespace Device {
 		for (auto& ubo : reflection->UniformBuffers())
 		{
 			append_binding_internal(BindingType::UniformBuffer, (uint32_t)ubo.shader_buffer, ubo.name, ubo.set, ubo.binding);
+		}
+
+		for (auto& ubo : reflection->StorageBuffers())
+		{
+			append_binding_internal(BindingType::StorageBuffer, (uint32_t)ubo.storage_buffer_name, ubo.name, ubo.set, ubo.binding);
 		}
 	}
 

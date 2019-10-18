@@ -25,15 +25,23 @@ layout(location = 1) out vec2 fragTexCoord;
 #endif
 
 #if defined(SKINNING)
-layout(location = 4) in vec3 joint_weights;
 layout(location = 3) in vec3 joint_indices;
+layout(location = 4) in vec3 joint_weights;
 
 layout (std140, set = 0, binding = 4) uniform SkinningMatrices {
   mat4 matrices[70];
 } skinning;
 #endif
 
+#if defined(LIGHTING)
+layout(location = 5) in vec3 normal;
+#endif
+
 layout(location = 0) out vec3 fragColor;
+layout(location = 2) out vec4 position_worldspace;
+#if defined(LIGHTING)
+layout(location = 4) out vec3 normal_worldspace;
+#endif
 
 void main() {
     fragColor = vec3(1.0, 1.0, 1.0);
@@ -49,7 +57,13 @@ void main() {
 	}
 	#endif
 
-    gl_Position = camera.cameraProjectionMatrix * camera.cameraViewMatrix * model_matrix * vec4(position, 1.0);
+    position_worldspace = model_matrix * vec4(position, 1.0);
+
+    gl_Position = camera.cameraProjectionMatrix * camera.cameraViewMatrix * position_worldspace;
+
+#if defined(LIGHTING)
+    normal_worldspace = normalize((model_matrix * vec4(normal, 0)).xyz);
+#endif
 
 #if defined(TEXTURE0)
     fragTexCoord = texcoord0;

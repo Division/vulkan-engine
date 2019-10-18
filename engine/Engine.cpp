@@ -47,14 +47,15 @@ namespace core
 
 		vulkan_context = std::make_unique<Device::VulkanContext>(window);
 		vulkan_context->initialize();
-		vulkan_context->RecreateSwapChain();
 		glfwSetTime(0);
 
 		shader_cache = std::make_unique<Device::ShaderCache>();
 		scene_renderer = std::make_unique<render::SceneRenderer>(shader_cache.get());
 		scene = std::make_unique<Scene>();
-
 		input = std::make_unique<system::Input>(window);
+
+		vulkan_context->RecreateSwapChain(); // creating swapchain after scene renderer to handle subscribtion to the recreate event
+
 		this->game->init();
 	}
 

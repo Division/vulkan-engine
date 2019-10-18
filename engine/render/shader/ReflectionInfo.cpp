@@ -51,7 +51,7 @@ namespace core { namespace Device {
 			data.name = storage_buffer.name;
 			data.set = compiler.get_decoration(storage_buffer.id, spv::DecorationDescriptorSet);
 			data.binding = compiler.get_decoration(storage_buffer.id, spv::DecorationBinding);
-			data.ssbo_name = SHADER_BUFFER_NAMES.at(storage_buffer.name);
+			data.storage_buffer_name = SHADER_BUFFER_NAMES.at(storage_buffer.name);
 
 			storage_buffers.push_back(data);
 		}

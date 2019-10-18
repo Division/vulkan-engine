@@ -123,16 +123,17 @@ namespace core { namespace Device {
 			command_buffers[i] = command_pool->GetCommandBuffer();
 		}
 
-		const unsigned max_count = 1024;
+		const unsigned max_count = 10000;
 		const unsigned SamplerSlotCount = 20;
 		
-		std::array<vk::DescriptorPoolSize, 6> pool_sizes = {
+		std::array<vk::DescriptorPoolSize, 7> pool_sizes = {
 			vk::DescriptorPoolSize(vk::DescriptorType::eUniformBufferDynamic, (int)ShaderBufferName::Count * max_count),
 			vk::DescriptorPoolSize(vk::DescriptorType::eUniformTexelBuffer, (int)ShaderTextureName::Count * max_count),
 			vk::DescriptorPoolSize(vk::DescriptorType::eUniformBuffer, SamplerSlotCount * max_count),
 			vk::DescriptorPoolSize(vk::DescriptorType::eSampler, SamplerSlotCount * max_count),
 			vk::DescriptorPoolSize(vk::DescriptorType::eSampledImage, (int)ShaderTextureName::Count * max_count),
-			vk::DescriptorPoolSize(vk::DescriptorType::eCombinedImageSampler, (int)ShaderTextureName::Count * max_count)
+			vk::DescriptorPoolSize(vk::DescriptorType::eCombinedImageSampler, (int)ShaderTextureName::Count * max_count),
+			vk::DescriptorPoolSize(vk::DescriptorType::eStorageBuffer, (int)ShaderBufferName::Count * max_count)
 		};
 
 		const auto descriptor_pool_info = vk::DescriptorPoolCreateInfo(
@@ -200,8 +201,7 @@ namespace core { namespace Device {
 				auto& descriptor_set = descriptor_sets[i];
 				if (!descriptor_set.active) continue;
 				
-				auto* shader_set_data = current_shader->GetDescriptorSet(i);
-				frame_descriptor_sets[i] = GetDescriptorSet(descriptor_set, shader_set_data->layout.get());
+				frame_descriptor_sets[i] = GetDescriptorSet(descriptor_set, i, current_shader);
 			}
 		}
 
@@ -261,11 +261,14 @@ namespace core { namespace Device {
 		}
 	}
 
-	vk::DescriptorSet VulkanRenderState::GetDescriptorSet(DescriptorSetData& set_data, const vk::DescriptorSetLayout& layout)
+	vk::DescriptorSet VulkanRenderState::GetDescriptorSet(DescriptorSetData& set_data, const uint32_t set_index, const ShaderProgram* current_shader)
 	{
 		auto iter = descriptor_set_cache.find(set_data.hash);
 		if (iter != descriptor_set_cache.end())
 			return iter->second;
+
+		auto* shader_set_data = current_shader->GetDescriptorSet(set_index);
+		auto& layout = shader_set_data->layout.get();
 
 		vk::DescriptorSet descriptor_set;
 		vk::DescriptorSetAllocateInfo alloc_info(descriptor_pool.get(), 1, &layout);
@@ -276,28 +279,51 @@ namespace core { namespace Device {
 
 		set_data.writes.clear();
 
-		for (uint32_t i = 0; i < set_data.texture_bindings.size(); i++)
+		for (int i = 0; i < shader_set_data->bindings.size(); i++)
 		{
-			if (!set_data.texture_bindings[i]) continue;
+			auto& binding = shader_set_data->bindings[i];
+			if (binding.address.set != set_index)
+				continue;
 
-			vk::DescriptorImageInfo image_info(GetSampler(SamplerMode()), set_data.texture_bindings[i], vk::ImageLayout::eShaderReadOnlyOptimal);
-			set_data.writes.push_back(vk::WriteDescriptorSet(
-				descriptor_set,
-				i, 0, 1, vk::DescriptorType::eCombinedImageSampler,
-				&image_info
-			));
-		}
+			auto binding_index = binding.address.binding;
 
-		for (uint32_t i = 0; i < set_data.buffer_bindings.size(); i++)
-		{
-			if (!set_data.buffer_bindings[i].buffer) continue;
+			switch (binding.type)
+			{
+			case ShaderProgram::BindingType::Sampler:
+				{
+					assert(set_data.texture_bindings[binding_index].imageView);
+					set_data.texture_bindings[binding_index].imageLayout = vk::ImageLayout::eShaderReadOnlyOptimal;
+					set_data.texture_bindings[binding_index].sampler = GetSampler(SamplerMode());
 
-			auto& binding_data = set_data.buffer_bindings[i];
-			set_data.writes.push_back(vk::WriteDescriptorSet(
-				descriptor_set,
-				i, 0, 1, vk::DescriptorType::eUniformBuffer,
-				nullptr, &binding_data
-			));
+					set_data.writes.push_back(vk::WriteDescriptorSet(
+						descriptor_set,
+						binding_index, 0, 1, vk::DescriptorType::eCombinedImageSampler,
+						&set_data.texture_bindings[binding_index]
+					));
+					break;
+				}
+
+			case ShaderProgram::BindingType::UniformBuffer:
+			case ShaderProgram::BindingType::StorageBuffer:
+				{
+					assert(set_data.buffer_bindings[binding_index].buffer);
+
+					vk::DescriptorType buffer_descriptor_type = binding.type == ShaderProgram::BindingType::UniformBuffer 
+																	? vk::DescriptorType::eUniformBuffer 
+																	: vk::DescriptorType::eStorageBuffer;
+
+					auto& binding_data = set_data.buffer_bindings[binding_index];
+					set_data.writes.push_back(vk::WriteDescriptorSet(
+						descriptor_set,
+						binding_index, 0, 1, buffer_descriptor_type,
+						nullptr, &binding_data
+					));
+					break;
+				}
+
+			default:
+				throw std::runtime_error("unsupported binding type");
+			}
 		}
 
 		device.updateDescriptorSets(set_data.writes.size(), set_data.writes.data(), 0, nullptr);
@@ -326,6 +352,7 @@ namespace core { namespace Device {
 		return result;
 	}
 
+	// TODO: don't cache bindings? (update ones that non in flight)
 	void VulkanRenderState::SetBindings(ShaderBindings& bindings)
 	{
 		for (auto& set_data : descriptor_sets)
@@ -340,7 +367,7 @@ namespace core { namespace Device {
 		// Getting hash for descriptor sets
 		for (auto& binding : bindings.GetTextureBindings())
 		{
-			descriptor_sets[binding.set].texture_bindings[binding.index] = binding.texture->GetImageView();
+			descriptor_sets[binding.set].texture_bindings[binding.index] = vk::DescriptorImageInfo(vk::Sampler(), binding.texture->GetImageView());
 			descriptor_sets[binding.set].active = true;
 		}
 

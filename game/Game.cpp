@@ -43,6 +43,7 @@ void Game::init()
 	MeshGeneration::generateBox(mesh, 1, 1, 1);
 	mesh->createBuffer();
 	auto material = std::make_shared<Material>();
+	material->lightingEnabled(false);
 
 	obj1->mesh(mesh);
 	obj1->material(material);

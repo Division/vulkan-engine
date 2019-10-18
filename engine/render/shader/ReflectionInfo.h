@@ -43,12 +43,13 @@ namespace core { namespace Device {
 			std::string name;
 			unsigned set;
 			unsigned binding;
-			ShaderBufferName ssbo_name;
+			ShaderBufferName storage_buffer_name;
 		};
 
 		ReflectionInfo(uint32_t* spirv_data, size_t count);
 
 		const std::vector<UniformBufferData>& UniformBuffers() const { return uniform_buffers; }
+		const std::vector<StorageBufferData>& StorageBuffers() const { return storage_buffers; }
 		const std::vector<VertexAttribData>& VertexAttribs() const { return vertex_attribs; }
 		const std::vector<SamplerData>& Samplers() const { return samplers; }
 
