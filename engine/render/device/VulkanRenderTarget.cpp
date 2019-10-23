@@ -26,18 +26,28 @@ namespace core { namespace Device {
 	{
 		auto device = Engine::GetVulkanDevice();
 
-		const vk::Image* images;
+		const vk::Image* images = nullptr;
 		vk::Format image_format;
 		if (use_swapchain)
 		{
+			has_color = true;
 			width = swapchain->GetWidth();
 			height = swapchain->GetHeight();
 			images = swapchain->GetImages().data();
 			image_format = swapchain->GetImageFormat();
 			frames.resize(swapchain->GetImages().size());
-		} else
+		} else if (has_color)
 		{
-			throw std::runtime_error("Offscreen render targets not supported yet");
+			image_format = color_format;
+			TextureInitializer color_texture_init(width, height, 1, 1, (Format)color_format);
+			color_texture_init.SetColorTarget();
+			for (int i = 0; i < color_textures.size(); i++)
+			{
+				color_textures[i] = std::make_shared<Texture>(color_texture_init);
+				color_texture_images[i] = color_textures[i]->GetImage();
+			}
+			images = color_texture_images.data();
+			frames.resize(color_textures.size());
 		}
 
 		has_depth = render_pass->HasDepth();
@@ -50,23 +60,26 @@ namespace core { namespace Device {
 		}
 
 		// Frame data: image views and framebuffers
-		for (size_t i = 0; i < frames.size(); i++)
+		if (has_color)
 		{
-			auto& frame = frames[i];
+			for (size_t i = 0; i < frames.size(); i++)
+			{
+				auto& frame = frames[i];
 
-			vk::ImageSubresourceRange range(vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1);
-			vk::ImageViewCreateInfo view_create_info({}, images[i], vk::ImageViewType::e2D, image_format, vk::ComponentMapping(), range);
-			frame.image_view = device.createImageViewUnique(view_create_info);
+				vk::ImageSubresourceRange range(vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1);
+				vk::ImageViewCreateInfo view_create_info({}, images[i], vk::ImageViewType::e2D, image_format, vk::ComponentMapping(), range);
+				frame.image_view = device.createImageViewUnique(view_create_info);
 
-			vk::ImageView attachments[] = {
-				frame.image_view.get(),
-				has_depth ? depth_texture->GetImageView() : vk::ImageView()
-			};
+				vk::ImageView attachments[] = {
+					frame.image_view.get(),
+					has_depth ? depth_texture->GetImageView() : vk::ImageView()
+				};
 
-			uint32_t attachment_count = has_depth ? 2 : 1;
+				uint32_t attachment_count = has_depth ? 2 : 1;
 
-			vk::FramebufferCreateInfo framebuffer_create_info({}, render_pass->GetRenderPass(), attachment_count, attachments, width, height, 1);
-			frame.framebuffer = device.createFramebufferUnique(framebuffer_create_info);
+				vk::FramebufferCreateInfo framebuffer_create_info({}, render_pass->GetRenderPass(), attachment_count, attachments, width, height, 1);
+				frame.framebuffer = device.createFramebufferUnique(framebuffer_create_info);
+			}
 		}
 
 		this->width = width;

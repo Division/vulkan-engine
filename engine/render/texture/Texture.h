@@ -13,7 +13,8 @@ namespace core { namespace Device {
 		enum Mode
 		{
 			Default,
-			DepthBuffer
+			DepthBuffer,
+			ColorTarget
 		};
 
 		TextureInitializer(uint32_t width, uint32_t height, uint32_t channel_count, void* data, bool sRGB) // simple RGBA
@@ -28,6 +29,12 @@ namespace core { namespace Device {
 		TextureInitializer& TextureInitializer::SetDepth()
 		{
 			mode = DepthBuffer;
+			return *this;
+		}
+
+		TextureInitializer& TextureInitializer::SetColorTarget()
+		{
+			mode = ColorTarget;
 			return *this;
 		}
 

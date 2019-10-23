@@ -24,6 +24,7 @@
 #include "render/shader/ShaderCache.h"
 #include "render/shader/ShaderBindings.h"
 #include "render/renderer/RenderOperation.h"
+#include "render/renderer/RenderGraph.h"
 #include "render/material/Material.h"
 #include "render/buffer/UniformBuffer.h"
 #include "objects/LightObject.h"
@@ -44,6 +45,10 @@ namespace core { namespace render {
 	{
 		scene_buffers = std::make_unique<SceneBuffers>();
 		light_grid = std::make_unique<LightGrid>();
+		render_graph = std::make_unique<graph::RenderGraph>();
+
+		//VulkanRenderTargetInitializer rt_initializer()
+		//color_target = std::make_unique<VulkanRenderTarget>();
 	}
 
 	ShaderBufferStruct::Camera camera_data;
@@ -122,8 +127,14 @@ namespace core { namespace render {
 		object_params_buffer->Unmap();
 		skinning_matrices_buffer->Unmap();
 
-		auto* render_state = context->GetRenderState();
 		auto* swapchain = context->GetSwapchain();
+		// Render Graph
+		render_graph->Clear();
+		//auto* main_render_target = render_graph->RegisterRenderTarget(*swapchain->GetRenderTarget());
+		//render_graph->SetPresentNode();
+		//
+
+		auto* render_state = context->GetRenderState();
 		RenderMode mode;
 		mode.SetDepthWriteEnabled(true);
 		mode.SetDepthTestEnabled(true);

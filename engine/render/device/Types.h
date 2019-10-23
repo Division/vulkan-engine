@@ -66,6 +66,37 @@ namespace core { namespace Device {
 		D24_unorm_S8_uint = VK_FORMAT_D24_UNORM_S8_UINT
 	};
 
+	enum class AttachmentLoadOp
+	{
+		Load = VK_ATTACHMENT_LOAD_OP_LOAD,
+		Clear = VK_ATTACHMENT_LOAD_OP_CLEAR,
+		DontCare = VK_ATTACHMENT_LOAD_OP_DONT_CARE
+	};
+
+	enum class AttachmentStoreOp
+	{
+		Store = VK_ATTACHMENT_STORE_OP_STORE,
+		DontCare = VK_ATTACHMENT_STORE_OP_DONT_CARE
+	};
+
+	enum class ImageLayout
+	{
+		Undefined = VK_IMAGE_LAYOUT_UNDEFINED,
+		General = VK_IMAGE_LAYOUT_GENERAL,
+		ColorAttachmentOptimal = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+		DepthStencilAttachmentOptimal = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
+		DepthStencilReadOnlyOptimal = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL,
+		ShaderReadOnlyOptimal = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+		TransferSrcOptimal = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+		TransferDstOptimal = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+		Preinitialized = VK_IMAGE_LAYOUT_PREINITIALIZED,
+		DepthReadOnlyStencilAttachmentOptimal = VK_IMAGE_LAYOUT_DEPTH_READ_ONLY_STENCIL_ATTACHMENT_OPTIMAL,
+		DepthAttachmentStencilReadOnlyOptimal = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_STENCIL_READ_ONLY_OPTIMAL,
+		PresentSrc = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
+		DepthReadOnlyStencilAttachmentOptimalKHR = VK_IMAGE_LAYOUT_DEPTH_READ_ONLY_STENCIL_ATTACHMENT_OPTIMAL_KHR,
+		DepthAttachmentStencilReadOnlyOptimalKHR = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_STENCIL_READ_ONLY_OPTIMAL_KHR
+	};
+
 	extern const std::unordered_map<Format, size_t> format_sizes;
 
 } }

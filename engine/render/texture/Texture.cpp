@@ -43,7 +43,8 @@ namespace core { namespace Device {
 		create_info.arrayLayers = initializer.array_layers;
 		create_info.samples = VK_SAMPLE_COUNT_1_BIT;
 		create_info.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-		create_info.usage = initializer.mode == TextureInitializer::DepthBuffer ? VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT : (VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+		auto transfer_flags = initializer.mode == TextureInitializer::Default ? VK_IMAGE_USAGE_TRANSFER_DST_BIT : 0;
+		create_info.usage = initializer.mode == TextureInitializer::DepthBuffer ? VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT : (transfer_flags | VK_IMAGE_USAGE_SAMPLED_BIT);
 		create_info.queueFamilyIndexCount = 0;
 		create_info.pQueueFamilyIndices = NULL;
 		create_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;

@@ -3,6 +3,9 @@
 #include <unordered_set>
 #include <unordered_map>
 #include <set>
+#include <list>
+#include <queue>
+#include <stack>
 #include <map>
 #include <iostream>
 #include <fstream>

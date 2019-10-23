@@ -42,8 +42,6 @@ set(ENGINE_SOURCES
 	render/buffer/VulkanBuffer.h
 	render/buffer/VulkanBuffer.cpp
 	render/buffer/UniformBuffer.h
-	render/pass/RenderPass.h
-	render/pass/RenderPass.cpp
 	render/material/Material.h
 	render/material/Material.cpp
 	render/renderer/IRenderer.h
@@ -54,6 +52,8 @@ set(ENGINE_SOURCES
 	render/renderer/SceneRenderer.cpp
 	render/renderer/SceneBuffers.h
 	render/renderer/SceneBuffers.cpp
+	render/renderer/RenderGraph.h
+	render/renderer/RenderGraph.cpp
 	render/renderer/RenderOperation.h
 	render/shader/Shader.h
 	render/shader/Shader.cpp
@@ -121,6 +121,7 @@ set(ENGINE_SOURCES
 	system/Input.h
 	system/Input.cpp
 	utils/Math.h
+	utils/DataStructures.h
 	utils/StringUtils.h
 	utils/Math.cpp
 	utils/MeshGeneration.h

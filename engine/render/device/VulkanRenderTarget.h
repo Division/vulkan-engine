@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CommonIncludes.h"
+#include "VulkanCaps.h"
 
 namespace core { namespace Device {
 
@@ -89,6 +90,8 @@ namespace core { namespace Device {
 		bool has_depth = false;
 		VulkanRenderPass* render_pass;
 		std::shared_ptr<Texture> depth_texture;
+		std::array<std::shared_ptr<Texture>, caps::MAX_FRAMES_IN_FLIGHT> color_textures;
+		std::array<vk::Image, caps::MAX_FRAMES_IN_FLIGHT> color_texture_images;
 
 		vk::Format color_format = vk::Format::eB8G8R8A8Snorm;
 		vk::Format depth_format = vk::Format::eD24UnormS8Uint;
