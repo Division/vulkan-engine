@@ -139,8 +139,7 @@ namespace core { namespace Device {
 		// Render target and render pass
 		render_pass = std::make_unique<VulkanRenderPass>(VulkanRenderPassInitializer((Format)GetImageFormat(), true));
 
-		auto render_target_initializer = VulkanRenderTargetInitializer(render_pass.get()).Swapchain(this);
-
+		auto render_target_initializer = VulkanRenderTargetInitializer(this).DepthTarget(render_pass->GetDepthFormat());
 		render_target = std::make_unique<VulkanRenderTarget>(render_target_initializer);
 	}
 

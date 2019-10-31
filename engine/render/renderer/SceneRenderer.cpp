@@ -71,6 +71,7 @@ namespace core { namespace render {
 		render_queues[(size_t)queue].push_back(draw_call);
 	}
 
+
 	void SceneRenderer::RenderScene(Scene* scene)
 	{
 		auto* context = Engine::GetVulkanContext();
@@ -140,7 +141,7 @@ namespace core { namespace render {
 		mode.SetDepthTestEnabled(true);
 		mode.SetDepthFunc(CompareOp::Less);
 
-		auto* command_buffer = render_state->BeginRendering(*swapchain->GetRenderTarget());
+		auto* command_buffer = render_state->BeginRendering(*swapchain->GetRenderTarget(), *swapchain->GetRenderPass());
 		render_state->SetRenderMode(mode);
 		for (auto* draw_call : render_queues[(size_t)RenderQueue::Opaque])
 		{

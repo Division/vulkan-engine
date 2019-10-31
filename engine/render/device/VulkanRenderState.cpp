@@ -457,7 +457,7 @@ namespace core { namespace Device {
 		command_buffer.drawIndexed(static_cast<uint32_t>(mesh->indexCount()), 1, 0, 0, 0);
 	}
 
-	VulkanCommandBuffer* VulkanRenderState::BeginRendering(const VulkanRenderTarget& render_target)
+	VulkanCommandBuffer* VulkanRenderState::BeginRendering(const VulkanRenderTarget& render_target, const VulkanRenderPass& render_pass)
 	{
 		dirty_flags = (uint32_t)DirtyFlags::All;
 		current_frame = (current_frame + 1) % caps::MAX_FRAMES_IN_FLIGHT;
@@ -471,7 +471,7 @@ namespace core { namespace Device {
 		for (auto& set_data : descriptor_sets)
 			set_data.hash = 0;
 
-		SetRenderPass(*render_target.GetRenderPass());
+		SetRenderPass(render_pass);
 
 		auto begin_info = vk::CommandBufferBeginInfo();
 		auto command_buffer = GetCurrentCommandBuffer()->GetCommandBuffer();

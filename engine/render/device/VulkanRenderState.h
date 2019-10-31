@@ -162,7 +162,7 @@ namespace core { namespace Device {
 		void RenderDrawCall(const core::render::DrawCall* draw_call);
 		VulkanCommandBuffer* GetCurrentCommandBuffer() const { return command_buffers[current_frame]; }
 
-		VulkanCommandBuffer* BeginRendering(const VulkanRenderTarget& render_target);
+		VulkanCommandBuffer* BeginRendering(const VulkanRenderTarget& render_target, const VulkanRenderPass& render_pass);
 		void EndRendering();
 		
 	private:

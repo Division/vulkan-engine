@@ -74,7 +74,7 @@ namespace core { namespace Device {
 		vk::AttachmentDescription* current_attachment = nullptr;
 		std::vector<vk::AttachmentDescription> color_attachments;
 		vk::AttachmentDescription depth_attachment;
-		bool has_depth;
+		bool has_depth = false;
 	};
 
 	class VulkanRenderPass
@@ -85,7 +85,7 @@ namespace core { namespace Device {
 		vk::RenderPass GetRenderPass() const { return render_pass.get(); }
 
 		bool HasDepth() const { return has_depth; }
-		vk::Format GetDepthFormat() const { return depth_format; }
+		Format GetDepthFormat() const { return (Format)depth_format; }
 
 		uint32_t GetHash() const { return hash; };
 

@@ -1,6 +1,7 @@
 #pragma once 
 
 #include "CommonIncludes.h"
+#include "Types.h"
 
 namespace core { namespace Device {
 
@@ -13,7 +14,7 @@ namespace core { namespace Device {
 		VulkanSwapchain(vk::SurfaceKHR surface, uint32_t width, uint32_t height, VulkanSwapchain* old_swapchain = nullptr);
 
 		vk::SwapchainKHR GetSwapchain() const { return swapchain.get(); }
-		vk::Format GetImageFormat() const { return image_format; }
+		Format GetImageFormat() const { return (Format)image_format; }
 		vk::Extent2D GetExtent() const { return vk::Extent2D(width, height); }
 		uint32_t GetWidth() const { return width; }
 		uint32_t GetHeight() const { return height; }

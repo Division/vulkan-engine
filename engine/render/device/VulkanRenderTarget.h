@@ -11,20 +11,15 @@ namespace core { namespace Device {
 
 	struct VulkanRenderTargetInitializer {
 
-		VulkanRenderTargetInitializer(VulkanRenderPass* render_pass)
+		VulkanRenderTargetInitializer(uint32_t width, uint32_t height)
 		{
-			if (!render_pass)
-				throw std::runtime_error("Render pass should be specified");
-
-			this->render_pass = render_pass;
-			this->use_swapchain = use_swapchain;
+			Size(width, height);
 		}
 
-		VulkanRenderTargetInitializer& Swapchain(VulkanSwapchain* swapchain)
+		VulkanRenderTargetInitializer(VulkanSwapchain* swapchain)
 		{
 			use_swapchain = true;
 			this->swapchain = swapchain;
-			return *this;
 		}
 
 		VulkanRenderTargetInitializer& Size(uint32_t width, uint32_t height) 
@@ -34,7 +29,7 @@ namespace core { namespace Device {
 			return *this;
 		}
 
-		VulkanRenderTargetInitializer& ColorTarget(uint32_t sampleCount = 1, vk::Format colorFormat = vk::Format::eB8G8R8A8Snorm) 
+		VulkanRenderTargetInitializer& ColorTarget(uint32_t sampleCount = 1, Format colorFormat = Format::R8G8B8A8_norm) 
 		{
 			has_color = true;
 			this->sample_count = sampleCount;
@@ -42,7 +37,7 @@ namespace core { namespace Device {
 			return *this;
 		}
 
-		VulkanRenderTargetInitializer& DepthTarget(vk::Format depthFormat = vk::Format::eD24UnormS8Uint)
+		VulkanRenderTargetInitializer& DepthTarget(Format depthFormat = Format::D24_unorm_S8_uint)
 		{
 			has_depth = true;
 			this->depth_format = depthFormat;
@@ -56,9 +51,8 @@ namespace core { namespace Device {
 		bool has_color = false;
 		bool has_depth = false;
 		VulkanSwapchain* swapchain = nullptr;
-		VulkanRenderPass* render_pass;
-		vk::Format color_format = vk::Format::eB8G8R8A8Snorm;
-		vk::Format depth_format = vk::Format::eD24UnormS8Uint;
+		Format color_format = Format::R8G8B8A8_norm;
+		Format depth_format = Format::D24_unorm_S8_uint;
 	};
 
 	class VulkanRenderTarget
@@ -73,11 +67,9 @@ namespace core { namespace Device {
 
 		VulkanRenderTarget(VulkanRenderTargetInitializer initializer);
 
-		void Resize(uint32_t width, uint32_t height);
 		const Frame& GetFrame(int index) const { return frames.at(index); }
 		uint32_t GetWidth() const { return  width; }
 		uint32_t GetHeight() const { return  height; }
-		VulkanRenderPass* GetRenderPass() const { return render_pass; }
 
 	private:
 		std::vector<Frame> frames;
@@ -88,13 +80,12 @@ namespace core { namespace Device {
 		VulkanSwapchain* swapchain;
 		bool has_color = false;
 		bool has_depth = false;
-		VulkanRenderPass* render_pass;
 		std::shared_ptr<Texture> depth_texture;
 		std::array<std::shared_ptr<Texture>, caps::MAX_FRAMES_IN_FLIGHT> color_textures;
 		std::array<vk::Image, caps::MAX_FRAMES_IN_FLIGHT> color_texture_images;
 
-		vk::Format color_format = vk::Format::eB8G8R8A8Snorm;
-		vk::Format depth_format = vk::Format::eD24UnormS8Uint;
+		Format color_format;
+		Format depth_format;
 	};
 
 } }
