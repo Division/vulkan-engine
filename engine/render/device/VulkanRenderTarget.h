@@ -65,11 +65,12 @@ namespace core { namespace Device {
 			vk::UniqueFramebuffer framebuffer;
 		};
 
-		VulkanRenderTarget(VulkanRenderTargetInitializer initializer);
+		VulkanRenderTarget(const VulkanRenderTargetInitializer& initializer);
 
 		const Frame& GetFrame(int index) const { return frames.at(index); }
 		uint32_t GetWidth() const { return  width; }
 		uint32_t GetHeight() const { return  height; }
+		bool IsSwapchain() const { return swapchain != nullptr; }
 
 	private:
 		std::vector<Frame> frames;
@@ -77,7 +78,7 @@ namespace core { namespace Device {
 		uint32_t width = 0;
 		uint32_t height = 0;
 		bool use_swapchain = false;
-		VulkanSwapchain* swapchain;
+		VulkanSwapchain* swapchain = nullptr;
 		bool has_color = false;
 		bool has_depth = false;
 		std::shared_ptr<Texture> depth_texture;

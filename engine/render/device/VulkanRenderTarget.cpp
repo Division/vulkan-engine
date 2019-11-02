@@ -8,7 +8,7 @@
 namespace core { namespace Device {
 
 	
-	VulkanRenderTarget::VulkanRenderTarget(VulkanRenderTargetInitializer initializer)
+	VulkanRenderTarget::VulkanRenderTarget(const VulkanRenderTargetInitializer& initializer)
 		: sample_count(initializer.sample_count)
 		, use_swapchain(initializer.use_swapchain)
 		, swapchain(initializer.swapchain)

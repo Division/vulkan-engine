@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CommonIncludes.h"
+#include "render/device/Types.h"
 
 namespace core
 {
@@ -9,6 +10,7 @@ namespace core
 		class Texture;
 		class VulkanBuffer;
 		class VulkanRenderTarget;
+		class VulkanRenderPass;
 	}
 }
 
@@ -50,6 +52,8 @@ namespace core { namespace render { namespace graph {
 			return reinterpret_cast<VulkanRenderTarget*>(resource_pointer);
 		}
 
+		ImageLayout image_layout = ImageLayout::Undefined;
+
 	};
 
 	struct Pass;
@@ -60,6 +64,7 @@ namespace core { namespace render { namespace graph {
 		Pass* render_pass = nullptr;
 		uint32_t index = -1;
 		uint32_t order = 0;
+		uint32_t group; // to discard all nodes not connected to present node
 		bool on_stack = false;
 		bool visited = false;
 	};
@@ -68,20 +73,21 @@ namespace core { namespace render { namespace graph {
 
 	struct Pass
 	{
-		typedef std::function<void(IRenderPassBuilder& builder)> InitCallback;
+		//typedef std::function<void(IRenderPassBuilder& builder)> InitCallback;
 		typedef std::function<void()> RecordCallback;
 
 		Pass() = default;
 		Pass(Pass&&) = default;
-		Pass(char* name, Pass::InitCallback init_callback, Pass::RecordCallback record_callback)
-			: name(name), init_callback(init_callback), record_callback(record_callback) {}
+		Pass& operator=(Pass&&) = default;
+		Pass(const char* name, /*Pass::InitCallback init_callback,*/ Pass::RecordCallback record_callback)
+			: name(name), /*init_callback(init_callback),*/ record_callback(record_callback) {}
 
-		InitCallback init_callback;
+		//InitCallback init_callback;
 		RecordCallback record_callback;
 
-		int order = -1; // distance from present node. -1 for non-visited passes (to be skipped)
+		int order = -1;
 
-		char* name;
+		const char* name;
 		std::vector<DependencyNode*> input_nodes;
 		std::vector<DependencyNode*> output_nodes;
 	};
@@ -101,12 +107,18 @@ namespace core { namespace render { namespace graph {
 		ResourceWrapper* RegisterRenderTarget(VulkanRenderTarget& render_target);
 		ResourceWrapper* RegisterBuffer(VulkanBuffer& buffer);
 
-		void AddPass(char* name, Pass::InitCallback init_callback, Pass::RecordCallback record_callback);
+		template<typename T>
+		T AddPass(char* name, std::function<T(IRenderPassBuilder& builder)> init_callback, Pass::RecordCallback record_callback)
+		{
+			render_passes.push_back(std::make_unique<Pass>(name, record_callback));
+			current_render_pass = render_passes.back().get();
+			return init_callback(*this);
+		}
+
 		void Clear();
 
-		void SetPresentNode(DependencyNode& resource);
 		void Prepare();
-		const std::vector<Pass>& GetRenderPasses() const { return render_passes; }
+		const std::vector<std::unique_ptr<Pass>>& GetRenderPasses() const { return render_passes; }
 
 		// IRenderPassBuilder
 		void AddInput(DependencyNode& node) override;
@@ -117,9 +129,10 @@ namespace core { namespace render { namespace graph {
 	private:
 		Pass* current_render_pass = nullptr;
 		DependencyNode* present_node = nullptr;
-		std::vector<Pass> render_passes;
-		std::vector<ResourceWrapper> resources;
-		std::vector<DependencyNode> nodes;
+		std::vector<std::unique_ptr<Pass>> render_passes;
+		std::vector<std::unique_ptr<ResourceWrapper>> resources;
+		std::vector<std::unique_ptr<DependencyNode>> nodes;
+		std::unordered_map<uint32_t, std::unique_ptr<VulkanRenderPass>> render_pass_cache;
 	};
 
 } } }

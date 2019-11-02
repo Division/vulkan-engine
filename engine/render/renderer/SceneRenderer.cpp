@@ -47,8 +47,10 @@ namespace core { namespace render {
 		light_grid = std::make_unique<LightGrid>();
 		render_graph = std::make_unique<graph::RenderGraph>();
 
-		//VulkanRenderTargetInitializer rt_initializer()
-		//color_target = std::make_unique<VulkanRenderTarget>();
+		VulkanRenderTargetInitializer rt_initializer(1, 1);
+		color_target = std::make_unique<VulkanRenderTarget>(rt_initializer);
+		temp_target1 = std::make_unique<VulkanRenderTarget>(rt_initializer);
+		temp_target2 = std::make_unique<VulkanRenderTarget>(rt_initializer);
 	}
 
 	ShaderBufferStruct::Camera camera_data;
@@ -70,7 +72,6 @@ namespace core { namespace render {
 		auto* draw_call = GetDrawCall(rop);
 		render_queues[(size_t)queue].push_back(draw_call);
 	}
-
 
 	void SceneRenderer::RenderScene(Scene* scene)
 	{
@@ -131,7 +132,62 @@ namespace core { namespace render {
 		auto* swapchain = context->GetSwapchain();
 		// Render Graph
 		render_graph->Clear();
-		//auto* main_render_target = render_graph->RegisterRenderTarget(*swapchain->GetRenderTarget());
+		auto* main_render_target = render_graph->RegisterRenderTarget(*swapchain->GetRenderTarget());
+		auto* color_render_target = render_graph->RegisterRenderTarget(*color_target);
+		auto* temp_render_target1 = render_graph->RegisterRenderTarget(*temp_target1);
+		auto* temp_render_target2 = render_graph->RegisterRenderTarget(*temp_target2);
+
+		struct PassInfo
+		{
+			graph::DependencyNode* output = nullptr;
+		};
+
+		auto temp1_pass_info = render_graph->AddPass<PassInfo>("temp1", [&](graph::IRenderPassBuilder& builder)
+		{
+			PassInfo result;
+			result.output = builder.AddOutput(*temp_render_target1);
+			return result;
+		}, []()
+		{
+
+		});
+
+		auto temp2_pass_info = render_graph->AddPass<PassInfo>("temp2", [&](graph::IRenderPassBuilder& builder)
+		{
+			PassInfo result;
+			result.output = builder.AddOutput(*temp_render_target1);
+			return result;
+		}, []()
+		{
+
+		});
+
+		auto color_pass_info = render_graph->AddPass<PassInfo>("color", [&](graph::IRenderPassBuilder& builder)
+		{
+			PassInfo result;
+			builder.AddInput(*temp2_pass_info.output);
+			result.output = builder.AddOutput(*color_render_target);
+			return result;
+		}, []()
+		{
+
+		});
+
+		auto main_pass_info = render_graph->AddPass<PassInfo>("main", [&](graph::IRenderPassBuilder& builder)
+		{
+			PassInfo result;
+			builder.AddInput(*color_pass_info.output);
+			builder.AddInput(*temp2_pass_info.output);
+			builder.AddInput(*temp1_pass_info.output);
+			result.output = builder.AddOutput(*main_render_target);
+			return result;
+		}, []()
+		{
+
+		});
+
+		render_graph->Prepare();
+
 		//render_graph->SetPresentNode();
 		//
 
