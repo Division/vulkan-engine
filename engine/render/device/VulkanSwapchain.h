@@ -7,6 +7,7 @@ namespace core { namespace Device {
 
 	class VulkanRenderPass;
 	class VulkanRenderTarget;
+	class VulkanRenderTargetAttachment;
 
 	class VulkanSwapchain : NonCopyable
 	{
@@ -29,8 +30,11 @@ namespace core { namespace Device {
 		uint32_t height;
 		std::vector<vk::Image> images;
 		vk::Format image_format;
+		uint32_t sample_count = 1;
 		std::unique_ptr<VulkanRenderPass> render_pass;
 		std::unique_ptr<VulkanRenderTarget> render_target;
+		std::unique_ptr<VulkanRenderTargetAttachment> color_attachment;
+		std::unique_ptr<VulkanRenderTargetAttachment> depth_attachment;
 	};
 
 } }

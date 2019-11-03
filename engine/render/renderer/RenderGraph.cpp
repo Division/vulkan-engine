@@ -206,13 +206,13 @@ namespace core { namespace render { namespace graph {
 
 						if (render_target->HasColor())
 						{
-							initializer.AddColorAttachment(render_target->GetColorFormat());
+							//initializer.AddColorAttachment(render_target->GetColorFormat());
 							initializer.SetLoadStoreOp(AttachmentLoadOp::Clear, AttachmentStoreOp::Store);
 						}
 
 						if (render_target->HasDepth())
 						{
-							initializer.AddDepthAttachment(render_target->GetDepthFormat());
+							//initializer.AddDepthAttachment(render_target->GetDepthFormat());
 							initializer.SetLoadStoreOp(AttachmentLoadOp::Clear, AttachmentStoreOp::Store);
 						}
 

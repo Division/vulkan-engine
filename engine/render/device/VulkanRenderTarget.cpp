@@ -7,6 +7,11 @@
 
 namespace core { namespace Device {
 
+	vk::ImageView VulkanRenderTargetAttachment::GetImageView(uint32_t frame) const 
+	{ 
+		return type == Type::Color ? frames[frame].image_view : depth_texture->GetImageView(); 
+	}
+
 	VulkanRenderTargetAttachment::VulkanRenderTargetAttachment(Type type, uint32_t width, uint32_t height, Format format, uint32_t sample_count)
 		: type(type), format(format), width(width), height(height)
 	{
@@ -45,110 +50,59 @@ namespace core { namespace Device {
 		}
 	}
 
-	VulkanRenderTargetInitializer& VulkanRenderTargetInitializer::ColorTarget(std::shared_ptr<Texture> texture)
+	VulkanRenderTargetInitializer::VulkanRenderTargetInitializer(VulkanSwapchain* swapchain)
 	{
-		has_color = true;
-		this->sample_count = texture->GetSampleCount();
-		this->color_format = texture->GetFormat();
-		this->color_attachment = texture;
-		return *this;
-	}
-
-	VulkanRenderTargetInitializer& VulkanRenderTargetInitializer::DepthTarget(std::shared_ptr<Texture> texture)
-	{
-		has_depth = true;
-		depth_format = texture->GetFormat();
-		depth_attachment = texture;
-		return *this;
+		memset(&color_attachments, 0, sizeof(color_attachments));
+		this->swapchain = swapchain;
+		this->width = swapchain->GetWidth();
+		this->height = swapchain->GetHeight();
 	}
 
 	VulkanRenderTarget::VulkanRenderTarget(const VulkanRenderTargetInitializer& initializer)
 		: sample_count(initializer.sample_count)
-		, use_swapchain(initializer.use_swapchain)
 		, swapchain(initializer.swapchain)
-		, has_color(initializer.has_color)
-		, has_depth(initializer.has_depth)
-		, color_format(initializer.color_format)
-		, depth_format(initializer.depth_format)
-
+		, color_attachment_count(initializer.color_attachment_count)
+		, color_attachments(initializer.color_attachments)
+		, depth_attachment(initializer.depth_attachment)
+		, width(initializer.width)
+		, height(initializer.height)
 	{
 		auto device = Engine::GetVulkanDevice();
 		VulkanRenderPassInitializer render_pass_initializer;
 
 		const vk::Image* images = nullptr;
-		if (use_swapchain)
+		std::vector<vk::ImageView> attachments[caps::MAX_FRAMES_IN_FLIGHT];
+		for (int i = 0; i < color_attachment_count; i++)
 		{
-			has_color = true;
-			width = swapchain->GetWidth();
-			height = swapchain->GetHeight();
-			images = swapchain->GetImages().data();
-			color_format = swapchain->GetImageFormat();
-			frames.resize(swapchain->GetImages().size());
-		} else if (has_color)
-		{
-			TextureInitializer color_texture_init(width, height, 1, 1, color_format);
-			color_texture_init.SetColorTarget();
-			for (int i = 0; i < color_textures.size(); i++)
-			{
-				color_textures[i] = std::make_shared<Texture>(color_texture_init);
-				color_texture_images[i] = color_textures[i]->GetImage();
-			}
-			images = color_texture_images.data();
-			frames.resize(color_textures.size());
-		}
-
-		if (has_color)
-		{
-			render_pass_initializer.AddColorAttachment(color_format);
+			assert(color_attachments[i]->GetType() == VulkanRenderTargetAttachment::Type::Color);
+			assert(color_attachments[i]->GetWidth() == width && color_attachments[i]->GetHeight() == height);
+			render_pass_initializer.AddColorAttachment(color_attachments[i]->GetFormat());
 			render_pass_initializer.SetLoadStoreOp(AttachmentLoadOp::DontCare, AttachmentStoreOp::Store);
 			render_pass_initializer.SetImageLayout(ImageLayout::Undefined, ImageLayout::ColorAttachmentOptimal);
+
+			for (int j = 0; j < caps::MAX_FRAMES_IN_FLIGHT; j++)
+				attachments[j].push_back(color_attachments[i]->GetImageView(j));
 		}
 
-		if (has_depth)
+		if (depth_attachment)
 		{
-			render_pass_initializer.AddDepthAttachment(depth_format);
+			assert(depth_attachment->GetType() == VulkanRenderTargetAttachment::Type::Depth);
+			assert(depth_attachment->GetWidth() == width && depth_attachment->GetHeight() == height);
+			render_pass_initializer.AddDepthAttachment(depth_attachment->GetFormat());
 			render_pass_initializer.SetLoadStoreOp(AttachmentLoadOp::DontCare, AttachmentStoreOp::Store);
 			render_pass_initializer.SetImageLayout(ImageLayout::Undefined, ImageLayout::DepthStencilAttachmentOptimal);
-
-			TextureInitializer depth_texture_init(width, height, 1, 1, depth_format);
-			depth_texture_init.SetDepth();
-			depth_texture = std::make_shared<Texture>(depth_texture_init);
+			
+			for (int j = 0; j < caps::MAX_FRAMES_IN_FLIGHT; j++)
+				attachments[j].push_back(depth_attachment->GetImageView(j));
 		}
 
 		VulkanRenderPass render_pass(render_pass_initializer);
 
-		// Frame data: image views and framebuffers
-		if (has_color)
+		for (int j = 0; j < caps::MAX_FRAMES_IN_FLIGHT; j++)
 		{
-			for (size_t i = 0; i < frames.size(); i++)
-			{
-				auto& frame = frames[i];
-
-				if (IsSwapchain())
-				{
-					vk::ImageSubresourceRange range(vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1);
-					vk::ImageViewCreateInfo view_create_info({}, images[i], vk::ImageViewType::e2D, (vk::Format)color_format, vk::ComponentMapping(), range);
-					frame.swapchain_image_view = device.createImageViewUnique(view_create_info);
-					frame.image_view = frame.swapchain_image_view.get();
-				} else 
-				{
-					frame.image_view = color_textures[i]->GetImageView();
-				}
-
-				vk::ImageView attachments[] = {
-					frame.image_view,
-					has_depth ? depth_texture->GetImageView() : vk::ImageView()
-				};
-
-				uint32_t attachment_count = has_depth ? 2 : 1;
-
-				vk::FramebufferCreateInfo framebuffer_create_info({}, render_pass.GetRenderPass(), attachment_count, attachments, width, height, 1);
-				frame.framebuffer = device.createFramebufferUnique(framebuffer_create_info);
-			}
+			vk::FramebufferCreateInfo framebuffer_create_info({}, render_pass.GetRenderPass(), attachments[j].size(), attachments[j].data(), width, height, 1);
+			framebuffers[j] = device.createFramebufferUnique(framebuffer_create_info);
 		}
-
-		this->width = width;
-		this->height = height;
 	}
 
 } }

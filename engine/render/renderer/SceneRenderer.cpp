@@ -47,10 +47,10 @@ namespace core { namespace render {
 		light_grid = std::make_unique<LightGrid>();
 		render_graph = std::make_unique<graph::RenderGraph>();
 
-		VulkanRenderTargetInitializer rt_initializer(1, 1);
+		/*VulkanRenderTargetInitializer rt_initializer(1, 1);
 		color_target = std::make_unique<VulkanRenderTarget>(rt_initializer);
 		temp_target1 = std::make_unique<VulkanRenderTarget>(rt_initializer);
-		temp_target2 = std::make_unique<VulkanRenderTarget>(rt_initializer);
+		temp_target2 = std::make_unique<VulkanRenderTarget>(rt_initializer);*/
 	}
 
 	ShaderBufferStruct::Camera camera_data;

@@ -175,7 +175,7 @@ namespace core { namespace Device {
 
 			vk::RenderPassBeginInfo render_pass_begin_info(
 				current_render_pass->GetRenderPass(),
-				current_render_target->GetFrame(context->GetCurrentFrame()).framebuffer.get(),
+				current_render_target->GetFramebuffer(context->GetCurrentFrame()),
 				vk::Rect2D(vk::Offset2D(0, 0), vk::Extent2D(current_render_target->GetWidth(), current_render_target->GetHeight())),
 				2, clear_value
 			);
