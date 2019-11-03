@@ -68,6 +68,9 @@ namespace core { namespace Device {
 		const vk::ImageView& GetImageView() const { return image_view.get(); }
 		void* Texture::Map();
 		void Texture::Unmap();
+		Format GetFormat() const { return format; }
+		uint32_t GetSampleCount() const { return 1; /* not implemented */ }
+		uint32_t GetHash() const;
 
 	private:
 		void SetupRGBA(const TextureInitializer& initializer);

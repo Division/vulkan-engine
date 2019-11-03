@@ -41,8 +41,7 @@ namespace core { namespace Device {
 		vk::SubpassDependency subpass_dependency(
 			VK_SUBPASS_EXTERNAL,
 			0,
-			vk
-			::PipelineStageFlagBits::eColorAttachmentOutput, 
+			vk::PipelineStageFlagBits::eColorAttachmentOutput, 
 			vk::PipelineStageFlagBits::eColorAttachmentOutput, 
 			{},
 			vk::AccessFlagBits::eColorAttachmentRead | vk::AccessFlagBits::eColorAttachmentWrite

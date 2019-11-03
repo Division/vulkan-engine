@@ -7,7 +7,61 @@
 
 namespace core { namespace Device {
 
-	
+	VulkanRenderTargetAttachment::VulkanRenderTargetAttachment(Type type, uint32_t width, uint32_t height, Format format, uint32_t sample_count)
+		: type(type), format(format), width(width), height(height)
+	{
+		TextureInitializer texture_init(width, height, 1, 1, format);
+
+		switch (type)
+		{
+		case Type::Color:
+			texture_init.SetColorTarget();
+			for (int i = 0; i < frames.size(); i++)
+			{
+				frames[i].color_texture = std::make_shared<Texture>(texture_init);
+				frames[i].image_view = frames[i].color_texture->GetImageView();
+			}
+			
+			break;
+
+		case Type::Depth:
+			texture_init.SetDepth();
+			depth_texture = std::make_shared<Texture>(texture_init);
+			break;
+		}
+	}
+
+	VulkanRenderTargetAttachment::VulkanRenderTargetAttachment(VulkanSwapchain* swapchain)
+		: swapchain(swapchain), width(swapchain->GetWidth()), height(swapchain->GetHeight()), type(Type::Color), format(swapchain->GetImageFormat())
+	{
+		auto device = Engine::GetVulkanDevice();
+		auto& swapchain_images = swapchain->GetImages();
+		for (int i = 0; i < frames.size(); i++)
+		{
+			vk::ImageSubresourceRange range(vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1);
+			vk::ImageViewCreateInfo view_create_info({}, swapchain_images[i], vk::ImageViewType::e2D, (vk::Format)format, vk::ComponentMapping(), range);
+			frames[i].swapchain_image_view = device.createImageViewUnique(view_create_info);
+			frames[i].image_view = frames[i].swapchain_image_view.get();
+		}
+	}
+
+	VulkanRenderTargetInitializer& VulkanRenderTargetInitializer::ColorTarget(std::shared_ptr<Texture> texture)
+	{
+		has_color = true;
+		this->sample_count = texture->GetSampleCount();
+		this->color_format = texture->GetFormat();
+		this->color_attachment = texture;
+		return *this;
+	}
+
+	VulkanRenderTargetInitializer& VulkanRenderTargetInitializer::DepthTarget(std::shared_ptr<Texture> texture)
+	{
+		has_depth = true;
+		depth_format = texture->GetFormat();
+		depth_attachment = texture;
+		return *this;
+	}
+
 	VulkanRenderTarget::VulkanRenderTarget(const VulkanRenderTargetInitializer& initializer)
 		: sample_count(initializer.sample_count)
 		, use_swapchain(initializer.use_swapchain)
@@ -50,7 +104,6 @@ namespace core { namespace Device {
 			render_pass_initializer.SetImageLayout(ImageLayout::Undefined, ImageLayout::ColorAttachmentOptimal);
 		}
 
-
 		if (has_depth)
 		{
 			render_pass_initializer.AddDepthAttachment(depth_format);
@@ -71,12 +124,19 @@ namespace core { namespace Device {
 			{
 				auto& frame = frames[i];
 
-				vk::ImageSubresourceRange range(vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1);
-				vk::ImageViewCreateInfo view_create_info({}, images[i], vk::ImageViewType::e2D, (vk::Format)color_format, vk::ComponentMapping(), range);
-				frame.image_view = device.createImageViewUnique(view_create_info);
+				if (IsSwapchain())
+				{
+					vk::ImageSubresourceRange range(vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1);
+					vk::ImageViewCreateInfo view_create_info({}, images[i], vk::ImageViewType::e2D, (vk::Format)color_format, vk::ComponentMapping(), range);
+					frame.swapchain_image_view = device.createImageViewUnique(view_create_info);
+					frame.image_view = frame.swapchain_image_view.get();
+				} else 
+				{
+					frame.image_view = color_textures[i]->GetImageView();
+				}
 
 				vk::ImageView attachments[] = {
-					frame.image_view.get(),
+					frame.image_view,
 					has_depth ? depth_texture->GetImageView() : vk::ImageView()
 				};
 

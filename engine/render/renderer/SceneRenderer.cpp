@@ -132,7 +132,7 @@ namespace core { namespace render {
 		auto* swapchain = context->GetSwapchain();
 		// Render Graph
 		render_graph->Clear();
-		auto* main_render_target = render_graph->RegisterRenderTarget(*swapchain->GetRenderTarget());
+		/*auto* main_render_target = render_graph->RegisterRenderTarget(*swapchain->GetRenderTarget());
 		auto* color_render_target = render_graph->RegisterRenderTarget(*color_target);
 		auto* temp_render_target1 = render_graph->RegisterRenderTarget(*temp_target1);
 		auto* temp_render_target2 = render_graph->RegisterRenderTarget(*temp_target2);
@@ -186,10 +186,7 @@ namespace core { namespace render {
 
 		});
 
-		render_graph->Prepare();
-
-		//render_graph->SetPresentNode();
-		//
+		render_graph->Prepare(); */
 
 		auto* render_state = context->GetRenderState();
 		RenderMode mode;

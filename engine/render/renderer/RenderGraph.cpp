@@ -2,6 +2,12 @@
 #include "utils/DataStructures.h"
 #include "render/device/VulkanRenderPass.h"
 #include "render/device/VulkanRenderTarget.h"
+#include "render/device/VulkanContext.h"
+#include "render/device/VulkanSwapchain.h"
+#include "render/device/VulkanRenderState.h"
+#include "render/texture/Texture.h"
+
+#include "Engine.h"
 
 namespace core { namespace render { namespace graph {
 
@@ -10,17 +16,25 @@ namespace core { namespace render { namespace graph {
 		return std::any_of(resources.begin(), resources.end(), [=](auto& item) { return item->resource_pointer == resource; });
 	}
 
-	ResourceWrapper* RenderGraph::RegisterRenderTarget(VulkanRenderTarget& render_target)
+	ResourceWrapper* RenderGraph::RegisterRenderTarget(std::shared_ptr<Texture>& render_target, bool is_depth)
 	{
 		assert(!ResourceRegistered(&render_target));
-		resources.emplace_back(std::make_unique<ResourceWrapper>(ResourceType::RenderTarget, &render_target));
+		auto type = is_depth ? ResourceType::DepthAttachment : ResourceType::ColorAttachment;
+		resources.emplace_back(std::make_unique<ResourceWrapper>(type, &render_target));
 		return resources.back().get();
 	}
 
 	ResourceWrapper* RenderGraph::RegisterBuffer(VulkanBuffer& buffer)
 	{
 		assert(!ResourceRegistered(&buffer));
-		resources.emplace_back(std::make_unique<ResourceWrapper>(ResourceType::RenderTarget, &buffer));
+		resources.emplace_back(std::make_unique<ResourceWrapper>(ResourceType::Buffer, &buffer));
+		return resources.back().get();
+	}
+
+	ResourceWrapper* RenderGraph::RegisterSwapchain(VulkanSwapchain& swapchain)
+	{
+		assert(!ResourceRegistered(&swapchain));
+		resources.emplace_back(std::make_unique<ResourceWrapper>(ResourceType::Swapchain, &swapchain));
 		return resources.back().get();
 	}
 
@@ -32,9 +46,9 @@ namespace core { namespace render { namespace graph {
 		present_node = nullptr;
 	}
 
-	void RenderGraph::AddInput(DependencyNode& node)
+	void RenderGraph::AddInput(DependencyNode& node, InputUsage usage)
 	{
-		current_render_pass->input_nodes.push_back(&node);
+		current_render_pass->input_nodes.push_back(std::make_pair(&node, usage));
 	}
 
 	DependencyNode* RenderGraph::AddOutput(ResourceWrapper& resource)
@@ -46,13 +60,18 @@ namespace core { namespace render { namespace graph {
 		node->render_pass = current_render_pass;
 		current_render_pass->output_nodes.push_back(node);
 
-		if (resource.type == ResourceType::RenderTarget && resource.GetRenderTarget()->IsSwapchain())
+		if (resource.type == ResourceType::Swapchain)
 		{
 			assert(!present_node);
 			present_node = node;
 		}
 
 		return node;
+	}
+
+	void RenderGraph::SetCompute()
+	{
+		current_render_pass->is_compute = true;
 	}
 
 	void RenderGraph::Prepare()
@@ -62,7 +81,7 @@ namespace core { namespace render { namespace graph {
 		for (auto& pass : render_passes)
 			for (auto& input : pass->input_nodes)
 				for (auto& output : pass->output_nodes)
-					graph.AddEdge(input->index, output->index);
+					graph.AddEdge(input.first->index, output->index);
 
 		std::stack<uint32_t> stack;
 		std::stack<uint32_t> execution_order;
@@ -110,6 +129,7 @@ namespace core { namespace render { namespace graph {
 		{
 			nodes[execution_order.top()]->order = current_order;
 			
+			//if (nodes[execution_order.top()]->group == present_node->group)
 				nodes[execution_order.top()]->render_pass->order = std::max(nodes[execution_order.top()]->render_pass->order, current_order);
 
 			current_order += 1;
@@ -120,7 +140,135 @@ namespace core { namespace render { namespace graph {
 			return a->order < b->order;
 		});
 
+		for (auto& pass : render_passes)
+		{
+			if (pass->order == -1)
+				continue;
 
+			OutputDebugStringA("Pass ");
+			OutputDebugStringA(pass->name);
+			OutputDebugStringA("\n");
+		}
+
+		OutputDebugStringA("=============================\n");
+
+	}
+
+	VulkanRenderPassInitializer GetPassInitializer(Pass* pass)
+	{
+		VulkanRenderPassInitializer initializer;
+
+		if (pass->is_compute)
+		{
+			throw std::runtime_error("not implemented");
+		} else
+		{
+			for (auto* output : pass->output_nodes)
+			{
+				auto* resource = output->resource;
+				switch (resource->type)
+				{
+				case ResourceType::ColorAttachment:
+					{
+						auto& texture = *resource->GetAttachment();
+						initializer.AddColorAttachment(texture->GetFormat());
+						initializer.SetLoadStoreOp(AttachmentLoadOp::Clear, AttachmentStoreOp::Store);
+
+						if (resource->last_operation != ResourceWrapper::LastOperation::None)
+							throw std::runtime_error("write after read/write not implemented");
+						auto initial_layout = ImageLayout::Undefined;
+
+						initializer.SetImageLayout(initial_layout, ImageLayout::ColorAttachmentOptimal);
+						break;
+					}
+
+				case ResourceType::DepthAttachment:
+					{
+						auto& texture = *resource->GetAttachment();
+						initializer.AddDepthAttachment(texture->GetFormat());
+						initializer.SetLoadStoreOp(AttachmentLoadOp::Clear, AttachmentStoreOp::Store);
+
+						if (resource->last_operation != ResourceWrapper::LastOperation::None)
+							throw std::runtime_error("write after read/write not implemented");
+						auto initial_layout = ImageLayout::Undefined;
+
+						initializer.SetImageLayout(initial_layout, ImageLayout::DepthStencilAttachmentOptimal);
+						break;
+					}
+
+				case ResourceType::Swapchain:
+					{
+						auto* swapchain = resource->GetSwapchain();
+
+						auto* render_target = swapchain->GetRenderTarget();
+
+						assert(resource->last_operation == ResourceWrapper::LastOperation::None);
+
+						if (render_target->HasColor())
+						{
+							initializer.AddColorAttachment(render_target->GetColorFormat());
+							initializer.SetLoadStoreOp(AttachmentLoadOp::Clear, AttachmentStoreOp::Store);
+						}
+
+						if (render_target->HasDepth())
+						{
+							initializer.AddDepthAttachment(render_target->GetDepthFormat());
+							initializer.SetLoadStoreOp(AttachmentLoadOp::Clear, AttachmentStoreOp::Store);
+						}
+
+						initializer.SetImageLayout(ImageLayout::Undefined, ImageLayout::DepthStencilAttachmentOptimal);
+						break;
+					}
+
+				default:
+					throw std::runtime_error("not implemented");
+				}
+
+				for (auto& input : pass->input_nodes)
+				{
+					auto* resource = input.first->resource;
+					auto usage = input.second;
+
+					if (usage == InputUsage::DepthAttachment)
+					{
+						assert(!initializer.has_depth);
+						assert(resource->type == ResourceType::DepthAttachment);
+						auto& texture = *resource->GetAttachment();
+						initializer.AddDepthAttachment(texture->GetFormat());
+						initializer.SetLoadStoreOp(AttachmentLoadOp::Load, AttachmentStoreOp::DontCare);
+					}
+				}
+			}
+		}
+
+		return initializer;
+	}
+
+	VulkanRenderPass* RenderGraph::GetRenderPass(const VulkanRenderPassInitializer& initializer)
+	{
+		auto hash = initializer.GetHash();
+		auto iter = render_pass_cache.find(hash);
+		if (iter != render_pass_cache.end())
+			return iter->second.get();
+		
+		auto render_pass = std::make_unique<VulkanRenderPass>(initializer);
+		auto* result = render_pass.get();
+		render_pass_cache[hash] = std::move(render_pass);
+
+		return result;
+	}
+
+	void RenderGraph::Render()
+	{
+		auto* context = Engine::GetVulkanContext();
+
+		for (auto& pass : render_passes)
+		{
+			auto* state = context->GetRenderState();
+			auto pass_initializer = GetPassInitializer(pass.get());
+			auto* vulkan_pass = GetRenderPass(pass_initializer);
+			//state->BeginRendering()
+		}
 	}
 
 } } }

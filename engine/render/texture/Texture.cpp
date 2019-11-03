@@ -5,6 +5,7 @@
 #include "render/device/VulkanContext.h"
 #include "render/device/VulkanUploader.h"
 #include "render/buffer/VulkanBuffer.h"
+#include "utils/Math.h"
 
 namespace core { namespace Device {
 
@@ -131,6 +132,11 @@ namespace core { namespace Device {
 
 		current_staging_buffer = (current_staging_buffer + 1) % caps::MAX_FRAMES_IN_FLIGHT;
 		mapped_pointer = nullptr;
+	}
+
+	uint32_t Texture::GetHash() const
+	{
+		return FastHash(&image_view, sizeof(image_view));
 	}
 
 	Texture::~Texture() 
