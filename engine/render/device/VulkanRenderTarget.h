@@ -23,14 +23,17 @@ namespace core { namespace Device {
 
 		struct Frame
 		{
+			vk::Image image;
 			vk::ImageView image_view;
 			vk::UniqueImageView swapchain_image_view;
 			std::shared_ptr<Texture> color_texture;
 		};
 
 		vk::ImageView GetImageView(uint32_t frame) const;
+		vk::Image GetImage(uint32_t frame) const;
 		VulkanRenderTargetAttachment(Type type, uint32_t width, uint32_t height, Format format, uint32_t sample_count = 1);
 		VulkanRenderTargetAttachment(VulkanSwapchain* swapchain);
+		bool IsSwapchain() const { return (bool)swapchain; }
 
 		Format GetFormat() const { return format; }
 		Type GetType() const { return type; }
@@ -57,6 +60,9 @@ namespace core { namespace Device {
 		}
 
 		VulkanRenderTargetInitializer(VulkanSwapchain* swapchain);
+
+		VulkanRenderTargetInitializer(VulkanRenderTargetInitializer&&) = default;
+		VulkanRenderTargetInitializer& operator=(VulkanRenderTargetInitializer&&) = default;
 
 		VulkanRenderTargetInitializer& Size(uint32_t width, uint32_t height) 
 		{

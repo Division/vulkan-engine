@@ -6,6 +6,8 @@
 
 namespace core { namespace Device {
 
+	class VulkanRenderTargetAttachment;
+
 	struct VulkanRenderPassInitializer {
 
 		VulkanRenderPassInitializer(Format format, bool has_depth, Format depth_format = Format::D24_unorm_S8_uint) 
@@ -29,6 +31,8 @@ namespace core { namespace Device {
 			current_attachment = &color_attachments.back();
 			return *this;
 		}
+
+		VulkanRenderPassInitializer& AddAttachment(const VulkanRenderTargetAttachment& attachment);
 
 		VulkanRenderPassInitializer& AddDepthAttachment(Format format)
 		{

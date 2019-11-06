@@ -164,7 +164,9 @@ namespace core { namespace Device {
 
 		VulkanCommandBuffer* BeginRendering(const VulkanRenderTarget& render_target, const VulkanRenderPass& render_pass);
 		void EndRendering();
-		
+
+		void BeginRecording();
+		void EndRecording();
 	private:
 		struct DescriptorSetData
 		{

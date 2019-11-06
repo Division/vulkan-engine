@@ -135,18 +135,8 @@ namespace core { namespace Device {
 		height = extent.height;
 
 		images = device.getSwapchainImagesKHR(swapchain.get());
-
-		// Render target and render pass
-		render_pass = std::make_unique<VulkanRenderPass>(VulkanRenderPassInitializer((Format)GetImageFormat(), true));
-
 		color_attachment = std::make_unique<VulkanRenderTargetAttachment>(this);
-		depth_attachment = std::make_unique<VulkanRenderTargetAttachment>(VulkanRenderTargetAttachment::Type::Depth, GetWidth(), GetHeight(), render_pass->GetDepthFormat(), sample_count);
-
-		auto render_target_initializer = VulkanRenderTargetInitializer(this);
-		render_target_initializer.AddAttachment(*color_attachment);
-		render_target_initializer.AddAttachment(*depth_attachment);
-
-		render_target = std::make_unique<VulkanRenderTarget>(render_target_initializer);
+		depth_attachment = std::make_unique<VulkanRenderTargetAttachment>(VulkanRenderTargetAttachment::Type::Depth, GetWidth(), GetHeight(), Format::D24_unorm_S8_uint, sample_count);
 	}
 
 } }

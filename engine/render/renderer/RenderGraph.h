@@ -12,7 +12,10 @@ namespace core
 		class VulkanRenderTarget;
 		class VulkanRenderPass;
 		class VulkanSwapchain;
+		class VulkanRenderTargetAttachment;
+		class VulkanRenderState;
 		struct VulkanRenderPassInitializer;
+		struct VulkanRenderTargetInitializer;
 	}
 }
 
@@ -24,9 +27,7 @@ namespace core { namespace render { namespace graph {
 	enum class ResourceType : int
 	{
 		None,
-		Swapchain,
-		ColorAttachment,
-		DepthAttachment,
+		Attachment,
 		Buffer
 	};
 
@@ -57,22 +58,17 @@ namespace core { namespace render { namespace graph {
 		ResourceWrapper() = default;
 		ResourceWrapper(ResourceType type, void* pointer) : type(type), resource_pointer(pointer) {}
 
+
 		VulkanBuffer* GetBuffer() const
 		{
 			if (type != ResourceType::Buffer) return nullptr;
 			return reinterpret_cast<VulkanBuffer*>(resource_pointer);
 		}
 
-		VulkanSwapchain* GetSwapchain() const
+		VulkanRenderTargetAttachment* GetAttachment() const
 		{
-			if (type != ResourceType::Swapchain) return nullptr;
-			return reinterpret_cast<VulkanSwapchain*>(resource_pointer);
-		}
-
-		std::shared_ptr<Texture>* GetAttachment() const
-		{
-			if (type != ResourceType::ColorAttachment && type != ResourceType::DepthAttachment) return nullptr;
-			return reinterpret_cast<std::shared_ptr<Texture>*>(resource_pointer);
+			if (type != ResourceType::Attachment) return nullptr;
+			return reinterpret_cast<VulkanRenderTargetAttachment*>(resource_pointer);
 		}
 
 		LastOperation last_operation = LastOperation::None;
@@ -97,7 +93,7 @@ namespace core { namespace render { namespace graph {
 
 	struct Pass
 	{
-		typedef std::function<void()> RecordCallback;
+		typedef std::function<void(VulkanRenderState& state)> RecordCallback;
 
 		Pass() = default;
 		Pass(Pass&&) = default;
@@ -130,9 +126,9 @@ namespace core { namespace render { namespace graph {
 	class RenderGraph : public IRenderPassBuilder
 	{
 	public:
-		ResourceWrapper* RegisterRenderTarget(std::shared_ptr<Texture>& render_target, bool is_depth);
+		ResourceWrapper* RegisterAttachment(VulkanRenderTargetAttachment& attachment);
 		ResourceWrapper* RegisterBuffer(VulkanBuffer& buffer);
-		ResourceWrapper* RegisterSwapchain(VulkanSwapchain& swapchain);
+		//ResourceWrapper* RegisterSwapchain(VulkanSwapchain& swapchain);
 
 		template<typename T>
 		T AddPass(char* name, std::function<T(IRenderPassBuilder& builder)> init_callback, Pass::RecordCallback record_callback)
@@ -154,7 +150,10 @@ namespace core { namespace render { namespace graph {
 	private:
 		bool ResourceRegistered(void* resource);
 		VulkanRenderPass* GetRenderPass(const VulkanRenderPassInitializer& initializer);
-
+		VulkanRenderTarget* GetRenderTarget(const VulkanRenderTargetInitializer& initializer);
+		void ApplyPreBarriers(Pass& pass, VulkanRenderState& state);
+		void ApplyPostBarriers(Pass& pass, VulkanRenderState& state);
+		void RecordCommandBuffers();
 	private:
 		Pass* current_render_pass = nullptr;
 		DependencyNode* present_node = nullptr;

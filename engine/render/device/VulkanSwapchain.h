@@ -20,8 +20,8 @@ namespace core { namespace Device {
 		uint32_t GetWidth() const { return width; }
 		uint32_t GetHeight() const { return height; }
 		const std::vector<vk::Image>& GetImages() const { return images; }
-		VulkanRenderPass* GetRenderPass() const { return render_pass.get(); }
-		VulkanRenderTarget* GetRenderTarget() const { return render_target.get(); }
+		VulkanRenderTargetAttachment* GetColorAttachment() const { return color_attachment.get(); }
+		VulkanRenderTargetAttachment* GetDepthAttachment() const { return depth_attachment.get(); }
 
 	private:
 		vk::UniqueSwapchainKHR swapchain;
@@ -31,10 +31,8 @@ namespace core { namespace Device {
 		std::vector<vk::Image> images;
 		vk::Format image_format;
 		uint32_t sample_count = 1;
-		std::unique_ptr<VulkanRenderPass> render_pass;
-		std::unique_ptr<VulkanRenderTarget> render_target;
 		std::unique_ptr<VulkanRenderTargetAttachment> color_attachment;
-		std::unique_ptr<VulkanRenderTargetAttachment> depth_attachment;
+		std::unique_ptr<VulkanRenderTargetAttachment> depth_attachment; // TODO: remove from swapchain
 	};
 
 } }

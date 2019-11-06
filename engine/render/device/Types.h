@@ -97,6 +97,13 @@ namespace core { namespace Device {
 		DepthAttachmentStencilReadOnlyOptimalKHR = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_STENCIL_READ_ONLY_OPTIMAL_KHR
 	};
 
+	enum class PipelineBindPoint
+	{
+		Graphics = VK_PIPELINE_BIND_POINT_GRAPHICS,
+		Compute = VK_PIPELINE_BIND_POINT_COMPUTE,
+		RayTracingNV = VK_PIPELINE_BIND_POINT_RAY_TRACING_NV
+	};
+
 	extern const std::unordered_map<Format, size_t> format_sizes;
 
 } }

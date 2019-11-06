@@ -457,10 +457,16 @@ namespace core { namespace Device {
 		command_buffer.drawIndexed(static_cast<uint32_t>(mesh->indexCount()), 1, 0, 0, 0);
 	}
 
+	void VulkanRenderState::BeginRecording()
+	{
+		auto begin_info = vk::CommandBufferBeginInfo();
+		auto command_buffer = GetCurrentCommandBuffer()->GetCommandBuffer();
+		command_buffer.begin(begin_info);
+	}
+
 	VulkanCommandBuffer* VulkanRenderState::BeginRendering(const VulkanRenderTarget& render_target, const VulkanRenderPass& render_pass)
 	{
 		dirty_flags = (uint32_t)DirtyFlags::All;
-		current_frame = (current_frame + 1) % caps::MAX_FRAMES_IN_FLIGHT;
 		current_render_pass = nullptr;
 		current_render_mode = RenderMode();
 		current_mesh = nullptr;
@@ -473,10 +479,6 @@ namespace core { namespace Device {
 
 		SetRenderPass(render_pass);
 
-		auto begin_info = vk::CommandBufferBeginInfo();
-		auto command_buffer = GetCurrentCommandBuffer()->GetCommandBuffer();
-		command_buffer.begin(begin_info);
-
 		return GetCurrentCommandBuffer();
 	}
 
@@ -484,7 +486,13 @@ namespace core { namespace Device {
 	{
 		auto command_buffer = GetCurrentCommandBuffer()->GetCommandBuffer();
 		command_buffer.endRenderPass();
+	}
+
+	void VulkanRenderState::EndRecording()
+	{
+		auto command_buffer = GetCurrentCommandBuffer()->GetCommandBuffer();
 		command_buffer.end();
+		current_frame = (current_frame + 1) % caps::MAX_FRAMES_IN_FLIGHT;
 	}
 
 	VulkanPipeline* VulkanRenderState::GetPipeline(const VulkanPipelineInitializer& initializer)

@@ -132,77 +132,38 @@ namespace core { namespace render {
 		auto* swapchain = context->GetSwapchain();
 		// Render Graph
 		render_graph->Clear();
-		/*auto* main_render_target = render_graph->RegisterRenderTarget(*swapchain->GetRenderTarget());
-		auto* color_render_target = render_graph->RegisterRenderTarget(*color_target);
-		auto* temp_render_target1 = render_graph->RegisterRenderTarget(*temp_target1);
-		auto* temp_render_target2 = render_graph->RegisterRenderTarget(*temp_target2);
-
+		
 		struct PassInfo
 		{
-			graph::DependencyNode* output = nullptr;
+			graph::DependencyNode* color_output = nullptr;
+			graph::DependencyNode* depth_output = nullptr;
 		};
 
-		auto temp1_pass_info = render_graph->AddPass<PassInfo>("temp1", [&](graph::IRenderPassBuilder& builder)
-		{
-			PassInfo result;
-			result.output = builder.AddOutput(*temp_render_target1);
-			return result;
-		}, []()
-		{
-
-		});
-
-		auto temp2_pass_info = render_graph->AddPass<PassInfo>("temp2", [&](graph::IRenderPassBuilder& builder)
-		{
-			PassInfo result;
-			result.output = builder.AddOutput(*temp_render_target1);
-			return result;
-		}, []()
-		{
-
-		});
-
-		auto color_pass_info = render_graph->AddPass<PassInfo>("color", [&](graph::IRenderPassBuilder& builder)
-		{
-			PassInfo result;
-			builder.AddInput(*temp2_pass_info.output);
-			result.output = builder.AddOutput(*color_render_target);
-			return result;
-		}, []()
-		{
-
-		});
+		auto* main_color = render_graph->RegisterAttachment(*swapchain->GetColorAttachment());
+		auto* main_depth = render_graph->RegisterAttachment(*swapchain->GetDepthAttachment());
 
 		auto main_pass_info = render_graph->AddPass<PassInfo>("main", [&](graph::IRenderPassBuilder& builder)
 		{
 			PassInfo result;
-			builder.AddInput(*color_pass_info.output);
-			builder.AddInput(*temp2_pass_info.output);
-			builder.AddInput(*temp1_pass_info.output);
-			result.output = builder.AddOutput(*main_render_target);
+			result.color_output = builder.AddOutput(*main_color);
+			result.depth_output = builder.AddOutput(*main_depth);
 			return result;
-		}, []()
+		}, [&](VulkanRenderState& state)
 		{
+			RenderMode mode;
+			mode.SetDepthWriteEnabled(true);
+			mode.SetDepthTestEnabled(true);
+			mode.SetDepthFunc(CompareOp::Less);
 
+			state.SetRenderMode(mode);
+			for (auto* draw_call : render_queues[(size_t)RenderQueue::Opaque])
+			{
+				state.RenderDrawCall(draw_call);
+			}
 		});
 
-		render_graph->Prepare(); */
-
-		auto* render_state = context->GetRenderState();
-		RenderMode mode;
-		mode.SetDepthWriteEnabled(true);
-		mode.SetDepthTestEnabled(true);
-		mode.SetDepthFunc(CompareOp::Less);
-
-		auto* command_buffer = render_state->BeginRendering(*swapchain->GetRenderTarget(), *swapchain->GetRenderPass());
-		render_state->SetRenderMode(mode);
-		for (auto* draw_call : render_queues[(size_t)RenderQueue::Opaque])
-		{
-			render_state->RenderDrawCall(draw_call);
-		}
-		render_state->EndRendering();
-
-		context->AddFrameCommandBuffer(command_buffer->GetCommandBuffer());
+		render_graph->Prepare();
+		render_graph->Render();
 
 		ReleaseDrawCalls();
 	}

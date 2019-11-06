@@ -1,8 +1,19 @@
 #include "VulkanRenderPass.h"
 #include "Engine.h"
 #include "VulkanContext.h"
+#include "VulkanRenderTarget.h"
 
 namespace core { namespace Device {
+
+	VulkanRenderPassInitializer& VulkanRenderPassInitializer::AddAttachment(const VulkanRenderTargetAttachment& attachment)
+	{
+		if (attachment.GetType() == VulkanRenderTargetAttachment::Type::Color)
+			AddColorAttachment(attachment.GetFormat());
+		else 
+			AddDepthAttachment(attachment.GetFormat());
+
+		return *this;
+	}
 
 	VulkanRenderPass::VulkanRenderPass(const VulkanRenderPassInitializer& initializer)
 	{
@@ -15,6 +26,7 @@ namespace core { namespace Device {
 		for (int i = 0; i < initializer.color_attachments.size(); i++)
 		{
 			attachments.push_back(initializer.color_attachments[i]);
+
 			attachment_references.emplace_back(attachments.size() - 1, vk::ImageLayout::eColorAttachmentOptimal);
 		}
 
@@ -37,17 +49,7 @@ namespace core { namespace Device {
 			depth_attachment_ref
 		);
 
-		// TODO: remove subpass dependency
-		vk::SubpassDependency subpass_dependency(
-			VK_SUBPASS_EXTERNAL,
-			0,
-			vk::PipelineStageFlagBits::eColorAttachmentOutput, 
-			vk::PipelineStageFlagBits::eColorAttachmentOutput, 
-			{},
-			vk::AccessFlagBits::eColorAttachmentRead | vk::AccessFlagBits::eColorAttachmentWrite
-		);
-
-		vk::RenderPassCreateInfo render_pass_info({}, attachments.size(), attachments.data(), 1, &subpass_desc, 1, &subpass_dependency);
+		vk::RenderPassCreateInfo render_pass_info({}, attachments.size(), attachments.data(), 1, &subpass_desc, 0, nullptr);
 		
 		render_pass = Engine::GetVulkanContext()->GetDevice().createRenderPassUnique(render_pass_info);
 	}

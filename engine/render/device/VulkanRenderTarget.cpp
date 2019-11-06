@@ -12,6 +12,11 @@ namespace core { namespace Device {
 		return type == Type::Color ? frames[frame].image_view : depth_texture->GetImageView(); 
 	}
 
+	vk::Image VulkanRenderTargetAttachment::GetImage(uint32_t frame) const 
+	{ 
+		return type == Type::Color ? frames[frame].image : depth_texture->GetImage(); 
+	}
+
 	VulkanRenderTargetAttachment::VulkanRenderTargetAttachment(Type type, uint32_t width, uint32_t height, Format format, uint32_t sample_count)
 		: type(type), format(format), width(width), height(height)
 	{
@@ -25,6 +30,7 @@ namespace core { namespace Device {
 			{
 				frames[i].color_texture = std::make_shared<Texture>(texture_init);
 				frames[i].image_view = frames[i].color_texture->GetImageView();
+				frames[i].image = frames[i].color_texture->GetImage();
 			}
 			
 			break;
@@ -47,6 +53,7 @@ namespace core { namespace Device {
 			vk::ImageViewCreateInfo view_create_info({}, swapchain_images[i], vk::ImageViewType::e2D, (vk::Format)format, vk::ComponentMapping(), range);
 			frames[i].swapchain_image_view = device.createImageViewUnique(view_create_info);
 			frames[i].image_view = frames[i].swapchain_image_view.get();
+			frames[i].image = swapchain_images[i];
 		}
 	}
 
@@ -78,7 +85,8 @@ namespace core { namespace Device {
 			assert(color_attachments[i]->GetWidth() == width && color_attachments[i]->GetHeight() == height);
 			render_pass_initializer.AddColorAttachment(color_attachments[i]->GetFormat());
 			render_pass_initializer.SetLoadStoreOp(AttachmentLoadOp::DontCare, AttachmentStoreOp::Store);
-			render_pass_initializer.SetImageLayout(ImageLayout::Undefined, ImageLayout::ColorAttachmentOptimal);
+			auto final_layout = color_attachments[i]->IsSwapchain() ? ImageLayout::PresentSrc : ImageLayout::ColorAttachmentOptimal;
+			render_pass_initializer.SetImageLayout(ImageLayout::Undefined, final_layout);
 
 			for (int j = 0; j < caps::MAX_FRAMES_IN_FLIGHT; j++)
 				attachments[j].push_back(color_attachments[i]->GetImageView(j));
