@@ -12,7 +12,7 @@ namespace core
 {
 	namespace Device
 	{
-		class VulkanRenderTarget;
+		class VulkanRenderTargetAttachment;
 		class VulkanRenderPass;
 		class ShaderProgram;
 		class ShaderBindings;
@@ -53,13 +53,12 @@ namespace core { namespace render {
 		std::unique_ptr<SceneBuffers> scene_buffers;
 		std::unique_ptr<LightGrid> light_grid;
 		std::unique_ptr<graph::RenderGraph> render_graph;
-		std::unique_ptr<VulkanRenderTarget> color_target;
-		std::unique_ptr<VulkanRenderTarget> temp_target1;
-		std::unique_ptr<VulkanRenderTarget> temp_target2;
 		core::utils::Pool<DrawCall> draw_call_pool;
 		std::vector<std::unique_ptr<DrawCall>> used_draw_calls;
+		std::unique_ptr<VulkanRenderTargetAttachment> temp_color_attachment;
 		std::unordered_map<RenderOperation*, vk::DescriptorBufferInfo> rop_transform_cache; // cleared every frame. Allows reusing same object transform buffer in multiple draw calls.
 		std::array<std::vector<DrawCall*>, (size_t)RenderQueue::Count> render_queues;
+		uint32_t depth_only_fragment_shader_hash;
 	};
 
 } }

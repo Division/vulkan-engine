@@ -7,25 +7,40 @@ namespace core { namespace Device {
 
 	const wchar_t* ShaderCache::shader_cache_dir = L"shaders_compiled";
 
+	uint32_t ShaderCache::GetDefinesHash(const std::vector<std::string>& defines)
+	{
+		uint32_t hash = 0;
+		for (int i = 0; i < defines.size(); i++)
+		{
+			auto& define = defines[i];
+			auto define_hash = define.length() ? FastHash(define.data(), define.length() * sizeof(char)) : 0u;
+			uint32_t combined[2] = { hash, define_hash };
+			hash = FastHash(combined, sizeof(combined));
+		}
+
+		return hash;
+	}
+
 	uint32_t ShaderCache::GetCombinedHash(uint32_t name_hash, const ShaderCapsSet& caps_set)
 	{
 		uint32_t combined_hash[] = { name_hash, caps_set.getBitmask() };
 		return FastHash(combined_hash, sizeof(combined_hash));
 	}
 
-	uint32_t ShaderCache::GetShaderPathHash(const std::wstring& path)
+	uint32_t ShaderCache::GetShaderPathHash(const std::wstring& path, const std::vector<std::string>& defines)
 	{
-		return FastHash(path.data(), path.length() * sizeof(wchar_t));
+		uint32_t combined_hash[] = { FastHash(path.data(), path.length() * sizeof(wchar_t)), GetDefinesHash(defines) };
+		return FastHash(combined_hash, sizeof(combined_hash));
 	}
 
-	uint32_t ShaderCache::GetMaterialShaderHash(const std::wstring& path, const ShaderCapsSet& caps_set)
+	uint32_t ShaderCache::GetMaterialShaderHash(const std::wstring& path, const ShaderCapsSet& caps_set, const std::vector<std::string>& defines)
 	{
-		return GetCombinedHash(GetShaderPathHash(path), caps_set);
+		return GetCombinedHash(GetShaderPathHash(path, defines), caps_set);
 	}
 
-	std::wstring ShaderCache::GetMaterialShaderCachePath(const std::wstring& path, const ShaderCapsSet& caps_set)
+	std::wstring ShaderCache::GetMaterialShaderCachePath(const std::wstring& path, const ShaderCapsSet& caps_set, const std::vector<std::string>& defines)
 	{
-		return GetMaterialShaderCachePath(GetShaderPathHash(path), caps_set);
+		return GetMaterialShaderCachePath(GetShaderPathHash(path, defines), caps_set);
 	}
 
 	std::wstring ShaderCache::GetMaterialShaderCachePath(uint32_t name_hash, const ShaderCapsSet& caps_set)
@@ -34,7 +49,7 @@ namespace core { namespace Device {
 		return GetShaderCachePath(hash);
 	}
 
-	std::wstring ShaderCache::GetShaderCachePath(uint32_t shader_hash)
+	std::wstring ShaderCache::GetShaderCachePath(uint32_t shader_hash, const std::vector<std::string>& defines)
 	{
 		std::filesystem::path shader_path(shader_cache_dir);
 

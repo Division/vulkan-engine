@@ -209,6 +209,7 @@ namespace core { namespace render { namespace graph {
 
 					render_pass_initializer.AddAttachment(attachment);
 					render_pass_initializer.SetLoadStoreOp(AttachmentLoadOp::Load, AttachmentStoreOp::DontCare);
+					render_pass_initializer.SetImageLayout(resource->image_layout, ImageLayout::DepthStencilReadOnlyOptimal);
 
 					render_target_initializer.Size(attachment.GetWidth(), attachment.GetHeight());
 					render_target_initializer.AddAttachment(attachment);
@@ -445,6 +446,13 @@ namespace core { namespace render { namespace graph {
 			auto* vulkan_pass = GetRenderPass(initializer.first);
 			auto* vulkan_render_target = GetRenderTarget(initializer.second);
 			
+			uint32_t attach_index = 0;
+			for (auto* output : pass->output_nodes)
+			{
+				if (output->resource->type == ResourceType::Attachment)
+					state->SetClearValue(attach_index++, output->clear_value);
+			}
+
 			auto* command_buffer = state->GetCurrentCommandBuffer();
 			state->BeginRecording();
 			ApplyPreBarriers(*pass, *state);

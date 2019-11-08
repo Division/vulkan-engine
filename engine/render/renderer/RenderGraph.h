@@ -87,6 +87,23 @@ namespace core { namespace render { namespace graph {
 
 		bool on_stack = false;
 		bool visited = false;
+
+		vk::ClearValue clear_value;
+		bool should_clear = false;
+
+		DependencyNode* Clear(vec4 color)
+		{
+			clear_value = vk::ClearColorValue(*(std::array<float, 4>*)&color);
+			should_clear = true;
+			return this;
+		}
+
+		DependencyNode* Clear(float value)
+		{
+			clear_value = vk::ClearDepthStencilValue(value, 0.0f);
+			should_clear = true;
+			return this;
+		}
 	};
 
 	class IRenderPassBuilder;

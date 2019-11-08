@@ -118,6 +118,7 @@ namespace core { namespace Device {
 		bool IsSwapchain() const { return swapchain != nullptr; }
 		bool HasColor() const { return color_attachment_count > 0; }
 		bool HasDepth() const { return (bool)depth_attachment; }
+		uint32_t GetColorAttachmentCount() const { return color_attachment_count; }
 
 	private:
 		uint32_t color_attachment_count = 0;

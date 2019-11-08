@@ -159,6 +159,7 @@ namespace core { namespace Device {
 		void SetViewport(vec4 viewport);
 		void SetShader(const ShaderProgram& program);
 		void SetBindings(ShaderBindings& bindings);
+		void SetClearValue(uint32_t index, vk::ClearValue value);
 		void RenderDrawCall(const core::render::DrawCall* draw_call);
 		VulkanCommandBuffer* GetCurrentCommandBuffer() const { return command_buffers[current_frame]; }
 
@@ -206,6 +207,7 @@ namespace core { namespace Device {
 		std::unordered_map<uint32_t, vk::UniqueSampler> sampler_cache;
 		std::unordered_map<uint32_t, vk::DescriptorSet> descriptor_set_cache;
 		std::unordered_map<uint32_t, std::unique_ptr<VulkanPipeline>> pipeline_cache;
+		std::array<vk::ClearValue, caps::max_color_attachments + 1> clear_values;
 
 		std::unique_ptr<VulkanCommandPool> command_pool;
 		vk::UniqueDescriptorPool descriptor_pool;

@@ -47,6 +47,13 @@ namespace core { namespace render {
 		light_grid = std::make_unique<LightGrid>();
 		render_graph = std::make_unique<graph::RenderGraph>();
 
+		auto* context = Engine::GetVulkanContext();
+		auto vk_swapchain = context->GetSwapchain();
+
+		depth_only_fragment_shader_hash = ShaderCache::GetShaderPathHash(L"shaders/noop.frag");
+
+		temp_color_attachment = std::make_unique<VulkanRenderTargetAttachment>(VulkanRenderTargetAttachment::Type::Color, 800, 600, Format::R8G8B8A8_norm);
+
 		/*VulkanRenderTargetInitializer rt_initializer(1, 1);
 		color_target = std::make_unique<VulkanRenderTarget>(rt_initializer);
 		temp_target1 = std::make_unique<VulkanRenderTarget>(rt_initializer);
@@ -71,6 +78,12 @@ namespace core { namespace render {
 	{
 		auto* draw_call = GetDrawCall(rop);
 		render_queues[(size_t)queue].push_back(draw_call);
+
+		if (queue == RenderQueue::Opaque)
+		{
+			auto* depth_draw_call = GetDrawCall(rop, true);
+			render_queues[(size_t)RenderQueue::DepthOnly].push_back(depth_draw_call);
+		}
 	}
 
 	void SceneRenderer::RenderScene(Scene* scene)
@@ -142,11 +155,10 @@ namespace core { namespace render {
 		auto* main_color = render_graph->RegisterAttachment(*swapchain->GetColorAttachment());
 		auto* main_depth = render_graph->RegisterAttachment(*swapchain->GetDepthAttachment());
 
-		auto main_pass_info = render_graph->AddPass<PassInfo>("main", [&](graph::IRenderPassBuilder& builder)
+		auto depth_pre_pass_info = render_graph->AddPass<PassInfo>("depth pre pass", [&](graph::IRenderPassBuilder& builder)
 		{
 			PassInfo result;
-			result.color_output = builder.AddOutput(*main_color);
-			result.depth_output = builder.AddOutput(*main_depth);
+			result.depth_output = builder.AddOutput(*main_depth)->Clear(1.0f);
 			return result;
 		}, [&](VulkanRenderState& state)
 		{
@@ -154,6 +166,26 @@ namespace core { namespace render {
 			mode.SetDepthWriteEnabled(true);
 			mode.SetDepthTestEnabled(true);
 			mode.SetDepthFunc(CompareOp::Less);
+
+			state.SetRenderMode(mode);
+			for (auto* draw_call : render_queues[(size_t)RenderQueue::DepthOnly])
+			{
+				state.RenderDrawCall(draw_call);
+			}
+		});
+
+		auto main_pass_info = render_graph->AddPass<PassInfo>("main", [&](graph::IRenderPassBuilder& builder)
+		{
+			PassInfo result;
+			builder.AddInput(*depth_pre_pass_info.depth_output, graph::InputUsage::DepthAttachment);
+			result.color_output = builder.AddOutput(*main_color)->Clear(vec4(0));
+			return result;
+		}, [&](VulkanRenderState& state)
+		{
+			RenderMode mode;
+			mode.SetDepthWriteEnabled(false);
+			mode.SetDepthTestEnabled(true);
+			mode.SetDepthFunc(CompareOp::LessOrEqual);
 
 			state.SetRenderMode(mode);
 			for (auto* draw_call : render_queues[(size_t)RenderQueue::Opaque])
@@ -306,8 +338,9 @@ namespace core { namespace render {
 		if (rop.skinning_matrices)
 			caps.addCap(ShaderCaps::Skinning);
 
-		auto vertex_hash =  ShaderCache::GetCombinedHash(rop.material->GetVertexShaderNameHash(), caps);
-		auto fragment_hash = ShaderCache::GetCombinedHash(rop.material->GetFragmentShaderNameHash(), caps);
+		auto vertex_name_hash = depth_only ? rop.material->GetVertexShaderDepthOnlyNameHash() : rop.material->GetVertexShaderNameHash();
+		auto vertex_hash =  ShaderCache::GetCombinedHash(vertex_name_hash, caps);
+		auto fragment_hash = depth_only ? depth_only_fragment_shader_hash : ShaderCache::GetCombinedHash(rop.material->GetFragmentShaderNameHash(), caps);
 
 		draw_call->shader = shader_cache->GetShaderProgram(vertex_hash, fragment_hash);
 		SetupShaderBindings(rop, *draw_call->shader, *draw_call->shader_bindings);
