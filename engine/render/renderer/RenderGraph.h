@@ -145,7 +145,6 @@ namespace core { namespace render { namespace graph {
 	public:
 		ResourceWrapper* RegisterAttachment(VulkanRenderTargetAttachment& attachment);
 		ResourceWrapper* RegisterBuffer(VulkanBuffer& buffer);
-		//ResourceWrapper* RegisterSwapchain(VulkanSwapchain& swapchain);
 
 		template<typename T>
 		T AddPass(char* name, std::function<T(IRenderPassBuilder& builder)> init_callback, Pass::RecordCallback record_callback)
@@ -156,6 +155,7 @@ namespace core { namespace render { namespace graph {
 		}
 
 		void Clear();
+		void ClearCache();
 
 		void Prepare();
 		void Render();

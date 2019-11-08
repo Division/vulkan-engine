@@ -136,7 +136,6 @@ namespace core { namespace Device {
 
 		images = device.getSwapchainImagesKHR(swapchain.get());
 		color_attachment = std::make_unique<VulkanRenderTargetAttachment>(this);
-		depth_attachment = std::make_unique<VulkanRenderTargetAttachment>(VulkanRenderTargetAttachment::Type::Depth, GetWidth(), GetHeight(), Format::D24_unorm_S8_uint, sample_count);
 	}
 
 } }

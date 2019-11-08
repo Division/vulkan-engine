@@ -242,33 +242,4 @@ void LightGrid::OnRecreateSwapchain(int32_t width, int32_t height)
 {
 }
 
-/*
-void LightGrid::bindBuffers(ID3D11DeviceContext1 *context) {
-	context->PSSetShaderResources(_lightGridBlock, 1, _lightGrid->shaderResourceViewPointer());
-	context->PSSetShaderResources(_lightIndexBlock, 1, _lightIndex->shaderResourceViewPointer());
-
-	// Lights
-	auto constantBuffer = _lights->buffer();
-	UINT firstConstant = 0;
-	UINT constantCount = LIGHTS_SIZE / DXCaps::CONSTANT_BUFFER_CONSTANT_SIZE;
-
-	context->VSSetConstantBuffers1((UINT)ConstantBufferName::Light, 1, &constantBuffer, &firstConstant, &constantCount);
-	context->PSSetConstantBuffers1((UINT)ConstantBufferName::Light, 1, &constantBuffer, &firstConstant, &constantCount);
-
-	// Projectors
-	constantBuffer = _projectors->buffer();
-	constantCount = PROJECTORS_SIZE / DXCaps::CONSTANT_BUFFER_CONSTANT_SIZE;
-
-	context->VSSetConstantBuffers1((UINT)ConstantBufferName::Projector, 1, &constantBuffer, &firstConstant, &constantCount);
-	context->PSSetConstantBuffers1((UINT)ConstantBufferName::Projector, 1, &constantBuffer, &firstConstant, &constantCount);
-}
-*/
-
-/*
-void LightGrid::setDebugDraw(std::shared_ptr<DebugDraw> debugDraw) {
-  _debugDraw = debugDraw;
-}
-*/
-
-
 } }

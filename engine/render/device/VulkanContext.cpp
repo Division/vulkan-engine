@@ -314,6 +314,8 @@ namespace core { namespace Device {
 
 		result = vkQueuePresentKHR(GetPresentQueue(), &presentInfo);
 
+		//vkDeviceWaitIdle(device); ///// Uncomment to sync every frame
+
 		if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || framebuffer_resized) {
 			framebuffer_resized = false;
 			RecreateSwapChain();

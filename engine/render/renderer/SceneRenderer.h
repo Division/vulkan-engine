@@ -45,6 +45,7 @@ namespace core { namespace render {
 		void ReleaseDrawCalls();
 		void SetupShaderBindings(RenderOperation& rop, ShaderProgram& shader, ShaderBindings& bindings);
 		std::tuple<vk::Buffer, size_t, size_t> GetBufferFromROP(RenderOperation& rop, ShaderBufferName buffer_name);
+		void OnRecreateSwapchain(int32_t width, int32_t height);
 
 	private:
 		std::unique_ptr<VulkanRenderPass> temp_pass;
@@ -55,7 +56,7 @@ namespace core { namespace render {
 		std::unique_ptr<graph::RenderGraph> render_graph;
 		core::utils::Pool<DrawCall> draw_call_pool;
 		std::vector<std::unique_ptr<DrawCall>> used_draw_calls;
-		std::unique_ptr<VulkanRenderTargetAttachment> temp_color_attachment;
+		std::unique_ptr<VulkanRenderTargetAttachment> main_depth_attachment;
 		std::unordered_map<RenderOperation*, vk::DescriptorBufferInfo> rop_transform_cache; // cleared every frame. Allows reusing same object transform buffer in multiple draw calls.
 		std::array<std::vector<DrawCall*>, (size_t)RenderQueue::Count> render_queues;
 		uint32_t depth_only_fragment_shader_hash;

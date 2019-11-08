@@ -41,6 +41,12 @@ namespace core { namespace render { namespace graph {
 		present_node = nullptr;
 	}
 
+	void RenderGraph::ClearCache()
+	{
+		render_pass_cache.clear();
+		render_target_cache.clear();
+	}
+
 	void RenderGraph::AddInput(DependencyNode& node, InputUsage usage)
 	{
 		current_render_pass->input_nodes.push_back(std::make_pair(&node, usage));

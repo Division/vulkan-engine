@@ -32,6 +32,8 @@
 #include "SceneBuffers.h"
 #include "objects/Camera.h"
 
+#include <functional>
+
 using namespace core;
 using namespace core::Device;
 
@@ -46,22 +48,17 @@ namespace core { namespace render {
 		scene_buffers = std::make_unique<SceneBuffers>();
 		light_grid = std::make_unique<LightGrid>();
 		render_graph = std::make_unique<graph::RenderGraph>();
-
-		auto* context = Engine::GetVulkanContext();
-		auto vk_swapchain = context->GetSwapchain();
-
 		depth_only_fragment_shader_hash = ShaderCache::GetShaderPathHash(L"shaders/noop.frag");
 
-		temp_color_attachment = std::make_unique<VulkanRenderTargetAttachment>(VulkanRenderTargetAttachment::Type::Color, 800, 600, Format::R8G8B8A8_norm);
-
-		/*VulkanRenderTargetInitializer rt_initializer(1, 1);
-		color_target = std::make_unique<VulkanRenderTarget>(rt_initializer);
-		temp_target1 = std::make_unique<VulkanRenderTarget>(rt_initializer);
-		temp_target2 = std::make_unique<VulkanRenderTarget>(rt_initializer);*/
+		auto* context = Engine::GetVulkanContext();
+		context->AddRecreateSwapchainCallback(std::bind(&SceneRenderer::OnRecreateSwapchain, this, std::placeholders::_1, std::placeholders::_2));
 	}
 
-	ShaderBufferStruct::Camera camera_data;
-	ShaderBufferStruct::ObjectParams object_data[4];
+	void SceneRenderer::OnRecreateSwapchain(int32_t width, int32_t height)
+	{
+		render_graph->ClearCache();
+		main_depth_attachment = std::make_unique<VulkanRenderTargetAttachment>(VulkanRenderTargetAttachment::Type::Depth, width, height, Format::D24_unorm_S8_uint);
+	}
 
 	static ShaderBufferStruct::Camera GetCameraData(ICameraParamsProvider* camera)
 	{
@@ -153,7 +150,7 @@ namespace core { namespace render {
 		};
 
 		auto* main_color = render_graph->RegisterAttachment(*swapchain->GetColorAttachment());
-		auto* main_depth = render_graph->RegisterAttachment(*swapchain->GetDepthAttachment());
+		auto* main_depth = render_graph->RegisterAttachment(*main_depth_attachment);
 
 		auto depth_pre_pass_info = render_graph->AddPass<PassInfo>("depth pre pass", [&](graph::IRenderPassBuilder& builder)
 		{
