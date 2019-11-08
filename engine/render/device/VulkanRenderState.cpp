@@ -214,6 +214,22 @@ namespace core { namespace Device {
 			command_buffer.bindPipeline( vk::PipelineBindPoint::eGraphics, current_pipeline->GetPipeline());
 		}
 
+		if (dirty_flags & (int)DirtyFlags::Viewport)
+		{
+			assert(current_viewport.w > 0 && current_viewport.z > 0);
+			auto command_buffer = GetCurrentCommandBuffer()->GetCommandBuffer();
+			vk::Viewport viewport(current_viewport.x, current_viewport.y, current_viewport.z, current_viewport.w, 0.0f, 1.0f);
+			command_buffer.setViewport(0, 1, &viewport);
+		}
+
+		if (dirty_flags & (int)DirtyFlags::Scissor)
+		{
+			assert(current_scissor.w > 0 && current_scissor.z > 0);
+			auto command_buffer = GetCurrentCommandBuffer()->GetCommandBuffer();
+			vk::Rect2D scissor(vk::Offset2D(current_scissor.x, current_scissor.y), vk::Extent2D(current_scissor.z, current_viewport.w));
+			command_buffer.setScissor(0, 1, &scissor);
+		}
+
 		dirty_flags = 0;
 	}
 
@@ -251,7 +267,20 @@ namespace core { namespace Device {
 
 	void VulkanRenderState::SetViewport(vec4 viewport)
 	{
+		if (current_viewport != viewport)
+		{
+			dirty_flags |= (int)DirtyFlags::Viewport;
+			current_viewport = viewport;
+		}
+	}
 
+	void VulkanRenderState::SetScissor(vec4 scissor)
+	{
+		if (current_scissor != scissor)
+		{
+			dirty_flags |= (int)DirtyFlags::Viewport;
+			current_scissor = scissor;
+		}
 	}
 
 	void VulkanRenderState::SetShader(const ShaderProgram& program)

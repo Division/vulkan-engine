@@ -70,8 +70,8 @@ namespace core { namespace Device {
 		vk::PipelineVertexInputStateCreateInfo vertex_input_state_create_info({}, 1, &vertex_binding_description, vertex_attribute_descriptions.size(), vertex_attribute_descriptions.data());
 		vk::PipelineInputAssemblyStateCreateInfo input_assembly_create_info({}, vk::PrimitiveTopology::eTriangleList, VK_FALSE);
 		
-		vk::Viewport viewport(0, 0, (float)context->GetSwapchain()->GetWidth(), (float)context->GetSwapchain()->GetHeight(), 0, 1);
-		vk::Rect2D scissor(vk::Offset2D(0, 0), context->GetSwapchain()->GetExtent());
+		vk::Viewport viewport(0, 0, 0, 0, 0, 1);
+		vk::Rect2D scissor(vk::Offset2D(0, 0), vk::Extent2D(0, 0));
 		vk::PipelineViewportStateCreateInfo viewport_state({}, 1, &viewport, 1, &scissor);
 
 		auto* render_mode = initializer.render_mode;
@@ -110,6 +110,9 @@ namespace core { namespace Device {
 		// todo: Add stencil if required
 		vk::PipelineDepthStencilStateCreateInfo pipeline_depth_stencil_info({}, render_mode->GetDepthTestEnabled(), render_mode->GetDepthWriteEnabled(), (vk::CompareOp)render_mode->GetDepthFunc());
 
+		std::array<vk::DynamicState, 2> dynamic_states = { vk::DynamicState::eViewport, vk::DynamicState::eScissor };
+		vk::PipelineDynamicStateCreateInfo pipeline_dynamic_state_info({}, dynamic_states.size(), dynamic_states.data());
+
 		vk::GraphicsPipelineCreateInfo pipeline_info(
 			{},
 			shader_stage_count, shader_stages.data(), 
@@ -120,8 +123,8 @@ namespace core { namespace Device {
 			&rasterization_state_create_info, 
 			&multisampling_state_create_info, 
 			&pipeline_depth_stencil_info, 
-			&color_blending, 
-			nullptr, 
+			&color_blending,
+			&pipeline_dynamic_state_info,
 			pipeline_layout.get(),
 			render_pass->GetRenderPass()
 		);

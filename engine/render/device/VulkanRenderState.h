@@ -148,6 +148,7 @@ namespace core { namespace Device {
 			Shader = 1 << 3,
 			RenderPass = 1 << 4,
 			DescriptorSet = 1 << 5,
+			Scissor = 1 << 6,
 			All = ~0u
 		};
 
@@ -157,6 +158,7 @@ namespace core { namespace Device {
 		void SetRenderMode(const RenderMode& mode);
 		void SetRenderPass(const VulkanRenderPass& render_pass);
 		void SetViewport(vec4 viewport);
+		void SetScissor(vec4 scissor);
 		void SetShader(const ShaderProgram& program);
 		void SetBindings(ShaderBindings& bindings);
 		void SetClearValue(uint32_t index, vk::ClearValue value);
@@ -199,6 +201,8 @@ namespace core { namespace Device {
 		const VulkanRenderPass* current_render_pass = nullptr;
 		const ShaderProgram* current_shader = nullptr;
 		const VulkanPipeline* current_pipeline = nullptr;
+		vec4 current_viewport;
+		vec4 current_scissor;
 
 		std::array<DescriptorSetData, ShaderProgram::max_descriptor_sets> descriptor_sets;
 		std::array<vk::DescriptorSet, ShaderProgram::max_descriptor_sets> frame_descriptor_sets;

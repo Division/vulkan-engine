@@ -151,10 +151,11 @@ namespace core { namespace render { namespace graph {
 
 	}
 
-	std::pair<VulkanRenderPassInitializer, VulkanRenderTargetInitializer> GetPassInitializer(Pass* pass)
+	std::tuple<VulkanRenderPassInitializer, VulkanRenderTargetInitializer, vec2> GetPassInitializer(Pass* pass)
 	{
 		VulkanRenderPassInitializer render_pass_initializer;
 		VulkanRenderTargetInitializer render_target_initializer(0,0);
+		vec2 size(0);
 
 		if (pass->is_compute)
 		{
@@ -173,6 +174,7 @@ namespace core { namespace render { namespace graph {
 						render_pass_initializer.SetLoadStoreOp(AttachmentLoadOp::Clear, AttachmentStoreOp::Store);
 
 						render_target_initializer.Size(attachment.GetWidth(), attachment.GetHeight());
+						size = glm::max(size, vec2(attachment.GetWidth(), attachment.GetHeight()));
 						render_target_initializer.AddAttachment(attachment);
 
 						if (resource->last_operation != ResourceWrapper::LastOperation::None)
@@ -206,6 +208,7 @@ namespace core { namespace render { namespace graph {
 					assert(!render_pass_initializer.has_depth);
 					assert(resource->type == ResourceType::Attachment && resource->GetAttachment()->GetType() == VulkanRenderTargetAttachment::Type::Depth);
 					auto& attachment = *resource->GetAttachment();
+					size = glm::max(size, vec2(attachment.GetWidth(), attachment.GetHeight()));
 
 					render_pass_initializer.AddAttachment(attachment);
 					render_pass_initializer.SetLoadStoreOp(AttachmentLoadOp::Load, AttachmentStoreOp::DontCare);
@@ -217,7 +220,7 @@ namespace core { namespace render { namespace graph {
 			}
 		}
 
-		return std::make_pair(std::move(render_pass_initializer), std::move(render_target_initializer));
+		return std::make_tuple(std::move(render_pass_initializer), std::move(render_target_initializer), size);
 	}
 
 	VulkanRenderPass* RenderGraph::GetRenderPass(const VulkanRenderPassInitializer& initializer)
@@ -443,9 +446,10 @@ namespace core { namespace render { namespace graph {
 		{
 			auto* state = context->GetRenderState();
 			auto initializer = GetPassInitializer(pass.get());
-			auto* vulkan_pass = GetRenderPass(initializer.first);
-			auto* vulkan_render_target = GetRenderTarget(initializer.second);
-			
+			auto* vulkan_pass = GetRenderPass(std::get<0>(initializer));
+			auto* vulkan_render_target = GetRenderTarget(std::get<1>(initializer));
+			auto viewport = vec4(0, 0, std::get<2>(initializer));
+
 			uint32_t attach_index = 0;
 			for (auto* output : pass->output_nodes)
 			{
@@ -457,6 +461,9 @@ namespace core { namespace render { namespace graph {
 			state->BeginRecording();
 			ApplyPreBarriers(*pass, *state);
 			
+			state->SetScissor(viewport);
+			state->SetViewport(viewport);
+
 			state->BeginRendering(*vulkan_render_target, *vulkan_pass);
 			pass->record_callback(*state);
 			state->EndRendering();

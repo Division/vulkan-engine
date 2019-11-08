@@ -30,8 +30,6 @@ public:
     return _visibilityMap.at(camera).projectors;
   }
   const std::vector<GameObjectPtr> &visibleObjects(const ICameraParamsProvider* camera) const {
-	  return _gameObjects;
-
     if (!_visibilityMap[camera].hasData) { return _getVisibilityForCamera(camera).objects; }
     return _visibilityMap.at(camera).objects;
   }
