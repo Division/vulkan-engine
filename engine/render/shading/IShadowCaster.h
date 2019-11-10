@@ -1,16 +1,18 @@
-//
-// Created by Sidorenko Nikita on 2018-11-29.
-//
-
-#ifndef CPPWRAPPER_ISHADOWCASTER_H
-#define CPPWRAPPER_ISHADOWCASTER_H
+#pragma once
 
 #include "render/renderer/ICameraParamsProvider.h"
-#include <memory>
+
+namespace core
+{
+	namespace render
+	{
+		class ShadowMap;
+	}
+}
 
 class IShadowCaster : public ICameraParamsProvider {
 public:
-  friend class ShadowMap;
+  friend class core::render::ShadowMap;
 
   ~IShadowCaster() override = default;
   virtual bool castShadows() const = 0;
@@ -20,6 +22,3 @@ protected:
   virtual vec4 viewport() const = 0;
 };
 
-typedef std::shared_ptr<IShadowCaster> IShadowCasterPtr;
-
-#endif //CPPWRAPPER_ISHADOWCASTER_H

@@ -22,7 +22,7 @@ protected:
   MeshPtr _mesh;
   std::shared_ptr<Material> _material;
   RenderQueue _renderQueue = RenderQueue::Opaque;
-  void render(IRenderer &renderer) override;
+  void render(std::function<void(core::Device::RenderOperation& rop, RenderQueue queue)> callback) override;
 
 };
 

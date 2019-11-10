@@ -87,7 +87,7 @@ void SkinnedMeshObject::postUpdate() {
   }
 }
 
-void SkinnedMeshObject::render(IRenderer &renderer) {
+void SkinnedMeshObject::render(std::function<void(core::Device::RenderOperation& rop, RenderQueue queue)> callback) {
   if (!_mesh || !_material) {
     return;
   }
@@ -96,5 +96,5 @@ void SkinnedMeshObject::render(IRenderer &renderer) {
   rop.skinning_matrices= &_skinningMatrices;
   rop.mesh = _mesh;
   rop.material = _material;
-  renderer.AddRenderOperation(rop, _renderQueue);
+  callback(rop, _renderQueue);
 }

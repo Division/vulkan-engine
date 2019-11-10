@@ -30,9 +30,8 @@ ShaderBufferStruct::Light LightObject::getLightStruct() const {
   result.direction = glm::normalize(transform()->forward());
 
   if (castShadows()) {
-	  throw std::runtime_error("not supported");
-    //result.shadowmapScale = vec2(_viewport.z, _viewport.w) / (float)SceneRenderer::shadowAtlasSize();
-    //result.shadowmapOffset= vec2(_viewport.x, _viewport.y) / (float)SceneRenderer::shadowAtlasSize();
+    result.shadowmapScale = vec2(_viewport.z, _viewport.w) / (float)core::render::SceneRenderer::ShadowAtlasSize();
+    result.shadowmapOffset= vec2(_viewport.x, _viewport.y) / (float)core::render::SceneRenderer::ShadowAtlasSize();
     result.projectionMatrix = cameraViewProjectionMatrix();
   } else {
     result.shadowmapScale = vec2(0, 0);
@@ -63,7 +62,7 @@ void LightObject::enableDebug() {
   _debugMaterial = std::make_shared<MaterialSingleColor>(); */
 }
 
-void LightObject::render(IRenderer &renderer) {
+void LightObject::render(std::function<void(core::Device::RenderOperation& rop, RenderQueue queue)> callback) {
 	/*
   if (_flareTexture) {
     RenderOperation rop = _getDefaultRenderOp();

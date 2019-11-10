@@ -64,7 +64,7 @@ public:
 
   ShaderBufferStruct::Light getLightStruct() const;
 
-  void render(IRenderer &renderer) override;
+  void render(std::function<void(core::Device::RenderOperation& rop, RenderQueue queue)> callback) override;
   void postUpdate() override;
 
   // ICameraParamsProvider
@@ -107,7 +107,7 @@ private:
   mat4 _projectionMatrix;
   mat4 _viewMatrix;
   vec4 _viewport;
-  float _zMin = 0.1f;
+  float _zMin = 0.05f;
   bool _castShadows = false;
   unsigned int _cameraIndex = 0;
 

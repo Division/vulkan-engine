@@ -383,7 +383,6 @@ namespace core { namespace Device {
 		return result;
 	}
 
-	// TODO: don't cache bindings? (update ones that non in flight)
 	void VulkanRenderState::SetBindings(ShaderBindings& bindings)
 	{
 		for (auto& set_data : descriptor_sets)

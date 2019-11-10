@@ -32,6 +32,12 @@ namespace core { namespace Device {
 			return *this;
 		}
 
+		TextureInitializer& TextureInitializer::SetSampled()
+		{
+			force_sampled = true;
+			return *this;
+		}
+
 		TextureInitializer& TextureInitializer::SetColorTarget()
 		{
 			mode = ColorTarget;
@@ -49,6 +55,7 @@ namespace core { namespace Device {
 		Mode mode = Default;
 		bool sRGB = false;
 		void* data = nullptr;
+		bool force_sampled = false;
 		uint32_t channel_count = 0;
 		size_t data_size = 0;
 		bool is_from_file = false;

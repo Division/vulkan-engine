@@ -22,8 +22,9 @@ layout(location = 4) in vec3 normal_worldspace;
 layout(location = 0) out vec4 out_color;
 
 #if defined (LIGHTING)
-/*
-Texture2D shadowMap : register(t7);
+layout(binding = 3) uniform sampler2D shadow_map;
+/*Texture2D shadowMap : register(t7);
+
 SamplerState shadowMapSampler : register(s7);
 Texture2D projectorTexture : register(t8);
 SamplerState projectorSampler : register(s8);
@@ -95,20 +96,18 @@ vec3 calculateFragmentDiffuse(float normalizedDistanceToLight, float attenuation
 
   return attenuationValue * (diffuse + specular);
 }
-/*
 
-float calculateFragmentShadow(float2 uv, float fragmentDepth) {
+
+float calculateFragmentShadow(vec2 uv, float fragmentDepth) {
   float shadow = 0.0;
   float bias = 0.001;
-  uint w;
-  uint h;
-  shadowMap.GetDimensions(w, h);
-  float2 texelSize = 1.0 / float2(w, h);
+  ivec2 size = textureSize(shadow_map, 0);
+  vec2 texelSize = 1.0 / vec2(size.x, size.y);
 
-  [unroll]
+  //[unroll]
   for(int x = -1; x <= 1; x++) {
     for(int y = -1; y <= 1; y++) {
-      float closestDepth = shadowMap.SampleLevel(shadowMapSampler, uv + float2(x, y) * texelSize, 0.0).r;
+      float closestDepth = texture(shadow_map, uv + vec2(x, y) * texelSize).r;
       shadow += fragmentDepth - bias > closestDepth ? 1.0 : 0.0;
     }
   }
@@ -116,7 +115,7 @@ float calculateFragmentShadow(float2 uv, float fragmentDepth) {
   shadow /= 9.0;
   return shadow;
 }
-*/
+
 #endif
 
 void main() {
@@ -163,22 +162,23 @@ void main() {
             float materialSpecular = 0;
             vec3 lightValue = calculateFragmentDiffuse(normalizedDistanceToLight, lights[lightIndex].attenuation, normal_worldspace.xyz, lightDir, eyeDir_worldspace, lights[lightIndex].color, materialSpecular);
             
-            /*vec3 coneDirection = lights[lightIndex].direction;
+            vec3 coneDirection = lights[lightIndex].direction;
             float coneAngle = lights[lightIndex].coneAngle;
             float lightToSurfaceAngle = dot(lightDir, coneDirection);
             float innerLightToSurfaceAngle = lightToSurfaceAngle * 1.03;
             float epsilon = innerLightToSurfaceAngle - lightToSurfaceAngle;
 
-            /*[branch]
-            if (lightToSurfaceAngle > coneAngle && lights[lightIndex].shadowmapScale.x > 0) {
-                vec4 position_lightspace = mul(lights[lightIndex].projectionMatrix, vec4(input.position_worldspace.xyz, 1));
+            //[branch]
+            if (lightToSurfaceAngle > coneAngle && lights[lightIndex].shadowmapScale.x > 0.0) {
+                vec4 position_lightspace = lights[lightIndex].projectionMatrix * vec4(position_worldspace.xyz, 1.0);
+
                 vec4 position_lightspace_normalized = position_lightspace / position_lightspace.w;
                 position_lightspace_normalized.xy = (position_lightspace_normalized.xy + 1.0) / 2.0;
-                position_lightspace_normalized.y = 1 - position_lightspace_normalized.y;
-                float2 shadowmapUV = position_lightspace_normalized.xy * lights[lightIndex].shadowmapScale + lights[lightIndex].shadowmapOffset;
+                position_lightspace_normalized.y = 1.0 - position_lightspace_normalized.y;
+                vec2 shadowmapUV = position_lightspace_normalized.xy * lights[lightIndex].shadowmapScale + lights[lightIndex].shadowmapOffset;
                 float shadow = calculateFragmentShadow(shadowmapUV, position_lightspace_normalized.z);
                 lightValue *= 1.0 - shadow;
-            }*/
+            }
 
             light_color += vec4(lightValue, 0.0);
         }

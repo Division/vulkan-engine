@@ -60,6 +60,9 @@ namespace core { namespace Device {
 			throw std::runtime_error("unknown mode");
 		}
 
+		if (initializer.force_sampled)
+			create_info.usage |= VK_IMAGE_USAGE_SAMPLED_BIT;
+
 		create_info.queueFamilyIndexCount = 0;
 		create_info.pQueueFamilyIndices = NULL;
 		create_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;

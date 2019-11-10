@@ -73,6 +73,8 @@ set(ENGINE_SOURCES
 	render/shading/IShadowCaster.h
 	render/shading/LightGrid.h
 	render/shading/LightGrid.cpp
+	render/shading/ShadowMap.h
+	render/shading/ShadowMap.cpp
 	render/mesh/Mesh.h
 	render/mesh/Mesh.cpp
 	render/texture/Texture.h

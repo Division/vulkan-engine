@@ -32,11 +32,10 @@ namespace core { namespace Device {
 				frames[i].image_view = frames[i].color_texture->GetImageView();
 				frames[i].image = frames[i].color_texture->GetImage();
 			}
-			
 			break;
 
 		case Type::Depth:
-			texture_init.SetDepth();
+			texture_init.SetDepth().SetSampled();
 			depth_texture = std::make_shared<Texture>(texture_init);
 			break;
 		}

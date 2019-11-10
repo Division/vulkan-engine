@@ -73,7 +73,7 @@ public:
 
   virtual void start(); // called only once just before the first update()
   virtual void update(float dt);
-  virtual void render(IRenderer &renderer);
+  virtual void render(std::function<void(core::Device::RenderOperation& rop, RenderQueue queue)> callback);
   virtual void postUpdate(); // called after update() is executed on all scene objects and transforms are updated
 
 protected:

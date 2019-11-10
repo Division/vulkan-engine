@@ -404,6 +404,39 @@ namespace core { namespace render { namespace graph {
 			default:
 				throw std::runtime_error("not implemented");
 			}
+		}
+
+		for (auto node_data : pass.input_nodes)
+		{
+			auto* resource = node_data.first;
+			ImageLayout target_layout = ImageLayout::Undefined;
+			switch (resource->resource->type)
+			{
+			case ResourceType::Attachment:
+			{
+				auto* attachment = resource->resource->GetAttachment();
+				auto usage = node_data.second;
+				bool is_depth = attachment->GetType() == VulkanRenderTargetAttachment::Type::Depth;
+				if (usage == InputUsage::DepthAttachment)
+				{
+					assert(is_depth);
+					target_layout =  ImageLayout::DepthStencilAttachmentOptimal;
+				} else
+				{
+					target_layout = ImageLayout::ShaderReadOnlyOptimal;
+				}
+
+				if (resource->resource->image_layout != target_layout)
+				{
+					TransitionImageLayout(*resource->resource, target_layout, state, BarrierType::BeforeRead);
+					resource->resource->image_layout = target_layout;
+				}
+				break;
+			}
+
+			default:
+				throw std::runtime_error("not implemented");
+			}
 
 		}
 	}
