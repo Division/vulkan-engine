@@ -34,7 +34,7 @@ namespace core { namespace Device {
 			std::string name;
 			unsigned set;
 			unsigned binding;
-			ShaderTextureName shader_texture;
+			ShaderTextureName shader_texture = ShaderTextureName::Unknown;
 		};
 
 		struct StorageBufferData
@@ -43,7 +43,7 @@ namespace core { namespace Device {
 			std::string name;
 			unsigned set;
 			unsigned binding;
-			ShaderBufferName storage_buffer_name;
+			ShaderBufferName storage_buffer_name = ShaderBufferName::Unknown;
 		};
 
 		ReflectionInfo(uint32_t* spirv_data, size_t count);

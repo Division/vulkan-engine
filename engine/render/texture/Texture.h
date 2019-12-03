@@ -13,7 +13,8 @@ namespace core { namespace Device {
 		enum Mode
 		{
 			Default,
-			DepthBuffer
+			DepthBuffer,
+			ColorTarget
 		};
 
 		TextureInitializer(uint32_t width, uint32_t height, uint32_t channel_count, void* data, bool sRGB) // simple RGBA
@@ -31,6 +32,18 @@ namespace core { namespace Device {
 			return *this;
 		}
 
+		TextureInitializer& TextureInitializer::SetSampled()
+		{
+			force_sampled = true;
+			return *this;
+		}
+
+		TextureInitializer& TextureInitializer::SetColorTarget()
+		{
+			mode = ColorTarget;
+			return *this;
+		}
+
 		// Allows mapping and dynamic uploading
 		TextureInitializer& SetDynamic()
 		{
@@ -42,6 +55,7 @@ namespace core { namespace Device {
 		Mode mode = Default;
 		bool sRGB = false;
 		void* data = nullptr;
+		bool force_sampled = false;
 		uint32_t channel_count = 0;
 		size_t data_size = 0;
 		bool is_from_file = false;
@@ -61,6 +75,9 @@ namespace core { namespace Device {
 		const vk::ImageView& GetImageView() const { return image_view.get(); }
 		void* Texture::Map();
 		void Texture::Unmap();
+		Format GetFormat() const { return format; }
+		uint32_t GetSampleCount() const { return 1; /* not implemented */ }
+		uint32_t GetHash() const;
 
 	private:
 		void SetupRGBA(const TextureInitializer& initializer);

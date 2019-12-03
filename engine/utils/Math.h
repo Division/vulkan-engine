@@ -116,4 +116,3 @@ inline uint32_t FastHash(const void* key, size_t len)
 	MurmurHash3_x86_32(key, (int)len, 0xdeadbeef, &result);
 	return result;
 }
-

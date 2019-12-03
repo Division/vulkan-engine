@@ -13,9 +13,10 @@ namespace core { namespace Device { namespace VulkanUtils {
 	struct QueueFamilyIndices {
 		std::optional<uint32_t> graphicsFamily;
 		std::optional<uint32_t> presentFamily;
+		std::optional<uint32_t> compute_family;
 
-		bool isComplete() {
-			return graphicsFamily.has_value() && presentFamily.has_value();
+		bool IsComplete() {
+			return graphicsFamily.has_value() && presentFamily.has_value() && compute_family.has_value();
 		}
 	};
 

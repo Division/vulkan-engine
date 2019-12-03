@@ -8,6 +8,7 @@ std::vector<ShaderCapsSet::Bitmask> Material::_uninitializedCaps;
 Material::Material()
 {
 	vertex_hash = ShaderCache::GetShaderPathHash(shader_path + L".vert");
+	vertex_hash_depth_only = ShaderCache::GetShaderPathHash(shader_path + L".vert", { "DEPTH_ONLY" });
 	fragment_hash = ShaderCache::GetShaderPathHash(shader_path + L".frag");
 }
 

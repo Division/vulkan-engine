@@ -135,12 +135,7 @@ namespace core { namespace Device {
 		height = extent.height;
 
 		images = device.getSwapchainImagesKHR(swapchain.get());
-
-		// Render target and render pass
-		render_pass = std::make_unique<VulkanRenderPass>(VulkanRenderPassInitializer(GetImageFormat(), true));
-
-		auto render_target_initializer = VulkanRenderTargetInitializer(render_pass.get()).Swapchain(this);
-		render_target = std::make_unique<VulkanRenderTarget>(render_target_initializer);
+		color_attachment = std::make_unique<VulkanRenderTargetAttachment>(this);
 	}
 
 } }

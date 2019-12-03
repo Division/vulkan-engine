@@ -28,7 +28,7 @@ void GameObject::postUpdate() {
 
 }
 
-void GameObject::render(IRenderer &renderer) {
+void GameObject::render(std::function<void(core::Device::RenderOperation& rop, RenderQueue queue)> callback) {
 
 }
 

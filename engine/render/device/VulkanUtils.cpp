@@ -100,10 +100,21 @@ namespace core { namespace Device { namespace VulkanUtils {
 		std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
 		vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, queueFamilies.data());
 
-		int i = 0;
-		for (const auto& queueFamily : queueFamilies) {
-			if (queueFamily.queueCount > 0 && queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT) {
+		uint32_t compute_family = -1;
+		uint32_t only_compute_family = -1;
+		for (int i = 0; i < queueFamilyCount; i++) {
+			const auto& queueFamily = queueFamilies[i];
+			if (queueFamily.queueCount == 0) 
+				continue;
+
+			if (queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT) {
 				indices.graphicsFamily = i;
+			}
+
+			if (queueFamily.queueFlags & VK_QUEUE_COMPUTE_BIT) {
+				compute_family = i;
+				if (!(queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT))
+					only_compute_family = i;
 			}
 
 			VkBool32 presentSupport = false;
@@ -113,12 +124,15 @@ namespace core { namespace Device { namespace VulkanUtils {
 				indices.presentFamily = i;
 			}
 
-			if (indices.isComplete()) {
+			if (indices.IsComplete()) {
 				break;
 			}
 
 			i++;
 		}
+
+		assert(compute_family != -1);
+		indices.compute_family = only_compute_family != -1 ? only_compute_family : compute_family;
 
 		return indices;
 	}
@@ -178,7 +192,7 @@ namespace core { namespace Device { namespace VulkanUtils {
 		VkPhysicalDeviceFeatures supportedFeatures;
 		vkGetPhysicalDeviceFeatures(device, &supportedFeatures);
 
-		return indices.isComplete() && extensionsSupported && swapChainAdequate && supportedFeatures.samplerAnisotropy;
+		return indices.IsComplete() && extensionsSupported && swapChainAdequate && supportedFeatures.samplerAnisotropy;
 	}
 
 } } }

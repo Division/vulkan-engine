@@ -25,7 +25,7 @@ namespace core { namespace Device {
 	class VulkanCommandBuffer;
 	class VulkanRenderPass;
 	class VulkanRenderTarget;
-	class RenderOperation;
+	struct RenderOperation;
 	class Texture;
 
 	enum class BlendFactor : int
@@ -148,6 +148,7 @@ namespace core { namespace Device {
 			Shader = 1 << 3,
 			RenderPass = 1 << 4,
 			DescriptorSet = 1 << 5,
+			Scissor = 1 << 6,
 			All = ~0u
 		};
 
@@ -157,14 +158,20 @@ namespace core { namespace Device {
 		void SetRenderMode(const RenderMode& mode);
 		void SetRenderPass(const VulkanRenderPass& render_pass);
 		void SetViewport(vec4 viewport);
+		void SetScissor(vec4 scissor);
 		void SetShader(const ShaderProgram& program);
 		void SetBindings(ShaderBindings& bindings);
+		void SetClearValue(uint32_t index, vk::ClearValue value);
 		void RenderDrawCall(const core::render::DrawCall* draw_call);
 		VulkanCommandBuffer* GetCurrentCommandBuffer() const { return command_buffers[current_frame]; }
 
-		VulkanCommandBuffer* BeginRendering(const VulkanRenderTarget& render_target);
+		VulkanCommandBuffer* BeginRendering(const VulkanRenderTarget& render_target, const VulkanRenderPass& render_pass);
 		void EndRendering();
-		
+
+		void RecordCompute(const ShaderProgram& program, ShaderBindings& bindings, uvec3 group_size);
+
+		void BeginRecording();
+		void EndRecording();
 	private:
 		struct DescriptorSetData
 		{
@@ -180,6 +187,8 @@ namespace core { namespace Device {
 		};
 
 	private:
+		void UpdateFrameDescriptorSets();
+		void BindFrameDescriptorSets(vk::CommandBuffer command_buffer, vk::PipelineBindPoint bind_point);
 		void UpdateState();
 		void SetMesh(const Mesh& mesh);
 		VulkanPipeline* GetPipeline(const VulkanPipelineInitializer& initializer);
@@ -196,6 +205,8 @@ namespace core { namespace Device {
 		const VulkanRenderPass* current_render_pass = nullptr;
 		const ShaderProgram* current_shader = nullptr;
 		const VulkanPipeline* current_pipeline = nullptr;
+		vec4 current_viewport;
+		vec4 current_scissor;
 
 		std::array<DescriptorSetData, ShaderProgram::max_descriptor_sets> descriptor_sets;
 		std::array<vk::DescriptorSet, ShaderProgram::max_descriptor_sets> frame_descriptor_sets;
@@ -204,6 +215,7 @@ namespace core { namespace Device {
 		std::unordered_map<uint32_t, vk::UniqueSampler> sampler_cache;
 		std::unordered_map<uint32_t, vk::DescriptorSet> descriptor_set_cache;
 		std::unordered_map<uint32_t, std::unique_ptr<VulkanPipeline>> pipeline_cache;
+		std::array<vk::ClearValue, caps::max_color_attachments + 1> clear_values;
 
 		std::unique_ptr<VulkanCommandPool> command_pool;
 		vk::UniqueDescriptorPool descriptor_pool;

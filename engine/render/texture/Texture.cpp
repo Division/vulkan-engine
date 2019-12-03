@@ -5,6 +5,7 @@
 #include "render/device/VulkanContext.h"
 #include "render/device/VulkanUploader.h"
 #include "render/buffer/VulkanBuffer.h"
+#include "utils/Math.h"
 
 namespace core { namespace Device {
 
@@ -43,7 +44,25 @@ namespace core { namespace Device {
 		create_info.arrayLayers = initializer.array_layers;
 		create_info.samples = VK_SAMPLE_COUNT_1_BIT;
 		create_info.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-		create_info.usage = initializer.mode == TextureInitializer::DepthBuffer ? VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT : (VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+
+		switch (initializer.mode)
+		{
+		case TextureInitializer::Default:
+			create_info.usage = (VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+			break;
+		case TextureInitializer::DepthBuffer:
+			create_info.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
+			break;
+		case TextureInitializer::ColorTarget:
+			create_info.usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+			break;
+		default:
+			throw std::runtime_error("unknown mode");
+		}
+
+		if (initializer.force_sampled)
+			create_info.usage |= VK_IMAGE_USAGE_SAMPLED_BIT;
+
 		create_info.queueFamilyIndexCount = 0;
 		create_info.pQueueFamilyIndices = NULL;
 		create_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
@@ -130,6 +149,11 @@ namespace core { namespace Device {
 
 		current_staging_buffer = (current_staging_buffer + 1) % caps::MAX_FRAMES_IN_FLIGHT;
 		mapped_pointer = nullptr;
+	}
+
+	uint32_t Texture::GetHash() const
+	{
+		return FastHash(&image_view, sizeof(image_view));
 	}
 
 	Texture::~Texture() 

@@ -1,6 +1,10 @@
 #pragma once
 
 #include "CommonIncludes.h"
+#include "VulkanCaps.h"
+#include "Types.h"
+
+#include "utils/Math.h"
 
 namespace core { namespace Device {
 
@@ -8,23 +12,58 @@ namespace core { namespace Device {
 	class VulkanSwapchain;
 	class Texture;
 
+	class VulkanRenderTargetAttachment
+	{
+	public:
+		enum class Type : int
+		{
+			Color,
+			Depth
+		};
+
+		struct Frame
+		{
+			vk::Image image;
+			vk::ImageView image_view;
+			vk::UniqueImageView swapchain_image_view;
+			std::shared_ptr<Texture> color_texture;
+		};
+
+		vk::ImageView GetImageView(uint32_t frame) const;
+		vk::Image GetImage(uint32_t frame) const;
+		std::shared_ptr<Texture>& GetTexture(uint32_t frame) { return type == Type::Depth ? depth_texture : frames[frame].color_texture; }
+		VulkanRenderTargetAttachment(Type type, uint32_t width, uint32_t height, Format format, uint32_t sample_count = 1);
+		VulkanRenderTargetAttachment(VulkanSwapchain* swapchain);
+		bool IsSwapchain() const { return (bool)swapchain; }
+
+		Format GetFormat() const { return format; }
+		Type GetType() const { return type; }
+		uint32_t GetWidth() const { return width; }
+		uint32_t GetHeight() const { return height; }
+
+	private:
+		Type type;
+		Format format;
+		uint32_t width;
+		uint32_t height;
+
+		VulkanSwapchain* swapchain = nullptr;
+		std::shared_ptr<Texture> depth_texture;
+		std::array<Frame, caps::MAX_FRAMES_IN_FLIGHT> frames;
+	};
+
 	struct VulkanRenderTargetInitializer {
 
-		VulkanRenderTargetInitializer(VulkanRenderPass* render_pass)
+		VulkanRenderTargetInitializer(uint32_t width, uint32_t height)
 		{
-			if (!render_pass)
-				throw std::runtime_error("Render pass should be specified");
-
-			this->render_pass = render_pass;
-			this->use_swapchain = use_swapchain;
+			memset(&color_attachments, 0, sizeof(color_attachments));
+			Size(width, height);
 		}
 
-		VulkanRenderTargetInitializer& Swapchain(VulkanSwapchain* swapchain)
-		{
-			use_swapchain = true;
-			this->swapchain = swapchain;
-			return *this;
-		}
+		VulkanRenderTargetInitializer(VulkanSwapchain* swapchain);
+
+		VulkanRenderTargetInitializer(VulkanRenderTargetInitializer&&) = default;
+		VulkanRenderTargetInitializer& operator=(VulkanRenderTargetInitializer&&) = default;
 
 		VulkanRenderTargetInitializer& Size(uint32_t width, uint32_t height) 
 		{
@@ -33,19 +72,28 @@ namespace core { namespace Device {
 			return *this;
 		}
 
-		VulkanRenderTargetInitializer& ColorTarget(uint32_t sampleCount = 1, vk::Format colorFormat = vk::Format::eB8G8R8A8Snorm) 
+		VulkanRenderTargetInitializer& AddAttachment(VulkanRenderTargetAttachment& attachment) 
 		{
-			has_color = true;
-			this->sample_count = sampleCount;
-			this->color_format = colorFormat;
+			if (attachment.GetType() == VulkanRenderTargetAttachment::Type::Color)
+			{
+				has_color = true;
+				color_attachments[color_attachment_count] = &attachment;
+				color_attachment_count += 1;
+			} else
+			{
+				assert(!depth_attachment && depth_attachment != &attachment);
+				has_depth = true;
+				depth_attachment = &attachment;
+			}
+			
 			return *this;
 		}
-
-		VulkanRenderTargetInitializer& DepthTarget(vk::Format depthFormat = vk::Format::eD24UnormS8Uint)
+	
+		uint32_t GetHash() const
 		{
-			has_depth = true;
-			this->depth_format = depthFormat;
-			return *this;
+			auto depth = (size_t)depth_attachment;
+			uint32_t hashes[] = { FastHash(color_attachments.data(), sizeof(color_attachments)), FastHash(&depth, sizeof(depth)) };
+			return FastHash(hashes, sizeof(hashes));
 		}
 
 		uint32_t sample_count = 1;
@@ -55,43 +103,34 @@ namespace core { namespace Device {
 		bool has_color = false;
 		bool has_depth = false;
 		VulkanSwapchain* swapchain = nullptr;
-		VulkanRenderPass* render_pass;
-		vk::Format color_format = vk::Format::eB8G8R8A8Snorm;
-		vk::Format depth_format = vk::Format::eD24UnormS8Uint;
+		std::array<VulkanRenderTargetAttachment*, caps::max_color_attachments> color_attachments;
+		uint32_t color_attachment_count = 0;
+		VulkanRenderTargetAttachment* depth_attachment = nullptr;
 	};
 
 	class VulkanRenderTarget
 	{
 	public:
-		struct Frame
-		{
-			vk::Image target;
-			vk::UniqueImageView image_view;
-			vk::UniqueFramebuffer framebuffer;
-		};
+		VulkanRenderTarget(const VulkanRenderTargetInitializer& initializer);
 
-		VulkanRenderTarget(VulkanRenderTargetInitializer initializer);
-
-		void Resize(uint32_t width, uint32_t height);
-		const Frame& GetFrame(int index) const { return frames.at(index); }
-		uint32_t GetWidth() const { return  width; }
-		uint32_t GetHeight() const { return  height; }
-		VulkanRenderPass* GetRenderPass() const { return render_pass; }
+		uint32_t GetWidth() const { return width; }
+		uint32_t GetHeight() const { return height; }
+		vk::Framebuffer GetFramebuffer(uint32_t index) const { return framebuffers[index].get(); }
+		bool IsSwapchain() const { return swapchain != nullptr; }
+		bool HasColor() const { return color_attachment_count > 0; }
+		bool HasDepth() const { return (bool)depth_attachment; }
+		uint32_t GetColorAttachmentCount() const { return color_attachment_count; }
 
 	private:
-		std::vector<Frame> frames;
+		uint32_t color_attachment_count = 0;
+		std::array<VulkanRenderTargetAttachment*, caps::max_color_attachments> color_attachments;
+		VulkanRenderTargetAttachment* depth_attachment;
+		std::array<vk::UniqueFramebuffer, caps::MAX_FRAMES_IN_FLIGHT> framebuffers;
+
 		uint32_t sample_count = 1;
 		uint32_t width = 0;
 		uint32_t height = 0;
-		bool use_swapchain = false;
-		VulkanSwapchain* swapchain;
-		bool has_color = false;
-		bool has_depth = false;
-		VulkanRenderPass* render_pass;
-		std::shared_ptr<Texture> depth_texture;
-
-		vk::Format color_format = vk::Format::eB8G8R8A8Snorm;
-		vk::Format depth_format = vk::Format::eD24UnormS8Uint;
+		VulkanSwapchain* swapchain = nullptr;
 	};
 
 } }

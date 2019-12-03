@@ -37,14 +37,19 @@ layout (std140, set = 0, binding = 4) uniform SkinningMatrices {
 layout(location = 5) in vec3 normal;
 #endif
 
+#if !defined(DEPTH_ONLY)
 layout(location = 0) out vec3 fragColor;
-layout(location = 2) out vec4 position_worldspace;
+layout(location = 2) out vec4 out_position_worldspace;
+#endif
+
 #if defined(LIGHTING)
 layout(location = 4) out vec3 normal_worldspace;
 #endif
 
 void main() {
+#if !defined(DEPTH_ONLY)
     fragColor = vec3(1.0, 1.0, 1.0);
+#endif
 
     mat4 model_matrix = object_params.objectModelMatrix;
 
@@ -57,9 +62,12 @@ void main() {
 	}
 	#endif
 
-    position_worldspace = model_matrix * vec4(position, 1.0);
-
+    vec4 position_worldspace = model_matrix * vec4(position, 1.0);
     gl_Position = camera.cameraProjectionMatrix * camera.cameraViewMatrix * position_worldspace;
+
+#if !defined(DEPTH_ONLY)
+    out_position_worldspace = position_worldspace;
+#endif
 
 #if defined(LIGHTING)
     normal_worldspace = normalize((model_matrix * vec4(normal, 0)).xyz);

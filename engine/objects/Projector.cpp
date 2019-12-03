@@ -54,11 +54,10 @@ ShaderBufferStruct::Projector Projector::getProjectorStruct() const {
   result.mask = cameraVisibilityMask();
 
   if (castShadows()) {
-	  throw std::runtime_error("not supported");
-	  //result.shadowmapScale = vec2(_viewport.z, _viewport.w) / (float)SceneRenderer::shadowAtlasSize();
-	  //result.shadowmapOffset = vec2(_viewport.x, _viewport.y) / (float)SceneRenderer::shadowAtlasSize();
+	  result.shadowmapScale = vec2(_viewport.z, _viewport.w) / (float)core::render::SceneRenderer::ShadowAtlasSize();
+	  result.shadowmapOffset= vec2(_viewport.x, _viewport.y) / (float)core::render::SceneRenderer::ShadowAtlasSize();
   } else {
-    result.shadowmapScale = vec2(0, 0);
+	  result.shadowmapScale = vec2(0, 0);
   }
 
   result.projectionMatrix = _viewProjection;

@@ -11,7 +11,7 @@ MeshObject::MeshObject() : GameObject() {
   _material = std::make_shared<Material>();
 }
 
-void MeshObject::render(IRenderer &renderer) {
+void MeshObject::render(std::function<void(core::Device::RenderOperation& rop, RenderQueue queue)> callback) {
   if (!_mesh || !_material) {
     return;
   }
@@ -19,7 +19,7 @@ void MeshObject::render(IRenderer &renderer) {
   RenderOperation rop = _getDefaultRenderOp();
   rop.mesh = _mesh;
   rop.material = _material;
-  renderer.AddRenderOperation(rop, _renderQueue);
+  callback(rop, _renderQueue);
 }
 
 void MeshObject::start() {

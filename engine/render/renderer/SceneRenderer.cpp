@@ -19,11 +19,14 @@
 #include "loader/TextureLoader.h"
 #include "render/shading/LightGrid.h"
 #include "render/texture/Texture.h"
+#include "render/shading/ShadowMap.h"
 #include "render/mesh/Mesh.h"
+#include "render/shading/IShadowCaster.h"
 #include "render/shader/Shader.h"
 #include "render/shader/ShaderCache.h"
 #include "render/shader/ShaderBindings.h"
 #include "render/renderer/RenderOperation.h"
+#include "render/renderer/RenderGraph.h"
 #include "render/material/Material.h"
 #include "render/buffer/UniformBuffer.h"
 #include "objects/LightObject.h"
@@ -31,11 +34,19 @@
 #include "SceneBuffers.h"
 #include "objects/Camera.h"
 
+#include <functional>
+
 using namespace core;
 using namespace core::Device;
 
-
 namespace core { namespace render {
+
+	static const int32_t shadow_atlas_size = 4096;
+
+	int32_t SceneRenderer::ShadowAtlasSize()
+	{
+		return shadow_atlas_size;
+	}
 
 	SceneRenderer::~SceneRenderer() = default;
 
@@ -44,10 +55,25 @@ namespace core { namespace render {
 	{
 		scene_buffers = std::make_unique<SceneBuffers>();
 		light_grid = std::make_unique<LightGrid>();
+		shadow_map = std::make_unique<ShadowMap>(ShadowAtlasSize(), ShadowAtlasSize());
+		render_graph = std::make_unique<graph::RenderGraph>();
+		depth_only_fragment_shader_hash = ShaderCache::GetShaderPathHash(L"shaders/noop.frag");
+		auto* context = Engine::GetVulkanContext();
+		context->AddRecreateSwapchainCallback(std::bind(&SceneRenderer::OnRecreateSwapchain, this, std::placeholders::_1, std::placeholders::_2));
+		shadowmap_atlas_attachment = std::make_unique<VulkanRenderTargetAttachment>(VulkanRenderTargetAttachment::Type::Depth, ShadowAtlasSize(), ShadowAtlasSize(), Format::D24_unorm_S8_uint);
+
+		compute_buffer = std::make_unique<UniformBuffer<unsigned char>>(128 * 128 * sizeof(vec4), true);
+		compute_program = shader_cache->GetShaderProgram(0, 0, ShaderCache::GetShaderPathHash(L"shaders/test.comp"));
+		auto* buffer_binding = compute_program->GetBindingByName("buf");
+		compute_bindings = std::make_unique<ShaderBindings>();
+		compute_bindings->AddBufferBinding(buffer_binding->address.set, buffer_binding->address.binding, 0, compute_buffer->GetSize(), compute_buffer->GetBuffer()->Buffer());
 	}
 
-	ShaderBufferStruct::Camera camera_data;
-	ShaderBufferStruct::ObjectParams object_data[4];
+	void SceneRenderer::OnRecreateSwapchain(int32_t width, int32_t height)
+	{
+		render_graph->ClearCache();
+		main_depth_attachment = std::make_unique<VulkanRenderTargetAttachment>(VulkanRenderTargetAttachment::Type::Depth, width, height, Format::D24_unorm_S8_uint);
+	}
 
 	static ShaderBufferStruct::Camera GetCameraData(ICameraParamsProvider* camera)
 	{
@@ -64,6 +90,12 @@ namespace core { namespace render {
 	{
 		auto* draw_call = GetDrawCall(rop);
 		render_queues[(size_t)queue].push_back(draw_call);
+
+		if (queue == RenderQueue::Opaque)
+		{
+			auto* depth_draw_call = GetDrawCall(rop, true);
+			render_queues[(size_t)RenderQueue::DepthOnly].push_back(depth_draw_call);
+		}
 	}
 
 	void SceneRenderer::RenderScene(Scene* scene)
@@ -79,82 +111,185 @@ namespace core { namespace render {
 		rop_transform_cache.clear();
 		auto visible_objects = scene->visibleObjects(scene->GetCamera());
 
-		auto* camera_buffer = scene_buffers->GetCameraBuffer();
-		camera_buffer->Map();
-		camera_buffer->Append(GetCameraData(scene->GetCamera()));
-		camera_buffer->Unmap();
-
 		// Shadow casters
 		auto &visibleLights = scene->visibleLights(scene->GetCamera());
-		//_shadowCasters.clear();
+		shadow_casters.clear();
 		for (auto &light : visibleLights) {
 			if (light->castShadows()) {
-				//_shadowCasters.push_back(std::static_pointer_cast<IShadowCaster>(light));
+				shadow_casters.push_back(
+					std::make_pair(static_cast<IShadowCaster*>(light.get()), std::vector<DrawCall*>())
+				);
 			}
 		}
 
 		auto &visibleProjectors = scene->visibleProjectors(scene->GetCamera());
 		for (auto &projector : visibleProjectors) {
 			if (projector->castShadows()) {
-				//_shadowCasters.push_back(std::static_pointer_cast<IShadowCaster>(projector));
+				shadow_casters.push_back(
+					std::make_pair(static_cast<IShadowCaster*>(projector.get()), std::vector<DrawCall*>())
+				);
 			}
 		}
-
-		// Light grid setup
-		auto window_size = scene->GetCamera()->cameraViewSize();
-		light_grid->Update(window_size.x, window_size.y);
-		//_shadowMap->setupRenderPasses(_shadowCasters); // Should go BEFORE lightgrid setup
-
-		auto lights = scene->visibleLights(scene->GetCamera());
-		light_grid->appendLights(lights, scene->GetCamera());
-		auto projectors = scene->visibleProjectors(scene->GetCamera());
-		light_grid->appendProjectors(projectors, scene->GetCamera());
-		light_grid->upload();
 
 		auto* object_params_buffer = scene_buffers->GetObjectParamsBuffer();
 		auto* skinning_matrices_buffer = scene_buffers->GetSkinningMatricesBuffer();
 		object_params_buffer->Map();
 		skinning_matrices_buffer->Map();
+
+		auto* camera_buffer = scene_buffers->GetCameraBuffer();
+		camera_buffer->Map();
+		camera_buffer->Append(GetCameraData(scene->GetCamera()));
+		for (auto& shadow_caster : shadow_casters)
+		{
+			auto offset = camera_buffer->Append(GetCameraData(shadow_caster.first));
+
+			auto& light_visible_objects = scene->visibleObjects(shadow_caster.first);
+			for (auto& object : light_visible_objects)
+			{
+				object->render([&](core::Device::RenderOperation& rop, RenderQueue queue) {
+					auto* depth_draw_call = GetDrawCall(rop, true, offset);
+					shadow_caster.second.push_back(depth_draw_call);
+				});
+			}
+		}
+		camera_buffer->Unmap();
+		shadow_map->SetupShadowCasters(shadow_casters);
+
+		// Light grid setup
+		auto window_size = scene->GetCamera()->cameraViewSize();
+		light_grid->Update(window_size.x, window_size.y);
+
+		light_grid->appendLights(visibleLights, scene->GetCamera());
+		light_grid->appendProjectors(visibleProjectors, scene->GetCamera());
+		light_grid->upload();
+
 		for (auto& object : visible_objects)
 		{
-			object->render(*this);
+			object->render([&](core::Device::RenderOperation& rop, RenderQueue queue) {
+				AddRenderOperation(rop, queue);
+			});
 		}
 		object_params_buffer->Unmap();
 		skinning_matrices_buffer->Unmap();
 
-		auto* render_state = context->GetRenderState();
 		auto* swapchain = context->GetSwapchain();
-		RenderMode mode;
-		mode.SetDepthWriteEnabled(true);
-		mode.SetDepthTestEnabled(true);
-		mode.SetDepthFunc(CompareOp::Less);
-
-		auto* command_buffer = render_state->BeginRendering(*swapchain->GetRenderTarget());
-		render_state->SetRenderMode(mode);
-		for (auto* draw_call : render_queues[(size_t)RenderQueue::Opaque])
+		// Render Graph
+		render_graph->Clear();
+		
+		struct PassInfo
 		{
-			render_state->RenderDrawCall(draw_call);
-		}
-		render_state->EndRendering();
+			graph::DependencyNode* color_output = nullptr;
+			graph::DependencyNode* depth_output = nullptr;
+			graph::DependencyNode* compute_output = nullptr;
+		};
 
-		context->AddFrameCommandBuffer(command_buffer->GetCommandBuffer());
+		auto* main_color = render_graph->RegisterAttachment(*swapchain->GetColorAttachment());
+		auto* main_depth = render_graph->RegisterAttachment(*main_depth_attachment);
+		auto* shadow_map = render_graph->RegisterAttachment(*shadowmap_atlas_attachment);
+		auto* compute_buffer_resource = render_graph->RegisterBuffer(*compute_buffer->GetBuffer());
+
+		/*auto compute_pass_info = render_graph->AddPass<PassInfo>("compute pass", [&](graph::IRenderPassBuilder& builder)
+		{
+			builder.SetCompute();
+
+			PassInfo result;
+			result.compute_output = builder.AddOutput(*compute_buffer_resource);
+			return result;
+		}, [&](VulkanRenderState& state)
+		{
+			state.RecordCompute(*compute_program, *compute_bindings, uvec3(128, 128, 1));
+		});*/
+
+		auto depth_pre_pass_info = render_graph->AddPass<PassInfo>("depth pre pass", [&](graph::IRenderPassBuilder& builder)
+		{
+			PassInfo result;
+			result.depth_output = builder.AddOutput(*main_depth)->Clear(1.0f);
+			return result;
+		}, [&](VulkanRenderState& state)
+		{
+			RenderMode mode;
+			mode.SetDepthWriteEnabled(true);
+			mode.SetDepthTestEnabled(true);
+			mode.SetDepthFunc(CompareOp::Less);
+
+			state.SetRenderMode(mode);
+			for (auto* draw_call : render_queues[(size_t)RenderQueue::DepthOnly])
+			{
+				state.RenderDrawCall(draw_call);
+			}
+		});
+
+		auto shadow_map_info = render_graph->AddPass<PassInfo>("shadow map", [&](graph::IRenderPassBuilder& builder)
+		{
+			PassInfo result;
+			result.depth_output = builder.AddOutput(*shadow_map)->Clear(1.0f);
+			return result;
+		}, [&](VulkanRenderState& state)
+		{
+			RenderMode mode;
+			mode.SetDepthWriteEnabled(true);
+			mode.SetDepthTestEnabled(true);
+			mode.SetDepthFunc(CompareOp::Less);
+			state.SetRenderMode(mode);
+			state.SetScissor(vec4(0, 0, ShadowAtlasSize(), ShadowAtlasSize()));
+
+			for (auto& shadow_caster : shadow_casters)
+			{
+				state.SetViewport(shadow_caster.first->cameraViewport());
+				for (auto* draw_call : shadow_caster.second)
+				{
+					state.RenderDrawCall(draw_call);
+				}
+			}
+
+		});
+
+		auto main_pass_info = render_graph->AddPass<PassInfo>("main", [&](graph::IRenderPassBuilder& builder)
+		{
+			PassInfo result;
+			builder.AddInput(*depth_pre_pass_info.depth_output, graph::InputUsage::DepthAttachment);
+			builder.AddInput(*shadow_map_info.depth_output);
+			result.color_output = builder.AddOutput(*main_color)->Clear(vec4(0));
+			return result;
+		}, [&](VulkanRenderState& state)
+		{
+			RenderMode mode;
+			mode.SetDepthWriteEnabled(false);
+			mode.SetDepthTestEnabled(true);
+			mode.SetDepthFunc(CompareOp::LessOrEqual);
+
+			state.SetRenderMode(mode);
+			for (auto* draw_call : render_queues[(size_t)RenderQueue::Opaque])
+			{
+				state.RenderDrawCall(draw_call);
+			}
+		});
+
+		render_graph->Prepare();
+		render_graph->Render();
 
 		ReleaseDrawCalls();
 	}
 	
-	Texture* GetTextureFromROP(RenderOperation& rop, ShaderTextureName texture_name)
+	Texture* SceneRenderer::GetTextureFromROP(RenderOperation& rop, ShaderTextureName texture_name)
 	{
 		auto* material = rop.material.get();
 		switch (texture_name)
 		{
 		case ShaderTextureName::Texture0:
 			return material->texture0().get();
+
+		case ShaderTextureName::ShadowMap:
+			return shadowmap_atlas_attachment->GetTexture(0).get();
+
+		default:
+			throw std::runtime_error("unknown texture");
 		}
 
 		return nullptr;
 	}
 
-	std::tuple<vk::Buffer, size_t, size_t> SceneRenderer::GetBufferFromROP(RenderOperation& rop, ShaderBufferName buffer_name)
+	std::tuple<vk::Buffer, size_t, size_t> SceneRenderer::GetBufferFromROP(RenderOperation& rop, ShaderBufferName buffer_name, uint32_t camera_index)
 	{
 		vk::Buffer buffer = nullptr;
 		size_t offset;
@@ -174,7 +309,7 @@ namespace core { namespace render {
 		{
 			auto* camera_buffer = scene_buffers->GetCameraBuffer();
 			buffer = camera_buffer->GetBuffer()->Buffer();
-			offset = 0;
+			offset = camera_index;
 			size = camera_buffer->GetElementSize();
 			break;
 		}
@@ -233,7 +368,7 @@ namespace core { namespace render {
 		return std::make_tuple(buffer, offset, size);
 	}
 
-	void SceneRenderer::SetupShaderBindings(RenderOperation& rop, ShaderProgram& shader, ShaderBindings& bindings)
+	void SceneRenderer::SetupShaderBindings(RenderOperation& rop, ShaderProgram& shader, ShaderBindings& bindings, uint32_t camera_index)
 	{
 		for (auto& set : shader.GetDescriptorSets())
 		{
@@ -249,7 +384,7 @@ namespace core { namespace render {
 					case ShaderProgram::BindingType::UniformBuffer:
 					case ShaderProgram::BindingType::StorageBuffer:
 					{
-						auto buffer_data = GetBufferFromROP(rop, (ShaderBufferName)binding.id);
+						auto buffer_data = GetBufferFromROP(rop, (ShaderBufferName)binding.id, camera_index);
 						vk::Buffer buffer;
 						size_t offset;
 						size_t size;
@@ -266,7 +401,7 @@ namespace core { namespace render {
 		}
 	}
 
-	DrawCall* SceneRenderer::GetDrawCall(RenderOperation& rop, bool depth_only)
+	DrawCall* SceneRenderer::GetDrawCall(RenderOperation& rop, bool depth_only, uint32_t camera_index)
 	{
 		auto draw_call = draw_call_pool.Obtain();
 		draw_call->mesh = nullptr;
@@ -280,11 +415,12 @@ namespace core { namespace render {
 		if (rop.skinning_matrices)
 			caps.addCap(ShaderCaps::Skinning);
 
-		auto vertex_hash =  ShaderCache::GetCombinedHash(rop.material->GetVertexShaderNameHash(), caps);
-		auto fragment_hash = ShaderCache::GetCombinedHash(rop.material->GetFragmentShaderNameHash(), caps);
+		auto vertex_name_hash = depth_only ? rop.material->GetVertexShaderDepthOnlyNameHash() : rop.material->GetVertexShaderNameHash();
+		auto vertex_hash =  ShaderCache::GetCombinedHash(vertex_name_hash, caps);
+		auto fragment_hash = depth_only ? depth_only_fragment_shader_hash : ShaderCache::GetCombinedHash(rop.material->GetFragmentShaderNameHash(), caps);
 
 		draw_call->shader = shader_cache->GetShaderProgram(vertex_hash, fragment_hash);
-		SetupShaderBindings(rop, *draw_call->shader, *draw_call->shader_bindings);
+		SetupShaderBindings(rop, *draw_call->shader, *draw_call->shader_bindings, camera_index);
 
 		auto* result = draw_call.get();
 		used_draw_calls.push_back(std::move(draw_call));

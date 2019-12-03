@@ -36,6 +36,7 @@ public:
 	const ShaderCapsSet &shaderCapsSkinning() { if (_capsDirty) _updateCaps(); return _shaderCapsSkinning; }
 
 	uint32_t GetVertexShaderNameHash() const { return vertex_hash; }
+	uint32_t GetVertexShaderDepthOnlyNameHash() const { return vertex_hash_depth_only; }
 	uint32_t GetFragmentShaderNameHash() const { return fragment_hash; }
 
 protected:
@@ -51,6 +52,7 @@ protected:
 	ShaderCapsSet _shaderCaps;
 	ShaderCapsSet _shaderCapsSkinning;
 
+	uint32_t vertex_hash_depth_only = 0;
 	uint32_t vertex_hash = 0;
 	uint32_t fragment_hash = 0;
 

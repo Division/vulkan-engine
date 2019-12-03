@@ -17,7 +17,6 @@ namespace core { namespace Device {
 
 		vk::ShaderModule GetModule() const { return shader_module.get(); }
 		const ReflectionInfo* GetReflectionInfo() const { return reflection_info.get(); }
-		bool HasModule() const { return (VkShaderModule)shader_module.get() != VK_NULL_HANDLE; }
 		uint32_t GetHash() const { return hash; }
 	private:
 		uint32_t hash;
@@ -31,8 +30,9 @@ namespace core { namespace Device {
 	public:
 		enum class Stage : unsigned
 		{
-			Vertex = 1 << 0,
-			Fragment = 1 << 1
+			Vertex   = 1 << 0,
+			Fragment = 1 << 1,
+			Compute  = 1 << 2
 		};
 
 		enum class BindingType : unsigned
@@ -69,7 +69,7 @@ namespace core { namespace Device {
 
 		static const unsigned max_descriptor_sets = 4;
 
-		static uint32_t CalculateHash(uint32_t fragment_hash, uint32_t vertex_hash);
+		static uint32_t CalculateHash(uint32_t fragment_hash, uint32_t vertex_hash, uint32_t compute_hash = 0);
 
 		ShaderProgram();
 		void AddModule(ShaderModule* shader_module, Stage stage);
@@ -77,6 +77,7 @@ namespace core { namespace Device {
 
 		const ShaderModule* VertexModule() const { return vertex_module; }
 		const ShaderModule* FragmentModule() const { return fragment_module; }
+		const ShaderModule* ComputeModule() const { return compute_module; }
 		
 		const auto& GetDescriptorSets() const { return descriptor_sets; }
 		const DescriptorSet* GetDescriptorSet(unsigned set) const { return &descriptor_sets[set]; };
@@ -91,6 +92,7 @@ namespace core { namespace Device {
 	private:
 		ShaderModule* vertex_module = nullptr;
 		ShaderModule* fragment_module = nullptr;
+		ShaderModule* compute_module = nullptr;
 		
 		uint32_t hash;
 

@@ -148,6 +148,20 @@ namespace core { namespace Device {
 
 	}
 
+	void VulkanRenderState::UpdateFrameDescriptorSets()
+	{
+		for (auto& set : frame_descriptor_sets)
+			set = vk::DescriptorSet();
+
+		for (int i = 0; i < descriptor_sets.size(); i++)
+		{
+			auto& descriptor_set = descriptor_sets[i];
+			if (!descriptor_set.active) continue;
+
+			frame_descriptor_sets[i] = GetDescriptorSet(descriptor_set, i, current_shader);
+		}
+	}
+
 	void VulkanRenderState::UpdateState()
 	{
 		if (dirty_flags == 0)
@@ -168,16 +182,13 @@ namespace core { namespace Device {
 		if (dirty_flags & (int)DirtyFlags::RenderPass)
 		{
 			auto* context = Engine::GetVulkanContext();
-			vk::ClearValue clear_value[] = { 
-				vk::ClearColorValue(std::array<float, 4>{ 0.0f, 0.0f, 0.0f, 1.0f }),
-				vk::ClearDepthStencilValue(1, 0)
-			};
+			auto attachment_count = std::min(current_render_target->GetColorAttachmentCount() + current_render_target->HasDepth() ? 1u : 0u, (uint32_t)clear_values.size());
 
 			vk::RenderPassBeginInfo render_pass_begin_info(
 				current_render_pass->GetRenderPass(),
-				current_render_target->GetFrame(context->GetCurrentFrame()).framebuffer.get(),
+				current_render_target->GetFramebuffer(context->GetCurrentFrame()),
 				vk::Rect2D(vk::Offset2D(0, 0), vk::Extent2D(current_render_target->GetWidth(), current_render_target->GetHeight())),
-				2, clear_value
+				attachment_count, clear_values.data()
 			);
 
 			auto command_buffer = GetCurrentCommandBuffer()->GetCommandBuffer();
@@ -193,16 +204,7 @@ namespace core { namespace Device {
 
 		if (dirty_flags & (int)DirtyFlags::DescriptorSet)
 		{
-			for (auto& set : frame_descriptor_sets)
-				set = vk::DescriptorSet();
-
-			for (int i = 0; i < descriptor_sets.size(); i++)
-			{
-				auto& descriptor_set = descriptor_sets[i];
-				if (!descriptor_set.active) continue;
-				
-				frame_descriptor_sets[i] = GetDescriptorSet(descriptor_set, i, current_shader);
-			}
+			UpdateFrameDescriptorSets();
 		}
 
 		if (update_pipeline)
@@ -217,7 +219,28 @@ namespace core { namespace Device {
 			command_buffer.bindPipeline( vk::PipelineBindPoint::eGraphics, current_pipeline->GetPipeline());
 		}
 
+		if (dirty_flags & (int)DirtyFlags::Viewport)
+		{
+			assert(current_viewport.w > 0 && current_viewport.z > 0);
+			auto command_buffer = GetCurrentCommandBuffer()->GetCommandBuffer();
+			vk::Viewport viewport(current_viewport.x, current_viewport.y, current_viewport.z, current_viewport.w, 0.0f, 1.0f);
+			command_buffer.setViewport(0, 1, &viewport);
+		}
+
+		if (dirty_flags & (int)DirtyFlags::Scissor)
+		{
+			assert(current_scissor.w > 0 && current_scissor.z > 0);
+			auto command_buffer = GetCurrentCommandBuffer()->GetCommandBuffer();
+			vk::Rect2D scissor(vk::Offset2D(current_scissor.x, current_scissor.y), vk::Extent2D(current_scissor.z, current_viewport.w));
+			command_buffer.setScissor(0, 1, &scissor);
+		}
+
 		dirty_flags = 0;
+	}
+
+	void VulkanRenderState::SetClearValue(uint32_t index, vk::ClearValue value)
+	{
+		clear_values[index] = value;
 	}
 	
 	void VulkanRenderState::SetMesh(const Mesh& mesh)
@@ -249,7 +272,20 @@ namespace core { namespace Device {
 
 	void VulkanRenderState::SetViewport(vec4 viewport)
 	{
+		if (current_viewport != viewport)
+		{
+			dirty_flags |= (int)DirtyFlags::Viewport;
+			current_viewport = viewport;
+		}
+	}
 
+	void VulkanRenderState::SetScissor(vec4 scissor)
+	{
+		if (current_scissor != scissor)
+		{
+			dirty_flags |= (int)DirtyFlags::Viewport;
+			current_scissor = scissor;
+		}
 	}
 
 	void VulkanRenderState::SetShader(const ShaderProgram& program)
@@ -352,7 +388,6 @@ namespace core { namespace Device {
 		return result;
 	}
 
-	// TODO: don't cache bindings? (update ones that non in flight)
 	void VulkanRenderState::SetBindings(ShaderBindings& bindings)
 	{
 		for (auto& set_data : descriptor_sets)
@@ -421,6 +456,19 @@ namespace core { namespace Device {
 		return dynamic_offsets;
 	}
 
+	void VulkanRenderState::BindFrameDescriptorSets(vk::CommandBuffer command_buffer, vk::PipelineBindPoint bind_point)
+	{
+		// todo: set only changed descriptor sets
+		for (int i = 0; i < frame_descriptor_sets.size(); i++)
+		{
+			if (frame_descriptor_sets[i])
+			{
+				auto& dynamic_offsets = GetDynamicOffsets(i, i);
+				command_buffer.bindDescriptorSets(bind_point, current_pipeline->GetPipelineLayout(), i, 1u, &frame_descriptor_sets[i], dynamic_offsets.size(), dynamic_offsets.data());
+			}
+		}
+	}
+
 	void VulkanRenderState::RenderDrawCall(const core::render::DrawCall* draw_call)
 	{
 		auto* mesh = draw_call->mesh;
@@ -444,23 +492,21 @@ namespace core { namespace Device {
 		command_buffer.bindVertexBuffers(0, 1, &vertex_buffer, &offset);
 		command_buffer.bindIndexBuffer(index_buffer, offset, vk::IndexType::eUint16);
 
-		// todo: set only changed descriptor sets
-		for (int i = 0; i < frame_descriptor_sets.size(); i++)
-		{
-			if (frame_descriptor_sets[i])
-			{
-				auto& dynamic_offsets = GetDynamicOffsets(i, i);
-				command_buffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, current_pipeline->GetPipelineLayout(), i, 1u, &frame_descriptor_sets[i], dynamic_offsets.size(), dynamic_offsets.data());
-			}
-		}
+		BindFrameDescriptorSets(command_buffer, vk::PipelineBindPoint::eGraphics);
 
 		command_buffer.drawIndexed(static_cast<uint32_t>(mesh->indexCount()), 1, 0, 0, 0);
 	}
 
-	VulkanCommandBuffer* VulkanRenderState::BeginRendering(const VulkanRenderTarget& render_target)
+	void VulkanRenderState::BeginRecording()
+	{
+		auto begin_info = vk::CommandBufferBeginInfo();
+		auto command_buffer = GetCurrentCommandBuffer()->GetCommandBuffer();
+		command_buffer.begin(begin_info);
+	}
+
+	VulkanCommandBuffer* VulkanRenderState::BeginRendering(const VulkanRenderTarget& render_target, const VulkanRenderPass& render_pass)
 	{
 		dirty_flags = (uint32_t)DirtyFlags::All;
-		current_frame = (current_frame + 1) % caps::MAX_FRAMES_IN_FLIGHT;
 		current_render_pass = nullptr;
 		current_render_mode = RenderMode();
 		current_mesh = nullptr;
@@ -471,11 +517,7 @@ namespace core { namespace Device {
 		for (auto& set_data : descriptor_sets)
 			set_data.hash = 0;
 
-		SetRenderPass(*render_target.GetRenderPass());
-
-		auto begin_info = vk::CommandBufferBeginInfo();
-		auto command_buffer = GetCurrentCommandBuffer()->GetCommandBuffer();
-		command_buffer.begin(begin_info);
+		SetRenderPass(render_pass);
 
 		return GetCurrentCommandBuffer();
 	}
@@ -484,7 +526,30 @@ namespace core { namespace Device {
 	{
 		auto command_buffer = GetCurrentCommandBuffer()->GetCommandBuffer();
 		command_buffer.endRenderPass();
+	}
+
+	void VulkanRenderState::EndRecording()
+	{
+		auto command_buffer = GetCurrentCommandBuffer()->GetCommandBuffer();
 		command_buffer.end();
+		current_frame = (current_frame + 1) % caps::MAX_FRAMES_IN_FLIGHT;
+	}
+
+	void VulkanRenderState::RecordCompute(const ShaderProgram& program, ShaderBindings& bindings, uvec3 group_size)
+	{
+		SetShader(program);
+		VulkanPipelineInitializer compute_pipeline_initializer(&program);
+		current_pipeline = GetPipeline(compute_pipeline_initializer);
+		SetBindings(bindings);
+		UpdateFrameDescriptorSets();
+
+		auto command_buffer = GetCurrentCommandBuffer()->GetCommandBuffer();
+		command_buffer.bindPipeline( vk::PipelineBindPoint::eCompute, current_pipeline->GetPipeline());
+		BindFrameDescriptorSets(command_buffer, vk::PipelineBindPoint::eCompute);
+
+		vkCmdDispatch(command_buffer, group_size.x, group_size.y, group_size.z);
+
+		dirty_flags = (uint32_t)DirtyFlags::All;
 	}
 
 	VulkanPipeline* VulkanRenderState::GetPipeline(const VulkanPipelineInitializer& initializer)
