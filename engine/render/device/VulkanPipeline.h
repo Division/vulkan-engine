@@ -12,12 +12,14 @@ namespace core { namespace Device {
 
 	struct VulkanPipelineInitializer
 	{
-		VulkanPipelineInitializer(const ShaderProgram* shader_program, const VulkanRenderPass* render_pass, const Mesh* mesh, const RenderMode* render_mode);
+		VulkanPipelineInitializer(const ShaderProgram* shader_program, const VulkanRenderPass* render_pass, const Mesh* mesh, const RenderMode* render_mode); // graphics
+		VulkanPipelineInitializer(const ShaderProgram* shader_program); // compute
 
-		const ShaderProgram const* shader_program;
-		const VulkanRenderPass const* render_pass;
-		const Mesh const* mesh;
-		const RenderMode const* render_mode;
+		const ShaderProgram const* shader_program = nullptr;
+		const VulkanRenderPass const* render_pass = nullptr;
+		const Mesh const* mesh = nullptr;
+		const RenderMode const* render_mode = nullptr;
+		bool is_compute = false;
 
 		uint32_t GetHash() const { return hash; }
 
@@ -34,6 +36,7 @@ namespace core { namespace Device {
 		vk::PipelineLayout GetPipelineLayout() const { return pipeline_layout.get(); }
 
 	private:
+		bool is_compute;
 		vk::UniquePipelineLayout pipeline_layout;
 		vk::UniquePipeline pipeline;
 	};

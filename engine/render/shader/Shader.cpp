@@ -26,6 +26,7 @@ namespace core { namespace Device {
 	{
 		{ ShaderProgram::Stage::Vertex, vk::ShaderStageFlagBits::eVertex },
 		{ ShaderProgram::Stage::Fragment, vk::ShaderStageFlagBits::eFragment },
+		{ ShaderProgram::Stage::Compute, vk::ShaderStageFlagBits::eCompute },
 	};
 
 	std::unordered_map<ShaderProgram::BindingType, vk::DescriptorType> binding_type_map =
@@ -109,6 +110,7 @@ namespace core { namespace Device {
 
 		uint32_t vertex_hash = 0;
 		uint32_t fragment_hash = 0;
+		uint32_t compute_hash = 0;
 		if (vertex_module)
 		{
 			vertex_hash = vertex_module->GetHash();
@@ -121,7 +123,13 @@ namespace core { namespace Device {
 			AppendBindings(*fragment_module, Stage::Fragment, existing_bindings);
 		}
 
-		hash = ShaderProgram::CalculateHash(fragment_hash, vertex_hash);
+		if (compute_module)
+		{
+			compute_hash = compute_module->GetHash();
+			AppendBindings(*compute_module, Stage::Compute, existing_bindings);
+		}
+
+		hash = ShaderProgram::CalculateHash(fragment_hash, vertex_hash, compute_hash);
 
 		auto device = Engine::GetVulkanDevice();
 
@@ -146,9 +154,9 @@ namespace core { namespace Device {
 
 	}
 
-	uint32_t ShaderProgram::CalculateHash(uint32_t fragment_hash, uint32_t vertex_hash)
+	uint32_t ShaderProgram::CalculateHash(uint32_t fragment_hash, uint32_t vertex_hash, uint32_t compute_hash)
 	{
-		std::array<uint32_t, 2> combined = { vertex_hash, fragment_hash };
+		std::array<uint32_t, 3> combined = { vertex_hash, fragment_hash, compute_hash };
 		return FastHash(combined.data(), sizeof(combined));
 	}
 

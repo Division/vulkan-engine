@@ -5,6 +5,7 @@
 #include "render/renderer/DrawCall.h"
 #include "render/renderer/IRenderer.h"
 #include "render/shader/ShaderResource.h"
+//#include "render/buffer/UniformBuffer.h"
 
 class Scene;
 class IShadowCaster;
@@ -19,6 +20,7 @@ namespace core
 		class ShaderBindings;
 		class ShaderCache;
 		struct RenderOperation;
+		template<typename T> class UniformBuffer;
 	}
 }
 
@@ -62,6 +64,11 @@ namespace core { namespace render {
 		std::unique_ptr<graph::RenderGraph> render_graph;
 		core::utils::Pool<DrawCall> draw_call_pool;
 		std::vector<std::unique_ptr<DrawCall>> used_draw_calls;
+		
+		ShaderProgram* compute_program;
+		std::unique_ptr<ShaderBindings> compute_bindings;
+		std::unique_ptr<UniformBuffer<unsigned char>> compute_buffer;
+
 		std::unique_ptr<VulkanRenderTargetAttachment> main_depth_attachment;
 		std::unique_ptr<VulkanRenderTargetAttachment> shadowmap_atlas_attachment;
 		std::unordered_map<RenderOperation*, vk::DescriptorBufferInfo> rop_transform_cache; // cleared every frame. Allows reusing same object transform buffer in multiple draw calls.

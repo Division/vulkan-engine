@@ -23,7 +23,7 @@ namespace core { namespace Device {
 	public:
 		ShaderCache();
 		~ShaderCache();
-		ShaderProgram* GetShaderProgram(uint32_t vertex_hash, uint32_t fragment_hash);
+		ShaderProgram* GetShaderProgram(uint32_t vertex_hash, uint32_t fragment_hash, uint32_t compute_hash = 0);
 		ShaderModule* GetShaderModule(uint32_t hash);
 
 	private:

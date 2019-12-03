@@ -73,6 +73,7 @@ namespace core { namespace render { namespace graph {
 
 		LastOperation last_operation = LastOperation::None;
 		ImageLayout image_layout = ImageLayout::Undefined;
+		vk::Semaphore semaphore; // signalled when write is done
 		vk::AccessFlags access_flags;
 	};
 
@@ -126,6 +127,7 @@ namespace core { namespace render { namespace graph {
 
 		bool is_compute = false;
 
+		uvec3 compute_group_size;
 		std::vector<std::pair<DependencyNode*, InputUsage>> input_nodes;
 		std::vector<DependencyNode*> output_nodes;
 	};
@@ -166,17 +168,27 @@ namespace core { namespace render { namespace graph {
 		DependencyNode* AddOutput(ResourceWrapper& render_target) override;
 	private:
 		bool ResourceRegistered(void* resource);
+		void RecordGraphicsPass(Pass* pass);
+		void RecordComputePass(Pass* pass);
 		VulkanRenderPass* GetRenderPass(const VulkanRenderPassInitializer& initializer);
 		VulkanRenderTarget* GetRenderTarget(const VulkanRenderTargetInitializer& initializer);
 		void ApplyPreBarriers(Pass& pass, VulkanRenderState& state);
 		void ApplyPostBarriers(Pass& pass, VulkanRenderState& state);
 		void RecordCommandBuffers();
+
+	private:
+		vk::Semaphore GetSemaphore();
+		void UpdateInFlightSemaphores();
+
 	private:
 		Pass* current_render_pass = nullptr;
 		DependencyNode* present_node = nullptr;
 		std::vector<std::unique_ptr<Pass>> render_passes;
 		std::vector<std::unique_ptr<ResourceWrapper>> resources;
 		std::vector<std::unique_ptr<DependencyNode>> nodes;
+		std::vector<vk::UniqueSemaphore> semaphores;
+		std::vector<vk::Semaphore> available_semaphores;
+		std::vector<std::pair<int, vk::Semaphore>> in_flight_semaphores;
 		std::unordered_map<uint32_t, std::unique_ptr<VulkanRenderPass>> render_pass_cache;
 		std::unordered_map<uint32_t, std::unique_ptr<VulkanRenderTarget>> render_target_cache;
 	};

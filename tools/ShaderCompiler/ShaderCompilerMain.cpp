@@ -1,5 +1,6 @@
 #include <cstdlib>
 #include "CommonIncludes.h"
+#include <string>
 #include "render/shader/Shader.h"
 #include "render/shader/ShaderDefines.h"
 #include "render/shader/ShaderCaps.h"
@@ -9,6 +10,7 @@
 
 const auto vs_extension = L".vert";
 const auto fs_extension = L".frag";
+const auto cs_extension = L".comp";
 const auto shaders_path = L"shaders";
 const auto compiler_shaders_path = L"shaders_compiled";
 const auto material_shader_name = L"material_main";
@@ -21,6 +23,12 @@ struct ShaderData
 	ShaderProgram::Stage stage;
 	std::filesystem::path path;
 	std::filesystem::path path_no_extension;
+};
+
+const std::map<std::wstring, ShaderProgram::Stage> extension_to_stage = {
+	{ vs_extension, ShaderProgram::Stage::Vertex },
+	{ fs_extension, ShaderProgram::Stage::Fragment },
+	{ cs_extension, ShaderProgram::Stage::Compute },
 };
 
 void CompileShader(const std::filesystem::path& shader_path, const ShaderCapsSet& set, bool is_material, std::vector<std::string> additional_macro = {})
@@ -87,10 +95,11 @@ int main(int argc, char* argv[])
 	for (auto& path : iter)
 	{
 		auto ext = path.path().extension();
-		if (ext == vs_extension || ext == fs_extension)
+		auto ext_iterator = extension_to_stage.find(ext);
+		if (ext_iterator != extension_to_stage.end())
 		{
 			auto file_path = path.path();
-			shaders.push_back({ ext == vs_extension ? ShaderProgram::Stage::Vertex : ShaderProgram::Stage::Fragment, file_path, file_path.replace_extension("") });
+			shaders.push_back({ ext_iterator->second, file_path, file_path.replace_extension("") });
 		}
 	}
 

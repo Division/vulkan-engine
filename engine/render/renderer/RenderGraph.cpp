@@ -165,7 +165,7 @@ namespace core { namespace render { namespace graph {
 
 		if (pass->is_compute)
 		{
-			throw std::runtime_error("not implemented");
+			throw std::runtime_error("Error: compute doesn't have render pass");
 		} else
 		{
 			for (auto* output : pass->output_nodes)
@@ -477,46 +477,107 @@ namespace core { namespace render { namespace graph {
 		}
 	}
 
+	void RenderGraph::RecordGraphicsPass(Pass* pass)
+	{
+		auto* context = Engine::GetVulkanContext();
+		auto* state = context->GetRenderState();
+		auto initializer = GetPassInitializer(pass);
+		auto* vulkan_pass = GetRenderPass(std::get<0>(initializer));
+		auto* vulkan_render_target = GetRenderTarget(std::get<1>(initializer));
+		auto viewport = vec4(0, 0, std::get<2>(initializer));
+
+		uint32_t attach_index = 0;
+		for (auto* output : pass->output_nodes)
+		{
+			if (output->resource->type == ResourceType::Attachment)
+				state->SetClearValue(attach_index++, output->clear_value);
+		}
+
+		auto* command_buffer = state->GetCurrentCommandBuffer();
+		state->BeginRecording();
+		ApplyPreBarriers(*pass, *state);
+
+		state->SetScissor(viewport);
+		state->SetViewport(viewport);
+
+		state->BeginRendering(*vulkan_render_target, *vulkan_pass);
+		pass->record_callback(*state);
+		state->EndRendering();
+
+		ApplyPostBarriers(*pass, *state);
+		state->EndRecording();
+
+		context->AddFrameCommandBuffer(command_buffer->GetCommandBuffer());
+	}
+
+	void RenderGraph::RecordComputePass(Pass* pass)
+	{
+		auto* context = Engine::GetVulkanContext();
+		auto* state = context->GetRenderState();
+
+		auto* command_buffer = state->GetCurrentCommandBuffer();
+		state->BeginRecording();
+		ApplyPreBarriers(*pass, *state);
+
+		pass->record_callback(*state);
+
+		ApplyPostBarriers(*pass, *state);
+		state->EndRecording();
+
+		context->AddFrameCommandBuffer(command_buffer->GetCommandBuffer());
+	}
+
 	void RenderGraph::RecordCommandBuffers()
 	{
 		auto* context = Engine::GetVulkanContext();
 
 		for (auto& pass : render_passes)
 		{
-			auto* state = context->GetRenderState();
-			auto initializer = GetPassInitializer(pass.get());
-			auto* vulkan_pass = GetRenderPass(std::get<0>(initializer));
-			auto* vulkan_render_target = GetRenderTarget(std::get<1>(initializer));
-			auto viewport = vec4(0, 0, std::get<2>(initializer));
-
-			uint32_t attach_index = 0;
-			for (auto* output : pass->output_nodes)
-			{
-				if (output->resource->type == ResourceType::Attachment)
-					state->SetClearValue(attach_index++, output->clear_value);
-			}
-
-			auto* command_buffer = state->GetCurrentCommandBuffer();
-			state->BeginRecording();
-			ApplyPreBarriers(*pass, *state);
-			
-			state->SetScissor(viewport);
-			state->SetViewport(viewport);
-
-			state->BeginRendering(*vulkan_render_target, *vulkan_pass);
-			pass->record_callback(*state);
-			state->EndRendering();
-
-			ApplyPostBarriers(*pass, *state);
-			state->EndRecording();
-
-			context->AddFrameCommandBuffer(command_buffer->GetCommandBuffer());
+			if (pass->is_compute)
+				RecordComputePass(pass.get());
+			else
+				RecordGraphicsPass(pass.get());
 		}
 	}
 
 	void RenderGraph::Render()
 	{
 		RecordCommandBuffers();
+	}
+
+	vk::Semaphore RenderGraph::GetSemaphore()
+	{
+		vk::Semaphore semaphore;
+
+		if (available_semaphores.size())
+		{
+			semaphore = available_semaphores.back();
+			available_semaphores.pop_back();
+		} else
+		{
+			auto device = Engine::GetVulkanDevice();
+			semaphores.push_back(device.createSemaphoreUnique(vk::SemaphoreCreateInfo()));
+			semaphore = semaphores.back().get();
+		}
+
+		in_flight_semaphores.push_back(std::make_pair(0, semaphore));
+	}
+
+	void RenderGraph::UpdateInFlightSemaphores()
+	{
+		for (auto& pair : in_flight_semaphores)
+		{
+			pair.first += 1;
+		}
+
+		const int in_flight_count = 2;
+		auto remove_pos = std::remove_if(in_flight_semaphores.begin(), in_flight_semaphores.end(), [=](auto& pair) { return pair.first >= in_flight_count; });
+		for (auto iter = remove_pos; iter != in_flight_semaphores.end(); iter++)
+		{
+			available_semaphores.push_back(iter->second);
+		}
+
+		in_flight_semaphores.erase(remove_pos, in_flight_semaphores.end());
 	}
 
 } } }

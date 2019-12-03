@@ -40,7 +40,10 @@ namespace core { namespace Device {
 			data.name = sampler.name;
 			data.set = compiler.get_decoration(sampler.id, spv::DecorationDescriptorSet);
 			data.binding = compiler.get_decoration(sampler.id, spv::DecorationBinding);
-			data.shader_texture = SHADER_SAMPLER_NAMES.at(data.name);
+			auto iter = SHADER_SAMPLER_NAMES.find(data.name);
+			if (iter != SHADER_SAMPLER_NAMES.end())
+				data.shader_texture = iter->second;
+
 			samplers.push_back(data);
 		}
 
@@ -51,7 +54,9 @@ namespace core { namespace Device {
 			data.name = storage_buffer.name;
 			data.set = compiler.get_decoration(storage_buffer.id, spv::DecorationDescriptorSet);
 			data.binding = compiler.get_decoration(storage_buffer.id, spv::DecorationBinding);
-			data.storage_buffer_name = SHADER_BUFFER_NAMES.at(storage_buffer.name);
+			auto iter = SHADER_BUFFER_NAMES.find(storage_buffer.name);
+			if (iter != SHADER_BUFFER_NAMES.end())
+				data.storage_buffer_name = iter->second;
 
 			storage_buffers.push_back(data);
 		}

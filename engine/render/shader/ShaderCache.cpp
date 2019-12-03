@@ -82,20 +82,31 @@ namespace core { namespace Device {
 		return result;
 	}
 
-	ShaderProgram* ShaderCache::GetShaderProgram(uint32_t vertex_hash, uint32_t fragment_hash)
+	ShaderProgram* ShaderCache::GetShaderProgram(uint32_t vertex_hash, uint32_t fragment_hash, uint32_t compute_hash)
 	{
 		// TODO: async shader loading
-		auto program_hash = ShaderProgram::CalculateHash(fragment_hash, vertex_hash);
+		auto program_hash = ShaderProgram::CalculateHash(fragment_hash, vertex_hash, compute_hash);
 		
 		auto iter = program_cache.find(program_hash);
 		if (iter != program_cache.end())
 			return iter->second.get();
 
 		auto program = std::make_unique<ShaderProgram>();
-		auto vertex_module = GetShaderModule(vertex_hash);
-		auto fragment_module = GetShaderModule(fragment_hash);
-		program->AddModule(vertex_module, ShaderProgram::Stage::Vertex);
-		program->AddModule(fragment_module, ShaderProgram::Stage::Fragment);
+		if (vertex_hash)
+		{
+			auto vertex_module = GetShaderModule(vertex_hash);
+			program->AddModule(vertex_module, ShaderProgram::Stage::Vertex);
+		}
+		if (fragment_hash)
+		{
+			auto fragment_module = GetShaderModule(fragment_hash);
+			program->AddModule(fragment_module, ShaderProgram::Stage::Fragment);
+		}
+		if (compute_hash)
+		{
+			auto compute_module = GetShaderModule(compute_hash);
+			program->AddModule(compute_module, ShaderProgram::Stage::Compute);
+		}
 		program->Prepare();
 		auto* result = program.get();
 		program_cache[program_hash] = std::move(program);

@@ -168,6 +168,8 @@ namespace core { namespace Device {
 		VulkanCommandBuffer* BeginRendering(const VulkanRenderTarget& render_target, const VulkanRenderPass& render_pass);
 		void EndRendering();
 
+		void RecordCompute(const ShaderProgram& program, ShaderBindings& bindings, uvec3 group_size);
+
 		void BeginRecording();
 		void EndRecording();
 	private:
@@ -185,6 +187,8 @@ namespace core { namespace Device {
 		};
 
 	private:
+		void UpdateFrameDescriptorSets();
+		void BindFrameDescriptorSets(vk::CommandBuffer command_buffer, vk::PipelineBindPoint bind_point);
 		void UpdateState();
 		void SetMesh(const Mesh& mesh);
 		VulkanPipeline* GetPipeline(const VulkanPipelineInitializer& initializer);

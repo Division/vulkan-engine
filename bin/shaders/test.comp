@@ -1,0 +1,20 @@
+#version 450
+#extension GL_ARB_separate_shader_objects : enable
+#define WORKGROUP_SIZE 1
+layout (local_size_x = WORKGROUP_SIZE, local_size_y = WORKGROUP_SIZE, local_size_z = 1 ) in;
+
+#define WIDTH 128
+
+struct Pixel{
+	vec4 value;
+};
+
+layout(std140, binding = 0) buffer buf
+{
+   Pixel imageData[];
+};
+
+void main() {
+	vec4 color = vec4(1.0,0.0,1.0,1.0);
+	imageData[WIDTH * gl_GlobalInvocationID.y + gl_GlobalInvocationID.x].value = color;
+}

@@ -39,7 +39,6 @@
 using namespace core;
 using namespace core::Device;
 
-
 namespace core { namespace render {
 
 	static const int32_t shadow_atlas_size = 4096;
@@ -62,6 +61,12 @@ namespace core { namespace render {
 		auto* context = Engine::GetVulkanContext();
 		context->AddRecreateSwapchainCallback(std::bind(&SceneRenderer::OnRecreateSwapchain, this, std::placeholders::_1, std::placeholders::_2));
 		shadowmap_atlas_attachment = std::make_unique<VulkanRenderTargetAttachment>(VulkanRenderTargetAttachment::Type::Depth, ShadowAtlasSize(), ShadowAtlasSize(), Format::D24_unorm_S8_uint);
+
+		compute_buffer = std::make_unique<UniformBuffer<unsigned char>>(128 * 128 * sizeof(vec4), true);
+		compute_program = shader_cache->GetShaderProgram(0, 0, ShaderCache::GetShaderPathHash(L"shaders/test.comp"));
+		auto* buffer_binding = compute_program->GetBindingByName("buf");
+		compute_bindings = std::make_unique<ShaderBindings>();
+		compute_bindings->AddBufferBinding(buffer_binding->address.set, buffer_binding->address.binding, 0, compute_buffer->GetSize(), compute_buffer->GetBuffer()->Buffer());
 	}
 
 	void SceneRenderer::OnRecreateSwapchain(int32_t width, int32_t height)
@@ -175,11 +180,25 @@ namespace core { namespace render {
 		{
 			graph::DependencyNode* color_output = nullptr;
 			graph::DependencyNode* depth_output = nullptr;
+			graph::DependencyNode* compute_output = nullptr;
 		};
 
 		auto* main_color = render_graph->RegisterAttachment(*swapchain->GetColorAttachment());
 		auto* main_depth = render_graph->RegisterAttachment(*main_depth_attachment);
 		auto* shadow_map = render_graph->RegisterAttachment(*shadowmap_atlas_attachment);
+		auto* compute_buffer_resource = render_graph->RegisterBuffer(*compute_buffer->GetBuffer());
+
+		/*auto compute_pass_info = render_graph->AddPass<PassInfo>("compute pass", [&](graph::IRenderPassBuilder& builder)
+		{
+			builder.SetCompute();
+
+			PassInfo result;
+			result.compute_output = builder.AddOutput(*compute_buffer_resource);
+			return result;
+		}, [&](VulkanRenderState& state)
+		{
+			state.RecordCompute(*compute_program, *compute_bindings, uvec3(128, 128, 1));
+		});*/
 
 		auto depth_pre_pass_info = render_graph->AddPass<PassInfo>("depth pre pass", [&](graph::IRenderPassBuilder& builder)
 		{

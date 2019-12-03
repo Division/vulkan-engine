@@ -21,7 +21,15 @@ namespace core { namespace Device {
 		hash = FastHash(hashes, sizeof(hashes));
 	}
 
+	VulkanPipelineInitializer::VulkanPipelineInitializer(const ShaderProgram* shader_program)
+	{
+		size_t hashes[] = { shader_program->GetHash() };
+		hash = FastHash(hashes, sizeof(hashes));
+		is_compute = true;
+	}
+
 	VulkanPipeline::VulkanPipeline(VulkanPipelineInitializer initializer)
+		: is_compute(initializer.is_compute)
 	{
 		auto* shader_program = initializer.shader_program;
 		auto* render_pass = initializer.render_pass;
@@ -32,16 +40,24 @@ namespace core { namespace Device {
 		std::array<vk::PipelineShaderStageCreateInfo, 5> shader_stages;
 		uint32_t shader_stage_count = 0;
 
-		vk::PipelineShaderStageCreateInfo vertex_shader_stage_info(
-			{}, 
-			vk::ShaderStageFlagBits::eVertex, 
-			shader_program->VertexModule()->GetModule(), 
-			"main"
-		);
-		shader_stages[shader_stage_count++] = vertex_shader_stage_info;
+		if (!initializer.is_compute)
+			assert(shader_program->VertexModule());
 
-		if (shader_program->FragmentModule()->HasModule())
+		if (shader_program->VertexModule())
 		{
+			assert(!initializer.is_compute);
+			vk::PipelineShaderStageCreateInfo vertex_shader_stage_info(
+				{}, 
+				vk::ShaderStageFlagBits::eVertex, 
+				shader_program->VertexModule()->GetModule(), 
+				"main"
+			);
+			shader_stages[shader_stage_count++] = vertex_shader_stage_info;
+		}
+
+		if (shader_program->FragmentModule())
+		{
+			assert(!initializer.is_compute);
 			vk::PipelineShaderStageCreateInfo fragment_shader_stage_info(
 				{},
 				vk::ShaderStageFlagBits::eFragment,
@@ -49,6 +65,18 @@ namespace core { namespace Device {
 				"main"
 			);
 			shader_stages[shader_stage_count++] = fragment_shader_stage_info;
+		}
+
+		if (shader_program->ComputeModule())
+		{
+			assert(initializer.is_compute);
+			vk::PipelineShaderStageCreateInfo compute_shader_stage_info(
+				{},
+				vk::ShaderStageFlagBits::eCompute,
+				shader_program->ComputeModule()->GetModule(),
+				"main"
+			);
+			shader_stages[shader_stage_count++] = compute_shader_stage_info;
 		}
 
 		vk::VertexInputBindingDescription vertex_binding_description(0, mesh->strideBytes(), vk::VertexInputRate::eVertex);
@@ -67,36 +95,6 @@ namespace core { namespace Device {
 			);
 		}
 
-		vk::PipelineVertexInputStateCreateInfo vertex_input_state_create_info({}, 1, &vertex_binding_description, vertex_attribute_descriptions.size(), vertex_attribute_descriptions.data());
-		vk::PipelineInputAssemblyStateCreateInfo input_assembly_create_info({}, vk::PrimitiveTopology::eTriangleList, VK_FALSE);
-		
-		vk::Viewport viewport(0, 0, 0, 0, 0, 1);
-		vk::Rect2D scissor(vk::Offset2D(0, 0), vk::Extent2D(0, 0));
-		vk::PipelineViewportStateCreateInfo viewport_state({}, 1, &viewport, 1, &scissor);
-
-		auto* render_mode = initializer.render_mode;
-		vk::PipelineRasterizationStateCreateInfo rasterization_state_create_info(
-			{}, VK_FALSE, VK_FALSE, 
-			vk::PolygonMode::eFill, 
-			vk::CullModeFlagBits(render_mode->GetCullMode()), 
-			vk::FrontFace::eCounterClockwise, VK_FALSE, 0, 0, 0.0f, 1.0f
-		);
-
-		vk::PipelineMultisampleStateCreateInfo multisampling_state_create_info({}, vk::SampleCountFlagBits::e1, VK_FALSE, 0, nullptr, VK_FALSE, VK_FALSE);
-
-		vk::PipelineColorBlendAttachmentState color_blend_attachment(
-			vk::Bool32(render_mode->GetAlphaBlendEnabled()),
-			vk::BlendFactor(render_mode->GetSrcBlend()), 
-			vk::BlendFactor(render_mode->GetDestBlend()), 
-			vk::BlendOp(render_mode->GetBlend()),
-			vk::BlendFactor(render_mode->GetSrcBlendAlpha()), 
-			vk::BlendFactor(render_mode->GetDestBlendAlpha()), 
-			vk::BlendOp(render_mode->GetBlendAlpha())
-		);
-		color_blend_attachment.colorWriteMask = vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA;
-
-		vk::PipelineColorBlendStateCreateInfo color_blending({}, VK_FALSE, vk::LogicOp::eCopy, 1, &color_blend_attachment);
-
 		std::vector<vk::DescriptorSetLayout> descriptor_set_layouts;
 		for (auto& set : shader_program->GetDescriptorSets())
 		{
@@ -107,29 +105,67 @@ namespace core { namespace Device {
 		vk::PipelineLayoutCreateInfo pipeline_layout_info({}, descriptor_set_layouts.size(), descriptor_set_layouts.data());
 		pipeline_layout = device.createPipelineLayoutUnique(pipeline_layout_info);
 
-		// todo: Add stencil if required
-		vk::PipelineDepthStencilStateCreateInfo pipeline_depth_stencil_info({}, render_mode->GetDepthTestEnabled(), render_mode->GetDepthWriteEnabled(), (vk::CompareOp)render_mode->GetDepthFunc());
+		if (initializer.is_compute)
+		{
+			assert(shader_stage_count == 1);
+			vk::ComputePipelineCreateInfo compute_pipeline_info({}, shader_stages[0], pipeline_layout.get());
+			pipeline = device.createComputePipelineUnique({}, compute_pipeline_info);
+		} else
+		{
+			vk::PipelineVertexInputStateCreateInfo vertex_input_state_create_info({}, 1, &vertex_binding_description, vertex_attribute_descriptions.size(), vertex_attribute_descriptions.data());
+			vk::PipelineInputAssemblyStateCreateInfo input_assembly_create_info({}, vk::PrimitiveTopology::eTriangleList, VK_FALSE);
+		
+			vk::Viewport viewport(0, 0, 0, 0, 0, 1);
+			vk::Rect2D scissor(vk::Offset2D(0, 0), vk::Extent2D(0, 0));
+			vk::PipelineViewportStateCreateInfo viewport_state({}, 1, &viewport, 1, &scissor);
 
-		std::array<vk::DynamicState, 2> dynamic_states = { vk::DynamicState::eViewport, vk::DynamicState::eScissor };
-		vk::PipelineDynamicStateCreateInfo pipeline_dynamic_state_info({}, dynamic_states.size(), dynamic_states.data());
+			auto* render_mode = initializer.render_mode;
+			vk::PipelineRasterizationStateCreateInfo rasterization_state_create_info(
+				{}, VK_FALSE, VK_FALSE, 
+				vk::PolygonMode::eFill, 
+				vk::CullModeFlagBits(render_mode->GetCullMode()), 
+				vk::FrontFace::eCounterClockwise, VK_FALSE, 0, 0, 0.0f, 1.0f
+			);
 
-		vk::GraphicsPipelineCreateInfo pipeline_info(
-			{},
-			shader_stage_count, shader_stages.data(), 
-			&vertex_input_state_create_info, 
-			&input_assembly_create_info,
-			nullptr,
-			&viewport_state, 
-			&rasterization_state_create_info, 
-			&multisampling_state_create_info, 
-			&pipeline_depth_stencil_info, 
-			&color_blending,
-			&pipeline_dynamic_state_info,
-			pipeline_layout.get(),
-			render_pass->GetRenderPass()
-		);
+			vk::PipelineMultisampleStateCreateInfo multisampling_state_create_info({}, vk::SampleCountFlagBits::e1, VK_FALSE, 0, nullptr, VK_FALSE, VK_FALSE);
 
-		pipeline = device.createGraphicsPipelineUnique(vk::PipelineCache(), pipeline_info);
+			vk::PipelineColorBlendAttachmentState color_blend_attachment(
+				vk::Bool32(render_mode->GetAlphaBlendEnabled()),
+				vk::BlendFactor(render_mode->GetSrcBlend()), 
+				vk::BlendFactor(render_mode->GetDestBlend()), 
+				vk::BlendOp(render_mode->GetBlend()),
+				vk::BlendFactor(render_mode->GetSrcBlendAlpha()), 
+				vk::BlendFactor(render_mode->GetDestBlendAlpha()), 
+				vk::BlendOp(render_mode->GetBlendAlpha())
+			);
+			color_blend_attachment.colorWriteMask = vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA;
+
+			vk::PipelineColorBlendStateCreateInfo color_blending({}, VK_FALSE, vk::LogicOp::eCopy, 1, &color_blend_attachment);
+
+			// todo: Add stencil if required
+			vk::PipelineDepthStencilStateCreateInfo pipeline_depth_stencil_info({}, render_mode->GetDepthTestEnabled(), render_mode->GetDepthWriteEnabled(), (vk::CompareOp)render_mode->GetDepthFunc());
+
+			std::array<vk::DynamicState, 2> dynamic_states = { vk::DynamicState::eViewport, vk::DynamicState::eScissor };
+			vk::PipelineDynamicStateCreateInfo pipeline_dynamic_state_info({}, dynamic_states.size(), dynamic_states.data());
+
+			vk::GraphicsPipelineCreateInfo pipeline_info(
+				{},
+				shader_stage_count, shader_stages.data(), 
+				&vertex_input_state_create_info, 
+				&input_assembly_create_info,
+				nullptr,
+				&viewport_state, 
+				&rasterization_state_create_info, 
+				&multisampling_state_create_info, 
+				&pipeline_depth_stencil_info, 
+				&color_blending,
+				&pipeline_dynamic_state_info,
+				pipeline_layout.get(),
+				render_pass->GetRenderPass()
+			);
+
+			pipeline = device.createGraphicsPipelineUnique(vk::PipelineCache(), pipeline_info);
+		}
 	}
 
 } }
