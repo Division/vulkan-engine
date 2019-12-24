@@ -65,7 +65,7 @@ namespace core { namespace Device {
 		return swapchain->GetImages().size(); 
 	}
 
-	void VulkanContext::AddFrameCommandBuffer(vk::CommandBuffer command_buffer)
+	void VulkanContext::AddFrameCommandBuffer(FrameCommandBufferData command_buffer)
 	{
 		frame_command_buffers.push_back(command_buffer);
 	}
@@ -226,8 +226,9 @@ namespace core { namespace Device {
 			throw std::runtime_error("failed to create logical device!");
 		}
 
-		vkGetDeviceQueue(device, indices.graphicsFamily.value(), 0, &graphicsQueue);
-		vkGetDeviceQueue(device, indices.presentFamily.value(), 0, &presentQueue);
+		graphics_queue = GetDevice().getQueue(indices.graphicsFamily.value(), 0);
+		present_queue = GetDevice().getQueue(indices.presentFamily.value(), 0);
+		compute_queue = GetDevice().getQueue(indices.compute_family.value(), 0);
 	}
 
     void VulkanContext::CreateSyncObjects() 
@@ -252,6 +253,21 @@ namespace core { namespace Device {
         }
     }
 
+	vk::Queue VulkanContext::GetQueue(PipelineBindPoint bind_point)
+	{
+		switch (bind_point)
+		{
+		case PipelineBindPoint::Graphics:
+			return GetGraphicsQueue();
+		
+		case PipelineBindPoint::Compute:
+			return GetComputeQueue();
+
+		default:
+			throw std::runtime_error("not supported");
+		}
+	}
+
 	void VulkanContext::WaitForRenderFence()
 	{
 		vk::Fence current_fence = GetInFlightFence(); 
@@ -263,8 +279,8 @@ namespace core { namespace Device {
 	{
 		auto vk_swapchain = GetSwapchain();
 		VkFence current_fence = GetInFlightFence();
-		VkSemaphore image_available_semaphone = GetImageAvailableSemaphore();
-		VkSemaphore render_finished_semaphore = GetRenderFinishedSemaphore();
+		vk::Semaphore image_available_semaphone = GetImageAvailableSemaphore();
+		vk::Semaphore render_finished_semaphore = GetRenderFinishedSemaphore();
 
 		uint32_t imageIndex;
 		VkResult result = vkAcquireNextImageKHR(device, swapchain->GetSwapchain(), std::numeric_limits<uint64_t>::max(), image_available_semaphone, VK_NULL_HANDLE, &imageIndex);
@@ -279,49 +295,58 @@ namespace core { namespace Device {
 
 		GetUploader()->ProcessUpload();
 
-		VkSubmitInfo submitInfo = {};
-		submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+		for (int i = 0; i < frame_command_buffers.size(); i++)
+		{
+			bool is_last = i == frame_command_buffers.size() - 1;
+			bool is_first = i == 0;
 
-		VkSemaphore waitSemaphores[] = { image_available_semaphone };
-		VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
-		submitInfo.waitSemaphoreCount = 1;
-		submitInfo.pWaitSemaphores = waitSemaphores;
-		submitInfo.pWaitDstStageMask = waitStages;
+			auto& data = frame_command_buffers[i];
+			vk::SubmitInfo submit_info;
+			vk::PipelineStageFlags wait_mask;
+			if (data.wait_semaphore)
+			{
+				submit_info.waitSemaphoreCount = 1;
+				wait_mask = data.wait_flags;
+				submit_info.pWaitDstStageMask = &wait_mask;
+				submit_info.setPWaitSemaphores(&data.wait_semaphore);
+			}
 
-		submitInfo.commandBufferCount = frame_command_buffers.size();
-		submitInfo.pCommandBuffers = frame_command_buffers.data();
+			if (is_first)
+			{
+				submit_info.waitSemaphoreCount = 1;
+				wait_mask = vk::PipelineStageFlagBits::eColorAttachmentOutput;
+				submit_info.pWaitDstStageMask = &wait_mask;
+				submit_info.setPWaitSemaphores(&image_available_semaphone);
+			}
 
-		VkSemaphore signalSemaphores[] = { render_finished_semaphore };
-		submitInfo.signalSemaphoreCount = 1;
-		submitInfo.pSignalSemaphores = signalSemaphores;
+			auto signal_semaphore = is_last ? render_finished_semaphore : data.signal_semaphore;
+			vk::Fence fence = is_last ? current_fence : nullptr;
 
-		// Queue waits for the image_available_semaphone which is signaled after vkAcquireNextImageKHR succeeds
-		if (vkQueueSubmit(GetGraphicsQueue(), 1, &submitInfo, current_fence) != VK_SUCCESS) {
-			throw std::runtime_error("failed to submit draw command buffer!");
+			if (signal_semaphore)
+			{
+				submit_info.signalSemaphoreCount = 1;
+				submit_info.setPSignalSemaphores(&signal_semaphore);
+			}
+
+			submit_info.commandBufferCount = 1;
+			submit_info.setPCommandBuffers(&data.command_buffer);
+
+			auto queue = GetQueue(data.queue);
+			queue.submit(1, &submit_info, fence);
 		}
 
-		VkPresentInfoKHR presentInfo = {};
-		presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
-
-		presentInfo.waitSemaphoreCount = 1;
-		presentInfo.pWaitSemaphores = signalSemaphores;
-
-		VkSwapchainKHR swapChains[] = { swapchain->GetSwapchain() };
-		presentInfo.swapchainCount = 1;
-		presentInfo.pSwapchains = swapChains;
-
-		presentInfo.pImageIndices = &imageIndex;
-
-		result = vkQueuePresentKHR(GetPresentQueue(), &presentInfo);
+		vk::SwapchainKHR swapChains[] = { swapchain->GetSwapchain() };
+		vk::PresentInfoKHR presentInfo(1, &render_finished_semaphore, 1, swapChains, &imageIndex);
+		auto present_result = GetPresentQueue().presentKHR(&presentInfo);
 
 		//vkDeviceWaitIdle(device); ///// Uncomment to sync every frame
 
-		if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || framebuffer_resized) {
+		if (present_result == vk::Result::eErrorOutOfDateKHR || present_result == vk::Result::eSuboptimalKHR || framebuffer_resized) {
 			framebuffer_resized = false;
 			RecreateSwapChain();
 			currentFrame = 1; // todo: understand why it removes validation layer message
 		}
-		else if (result != VK_SUCCESS) {
+		else if (present_result != vk::Result::eSuccess) {
 			throw std::runtime_error("failed to present swap chain image!");
 		}
 

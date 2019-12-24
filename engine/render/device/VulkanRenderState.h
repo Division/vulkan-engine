@@ -164,6 +164,7 @@ namespace core { namespace Device {
 		void SetClearValue(uint32_t index, vk::ClearValue value);
 		void RenderDrawCall(const core::render::DrawCall* draw_call);
 		VulkanCommandBuffer* GetCurrentCommandBuffer() const { return command_buffers[current_frame]; }
+		vk::Semaphore GetCurrentSemaphore() const { return semaphores[current_frame].get(); }
 
 		VulkanCommandBuffer* BeginRendering(const VulkanRenderTarget& render_target, const VulkanRenderPass& render_pass);
 		void EndRendering();
@@ -220,6 +221,7 @@ namespace core { namespace Device {
 		std::unique_ptr<VulkanCommandPool> command_pool;
 		vk::UniqueDescriptorPool descriptor_pool;
 		std::array<VulkanCommandBuffer*, caps::MAX_FRAMES_IN_FLIGHT> command_buffers;
+		std::array<vk::UniqueSemaphore, caps::MAX_FRAMES_IN_FLIGHT> semaphores;
 	};
 
 } }

@@ -376,6 +376,7 @@ namespace core { namespace render { namespace graph {
 #endif
 	}
 
+	// TODO: here should go compute->compute barriers as well
 	void RenderGraph::ApplyPreBarriers(Pass& pass, VulkanRenderState& state)
 	{
 #if DEBUG_LOG
@@ -477,6 +478,18 @@ namespace core { namespace render { namespace graph {
 		}
 	}
 
+	void SetResourceWriteSemaphore(Pass* pass, vk::Semaphore semaphore)
+	{
+		for (auto* output : pass->output_nodes)
+			output->resource->semaphore = semaphore;
+	}
+
+	void SetResourceQueue(Pass* pass, PassQueue queue)
+	{
+		for (auto* output : pass->output_nodes)
+			output->resource->ownership_queue = queue;
+	}
+
 	void RenderGraph::RecordGraphicsPass(Pass* pass)
 	{
 		auto* context = Engine::GetVulkanContext();
@@ -507,7 +520,45 @@ namespace core { namespace render { namespace graph {
 		ApplyPostBarriers(*pass, *state);
 		state->EndRecording();
 
-		context->AddFrameCommandBuffer(command_buffer->GetCommandBuffer());
+		core::Device::FrameCommandBufferData data(
+			command_buffer->GetCommandBuffer(),
+			state->GetCurrentSemaphore(),
+			vk::Semaphore(),
+			vk::PipelineStageFlagBits::eAllCommands, // TODO: fix
+			core::Device::PipelineBindPoint::Graphics
+		);
+
+		data.command_buffer = command_buffer->GetCommandBuffer();
+		data.queue = core::Device::PipelineBindPoint::Graphics;
+		context->AddFrameCommandBuffer(data);
+	}
+
+	void TransferOwnershipQueue(ResourceWrapper& resource, PassQueue queue)
+	{
+		if (resource.ownership_queue == queue)
+			return;
+
+		
+	}
+
+	void ApplyPreComputeBarriers(Pass& pass, VulkanRenderState& state)
+	{
+		for (auto* resource : pass.output_nodes)
+		{
+			ImageLayout target_layout = ImageLayout::Undefined;
+			switch (resource->resource->type)
+			{
+			case ResourceType::Buffer:
+			{
+		
+
+				break;
+			}
+
+			default:
+				throw std::runtime_error("not implemented");
+			}
+		}
 	}
 
 	void RenderGraph::RecordComputePass(Pass* pass)
@@ -524,7 +575,14 @@ namespace core { namespace render { namespace graph {
 		ApplyPostBarriers(*pass, *state);
 		state->EndRecording();
 
-		context->AddFrameCommandBuffer(command_buffer->GetCommandBuffer());
+		core::Device::FrameCommandBufferData data(
+			command_buffer->GetCommandBuffer(),
+			vk::Semaphore(),
+			vk::Semaphore(),
+			vk::PipelineStageFlagBits::eAllCommands, // TODO: fix
+			core::Device::PipelineBindPoint::Compute
+		);
+		context->AddFrameCommandBuffer(data);
 	}
 
 	void RenderGraph::RecordCommandBuffers()
@@ -545,6 +603,7 @@ namespace core { namespace render { namespace graph {
 		RecordCommandBuffers();
 	}
 
+	// TODO: remove since unused?
 	vk::Semaphore RenderGraph::GetSemaphore()
 	{
 		vk::Semaphore semaphore;
@@ -561,6 +620,7 @@ namespace core { namespace render { namespace graph {
 		}
 
 		in_flight_semaphores.push_back(std::make_pair(0, semaphore));
+		return semaphore;
 	}
 
 	void RenderGraph::UpdateInFlightSemaphores()

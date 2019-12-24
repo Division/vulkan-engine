@@ -117,10 +117,12 @@ namespace core { namespace Device {
 		: current_render_mode()
 	{
 		command_pool = std::make_unique<core::Device::VulkanCommandPool>();
+		auto& device = Engine::GetVulkanDevice();
 
 		for (int i = 0; i < caps::MAX_FRAMES_IN_FLIGHT; i++)
 		{
 			command_buffers[i] = command_pool->GetCommandBuffer();
+			semaphores[i] = device.createSemaphoreUnique(vk::SemaphoreCreateInfo());
 		}
 
 		const unsigned max_count = 10000;

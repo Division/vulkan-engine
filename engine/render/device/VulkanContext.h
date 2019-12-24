@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CommonIncludes.h"
+#include "Types.h"
 
 namespace core { namespace Device {
 
@@ -10,11 +11,34 @@ namespace core { namespace Device {
 	class VulkanSwapchain;
 	class VulkanRenderTarget;
 	class VulkanRenderState;
+	
+	struct FrameCommandBufferData
+	{
+		FrameCommandBufferData(
+			vk::CommandBuffer command_buffer,
+			vk::Semaphore signal_semaphore,
+			vk::Semaphore wait_semaphore,
+			vk::PipelineStageFlags wait_flags,
+			PipelineBindPoint queue) 
+		: command_buffer(command_buffer)
+		, signal_semaphore(signal_semaphore)
+		, wait_semaphore(wait_semaphore)
+		, wait_flags(wait_flags)
+		, queue(queue)
+		{}
+
+		vk::CommandBuffer command_buffer;
+		vk::Semaphore signal_semaphore;
+		vk::Semaphore wait_semaphore;
+		vk::PipelineStageFlags wait_flags;
+		PipelineBindPoint queue;
+	};
 
 	class VulkanContext : public NonCopyable
 	{
 	public:
 		typedef std::function<void(int32_t width, int32_t height)> RecreateSwapchainCallback;
+
 
 		VulkanContext(GLFWwindow* window);
 		virtual ~VulkanContext();
@@ -27,8 +51,10 @@ namespace core { namespace Device {
 		VkSurfaceKHR GetSurface() const { return surface; }
 		VulkanUploader* GetUploader() const { return uploader.get(); }
 
-		VkQueue GetGraphicsQueue() const { return graphicsQueue; }
-		VkQueue GetPresentQueue() const { return presentQueue; }
+		vk::Queue GetGraphicsQueue() const { return graphics_queue; }
+		vk::Queue GetPresentQueue() const { return present_queue; }
+		vk::Queue GetComputeQueue() const { return compute_queue; }
+		vk::Queue GetQueue(PipelineBindPoint bind_point);
 
 		size_t GetCurrentFrame() const { return currentFrame; }
 		uint32_t GetSwapchainImageCount() const;
@@ -38,7 +64,7 @@ namespace core { namespace Device {
 		VulkanRenderState* GetRenderState();
 
 		VmaAllocator GetAllocator() { return allocator; }
-		void AddFrameCommandBuffer(vk::CommandBuffer command_buffer);
+		void AddFrameCommandBuffer(FrameCommandBufferData command_buffer);
 
 		void AddRecreateSwapchainCallback(RecreateSwapchainCallback callback);
 
@@ -70,15 +96,16 @@ namespace core { namespace Device {
 		VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
 		VkDevice device;
 
-		VkQueue graphicsQueue;
-		VkQueue presentQueue;
+		vk::Queue graphics_queue;
+		vk::Queue present_queue;
+		vk::Queue compute_queue;
 
 		std::vector<std::unique_ptr<VulkanRenderState>> render_states;
 		uint32_t current_render_state = 0;
 		std::vector<VkSemaphore> imageAvailableSemaphores;
 		std::vector<VkSemaphore> renderFinishedSemaphores;
 		std::vector<VkFence> inFlightFences;
-		std::vector<VkCommandBuffer> frame_command_buffers;
+		std::vector<FrameCommandBufferData> frame_command_buffers;
 		
 		std::vector<RecreateSwapchainCallback> recreate_swapchain_callbacks;
 

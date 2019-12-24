@@ -40,7 +40,8 @@ namespace core { namespace render { namespace graph {
 	enum class PassQueue
 	{
 		Graphics,
-		Compute
+		Compute,
+		None
 	};
 
 	struct ResourceWrapper
@@ -71,10 +72,11 @@ namespace core { namespace render { namespace graph {
 			return reinterpret_cast<VulkanRenderTargetAttachment*>(resource_pointer);
 		}
 
+		PassQueue ownership_queue = PassQueue::None;
 		LastOperation last_operation = LastOperation::None;
 		ImageLayout image_layout = ImageLayout::Undefined;
 		vk::Semaphore semaphore; // signalled when write is done
-		vk::AccessFlags access_flags;
+		//vk::AccessFlags access_flags;
 	};
 
 	struct Pass;
