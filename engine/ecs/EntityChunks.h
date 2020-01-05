@@ -174,6 +174,7 @@ namespace core { namespace ECS {
 		}
 		
 		void* GetMemory() const { return memory; }
+		Chunk* GetNextChunk() const { return next.get(); };
 		
 		void* GetComponentPointer(uint32_t index, ComponentHash hash)
 		{

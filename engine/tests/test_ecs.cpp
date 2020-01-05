@@ -91,3 +91,85 @@ TEST_CASE("ECS multiple entities and components")
 	REQUIRE(layout.GetComponentData(GetComponentHash<TestPositionComponent>()) == nullptr);
 	REQUIRE(layout.GetComponentData(GetComponentHash<TestAABBComponent>()) != nullptr);
 }
+
+TEST_CASE("ECS allocation of multiple chunks with the same layout")
+{
+	EntityManager manager;
+	auto& address_map = manager.GetEntityAddressMap();
+	auto& chunk_map = manager.GetChunkMap();
+
+	SECTION("no component entity")
+	{
+		auto entity = manager.CreateEntity();
+		auto* entity_data = manager.GetComponent<EntityData>(entity);
+		auto& layout = *entity_data->layout;
+		auto* initial_chunk = entity_data->address.chunk;
+
+		REQUIRE(initial_chunk->GetNextChunk() == nullptr);
+
+		for (int i = 0; i < layout.GetMaxEntityCount() - 1; i++)
+			manager.CreateEntity();
+
+		REQUIRE(initial_chunk->GetNextChunk() == nullptr); // filled all the available slots but still no next
+		manager.CreateEntity();
+		REQUIRE(initial_chunk->GetNextChunk() != nullptr); // Finally allocated the next chunk
+		REQUIRE(initial_chunk->GetNextChunk()->GetEntityCount() == 1);
+
+		manager.DestroyEntity(entity);
+		manager.CreateEntity();
+		REQUIRE(initial_chunk->GetNextChunk()->GetEntityCount() == 1); // Created in the recently freed place in 1st chunk
+		manager.CreateEntity();
+		REQUIRE(initial_chunk->GetNextChunk()->GetEntityCount() == 2); // Now in the 2nd
+
+		REQUIRE(initial_chunk->GetNextChunk()->GetNextChunk() == nullptr);
+
+		for (int i = 0; i < layout.GetMaxEntityCount(); i++)
+			manager.CreateEntity();
+
+		REQUIRE(initial_chunk->GetNextChunk()->GetNextChunk() != nullptr); // Now in the 2nd
+	}
+
+	SECTION("multiple component entity")
+	{
+		auto create_entity = [&]()
+		{
+			auto entity = manager.CreateEntity();
+			manager.AddComponent<TestPositionComponent>(entity);
+			manager.AddComponent<TestAABBComponent>(entity);
+			return entity;
+		};
+
+		auto entity = create_entity();
+		auto* entity_data = manager.GetComponent<EntityData>(entity);
+		auto& layout = *entity_data->layout;
+		auto* initial_chunk = entity_data->address.chunk;
+
+		REQUIRE(initial_chunk->GetNextChunk() == nullptr);
+		
+		for (int i = 0; i < layout.GetMaxEntityCount() - 1; i++)
+		{
+			auto entity = manager.CreateEntity();
+			manager.AddComponent<TestPositionComponent>(entity);
+			manager.AddComponent<TestAABBComponent>(entity);
+		}
+
+		REQUIRE(initial_chunk->GetNextChunk() == nullptr); // filled all the available slots but still no next
+		create_entity();
+		REQUIRE(initial_chunk->GetNextChunk() != nullptr); // Finally allocated the next chunk
+		REQUIRE(initial_chunk->GetNextChunk()->GetEntityCount() == 1);
+
+		manager.DestroyEntity(entity);
+		create_entity();
+		REQUIRE(initial_chunk->GetNextChunk()->GetEntityCount() == 1); // Created in the recently freed place in 1st chunk
+		create_entity();
+		REQUIRE(initial_chunk->GetNextChunk()->GetEntityCount() == 2); // Now in the 2nd
+
+		REQUIRE(initial_chunk->GetNextChunk()->GetNextChunk() == nullptr);
+
+		for (int i = 0; i < layout.GetMaxEntityCount(); i++)
+			create_entity();
+
+		REQUIRE(initial_chunk->GetNextChunk()->GetNextChunk() != nullptr); // Now in the 2nd
+	}
+
+}
