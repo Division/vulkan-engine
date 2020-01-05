@@ -147,11 +147,7 @@ TEST_CASE("ECS allocation of multiple chunks with the same layout")
 		REQUIRE(initial_chunk->GetNextChunk() == nullptr);
 		
 		for (int i = 0; i < layout.GetMaxEntityCount() - 1; i++)
-		{
-			auto entity = manager.CreateEntity();
-			manager.AddComponent<TestPositionComponent>(entity);
-			manager.AddComponent<TestAABBComponent>(entity);
-		}
+			create_entity();
 
 		REQUIRE(initial_chunk->GetNextChunk() == nullptr); // filled all the available slots but still no next
 		create_entity();
