@@ -12,13 +12,6 @@ namespace core { namespace ECS {
 	class EntityManager
 	{
 	public:
-		static EntityManager* Get()
-		{
-			static std::unique_ptr<EntityManager> instance = nullptr;
-			if (!instance)
-				instance = std::make_unique<EntityManager>();
-			return instance.get();
-		}
 
 		EntityID CreateEntity(ComponentSetHash set_hash = 0)
 		{
@@ -50,7 +43,10 @@ namespace core { namespace ECS {
 		template<typename T>
 		T* AddComponent(EntityID entity)
 		{
-			auto& old_address = entity_address.at(entity);
+			auto entity_address_it = entity_address.find(entity);
+			assert(entity_address_it != entity_address.end());
+
+			auto old_address = entity_address_it->second;
 			auto layout = old_address.chunk ? old_address.chunk->GetComponentLayout() : ComponentLayout(CHUNK_SIZE);
 
 			if (old_address.chunk)
@@ -63,15 +59,10 @@ namespace core { namespace ECS {
 			else
 				layout.AddComponent<T>();
 
-			auto chunk_list_it = chunks.find(layout.GetHash());
-			if (chunk_list_it == chunks.end())
-			{
-				chunks[layout.GetHash()] = std::make_unique<ChunkList>(layout, std::bind(&EntityManager::OnEntityAddressChanged, this, std::placeholders::_1, std::placeholders::_2));
-				chunk_list_it = chunks.find(layout.GetHash());
-			}
+			auto* chunk_list = GetOrCreateChunkList(layout);
+			auto* chunk = chunk_list->GetFirstChunk();
+			auto new_address = chunk->AddEntity(entity, old_address.chunk ? &old_address : nullptr);
 
-			auto* chunk = chunk_list_it->second->GetFirstChunk();
-			auto new_address = chunk->AddEntity(old_address.chunk ? &old_address : nullptr);
 			if (old_address.chunk)
 				old_address.chunk->RemoveEntity(old_address.index);
 
@@ -79,7 +70,38 @@ namespace core { namespace ECS {
 		}
 
 		template<typename T>
-		T& GetComponent(EntityID entity)
+		void RemoveComponent(EntityID entity)
+		{
+			auto entity_address_it = entity_address.find(entity);
+			assert(entity_address_it != entity_address.end());
+
+			auto old_address = entity_address_it->second;
+			assert(old_address.chunk);
+			auto layout = old_address.chunk->GetComponentLayout();
+
+			if (!layout.RemoveComponent<T>())
+				throw std::runtime_error("Component doesn't exist");
+			
+			auto* chunk_list = GetOrCreateChunkList(layout);
+			auto* chunk = chunk_list->GetFirstChunk();
+			auto new_address = chunk->AddEntity(entity, &old_address);
+			old_address.chunk->RemoveEntity(old_address.index);
+		}
+
+		ChunkList* GetOrCreateChunkList(const ComponentLayout& layout)
+		{
+			auto chunk_list_it = chunks.find(layout.GetHash());
+			if (chunk_list_it == chunks.end())
+			{
+				auto it = chunks.insert(std::make_pair(layout.GetHash(), std::make_unique<ChunkList>(layout, std::bind(&EntityManager::OnEntityAddressChanged, this, std::placeholders::_1, std::placeholders::_2))));
+				chunk_list_it = it.first;
+			}
+
+			return chunk_list_it->second.get();
+		}
+
+		template<typename T>
+		T* GetComponent(EntityID entity)
 		{
 			auto address = entity_address.at(entity);
 			return (T*)address.chunk->GetComponentPointer(address.index, GetComponentHash<T>());
@@ -93,6 +115,9 @@ namespace core { namespace ECS {
 			auto* entity = (EntityData*)address.chunk->GetComponentPointer(address.index, GetComponentHash<EntityData>());
 			entity->address = address;
 		}
+
+		const auto& GetChunkMap() const { return chunks; }
+		const auto& GetEntityAddressMap() const { return entity_address; }
 
 	private:
 		EntityID id_counter = 0;

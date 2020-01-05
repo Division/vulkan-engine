@@ -39,6 +39,11 @@ namespace core { namespace ECS {
 			return l.hash < r.hash;
 		}
 
+		bool operator==(const ComponentData& other) const
+		{
+			return hash == other.hash && offset == other.offset && size == other.size;
+		}
+
 		ComponentHash hash;
 		uint32_t offset;
 		uint32_t size;
@@ -49,7 +54,7 @@ namespace core { namespace ECS {
 	public:
 		ComponentLayout(const ComponentLayout&) = default;
 
-		ComponentLayout(size_t chunk_size)
+		explicit ComponentLayout(size_t chunk_size)
 			: chunk_size(chunk_size)
 		{
 			memset(components.data(), 0, sizeof(components));
@@ -62,12 +67,12 @@ namespace core { namespace ECS {
 		uint32_t GetHash() const { return hash; }
 
 		template<typename T>
-		void AddComponent()
+		bool AddComponent()
 		{
 			auto hash = GetComponentHash<T>();
 			auto* existing_component = GetComponentData(hash);
 			if (existing_component)
-				return;
+				return false;
 
 			components[component_count] = ComponentData{ hash, 0, sizeof(T) };
 			component_count += 1;
@@ -75,6 +80,27 @@ namespace core { namespace ECS {
 			std::sort(components.begin(), components.begin() + component_count);
 			RecalculateOffsets();
 			UpdateHash();
+
+			return true;
+		}
+
+		template<typename T>
+		bool RemoveComponent()
+		{
+			auto hash = GetComponentHash<T>();
+			auto* existing_component = GetComponentData(hash);
+			if (!existing_component)
+				return false;
+
+			auto new_end = std::remove(components.begin(), components.begin() + component_count, *existing_component);
+			component_count -= 1;
+			assert(component_count >= 0);
+			memset(&*(components.begin() + component_count), 0, sizeof(ComponentData));
+			
+			RecalculateOffsets();
+			UpdateHash();
+
+			return true;
 		}
 
 		const ComponentData* GetComponentData(ComponentHash hash) const
@@ -107,6 +133,8 @@ namespace core { namespace ECS {
 				component.offset = last_offset;
 				last_offset += component.size * max_entity_count;
 			}
+
+			assert(max_entity_count > 0);
 		}
 
 	private:
@@ -133,9 +161,11 @@ namespace core { namespace ECS {
 		Chunk(const ComponentLayout& layout, EntityAddressChangedCallback entity_address_callback)
 			: layout(layout) 
 			, entity_address_callback(entity_address_callback)
-			, allocated_entity_count(0)
+			, entity_count(0)
 			, memory(malloc(CHUNK_SIZE))
 		{}
+
+		Chunk(const ComponentLayout&& layout, EntityAddressChangedCallback entity_address_callback) = delete;
 		
 		~Chunk()
 		{
@@ -159,14 +189,15 @@ namespace core { namespace ECS {
 			return (char*)memory + data->offset + (size_t)data->size * (size_t)index;
 		}
 
+		uint32_t GetEntityCount() const { return entity_count; }
+
 		EntityAddress AllocateAddress()
 		{
-			EntityAddress result = { this, 0 };
-
-			if (allocated_entity_count < layout.GetMaxEntityCount())
+			if (entity_count < layout.GetMaxEntityCount())
 			{
-				result.index = allocated_entity_count;
-				allocated_entity_count += 1;
+				EntityAddress result = { this, entity_count };
+				entity_count += 1;
+				return result;
 			}
 			else
 			{
@@ -175,15 +206,12 @@ namespace core { namespace ECS {
 
 				return next->AllocateAddress(); // todo: make non-recursive
 			}
-
-			return result;
 		}
 
 		const ComponentLayout& GetComponentLayout() const { return layout; }
 
-		EntityAddress AddEntity(const EntityAddress* previous_address = nullptr)
+		EntityAddress AddEntity(EntityID id, const EntityAddress* previous_address = nullptr)
 		{
-			uint32_t result = -1;
 			auto new_address = AllocateAddress();
 
 			// Copy data
@@ -206,14 +234,29 @@ namespace core { namespace ECS {
 				}
 			}
 
+			auto* entity = (EntityData*)new_address.chunk->GetComponentPointer(new_address.index, GetComponentHash<EntityData>());
+			// Entity is new, need to setup EntityData component
+			if (!previous_address)
+			{
+				entity->address = new_address;
+				entity->id = id;
+			}
+
+			assert(entity->id == id);
+
+			// Every time entity is moved to a different chunk the layout is updated
+			entity->layout = &layout;
+
+			entity_address_callback(entity->id, new_address); // Notify address changed
+
 			return new_address;
 		}
 
 		void RemoveEntity(uint32_t index)
 		{
-			assert(index < allocated_entity_count);
+			assert(index < entity_count);
 
-			auto last_entity_index = allocated_entity_count - 1;
+			auto last_entity_index = entity_count - 1;
 			
 			// Swap deleted component data with the last one
 			if (index < last_entity_index)
@@ -232,14 +275,14 @@ namespace core { namespace ECS {
 				entity_address_callback(entity->id, EntityAddress{ this, index });
 			}
 
-			allocated_entity_count -= 1;
+			entity_count -= 1;
 		}
 
 	private:
 		const ComponentLayout& layout;
 		void* memory;
 		std::unique_ptr<Chunk> next;
-		uint32_t allocated_entity_count;
+		uint32_t entity_count;
 		EntityAddressChangedCallback entity_address_callback;
 	};
 
@@ -248,7 +291,7 @@ namespace core { namespace ECS {
 	public:
 		ChunkList(const ComponentLayout& layout, EntityAddressChangedCallback entity_address_callback)
 			: layout(layout)
-			, first(std::make_unique<Chunk>(layout, entity_address_callback)) {};
+			, first(std::make_unique<Chunk>(this->layout, entity_address_callback)) {};
 
 		~ChunkList() = default;
 
@@ -256,8 +299,8 @@ namespace core { namespace ECS {
 		Chunk* GetFirstChunk() const { return first.get(); }
 
 	private:
-		std::unique_ptr<Chunk> first;
 		ComponentLayout layout;
+		std::unique_ptr<Chunk> first;
 	};
 
 } }

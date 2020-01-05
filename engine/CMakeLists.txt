@@ -157,3 +157,12 @@ target_link_libraries(vk_engine spirv-cross-core)
 target_link_libraries(vk_engine spirv-cross-glsl)
 target_link_libraries(vk_engine spirv-cross-cpp)
 target_link_libraries(vk_engine spirv-cross-reflect)
+
+# Tests
+set(TEST_SOURCES
+	tests/test_main.cpp
+	tests/test_ecs.cpp
+)
+
+add_executable(engine_tests ${TEST_SOURCES})
+target_link_libraries(engine_tests vk_engine)

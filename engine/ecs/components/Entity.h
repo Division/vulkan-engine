@@ -3,6 +3,7 @@
 namespace core { namespace ECS {
 
 	class Chunk;
+	class ComponentLayout;
 
 	struct EntityAddress
 	{
@@ -15,9 +16,8 @@ namespace core { namespace ECS {
 	struct EntityData
 	{
 		EntityAddress address;
-		uint32_t type_set_hash = 0;
-		uint32_t component_count = 0;
 		EntityID id = 0;
+		const ComponentLayout* layout;
 	};
 
 } }
