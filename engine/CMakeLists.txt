@@ -18,6 +18,8 @@ set(ENGINE_SOURCES
 	lib.cpp
 	CommonIncludes.h
 	utils/NonCopyable.h
+	ecs/ECS.h
+	ecs/EntityChunks.h
 	render/device/VkObjects.h
 	render/device/VkObjects.cpp
 	render/device/VulkanContext.h
