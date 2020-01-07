@@ -9,6 +9,7 @@
 #include <functional>
 #include <typeinfo>
 #include <typeindex>
+#include <list>
 
 #include "components/Entity.h"
 #include "utils/Math.h"
@@ -26,8 +27,6 @@ namespace core { namespace ECS {
 	{
 		return std::type_index(typeid(T)).hash_code();
 	}
-
-	class Chunk;
 
 	typedef std::function<void(uint64_t, EntityAddress)> EntityAddressChangedCallback;
 
@@ -182,6 +181,7 @@ namespace core { namespace ECS {
 			return GetComponentPointer(index, data);
 		}
 
+		// TODO: getting components in systems without referencing layouts and chunk instances (pass pointer and ComponentData into a static function)
 		void* GetComponentPointer(uint32_t index, const ComponentData* data)
 		{
 			if (!data)
@@ -290,6 +290,8 @@ namespace core { namespace ECS {
 	class ChunkList
 	{
 	public:
+		typedef std::list<ChunkList*> List;
+
 		ChunkList(const ComponentLayout& layout, EntityAddressChangedCallback entity_address_callback)
 			: layout(layout)
 			, first(std::make_unique<Chunk>(this->layout, entity_address_callback)) {};
@@ -300,7 +302,7 @@ namespace core { namespace ECS {
 		Chunk* GetFirstChunk() const { return first.get(); }
 
 	private:
-		ComponentLayout layout;
+		ComponentLayout layout; // TODO: move layout into the chunk memory, offset components
 		std::unique_ptr<Chunk> first;
 	};
 

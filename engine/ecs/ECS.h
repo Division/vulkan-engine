@@ -2,6 +2,7 @@
 
 #include <set>
 #include <unordered_map>
+#include <functional>
 #include "stdint.h"
 #include "utils/Math.h"
 #include "EntityChunks.h"
@@ -12,6 +13,12 @@ namespace core { namespace ECS {
 	class EntityManager
 	{
 	public:
+		typedef std::function<void(EntityID)> EntityCallback;
+
+		void AddEntityDestroyCallback(EntityCallback callback)
+		{
+			entity_destroy_callbacks.push_back(callback);
+		}
 
 		EntityID CreateEntity(ComponentSetHash set_hash = 0)
 		{
@@ -34,6 +41,7 @@ namespace core { namespace ECS {
 		{
 			auto address_it = entity_address.find(entity);
 			assert(address_it != entity_address.end());
+			TriggerDestroyCallbacks(entity);
 
 			auto& address = address_it->second;
 			address.chunk->RemoveEntity(address.index);
@@ -119,10 +127,46 @@ namespace core { namespace ECS {
 		const auto& GetChunkMap() const { return chunks; }
 		const auto& GetEntityAddressMap() const { return entity_address; }
 
+		void ForEachChunkList(std::function<void(ChunkList*)> callback, std::function<bool(ChunkList*)> predicate)
+		{
+			for (auto& chunk : chunks)
+				if (predicate(chunk.second.get()))
+					callback(chunk.second.get());
+		}
+
+		ChunkList::List GetChunkLists(std::function<bool(ChunkList*)> predicate)
+		{
+			ChunkList::List list;
+
+			ForEachChunkList([&list](ChunkList* chunk_list) {
+				list.push_back(chunk_list);
+			}, predicate);
+
+			return list;
+		}
+
+		template <typename T>
+		ChunkList::List GetChunkListsWithComponent()
+		{
+			auto hash = GetComponentHash<T>();
+			return GetChunkLists([=hash](ChunkList* chunk_list) {
+				return chunk_list->GetLayout().GetComponentData(hash) != nullptr;
+			});
+		}
+
+
+	private:
+		void TriggerDestroyCallbacks(EntityID id)
+		{
+			for (auto& callback : entity_destroy_callbacks)
+				callback(id);
+		}
+
 	private:
 		EntityID id_counter = 0;
 		std::unordered_map<ComponentSetHash, std::unique_ptr<ChunkList>> chunks;
 		std::unordered_map<EntityID, EntityAddress> entity_address;
+		std::vector<EntityCallback> entity_destroy_callbacks;
 	};
 
 } }

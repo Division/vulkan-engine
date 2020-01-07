@@ -85,6 +85,13 @@ TEST_CASE("ECS multiple entities and components")
 
 	manager.RemoveComponent<TestPositionComponent>(entities[0]);
 	REQUIRE(chunk_map.size() == 4); // More one combination added
+
+	auto entity = manager.CreateEntity();
+	manager.AddComponent<TestAABBComponent>(entity);
+	auto data1 = manager.GetComponent<EntityData>(entity);
+	auto data2 = manager.GetComponent<EntityData>(entities[0]);
+	REQUIRE(data1->layout->GetHash() == data2->layout->GetHash()); // Removing odd component and add component should result in the same hash
+
 	address0 = address_map.at(entities[0]);
 	auto& layout = address0.chunk->GetComponentLayout();
 	REQUIRE(layout.GetComponentCount() == 2);

@@ -20,6 +20,8 @@ set(ENGINE_SOURCES
 	utils/NonCopyable.h
 	ecs/ECS.h
 	ecs/EntityChunks.h
+	ecs/TransformGraph.h
+	ecs/components/Transform.h
 	render/device/VkObjects.h
 	render/device/VkObjects.cpp
 	render/device/VulkanContext.h
@@ -162,6 +164,8 @@ target_link_libraries(vk_engine spirv-cross-reflect)
 set(TEST_SOURCES
 	tests/test_main.cpp
 	tests/test_ecs.cpp
+	tests/test_transform_graph.cpp
+	tests/test_systems.cpp
 )
 
 add_executable(engine_tests ${TEST_SOURCES})
