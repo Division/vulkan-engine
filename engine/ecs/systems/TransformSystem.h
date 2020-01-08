@@ -9,7 +9,7 @@ namespace core { namespace ECS { namespace systems {
 	public:
 		TransformSystem(EntityManager& manager) : System(manager) {}
 
-		void Process(const ChunkList::List& list) override;
+		void Process(Chunk* chunk) override;
 	};
 
 } } }

@@ -300,6 +300,7 @@ namespace core { namespace ECS {
 
 		const ComponentLayout& GetLayout() const { return layout; }
 		Chunk* GetFirstChunk() const { return first.get(); }
+		bool HasComponent(ComponentHash hash) const { return layout.GetComponentData(hash) != nullptr; }
 
 	private:
 		ComponentLayout layout; // TODO: move layout into the chunk memory, offset components

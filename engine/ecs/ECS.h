@@ -71,6 +71,7 @@ namespace core { namespace ECS {
 			auto* chunk = chunk_list->GetFirstChunk();
 			auto new_address = chunk->AddEntity(entity, old_address.chunk ? &old_address : nullptr);
 
+
 			if (old_address.chunk)
 				old_address.chunk->RemoveEntity(old_address.index);
 
@@ -149,8 +150,17 @@ namespace core { namespace ECS {
 		ChunkList::List GetChunkListsWithComponent()
 		{
 			auto hash = GetComponentHash<T>();
-			return GetChunkLists([=hash](ChunkList* chunk_list) {
-				return chunk_list->GetLayout().GetComponentData(hash) != nullptr;
+			return GetChunkLists([=](ChunkList* chunk_list) {
+				return chunk_list->HasComponent(hash);
+			});
+		}
+
+		template <typename T>
+		ChunkList::List GetChunkListsWithoutComponent()
+		{
+			auto hash = GetComponentHash<T>();
+			return GetChunkLists([=](ChunkList* chunk_list) {
+				return !chunk_list->HasComponent(hash);
 			});
 		}
 

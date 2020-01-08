@@ -11,7 +11,20 @@ namespace core { namespace ECS {
 		System(EntityManager& manager)
 			: manager(manager) {}
 
-		virtual void Process(const ChunkList::List& list) = 0;
+		virtual void ProcessChunks(const ChunkList::List& list)
+		{
+			for (auto* chunk_list : list)
+			{
+				auto* chunk = chunk_list->GetFirstChunk();
+				while (chunk)
+				{
+					Process(chunk);
+					chunk = chunk->GetNextChunk();
+				}
+			}
+		}
+
+		virtual void Process(Chunk* chunk) = 0;
 
 	protected:
 		EntityManager& manager;

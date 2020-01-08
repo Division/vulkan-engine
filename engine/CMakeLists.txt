@@ -22,6 +22,9 @@ set(ENGINE_SOURCES
 	ecs/EntityChunks.h
 	ecs/TransformGraph.h
 	ecs/components/Transform.h
+	ecs/components/Entity.h
+	ecs/systems/TransformSystem.h
+	ecs/systems/TransformSystem.cpp
 	render/device/VkObjects.h
 	render/device/VkObjects.cpp
 	render/device/VulkanContext.h
