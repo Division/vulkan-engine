@@ -522,7 +522,7 @@ namespace core { namespace render { namespace graph {
 
 		core::Device::FrameCommandBufferData data(
 			command_buffer->GetCommandBuffer(),
-			state->GetCurrentSemaphore(),
+			vk::Semaphore(),//state->GetCurrentSemaphore(), // TODO: only provide semaphore when other pass should wait for current
 			vk::Semaphore(),
 			vk::PipelineStageFlagBits::eAllCommands, // TODO: fix
 			core::Device::PipelineBindPoint::Graphics

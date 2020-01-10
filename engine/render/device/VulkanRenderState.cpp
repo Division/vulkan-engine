@@ -195,6 +195,7 @@ namespace core { namespace Device {
 
 			auto command_buffer = GetCurrentCommandBuffer()->GetCommandBuffer();
 			command_buffer.beginRenderPass(render_pass_begin_info, vk::SubpassContents::eInline);
+			render_pass_started = true;
 
 			update_pipeline = true;
 		}
@@ -515,6 +516,7 @@ namespace core { namespace Device {
 		current_shader = nullptr;
 		current_pipeline = nullptr;
 		current_render_target = &render_target;
+		render_pass_started = false;
 
 		for (auto& set_data : descriptor_sets)
 			set_data.hash = 0;
@@ -526,8 +528,11 @@ namespace core { namespace Device {
 
 	void VulkanRenderState::EndRendering()
 	{
-		auto command_buffer = GetCurrentCommandBuffer()->GetCommandBuffer();
-		command_buffer.endRenderPass();
+		if (render_pass_started)
+		{
+			auto command_buffer = GetCurrentCommandBuffer()->GetCommandBuffer();
+			command_buffer.endRenderPass();
+		}
 	}
 
 	void VulkanRenderState::EndRecording()

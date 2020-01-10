@@ -199,6 +199,7 @@ namespace core { namespace Device {
 
 		uint32_t dirty_flags = 0;
 		uint32_t current_frame = 0;
+		bool render_pass_started = false;
 
 		RenderMode current_render_mode;
 		const Mesh* current_mesh = nullptr;

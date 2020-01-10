@@ -108,7 +108,8 @@ void LightGrid::_appendItem(ICameraParamsProvider* camera, const std::vector<vec
 void LightGrid::appendLights(const std::vector<LightObjectPtr> &light_list,
                              ICameraParamsProvider* camera) {
   _lightCount = light_list.size();
-  ResizeBuffer(lights, light_list.size() * sizeof(ShaderBufferStruct::Light), false);
+  auto size = light_list.size() * sizeof(ShaderBufferStruct::Light);
+  ResizeBuffer(lights, std::max(size, sizeof(ShaderBufferStruct::Light)), false);
   lights[0]->Map();
 
   for (int i = 0; i < light_list.size(); i++) {
