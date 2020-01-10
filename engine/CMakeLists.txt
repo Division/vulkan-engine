@@ -169,6 +169,7 @@ set(TEST_SOURCES
 	tests/test_ecs.cpp
 	tests/test_transform_graph.cpp
 	tests/test_systems.cpp
+	tests/test_transform_system.cpp
 )
 
 add_executable(engine_tests ${TEST_SOURCES})

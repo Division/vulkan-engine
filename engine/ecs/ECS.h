@@ -155,12 +155,32 @@ namespace core { namespace ECS {
 			});
 		}
 
+		template <typename T1, typename T2>
+		ChunkList::List GetChunkListsWithComponents()
+		{
+			auto hash1 = GetComponentHash<T1>();
+			auto hash2 = GetComponentHash<T2>();
+			return GetChunkLists([=](ChunkList* chunk_list) {
+				return chunk_list->HasComponent(hash1) && chunk_list->HasComponent(hash2);
+			});
+		}
+
 		template <typename T>
 		ChunkList::List GetChunkListsWithoutComponent()
 		{
 			auto hash = GetComponentHash<T>();
 			return GetChunkLists([=](ChunkList* chunk_list) {
 				return !chunk_list->HasComponent(hash);
+			});
+		}
+
+		template <typename T1, typename T2>
+		ChunkList::List GetChunkListsWithoutComponents()
+		{
+			auto hash1 = GetComponentHash<T1>();
+			auto hash2 = GetComponentHash<T2>();
+			return GetChunkLists([=](ChunkList* chunk_list) {
+				return !(chunk_list->HasComponent(hash1) && chunk_list->HasComponent(hash2));
 			});
 		}
 

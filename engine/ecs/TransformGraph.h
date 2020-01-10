@@ -71,7 +71,21 @@ namespace core { namespace ECS {
 
 			// Children becomes root if it has own children
 			if (child_children_count)
-				manager.AddComponent<components::RootTransform>(child);
+			{
+				auto* root_transform = manager.AddComponent<components::RootTransform>(child);
+				root_transform->id = child;
+			}
+		}
+
+		const std::vector<EntityID>& GetChildren(EntityID parent) const
+		{
+			auto it = transforms.find(parent);
+			//return it != transforms.end() ? it->second.children : std::vector<EntityID>();
+
+			if (it != transforms.end())
+				return it->second.children;
+			else 
+				return std::vector<EntityID>();
 		}
 
 	private:

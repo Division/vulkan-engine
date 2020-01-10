@@ -110,6 +110,15 @@ inline int32_t getPowerOfTwo(int32_t value) {
 	return pow(2, (int)ceilf(result));
 }
 
+inline mat4 ComposeMatrix(const vec3& position, const quat& rotation, const vec3& scale)
+{
+	mat4 result;
+	result = glm::translate(result, position);
+	result *= mat4_cast(rotation);
+	result = glm::scale(result, scale);
+	return result;
+}
+
 inline uint32_t FastHash(const void* key, size_t len)
 {
 	uint32_t result;

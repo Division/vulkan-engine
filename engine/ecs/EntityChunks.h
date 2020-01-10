@@ -175,6 +175,11 @@ namespace core { namespace ECS {
 		void* GetMemory() const { return memory; }
 		Chunk* GetNextChunk() const { return next.get(); };
 		
+		static void* GetComponentPointer(void* memory, uint32_t index, const ComponentData& data)
+		{
+			return (char*)memory + data.offset + (size_t)data.size * (size_t)index;
+		}
+
 		void* GetComponentPointer(uint32_t index, ComponentHash hash)
 		{
 			auto* data = layout.GetComponentData(hash);
@@ -305,6 +310,32 @@ namespace core { namespace ECS {
 	private:
 		ComponentLayout layout; // TODO: move layout into the chunk memory, offset components
 		std::unique_ptr<Chunk> first;
+	};
+
+	// For cache-friendly component fetching
+	template <typename T>
+	class ComponentFetcher
+	{
+	public:
+		class ComponentFetcher(Chunk& chunk)
+			: chunk(chunk)
+			, memory(chunk.GetMemory())
+		{
+			data = *chunk.GetComponentLayout().GetComponentData(GetComponentHash<T>());
+		}
+
+		T* GetComponent(uint32_t index)
+		{
+			if (index >= chunk.GetEntityCount())
+				throw std::runtime_error("entity index is greater than maximum entities");
+
+			return (T*)Chunk::GetComponentPointer(memory, index, data);
+		}
+	
+	private:
+		ComponentData data;
+		Chunk& chunk;
+		void* memory;
 	};
 
 } }

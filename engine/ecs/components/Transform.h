@@ -9,7 +9,7 @@ namespace core { namespace ECS { namespace components {
 	{
 		quat rotation;
 		vec3 position;
-		vec3 scale;
+		vec3 scale = vec3(1,1,1);
 		mat4 local_to_world;
 	};
 
