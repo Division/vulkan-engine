@@ -24,6 +24,7 @@ set(ENGINE_SOURCES
 	ecs/components/Transform.h
 	ecs/components/Entity.h
 	ecs/components/MeshRenderer.h
+	ecs/components/CullingData.h
 	ecs/systems/TransformSystem.h
 	ecs/systems/TransformSystem.cpp
 	ecs/systems/RendererSystem.h

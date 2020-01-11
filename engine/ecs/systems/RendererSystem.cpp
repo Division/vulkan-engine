@@ -1,6 +1,7 @@
 #include "RendererSystem.h"
 #include "ecs/components/MeshRenderer.h"
 #include "ecs/components/Transform.h"
+#include "ecs/components/CullingData.h"
 
 namespace core { namespace ECS { namespace systems {
 
@@ -42,6 +43,7 @@ namespace core { namespace ECS { namespace systems {
 	{
 		ComponentFetcher<MeshRenderer> mesh_renderer_fetcher(*chunk);
 		ComponentFetcher<Transform> transform_fetcher(*chunk);
+		ComponentFetcher<CullingData> culling_data_fetcher(*chunk);
 
 		for (int i = 0; i < chunk->GetEntityCount(); i++)
 		{
@@ -50,12 +52,15 @@ namespace core { namespace ECS { namespace systems {
 			mesh_renderer->object_params.transform = transform->local_to_world;
 			mesh_renderer->object_params.uvOffset = vec2(0, 0);
 			mesh_renderer->object_params.uvScale = vec2(1, 1);
-		}
-	}
 
-	void UpdateRendererSystem::ProcessMeshRendererSkinning(Chunk* chunk)
-	{
-		// TODO: implement later
+			if (culling_data_fetcher.HasData())
+			{
+				auto* culling_data = culling_data_fetcher.GetComponent(i);
+				// Setting worldspace position for sphere type culling
+				if (culling_data->type == CullingData::Type::Sphere)
+					culling_data->sphere.worldspace.position = culling_data->sphere.local.position + vec3(transform->local_to_world[3]);
+			}
+		}
 	}
 
 } } }

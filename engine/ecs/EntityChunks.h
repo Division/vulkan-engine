@@ -321,11 +321,17 @@ namespace core { namespace ECS {
 			: chunk(chunk)
 			, memory(chunk.GetMemory())
 		{
-			data = *chunk.GetComponentLayout().GetComponentData(GetComponentHash<T>());
+			auto* data_ptr = chunk.GetComponentLayout().GetComponentData(GetComponentHash<T>());
+			has_component = data_ptr != nullptr;
+			if (data_ptr)
+				data = *data_ptr;
 		}
+
+		bool HasData() const { return has_component; }
 
 		T* GetComponent(uint32_t index)
 		{
+			assert(has_component);
 			if (index >= chunk.GetEntityCount())
 				throw std::runtime_error("entity index is greater than maximum entities");
 
@@ -333,6 +339,7 @@ namespace core { namespace ECS {
 		}
 	
 	private:
+		bool has_component;
 		ComponentData data;
 		Chunk& chunk;
 		void* memory;

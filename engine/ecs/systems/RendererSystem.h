@@ -35,7 +35,6 @@ namespace core { namespace ECS { namespace systems {
 	
 	private:
 		void ProcessMeshRenderer(Chunk* chunk);
-		void ProcessMeshRendererSkinning(Chunk* chunk);
 
 	};
 
