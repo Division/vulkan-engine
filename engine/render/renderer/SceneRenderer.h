@@ -22,6 +22,17 @@ namespace core
 		struct RenderOperation;
 		template<typename T> class UniformBuffer;
 	}
+
+	namespace ECS
+	{
+		namespace systems
+		{
+			class RendererToROPSystem;
+		}
+
+		class EntityManager;
+	}
+	
 }
 
 namespace core { namespace render {
@@ -34,6 +45,7 @@ namespace core { namespace render {
 	{
 		class RenderGraph;
 	}
+
 
 	class SceneRenderer : IRenderer
 	{
@@ -53,6 +65,7 @@ namespace core { namespace render {
 		std::tuple<vk::Buffer, size_t, size_t> GetBufferFromROP(RenderOperation& rop, ShaderBufferName buffer_name, uint32_t camera_index);
 		void OnRecreateSwapchain(int32_t width, int32_t height);
 		Texture* GetTextureFromROP(RenderOperation& rop, ShaderTextureName texture_name);
+		void AddROPsFromECS(ECS::EntityManager* manager);
 
 	private:
 		std::unique_ptr<VulkanRenderPass> temp_pass;
@@ -71,7 +84,7 @@ namespace core { namespace render {
 
 		std::unique_ptr<VulkanRenderTargetAttachment> main_depth_attachment;
 		std::unique_ptr<VulkanRenderTargetAttachment> shadowmap_atlas_attachment;
-		std::unordered_map<RenderOperation*, vk::DescriptorBufferInfo> rop_transform_cache; // cleared every frame. Allows reusing same object transform buffer in multiple draw calls.
+		std::unique_ptr<core::ECS::systems::RendererToROPSystem> renderer_to_rop_system;
 		std::array<std::vector<DrawCall*>, (size_t)RenderQueue::Count> render_queues;
 		uint32_t depth_only_fragment_shader_hash;
 		std::vector<std::pair<IShadowCaster*, std::vector<DrawCall*>>> shadow_casters;

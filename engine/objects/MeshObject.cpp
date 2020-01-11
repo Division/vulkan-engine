@@ -17,8 +17,8 @@ void MeshObject::render(std::function<void(core::Device::RenderOperation& rop, R
   }
 
   RenderOperation rop = _getDefaultRenderOp();
-  rop.mesh = _mesh;
-  rop.material = _material;
+  rop.mesh = _mesh.get();
+  rop.material = _material.get();
   callback(rop, _renderQueue);
 }
 

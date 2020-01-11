@@ -11,15 +11,15 @@ namespace core { namespace Device {
 
 	struct RenderOperation 
 	{
-		std::shared_ptr<const Mesh> mesh;
-		std::shared_ptr<Material> material;
-		ShaderProgram* shader;
-		vk::Buffer object_params_buffer;
+		const Mesh* mesh;
+		Material* material;
+		//ShaderProgram* shader;
+		//vk::Buffer object_params_buffer;
 		ShaderBufferStruct::ObjectParams *object_params = nullptr;
 		ShaderBufferStruct::SkinningMatrices *skinning_matrices = nullptr;
 
-		size_t object_params_buffer_offset = 0;
-		size_t skinning_matrices_buffer_offset = 0;
+		//size_t object_params_buffer_offset = 0;
+		//size_t skinning_matrices_buffer_offset = 0;
 		//MultiBufferAddress skinningOffset;
 		std::string *debug_info = nullptr;
 	};

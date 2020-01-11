@@ -70,7 +70,7 @@ void CompileShader(const std::filesystem::path& shader_path, const ShaderCapsSet
 
 void ForEachCapsPermutation(std::function<void(ShaderCapsSet)> callback)
 {
-	std::vector<ShaderCaps> caps_to_iterate = { ShaderCaps::Skinning, ShaderCaps::Lighting, ShaderCaps::NormalMap, ShaderCaps::Texture0 };
+	std::vector<ShaderCaps> caps_to_iterate = { ShaderCaps::Skinning, ShaderCaps::Lighting, ShaderCaps::NormalMap, ShaderCaps::Texture0, ShaderCaps::Color };
 	for (int i = 0; i < caps_to_iterate.size() * caps_to_iterate.size(); i++)
 	{
 		ShaderCapsSet caps_set;

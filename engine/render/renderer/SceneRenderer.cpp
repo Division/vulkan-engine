@@ -1,4 +1,8 @@
 #include "SceneRenderer.h"
+#include "ecs/ECS.h"
+#include "ecs/components/MeshRenderer.h"
+#include "ecs/components/Transform.h"
+#include "ecs/systems/RendererSystem.h"
 #include "scene/Scene.h"
 #include "render/device/VulkanUtils.h"
 #include "render/shader/Shader.h"
@@ -98,8 +102,26 @@ namespace core { namespace render {
 		}
 	}
 
+	void SceneRenderer::AddROPsFromECS(ECS::EntityManager* manager)
+	{
+		renderer_to_rop_system->ResetRops();
+		auto mesh_renderers = manager->GetChunkListsWithComponent<ECS::components::MeshRenderer>();
+		renderer_to_rop_system->ProcessChunks(mesh_renderers);
+		for (auto& rop : renderer_to_rop_system->GetRops())
+		{
+			auto op = rop.second;
+			AddRenderOperation(op, rop.first);
+		}
+	}
+
 	void SceneRenderer::RenderScene(Scene* scene)
 	{
+		auto* entity_manager = scene->GetEntityManager();
+
+		// TODO: init in a proper way after ecs is integrated properly
+		if (!renderer_to_rop_system && scene->GetEntityManager())
+			renderer_to_rop_system = std::make_unique<core::ECS::systems::RendererToROPSystem>(*scene->GetEntityManager());
+
 		auto* context = Engine::GetVulkanContext();
 		auto vk_device = context->GetDevice();
 		auto vk_physical_device = context->GetPhysicalDevice();
@@ -108,7 +130,6 @@ namespace core { namespace render {
 		for (auto& queue : render_queues)
 			queue.clear();
 
-		rop_transform_cache.clear();
 		auto visible_objects = scene->visibleObjects(scene->GetCamera());
 
 		// Shadow casters
@@ -162,6 +183,9 @@ namespace core { namespace render {
 		light_grid->appendLights(visibleLights, scene->GetCamera());
 		light_grid->appendProjectors(visibleProjectors, scene->GetCamera());
 		light_grid->upload();
+
+		if (entity_manager)
+			AddROPsFromECS(entity_manager);
 
 		for (auto& object : visible_objects)
 		{
@@ -270,10 +294,10 @@ namespace core { namespace render {
 
 		ReleaseDrawCalls();
 	}
-	
+
 	Texture* SceneRenderer::GetTextureFromROP(RenderOperation& rop, ShaderTextureName texture_name)
 	{
-		auto* material = rop.material.get();
+		auto* material = rop.material;
 		switch (texture_name)
 		{
 		case ShaderTextureName::Texture0:
@@ -409,7 +433,7 @@ namespace core { namespace render {
 		draw_call->shader_bindings->Clear();
 		assert(rop.object_params && "Object params data must be set");
 
-		draw_call->mesh = rop.mesh.get();
+		draw_call->mesh = rop.mesh;
 
 		auto caps = depth_only ? ShaderCapsSet() : rop.material->shaderCaps();
 		if (rop.skinning_matrices)

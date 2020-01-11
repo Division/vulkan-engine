@@ -94,7 +94,7 @@ void SkinnedMeshObject::render(std::function<void(core::Device::RenderOperation&
 
   RenderOperation rop = _getDefaultRenderOp();
   rop.skinning_matrices= &_skinningMatrices;
-  rop.mesh = _mesh;
-  rop.material = _material;
+  rop.mesh = _mesh.get();
+  rop.material = _material.get();
   callback(rop, _renderQueue);
 }

@@ -63,13 +63,22 @@ void MeshGeneration::generateBox(MeshPtr mesh, float sizeX, float sizeY, float s
   std::vector<uint16_t> indices;
 
   // duplicate vertices
-  for (int i = 0; i < 36; i++) {
-    vertices.emplace_back(vec3(srcVertices[srcIndices[i] * 3],
-                            srcVertices[srcIndices[i] * 3 + 1],
-                            srcVertices[srcIndices[i] * 3 + 2]));
-	indices.push_back(srcIndices[i] * 3);
-	indices.push_back(srcIndices[i] * 3 + 1);
-	indices.push_back(srcIndices[i] * 3 + 2);
+  for (int i = 0; i < 12; i++) {
+    vertices.emplace_back(vec3(srcVertices[srcIndices[i * 3] * 3],
+                            srcVertices[srcIndices[i * 3] * 3 + 1],
+                            srcVertices[srcIndices[i * 3] * 3 + 2]));
+
+	vertices.emplace_back(vec3(srcVertices[srcIndices[i * 3 + 1] * 3],
+							   srcVertices[srcIndices[i * 3 + 1] * 3 + 1],
+							   srcVertices[srcIndices[i * 3 + 1] * 3 + 2]));
+
+	vertices.emplace_back(vec3(srcVertices[srcIndices[i * 3 + 2] * 3],
+							   srcVertices[srcIndices[i * 3 + 2] * 3 + 1],
+							   srcVertices[srcIndices[i * 3 + 2] * 3 + 2]));
+	
+	indices.push_back(i * 3);
+	indices.push_back(i * 3 + 1);
+	indices.push_back(i * 3 + 2);
   }
 
   mesh->setVertices(vertices);

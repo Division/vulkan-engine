@@ -14,7 +14,7 @@ void FollowCamera::start() {
   container->transform()->rotate(vec3(1, 0, 0), RAD(-55));
 
   _container = container;
-  setFreeCamera(false);
+  setFreeCamera(true);
 }
 
 
@@ -79,8 +79,8 @@ void FollowCamera::setFreeCamera(bool isFree) {
     vec3 position = transform()->worldPosition();
 	scene_camera->transform()->parent(nullptr);
     //transform()->position(position);
-   // _angleX = -(float)M_PI / 8;
-    //_angleY = (float)M_PI;
+    _angleX = -(float)M_PI / 8;
+    _angleY = (float)M_PI;
   } else {
 	scene_camera->transform()->parent(_container.lock()->transform());
     //transform()->parent(_container.lock()->transform());

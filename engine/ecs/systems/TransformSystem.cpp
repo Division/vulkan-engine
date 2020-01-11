@@ -27,7 +27,7 @@ namespace core { namespace ECS { namespace systems {
 		{
 			auto* child_transform = manager.GetComponent<Transform>(child_id);
 			auto child_matrix = ComposeMatrix(child_transform->position, child_transform->rotation, child_transform->scale);
-			child_transform->local_to_world = child_matrix * matrix;
+			child_transform->local_to_world = matrix * child_matrix;
 			SetTransformRecursive(child_transform->local_to_world, transform_graph.GetChildren(child_id));
 		}
 	}

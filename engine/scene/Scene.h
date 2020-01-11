@@ -8,6 +8,14 @@ class Projector;
 class LightObject;
 class Camera;
 
+namespace core
+{
+	namespace ECS
+	{
+		class EntityManager;
+	}
+}
+
 class Scene : public IGameObjectManager {
 public:
 
@@ -40,6 +48,9 @@ public:
   void update(float dt);
 
   Camera* GetCamera() const { return camera.get(); }
+
+  core::ECS::EntityManager* GetEntityManager() const { return entity_manager; }
+  void SetEntityManager(core::ECS::EntityManager* manager) { entity_manager = manager; }
 
 protected:
   Scene::Visibility &_getVisibilityForCamera(const ICameraParamsProvider *camera) const;
@@ -77,6 +88,8 @@ protected:
   std::unordered_map<GameObjectID, TransformPtr>_rootTransformMap; // maps GameObject::id() to the top level transforms
   mutable std::unordered_map<const ICameraParamsProvider*, Scene::Visibility> _visibilityMap; // maps camera to a visible object list
   std::vector<GameObjectPtr> _startList;
+
+  core::ECS::EntityManager* entity_manager = nullptr;
 
   void _processAddedObject(GameObjectPtr object);
   void _processRemovedObject(GameObjectPtr object);

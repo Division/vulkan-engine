@@ -125,7 +125,8 @@ void Scene::transformChangeParent(TransformPtr transform, TransformPtr oldParent
 
 void Scene::update(float dt) {
   if (!_startList.empty()) {
-    for (auto &object : _startList) {
+	auto start_list = _startList;
+    for (auto &object : start_list) {
       object->start();
     }
     _startList.clear();

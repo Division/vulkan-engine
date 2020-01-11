@@ -87,13 +87,12 @@ readonly layout(std430, set = 0, binding = 8) buffer LightIndices
 vec3 calculateFragmentDiffuse(float normalizedDistanceToLight, float attenuation, vec3 normal, vec3 lightDir, vec3 eyeDir, vec3 lightColor, float materialSpecular) {
   float lightValue = clamp(dot(-lightDir, normal), 0.0, 1.0);
   float attenuationValue = pow(max(1.0 - normalizedDistanceToLight, 0.0), attenuation);
-  vec3 diffuse = lightColor/* * lightValue*/;
+  vec3 diffuse = lightColor * lightValue;
 
   vec3 reflected = reflect(lightDir, normal);
   float cosAlpha = clamp(dot(eyeDir, reflected), 0.0, 1.0);
   //vec3 specular = pow(cosAlpha, 32.0) * lightColor * materialSpecular;
   vec3 specular = vec3(0,0,0);
-
   return attenuationValue * (diffuse + specular);
 }
 
@@ -183,6 +182,8 @@ void main() {
             light_color += vec4(lightValue, 0.0);
         }
     }
+
+	//light_color = vec4((normal_worldspace + vec3(1,1,1)) / 2.0, 1);
 
 	//out_color.r += (pointLightCount + spotLightCount) * 0.2;
 #else
