@@ -6,6 +6,7 @@
 #include "render/renderer/SceneRenderer.h"
 #include "system/Input.h"
 #include "render/shader/ShaderCache.h"
+#include "render/material/MaterialManager.h"
 
 namespace core
 {
@@ -51,6 +52,7 @@ namespace core
 
 		shader_cache = std::make_unique<Device::ShaderCache>();
 		scene_renderer = std::make_unique<render::SceneRenderer>(shader_cache.get());
+		material_manager = std::make_unique<render::MaterialManager>();
 		scene = std::make_unique<Scene>();
 		input = std::make_unique<system::Input>(window);
 

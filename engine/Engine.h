@@ -17,6 +17,7 @@ namespace core
 	namespace render
 	{
 		class SceneRenderer;
+		class MaterialManager;
 	}
 
 	namespace system
@@ -39,6 +40,7 @@ namespace core
 
 		Device::VulkanContext* GetContext() const { return vulkan_context.get(); }
 		Scene* GetScene() const { return scene.get(); }
+		render::MaterialManager* GetMaterialManager() const { return material_manager.get(); }
 		system::Input* GetInput() const { return input.get(); }
 
 		void MainLoop();
@@ -55,6 +57,7 @@ namespace core
 		std::unique_ptr<Device::VulkanContext> vulkan_context;
 		std::unique_ptr<Scene> scene;
 		std::unique_ptr<render::SceneRenderer> scene_renderer;
+		std::unique_ptr<render::MaterialManager> material_manager;
 		std::unique_ptr<system::Input> input;
 
 		bool loop_started = false;

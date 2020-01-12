@@ -59,9 +59,7 @@ namespace core { namespace ECS {
 
 			if (old_address.chunk)
 			{
-				auto old_hash = layout.GetHash();
-				layout.AddComponent<T>();
-				if (old_hash == layout.GetHash())
+				if (!layout.AddComponent<T>())
 					return nullptr;
 			}
 			else

@@ -125,3 +125,17 @@ inline uint32_t FastHash(const void* key, size_t len)
 	MurmurHash3_x86_32(key, (int)len, 0xdeadbeef, &result);
 	return result;
 }
+
+inline uint32_t FastHash(const std::string& str)
+{
+	uint32_t result;
+	MurmurHash3_x86_32(str.data(), (int)str.length(), 0xdeadbeef, &result);
+	return result;
+}
+
+inline uint32_t FastHash(const std::wstring& str)
+{
+	uint32_t result;
+	MurmurHash3_x86_32(str.data(), (int)str.length() * 2, 0xdeadbeef, &result);
+	return result;
+}

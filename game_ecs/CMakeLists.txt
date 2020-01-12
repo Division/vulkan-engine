@@ -5,6 +5,8 @@ set(GAME_SOURCES
 	../game/objects/FollowCamera.cpp
 	../game/objects/PlayerController.h
 	../game/objects/PlayerController.cpp
+	level/Level.h
+	level/Level.cpp
 	main.cpp
 	Game.h
 	Game.cpp

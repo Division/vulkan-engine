@@ -90,6 +90,9 @@ TEST_CASE("ECS multiple entities and components")
 	manager.AddComponent<TestAABBComponent>(entity);
 	auto data1 = manager.GetComponent<EntityData>(entity);
 	auto data2 = manager.GetComponent<EntityData>(entities[0]);
+	REQUIRE(data1->address.chunk->GetComponentLayout().GetHash() == data2->address.chunk->GetComponentLayout().GetHash());
+	REQUIRE(&data1->address.chunk->GetComponentLayout() == data1->layout);
+	REQUIRE(&data2->address.chunk->GetComponentLayout() == data2->layout);
 	REQUIRE(data1->layout->GetHash() == data2->layout->GetHash()); // Removing odd component and add component should result in the same hash
 
 	address0 = address_map.at(entities[0]);

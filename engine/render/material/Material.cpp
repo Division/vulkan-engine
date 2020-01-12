@@ -1,9 +1,7 @@
 ﻿#include "Material.h"
 #include "render/texture/Texture.h"
 #include "render/shader/ShaderCache.h"
-
-std::unordered_set<ShaderCapsSet::Bitmask> Material::_capsVariations;
-std::vector<ShaderCapsSet::Bitmask> Material::_uninitializedCaps;
+#include "utils/Math.h"
 
 Material::Material()
 {
@@ -44,7 +42,7 @@ void Material::vertexColorEnabled(bool vertexColorEnabled) {
 	}
 }
 
-void Material::_updateCaps() {
+void Material::_updateCaps() const {
 	if (!_capsDirty) { return; }
 
 	if (_hasTexture0) {
@@ -71,18 +69,23 @@ void Material::_updateCaps() {
 		_shaderCaps.removeCap(ShaderCaps::VertexColor);
 	}
 
-	auto bitmask = _shaderCaps.getBitmask();
-	if (!_capsVariations.count(bitmask)) {
-		_capsVariations.insert(bitmask);
-		_uninitializedCaps.push_back(bitmask);
-	}
-
 	_shaderCapsSkinning = _shaderCaps;
 	_shaderCapsSkinning.addCap(ShaderCaps::Skinning);
 
 	_capsDirty = false;
 }
 
-void Material::_capsInitialized() {
-	_uninitializedCaps.clear();
+uint32_t Material::GetHash() const
+{
+	auto tuple = std::make_tuple(
+		vertex_hash,
+		fragment_hash,
+		_shaderCaps.getBitmask(),
+		_texture0 ? _texture0->GetHash() : 0,
+		_normalMap ? _normalMap->GetHash() : 0,
+		_lightingEnabled,
+		_vertexColorEnabled
+	);
+
+	return FastHash(&tuple, sizeof(tuple));
 }

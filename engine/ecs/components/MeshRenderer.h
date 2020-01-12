@@ -11,7 +11,7 @@ namespace core { namespace ECS { namespace components {
 	struct MeshRenderer
 	{
 		Mesh* mesh = nullptr;
-		Material* material = nullptr;
+		uint32_t material_id = 0;
 		RenderQueue render_queue = RenderQueue::Opaque;
 		Device::ShaderBufferStruct::ObjectParams object_params;
 	};

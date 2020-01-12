@@ -12,7 +12,7 @@ namespace core { namespace Device {
 	struct RenderOperation 
 	{
 		const Mesh* mesh;
-		Material* material;
+		const Material* material;
 		//ShaderProgram* shader;
 		//vk::Buffer object_params_buffer;
 		ShaderBufferStruct::ObjectParams *object_params = nullptr;

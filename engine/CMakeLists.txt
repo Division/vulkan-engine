@@ -25,6 +25,7 @@ set(ENGINE_SOURCES
 	ecs/components/Entity.h
 	ecs/components/MeshRenderer.h
 	ecs/components/CullingData.h
+	ecs/components/DrawCall.h
 	ecs/systems/TransformSystem.h
 	ecs/systems/TransformSystem.cpp
 	ecs/systems/RendererSystem.h
@@ -55,6 +56,8 @@ set(ENGINE_SOURCES
 	render/buffer/UniformBuffer.h
 	render/material/Material.h
 	render/material/Material.cpp
+	render/material/MaterialManager.h
+	render/material/MaterialManager.cpp
 	render/renderer/IRenderer.h
 	render/renderer/ICameraParamsProvider.h
 	render/renderer/DrawCall.h
@@ -174,6 +177,7 @@ set(TEST_SOURCES
 	tests/test_transform_graph.cpp
 	tests/test_systems.cpp
 	tests/test_transform_system.cpp
+	tests/test_containers.cpp
 )
 
 add_executable(engine_tests ${TEST_SOURCES})

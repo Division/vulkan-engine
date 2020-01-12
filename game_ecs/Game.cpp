@@ -9,6 +9,7 @@
 #include "ecs/components/MeshRenderer.h"
 #include "scene/Scene.h"
 #include "objects/LightObject.h"
+#include "render/material/MaterialManager.h"
 
 Game::Game() = default;
 Game::~Game() = default;
@@ -30,7 +31,7 @@ EntityID Game::CreateCubeEntity(vec3 position, EntityID parent)
 	auto* mesh_renderer = manager->AddComponent<components::MeshRenderer>(entity);
 	mesh_renderer->render_queue = RenderQueue::Opaque;
 	mesh_renderer->mesh = box_mesh.get();
-	mesh_renderer->material = material_default.get();
+	mesh_renderer->material_id = core::Engine::Get()->GetMaterialManager()->GetMaterialID(*material_default);
 
 	return entity;
 }
@@ -95,7 +96,8 @@ void Game::init()
 
 	auto light_pos_entity = CreateCubeEntity(light->transform()->position(), 0);
 	manager->GetComponent<components::Transform>(light_pos_entity)->scale = vec3(0.1, 0.1, 0.1);
-	manager->GetComponent<components::MeshRenderer>(light_pos_entity)->material = material_no_light.get();
+	auto* material_manager = core::Engine::Get()->GetMaterialManager();
+	manager->GetComponent<components::MeshRenderer>(light_pos_entity)->material_id = material_manager->GetMaterialID(*material_no_light);
 }
 
 void Game::update(float dt)

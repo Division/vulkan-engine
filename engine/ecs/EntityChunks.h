@@ -93,9 +93,11 @@ namespace core { namespace ECS {
 
 			auto new_end = std::remove(components.begin(), components.begin() + component_count, *existing_component);
 			component_count -= 1;
+			assert(new_end == components.begin() + component_count);
 			assert(component_count >= 0);
 			memset(&*(components.begin() + component_count), 0, sizeof(ComponentData));
 			
+			std::sort(components.begin(), components.begin() + component_count);
 			RecalculateOffsets();
 			UpdateHash();
 
@@ -121,32 +123,35 @@ namespace core { namespace ECS {
 		void RecalculateOffsets()
 		{
 			uint32_t total_size = 0;
-			for (auto& component : components)
-				total_size += component.size;
+			for (int i = 0; i < component_count; i++)
+				total_size += components[i].size;
 
 			max_entity_count = (uint32_t)chunk_size / total_size;
 
 			auto last_offset = 0;
-			for (auto& component : components)
+			for (int i = 0; i < component_count; i++)
 			{
-				component.offset = last_offset;
-				last_offset += component.size * max_entity_count;
+				components[i].offset = last_offset;
+				last_offset += components[i].size * max_entity_count;
 			}
 
 			assert(max_entity_count > 0);
 		}
 
-	private:
 		void UpdateHash()
 		{
-			hash = 0;
-			for (auto& component : components)
+			size_t hash = 0;
+			for (int i = 0; i < component_count; i++)
 			{
+				auto& component = components[i];
 				auto pair = std::make_pair(hash, component.hash);
 				hash = FastHash(&pair, sizeof(pair));
 			}
+
+			this->hash = hash;
 		}
 
+	private:
 		std::array<ComponentData, MAX_COMPONENTS> components;
 		uint32_t component_count = 0;
 		uint32_t max_entity_count = 0;
@@ -164,7 +169,7 @@ namespace core { namespace ECS {
 			, memory(malloc(CHUNK_SIZE))
 		{}
 
-		Chunk(const ComponentLayout&& layout, EntityAddressChangedCallback entity_address_callback) = delete;
+		Chunk(ComponentLayout&& layout, EntityAddressChangedCallback entity_address_callback) = delete;
 		
 		~Chunk()
 		{
@@ -299,7 +304,9 @@ namespace core { namespace ECS {
 
 		ChunkList(const ComponentLayout& layout, EntityAddressChangedCallback entity_address_callback)
 			: layout(layout)
-			, first(std::make_unique<Chunk>(this->layout, entity_address_callback)) {};
+		{
+			first = std::make_unique<Chunk>(this->layout, entity_address_callback);
+		};
 
 		~ChunkList() = default;
 

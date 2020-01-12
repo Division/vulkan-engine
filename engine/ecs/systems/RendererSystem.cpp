@@ -2,6 +2,8 @@
 #include "ecs/components/MeshRenderer.h"
 #include "ecs/components/Transform.h"
 #include "ecs/components/CullingData.h"
+#include "Engine.h"
+#include "render/material/MaterialManager.h"
 
 namespace core { namespace ECS { namespace systems {
 
@@ -17,7 +19,7 @@ namespace core { namespace ECS { namespace systems {
 		{
 			auto* mesh_renderer = mesh_renderer_fetcher.GetComponent(i);
 			RenderOperation rop;
-			rop.material = mesh_renderer->material;
+			rop.material = Engine::Get()->GetMaterialManager()->GetMaterial(mesh_renderer->material_id);
 			rop.mesh = mesh_renderer->mesh;
 			rop.object_params = &mesh_renderer->object_params;
 
