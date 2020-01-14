@@ -28,8 +28,6 @@ public:
 
 private:
 	core::ECS::EntityID CreateCubeEntity(vec3 position, core::ECS::EntityID parent);
-	void ProcessTransformSystems();
-	void ProcessRendererSystems();
 
 private:
 	std::shared_ptr<FollowCamera> camera;
@@ -42,11 +40,8 @@ private:
 	std::shared_ptr<Material> material_default;
 	std::shared_ptr<Mesh> box_mesh;
 
-	std::unique_ptr<core::ECS::EntityManager> manager;
-	std::unique_ptr<core::ECS::TransformGraph> graph;
-	std::unique_ptr<core::ECS::systems::NoChildTransformSystem> no_child_system;
-	std::unique_ptr<core::ECS::systems::RootTransformSystem> root_transform_system;
-	std::unique_ptr<core::ECS::systems::UpdateRendererSystem> update_renderer_system;
+	core::ECS::EntityManager* manager;
+	core::ECS::TransformGraph* graph;
 
 	bool camera_control = false;
 };

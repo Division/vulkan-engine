@@ -7,6 +7,7 @@
 #include "VulkanSwapchain.h"
 #include "VulkanRenderTarget.h"
 #include "VulkanRenderState.h"
+#include "VulkanDescriptorCache.h"
 #include <mutex>
 
 namespace core { namespace Device {

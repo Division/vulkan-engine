@@ -7,6 +7,12 @@ class Scene;
 
 namespace core 
 {
+	namespace ECS
+	{
+		class EntityManager;
+		class TransformGraph;
+	}
+
 	namespace Device 
 	{
 		class Device;
@@ -25,7 +31,6 @@ namespace core
 		class Input;
 	}
 
-
 	class Engine : public NonCopyable
 	{
 	public:
@@ -37,6 +42,9 @@ namespace core
 		~Engine();
 		
 		double time() const { return current_time; }
+
+		ECS::EntityManager* GetEntityManager() const;
+		ECS::TransformGraph* GetTransformGraph() const;
 
 		Device::VulkanContext* GetContext() const { return vulkan_context.get(); }
 		Scene* GetScene() const { return scene.get(); }

@@ -7,12 +7,12 @@ namespace core { namespace Device {
 
 	void ShaderBindings::AddTextureBinding(unsigned set, unsigned index, Texture* texture)
 	{
-		texture_bindings.emplace_back(TextureBinding{ set, index, texture });
+		texture_bindings.push_back(TextureBinding{ (unsigned char)set, (unsigned char)index, texture });
 	}
 
 	void ShaderBindings::AddBufferBinding(unsigned set, unsigned index, size_t offset, size_t size, vk::Buffer buffer)
 	{
-		buffer_bindings.emplace_back(BufferBinding{ set, index, offset, size, buffer });
+		buffer_bindings.push_back(BufferBinding{ (unsigned char)set, (unsigned char)index, (unsigned)offset, (unsigned)size, buffer });
 	}
 
 	void ShaderBindings::Clear()

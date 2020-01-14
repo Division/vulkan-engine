@@ -6,21 +6,37 @@
 #include "objects/Projector.h"
 #include "objects/Camera.h"
 #include "objects/LightObject.h"
+#include "ecs/ECS.h"
+#include "ecs/TransformGraph.h"
+#include "ecs/systems/RendererSystem.h"
+#include "ecs/systems/TransformSystem.h"
+#include "ecs/components/MeshRenderer.h"
+#include "render/renderer/DrawCallManager.h"
 
 #define IS_CAMERA(object) (bool)(dynamic_cast<Camera *>((object).get()))
 #define IS_LIGHT(object) (bool)(dynamic_cast<LightObject *>((object).get()))
 #define IS_PROJECTOR(object) (bool)(dynamic_cast<Projector *>((object).get()))
+
+using namespace core::ECS;
 
 void Scene::setAsDefault() {
   GameObject::_defaultManager = this;
 }
 
 Scene::Scene() {
-  if (!GameObject::_defaultManager) {
-    setAsDefault();
-  }
+    if (!GameObject::_defaultManager) {
+        setAsDefault();
+    }
 
-  camera = CreateGameObject<Camera>();
+    camera = CreateGameObject<Camera>();
+
+    entity_manager = std::make_unique<EntityManager>();
+    transform_graph = std::make_unique<TransformGraph>(*entity_manager);
+    draw_call_manager = std::make_unique<core::render::DrawCallManager>();
+
+    no_child_system = std::make_unique<systems::NoChildTransformSystem>(*transform_graph, *entity_manager);
+    root_transform_system = std::make_unique<systems::RootTransformSystem>(*transform_graph, *entity_manager);
+    update_renderer_system = std::make_unique<systems::UpdateRendererSystem>(*entity_manager);
 }
 
 void Scene::addGameObject(GameObjectPtr object) {
@@ -156,6 +172,10 @@ void Scene::update(float dt) {
   for (auto &iterator : _visibilityMap) {
     iterator.second.hasData = false;
   }
+
+  // ECS update
+  ProcessTransformSystems();
+  ProcessRendererSystems();
 }
 
 void Scene::_updateTransforms() {
@@ -197,5 +217,26 @@ Scene::Visibility &Scene::_getVisibilityForCamera(const ICameraParamsProvider* c
   }
 
   return visibility;
+}
+
+// ECS
+
+void Scene::ProcessTransformSystems()
+{
+    auto root_list = entity_manager->GetChunkListsWithComponents<components::RootTransform, components::Transform>();
+    auto no_child_list = entity_manager->GetChunkLists([](ChunkList* chunk_list) {
+        auto child_hash = GetComponentHash<components::ChildTransform>();
+        auto transform_hash = GetComponentHash<components::Transform>();
+        return !chunk_list->HasComponent(child_hash) && chunk_list->HasComponent(transform_hash);
+        });
+
+    no_child_system->ProcessChunks(no_child_list);
+    root_transform_system->ProcessChunks(root_list);
+}
+
+void Scene::ProcessRendererSystems()
+{
+    auto list = entity_manager->GetChunkListsWithComponents<components::MeshRenderer, components::Transform>();
+    update_renderer_system->ProcessChunks(list);
 }
 

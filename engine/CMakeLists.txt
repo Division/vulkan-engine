@@ -34,6 +34,7 @@ set(ENGINE_SOURCES
 	render/device/VkObjects.cpp
 	render/device/VulkanContext.h
 	render/device/VulkanContext.cpp
+	render/device/VulkanDescriptorCache.h
 	render/device/VulkanUploader.h
 	render/device/VulkanUploader.cpp
 	render/device/VulkanRenderPass.h
@@ -62,6 +63,8 @@ set(ENGINE_SOURCES
 	render/renderer/ICameraParamsProvider.h
 	render/renderer/DrawCall.h
 	render/renderer/DrawCall.cpp
+	render/renderer/DrawCallManager.h
+	render/renderer/DrawCallManager.cpp
 	render/renderer/SceneRenderer.h
 	render/renderer/SceneRenderer.cpp
 	render/renderer/SceneBuffers.h

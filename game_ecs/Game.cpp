@@ -36,34 +36,11 @@ EntityID Game::CreateCubeEntity(vec3 position, EntityID parent)
 	return entity;
 }
 
-void Game::ProcessTransformSystems()
-{
-	auto root_list = manager->GetChunkListsWithComponents<components::RootTransform, components::Transform>();
-	auto no_child_list = manager->GetChunkLists([](ChunkList* chunk_list) {
-		auto child_hash = GetComponentHash<components::ChildTransform>();
-		auto transform_hash = GetComponentHash<components::Transform>();
-		return !chunk_list->HasComponent(child_hash) && chunk_list->HasComponent(transform_hash);
-	});
-
-	no_child_system->ProcessChunks(no_child_list);
-	root_transform_system->ProcessChunks(root_list);
-}
-
-void Game::ProcessRendererSystems()
-{
-	auto list = manager->GetChunkListsWithComponents<components::MeshRenderer, components::Transform>();
-	update_renderer_system->ProcessChunks(list);
-}
-
 void Game::init()
 {
-	manager = std::make_unique<EntityManager>();
-	core::Engine::Get()->GetScene()->SetEntityManager(manager.get());
-
-	graph = std::make_unique<TransformGraph>(*manager);
-	no_child_system = std::make_unique<NoChildTransformSystem>(*graph, *manager);
-	root_transform_system = std::make_unique<RootTransformSystem>(*graph, *manager);
-	update_renderer_system = std::make_unique<UpdateRendererSystem>(*manager);
+	auto* engine = core::Engine::Get();
+	manager = engine->GetEntityManager();
+	graph = engine->GetTransformGraph();
 
 	camera = CreateGameObject<FollowCamera>();
 	camera->setFreeCamera(true);
@@ -104,9 +81,6 @@ void Game::update(float dt)
 {
 	auto* transform1 = manager->GetComponent<components::Transform>(entity1);
 	transform1->Rotate(vec3(0, 0, 1), M_PI * dt);
-
-	ProcessTransformSystems();
-	ProcessRendererSystems();
 }
 
 void Game::cleanup()

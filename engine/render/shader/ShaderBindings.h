@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CommonIncludes.h"
+#include "utils/DataStructures.h"
 
 namespace core { namespace Device {
 
@@ -12,22 +13,22 @@ namespace core { namespace Device {
 	public:
 		struct TextureBinding
 		{
-			unsigned set;
-			unsigned index;
+			unsigned char set;
+			unsigned char index;
 			Texture* texture;
 		};
 
 		struct BufferBinding
 		{
-			unsigned set;
-			unsigned index;
-			size_t offset;
-			size_t size;
+			unsigned char set;
+			unsigned char index;
+			unsigned int offset;
+			unsigned int size;
 			vk::Buffer buffer;
 		};
 
-		const std::vector<TextureBinding>& GetTextureBindings() const { return texture_bindings; }
-		const std::vector<BufferBinding>& GetBufferBindings() const { return buffer_bindings; }
+		const utils::SmallVectorBase<TextureBinding, false>& GetTextureBindings() const { return texture_bindings; }
+		const utils::SmallVectorBase<BufferBinding, false>& GetBufferBindings() const { return buffer_bindings; }
 
 		void AddTextureBinding(unsigned set, unsigned index, Texture* texture);
 		void AddBufferBinding(unsigned set, unsigned index, size_t offset, size_t size, vk::Buffer buffer);
@@ -35,8 +36,8 @@ namespace core { namespace Device {
 
 	private:
 
-		std::vector<TextureBinding> texture_bindings;
-		std::vector<BufferBinding> buffer_bindings;
+		utils::SmallVector<TextureBinding, 6, false> texture_bindings;
+		utils::SmallVector<BufferBinding, 10, false> buffer_bindings;
 	};
 
 

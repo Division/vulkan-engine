@@ -10,7 +10,6 @@
 
 namespace core
 {
-
 	Engine* Engine::instance;
 
 	Engine::Engine(std::unique_ptr<IGame> game) : game(std::move(game))
@@ -133,6 +132,16 @@ namespace core
 	vk::Device Engine::GetVulkanDevice()
 	{
 		return instance->GetContext()->GetDevice();
+	}
+
+	ECS::EntityManager* Engine::GetEntityManager() const
+	{
+		return scene->GetEntityManager();
+	}
+	
+	ECS::TransformGraph* Engine::GetTransformGraph() const
+	{
+		return scene->GetTransformGraph();
 	}
 
 }

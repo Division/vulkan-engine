@@ -40,6 +40,8 @@ namespace core { namespace utils {
 			, _capacity(capacity)
 		{}
 
+		// TODO: move and copy construct
+
 		~SmallVectorBase()
 		{
 			clear();
@@ -101,7 +103,7 @@ namespace core { namespace utils {
 				for (size_t i = 0; i < count; i++)
 				{
 					auto& item = *(begin() + i);
-					new (new_begin + i) T(std::move(item));
+					new (new_begin + i) T(std::move(item)); // move 
 					item.~T();
 				}
 

@@ -11,6 +11,7 @@ namespace core { namespace Device {
 	class VulkanSwapchain;
 	class VulkanRenderTarget;
 	class VulkanRenderState;
+	class VulkanDescriptorCache;
 	
 	struct FrameCommandBufferData
 	{
@@ -88,6 +89,7 @@ namespace core { namespace Device {
 		
 		std::unique_ptr<VulkanUploader> uploader;
 		std::unique_ptr<VulkanSwapchain> swapchain;
+		std::unique_ptr<VulkanDescriptorCache> descriptor_cache;
 
 		VkInstance instance;
 		VkDebugUtilsMessengerEXT debugMessenger;

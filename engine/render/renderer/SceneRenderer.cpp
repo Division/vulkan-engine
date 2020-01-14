@@ -119,7 +119,7 @@ namespace core { namespace render {
 		auto* entity_manager = scene->GetEntityManager();
 
 		// TODO: init in a proper way after ecs is integrated properly
-		if (!renderer_to_rop_system && scene->GetEntityManager())
+		if (!renderer_to_rop_system)
 			renderer_to_rop_system = std::make_unique<core::ECS::systems::RendererToROPSystem>(*scene->GetEntityManager());
 
 		auto* context = Engine::GetVulkanContext();
