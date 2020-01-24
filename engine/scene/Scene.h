@@ -15,6 +15,8 @@ namespace core
 		class EntityManager;
         class TransformGraph;
 
+        typedef uint64_t EntityID;
+
         namespace systems
         {
             class NoChildTransformSystem;
@@ -22,11 +24,6 @@ namespace core
             class UpdateRendererSystem;
         }
 	}
-
-    namespace render
-    {
-        class DrawCallManager;
-    }
 }
 
 class Scene : public IGameObjectManager {
@@ -109,9 +106,10 @@ private:
   void _processRemovedObject(GameObjectPtr object);
 
   // ECS
+  void OnEntityDestroyed(core::ECS::EntityID entity);
+
   std::unique_ptr<core::ECS::EntityManager> entity_manager;
   std::unique_ptr<core::ECS::TransformGraph> transform_graph;
-  std::unique_ptr<core::render::DrawCallManager> draw_call_manager;
 
   std::unique_ptr<core::ECS::systems::NoChildTransformSystem> no_child_system;
   std::unique_ptr<core::ECS::systems::RootTransformSystem> root_transform_system;

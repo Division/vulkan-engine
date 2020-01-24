@@ -3,6 +3,7 @@
 #include "CommonIncludes.h"
 #include "VulkanCaps.h"
 #include "render/shader/Shader.h"
+#include "render/shader/ShaderBindings.h"
 
 class Mesh;
 
@@ -18,7 +19,6 @@ namespace core
 namespace core { namespace Device {
 
 	class ShaderProgram;
-	class ShaderBindings;
 	class VulkanPipeline;
 	struct VulkanPipelineInitializer;
 	class VulkanCommandPool;
@@ -147,8 +147,9 @@ namespace core { namespace Device {
 			RenderMode = 1 << 2,
 			Shader = 1 << 3,
 			RenderPass = 1 << 4,
-			DescriptorSet = 1 << 5,
-			Scissor = 1 << 6,
+			GlobalDescriptorSet = 1 << 5,
+			DescriptorSet = 1 << 6,
+			Scissor = 1 << 7,
 			All = ~0u
 		};
 
@@ -161,10 +162,12 @@ namespace core { namespace Device {
 		void SetScissor(vec4 scissor);
 		void SetShader(const ShaderProgram& program);
 		void SetBindings(ShaderBindings& bindings);
+		void SetGlobalBindings(const ShaderBindings& global_bindings);
 		void SetClearValue(uint32_t index, vk::ClearValue value);
 		void RenderDrawCall(const core::render::DrawCall* draw_call);
 		VulkanCommandBuffer* GetCurrentCommandBuffer() const { return command_buffers[current_frame]; }
 		vk::Semaphore GetCurrentSemaphore() const { return semaphores[current_frame].get(); }
+		void UpdateGlobalDescriptorSet();
 
 		VulkanCommandBuffer* BeginRendering(const VulkanRenderTarget& render_target, const VulkanRenderPass& render_pass);
 		void EndRendering();
@@ -176,11 +179,12 @@ namespace core { namespace Device {
 	private:
 		struct DescriptorSetData
 		{
-
 			std::vector<vk::WriteDescriptorSet> writes;
+			ShaderBindings bindings;
 			std::array<vk::DescriptorImageInfo, caps::max_texture_bindings> texture_bindings;
 			std::array<vk::DescriptorBufferInfo, caps::max_ubo_bindings> buffer_bindings;
-			std::array<uint32_t, caps::max_ubo_bindings> dynamic_offsets;
+			//utils::SmallVector<uint32_t, caps::max_ubo_bindings, false> dynamic_offsets;
+			std::vector<uint32_t> dynamic_offsets;
 
 			bool active;
 			bool dirty;
@@ -196,6 +200,9 @@ namespace core { namespace Device {
 		vk::DescriptorSet GetDescriptorSet(DescriptorSetData& set_data, const uint32_t set_index, const ShaderProgram* current_shader);
 		vk::Sampler GetSampler(const SamplerMode& sampler_mode);
 		const std::vector<uint32_t>& GetDynamicOffsets(uint32_t first_set, uint32_t last_set);
+
+		ShaderBindings global_bindings;
+		uint32_t global_layout_hash = 0;
 
 		uint32_t dirty_flags = 0;
 		uint32_t current_frame = 0;

@@ -30,11 +30,14 @@ set(ENGINE_SOURCES
 	ecs/systems/TransformSystem.cpp
 	ecs/systems/RendererSystem.h
 	ecs/systems/RendererSystem.cpp
+	ecs/systems/UpdateDrawCallsSystem.h
+	ecs/systems/UpdateDrawCallsSystem.cpp
 	render/device/VkObjects.h
 	render/device/VkObjects.cpp
 	render/device/VulkanContext.h
 	render/device/VulkanContext.cpp
 	render/device/VulkanDescriptorCache.h
+	render/device/VulkanDescriptorCache.cpp
 	render/device/VulkanUploader.h
 	render/device/VulkanUploader.cpp
 	render/device/VulkanRenderPass.h

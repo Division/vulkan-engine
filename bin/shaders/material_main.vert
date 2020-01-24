@@ -8,7 +8,7 @@ layout(std140, set = 0, binding = 0) uniform Camera {
     mat4 cameraProjectionMatrix;
 } camera;
 
-layout(std140, set = 0, binding = 1) uniform ObjectParams {
+layout(std140, set = 1, binding = 1) uniform ObjectParams {
     mat4 objectModelMatrix;
     mat4 objectNormalMatrix;
     vec2 uvScale;
@@ -28,7 +28,7 @@ layout(location = 1) out vec2 fragTexCoord;
 layout(location = 3) in vec3 joint_indices;
 layout(location = 4) in vec3 joint_weights;
 
-layout (std140, set = 0, binding = 4) uniform SkinningMatrices {
+layout (std140, set = 1, binding = 4) uniform SkinningMatrices {
   mat4 matrices[70];
 } skinning;
 #endif

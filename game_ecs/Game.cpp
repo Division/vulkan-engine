@@ -61,6 +61,7 @@ void Game::init()
 	entity2 = CreateCubeEntity(vec3(2, 0, 0), entity1);
 
 	auto light = CreateGameObject<LightObject>();
+	light->castShadows(true);
 	light->color(vec3(1, 1, 1));
 	light->transform()->setPosition(vec3(7, 7, 3));
 	light->radius(30);

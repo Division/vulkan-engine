@@ -63,6 +63,7 @@ namespace core { namespace Device {
 		VkSemaphore GetRenderFinishedSemaphore() const { return renderFinishedSemaphores[currentFrame]; }
 		VkSemaphore GetImageAvailableSemaphore() const { return imageAvailableSemaphores[currentFrame]; }
 		VulkanRenderState* GetRenderState();
+		VulkanDescriptorCache* GetDescriptorCache() const { return descriptor_cache.get(); }
 
 		VmaAllocator GetAllocator() { return allocator; }
 		void AddFrameCommandBuffer(FrameCommandBufferData command_buffer);

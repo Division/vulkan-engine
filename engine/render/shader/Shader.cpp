@@ -141,12 +141,16 @@ namespace core { namespace Device {
 				continue;
 
 			set.layout_bindings.clear();
+
 			for (auto& binding : set.bindings)
 			{
 				set.layout_bindings.push_back(vk::DescriptorSetLayoutBinding(
 					binding.address.binding, binding_type_map.at(binding.type), 1, GetShaderStageFlags(binding.stage_flags)
 				));
+
 			}
+
+			set.layout_hash = FastHash(set.layout_bindings.data(), sizeof(vk::DescriptorSetLayoutBinding) * set.layout_bindings.size());
 
 			vk::DescriptorSetLayoutCreateInfo layout_info({}, set.layout_bindings.size(), set.layout_bindings.data());
 			set.layout = device.createDescriptorSetLayoutUnique(layout_info);

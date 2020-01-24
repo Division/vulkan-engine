@@ -7,11 +7,10 @@
 
 namespace core { namespace Device {
 
-	enum class DescriptorSet
+	enum DescriptorSet : int
 	{
-		Pass,
-		Object,
-		//Material // Not used yet
+		Global,
+		Object
 	};
 
 	extern const std::map<std::string, VertexAttrib> VERTEX_ATTRIB_NAMES;

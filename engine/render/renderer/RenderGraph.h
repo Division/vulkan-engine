@@ -2,6 +2,7 @@
 
 #include "CommonIncludes.h"
 #include "render/device/Types.h"
+#include "render/shader/ShaderBindings.h"
 
 namespace core
 {

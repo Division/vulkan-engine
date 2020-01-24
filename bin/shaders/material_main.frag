@@ -9,7 +9,7 @@ layout(std140, set = 0, binding = 0) uniform Camera {
 } camera;
 
 #if defined(TEXTURE0)
-layout(binding = 2) uniform sampler2D texture0;
+layout(set = 1, binding = 2) uniform sampler2D texture0;
 layout(location = 1) in vec2 fragTexCoord;
 #endif
 
@@ -22,7 +22,7 @@ layout(location = 4) in vec3 normal_worldspace;
 layout(location = 0) out vec4 out_color;
 
 #if defined (LIGHTING)
-layout(binding = 3) uniform sampler2D shadow_map;
+layout(set = 0, binding = 3) uniform sampler2D shadow_map;
 /*Texture2D shadowMap : register(t7);
 
 SamplerState shadowMapSampler : register(s7);
