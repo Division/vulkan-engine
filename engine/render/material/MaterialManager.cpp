@@ -3,6 +3,9 @@
 
 namespace core { namespace render {
 
+	MaterialManager::~MaterialManager() = default;
+	MaterialManager::MaterialManager() = default;
+
 	uint32_t MaterialManager::GetMaterialID(const Material& material) const
 	{
 		std::lock_guard<std::mutex> lock(mutex);

@@ -64,7 +64,6 @@ public:
 
   ShaderBufferStruct::Light getLightStruct() const;
 
-  void render(std::function<void(core::Device::RenderOperation& rop, RenderQueue queue)> callback) override;
   void postUpdate() override;
 
   // ICameraParamsProvider

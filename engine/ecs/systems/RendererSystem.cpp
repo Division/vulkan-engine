@@ -9,32 +9,6 @@ namespace core { namespace ECS { namespace systems {
 
 	using namespace core::ECS::components;
 
-	void RendererToROPSystem::Process(Chunk* chunk)
-	{
-		static thread_local std::vector<std::pair<RenderQueue, RenderOperation>> local_rops;
-		local_rops.clear();
-
-		ComponentFetcher<MeshRenderer> mesh_renderer_fetcher(*chunk);
-		for (int i = 0; i < chunk->GetEntityCount(); i++)
-		{
-			auto* mesh_renderer = mesh_renderer_fetcher.GetComponent(i);
-			RenderOperation rop;
-			rop.material = Engine::Get()->GetMaterialManager()->GetMaterial(mesh_renderer->material_id);
-			rop.mesh = mesh_renderer->mesh;
-			rop.object_params = &mesh_renderer->object_params;
-
-			local_rops.push_back(std::make_pair(mesh_renderer->render_queue, rop));
-		}
-
-		AppendRops(local_rops);
-	}
-
-	void RendererToROPSystem::AppendRops(const std::vector<std::pair<RenderQueue, RenderOperation>>& chunk_rops)
-	{
-		std::lock_guard<std::mutex> lock(mutex);
-		rops.insert(rops.end(), chunk_rops.begin(), chunk_rops.end());
-	}
-
 	void UpdateRendererSystem::Process(Chunk* chunk)
 	{
 		//auto& layout = chunk->GetComponentLayout();

@@ -1,7 +1,6 @@
 #pragma once
 
 #include "CommonIncludes.h"
-#include "RenderOperation.h"
 
 enum class RendererMode : int {
   DepthOnly = 0,
@@ -23,6 +22,5 @@ enum class RenderQueue : int {
 class IRenderer {
 public:
   virtual ~IRenderer() = default;
-  virtual void AddRenderOperation(core::Device::RenderOperation &rop, RenderQueue queue) = 0;
   //virtual void RenderMesh(MeshPtr mesh) = 0;
 };

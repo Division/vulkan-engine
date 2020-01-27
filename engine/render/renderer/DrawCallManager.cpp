@@ -8,10 +8,12 @@
 #include "render/device/VulkanDescriptorCache.h"
 #include "Engine.h"
 #include "utils/Pool.h"
+#include "render/material/Material.h"
 
 namespace core { namespace render {
 
 	using namespace ECS;
+	using namespace Device;
 
 	DrawCallManager::~DrawCallManager() = default;
 

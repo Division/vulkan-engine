@@ -73,20 +73,10 @@ public:
 
   virtual void start(); // called only once just before the first update()
   virtual void update(float dt);
-  virtual void render(std::function<void(core::Device::RenderOperation& rop, RenderQueue queue)> callback);
   virtual void postUpdate(); // called after update() is executed on all scene objects and transforms are updated
 
 protected:
   virtual void _processAnimations(float dt); // called after update, but before postUpdate and transforms calculation
-  RenderOperation _getDefaultRenderOp() {
-    _objectParamsStruct.transform = transform()->worldMatrix();
-    _objectParamsStruct.layer = layer();
-
-    RenderOperation result;
-    result.object_params = &_objectParamsStruct;
-    result.debug_info= &_name;
-    return result;
-  };
 
   std::string _name;
   std::string _sid; // sid of the HierarchyData

@@ -29,7 +29,6 @@
 #include "render/shader/ShaderCache.h"
 #include "render/shader/ShaderBindings.h"
 #include "render/shader/ShaderDefines.h"
-#include "render/renderer/RenderOperation.h"
 #include "render/renderer/RenderGraph.h"
 #include "render/material/Material.h"
 #include "render/buffer/UniformBuffer.h"
@@ -65,7 +64,6 @@ namespace core { namespace render {
 		draw_call_manager = std::make_unique<DrawCallManager>(*this);
 		create_draw_calls_system = std::make_unique<systems::CreateDrawCallsSystem>(*scene.GetEntityManager(), *draw_call_manager);
 		upload_draw_calls_system = std::make_unique<systems::UploadDrawCallsSystem>(*draw_call_manager, *scene_buffers);
-		renderer_to_rop_system = std::make_unique<systems::RendererToROPSystem>(*scene.GetEntityManager());
 
 		light_grid = std::make_unique<LightGrid>();
 		shadow_map = std::make_unique<ShadowMap>(ShadowAtlasSize(), ShadowAtlasSize());
@@ -110,30 +108,6 @@ namespace core { namespace render {
 		result.viewMatrix = camera->cameraViewMatrix();
 		result.screenSize = camera->cameraViewSize();
 		return result;
-	}
-
-	void SceneRenderer::AddRenderOperation(core::Device::RenderOperation& rop, RenderQueue queue)
-	{
-		/*auto* draw_call = GetDrawCall(rop);
-		render_queues[(size_t)queue].push_back(draw_call);
-
-		if (queue == RenderQueue::Opaque)
-		{
-			auto* depth_draw_call = GetDrawCall(rop, true);
-			render_queues[(size_t)RenderQueue::DepthOnly].push_back(depth_draw_call);
-		}*/
-	}
-
-	void SceneRenderer::AddROPsFromECS(ECS::EntityManager* manager)
-	{
-		renderer_to_rop_system->ResetRops();
-		auto mesh_renderers = manager->GetChunkListsWithComponent<ECS::components::MeshRenderer>();
-		renderer_to_rop_system->ProcessChunks(mesh_renderers);
-		for (auto& rop : renderer_to_rop_system->GetRops())
-		{
-			auto op = rop.second;
-			AddRenderOperation(op, rop.first);
-		}
 	}
 
 	void SceneRenderer::RenderScene()
@@ -205,14 +179,6 @@ namespace core { namespace render {
 
 		UpdateGlobalBindings();
 
-		AddROPsFromECS(entity_manager);
-
-		for (auto& object : visible_objects)
-		{
-			object->render([&](core::Device::RenderOperation& rop, RenderQueue queue) {
-				AddRenderOperation(rop, queue);
-			});
-		}
 		object_params_buffer->Unmap();
 		skinning_matrices_buffer->Unmap();
 
@@ -409,117 +375,6 @@ namespace core { namespace render {
 		}
 
 		return nullptr;
-	}
-
-	std::tuple<vk::Buffer, size_t, size_t> SceneRenderer::GetBufferFromROP(RenderOperation& rop, ShaderBufferName buffer_name, uint32_t camera_index)
-	{
-		vk::Buffer buffer = nullptr;
-		size_t offset;
-		size_t size;
-		switch (buffer_name)
-		{
-		case ShaderBufferName::ObjectParams:
-			{
-				auto* object_params_buffer = scene_buffers->GetObjectParamsBuffer();
-				buffer = object_params_buffer->GetBuffer()->Buffer();
-				offset = object_params_buffer->Append(*rop.object_params);
-				size = object_params_buffer->GetElementSize();
-				break;
-			}
-
-		case ShaderBufferName::Camera:
-		{
-			auto* camera_buffer = scene_buffers->GetCameraBuffer();
-			buffer = camera_buffer->GetBuffer()->Buffer();
-			offset = camera_index;
-			size = camera_buffer->GetElementSize();
-			break;
-		}
-
-		case ShaderBufferName::SkinningMatrices:
-		{
-			auto* skinning_matrices_buffer = scene_buffers->GetSkinningMatricesBuffer();
-			buffer = skinning_matrices_buffer->GetBuffer()->Buffer();
-			offset = skinning_matrices_buffer->Append(*rop.skinning_matrices);
-			size = skinning_matrices_buffer->GetElementSize();
-			break;
-		}
-
-		case ShaderBufferName::Projector:
-		{
-			auto* uniform_buffer = light_grid->GetProjectorBuffer();
-			buffer = uniform_buffer->GetBuffer()->Buffer();
-			offset = 0;
-			size = uniform_buffer->GetSize();
-			break;
-		}
-
-		case ShaderBufferName::Light:
-		{
-			auto* uniform_buffer = light_grid->GetLightsBuffer();
-			buffer = uniform_buffer->GetBuffer()->Buffer();
-			offset = 0;
-			size = uniform_buffer->GetSize();
-			break;
-		}
-
-		case ShaderBufferName::LightIndices:
-		{
-			auto* uniform_buffer = light_grid->GetLightIndexBuffer();
-			buffer = uniform_buffer->GetBuffer()->Buffer();
-			offset = 0;
-			size = uniform_buffer->GetSize();
-			break;
-		}
-
-		case ShaderBufferName::LightGrid:
-		{
-			auto* uniform_buffer = light_grid->GetLightGridBuffer();
-			buffer = uniform_buffer->GetBuffer()->Buffer();
-			offset = 0;
-			size = uniform_buffer->GetSize();
-			break;
-		}
-
-		default:
-			throw std::runtime_error("unknown shader buffer");
-		}
-
-		assert(buffer && "buffer should be defined");
-
-		return std::make_tuple(buffer, offset, size);
-	}
-
-	void SceneRenderer::SetupShaderBindings(RenderOperation& rop, ShaderProgram& shader, ShaderBindings& bindings, uint32_t camera_index)
-	{
-		auto* set = shader.GetDescriptorSet(DescriptorSet::Object);
-
-		for (auto& binding : set->bindings)
-		{
-			auto& address = binding.address;
-			switch (binding.type)
-			{
-				case ShaderProgram::BindingType::Sampler:
-					bindings.AddTextureBinding(address.set, address.binding, GetTexture((ShaderTextureName)binding.id, *rop.material));
-					break;
-
-				case ShaderProgram::BindingType::UniformBuffer:
-				case ShaderProgram::BindingType::StorageBuffer:
-				{
-					auto buffer_data = GetBufferFromROP(rop, (ShaderBufferName)binding.id, camera_index);
-					vk::Buffer buffer;
-					size_t offset;
-					size_t size;
-					std::tie(buffer, offset, size) = buffer_data;
-
-					bindings.AddBufferBinding(address.set, address.binding, offset, size, buffer);
-					break;
-				}
-
-				default:
-					throw std::runtime_error("unknown shader binding");
-			}
-		}
 	}
 
 	void SceneRenderer::SetupShaderBindings(const Material& material, const ShaderProgram::DescriptorSet& descriptor_set, ShaderBindings& bindings)

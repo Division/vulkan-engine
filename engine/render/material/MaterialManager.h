@@ -10,6 +10,8 @@ namespace core { namespace render {
 	class MaterialManager
 	{
 	public:
+		MaterialManager();
+		~MaterialManager();
 		uint32_t GetMaterialID(const Material& material) const;
 		const Material* GetMaterial(uint32_t id) const;
 

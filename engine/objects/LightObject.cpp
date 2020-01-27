@@ -62,26 +62,6 @@ void LightObject::enableDebug() {
   _debugMaterial = std::make_shared<MaterialSingleColor>(); */
 }
 
-void LightObject::render(std::function<void(core::Device::RenderOperation& rop, RenderQueue queue)> callback) {
-	/*
-  if (_flareTexture) {
-    RenderOperation rop = _getDefaultRenderOp();
-    rop.mesh = _flareMesh;
-    rop.material = _flareMaterial;
-    _flareMaterial->color(vec4(color(), 1));
-    rop.depthTest = false;
-    renderer.addRenderOperation(rop, RenderQueue::Translucent);
-  }
-
-  if (_debugMesh && _debugMaterial) {
-    _debugMaterial->color(vec4(color(), 1));
-    RenderOperation rop = _getDefaultRenderOp();
-    rop.mesh = _debugMesh;
-    rop.material = _debugMaterial;
-    renderer.addRenderOperation(rop, RenderQueue::Opaque);
-  } */
-}
-
 float LightObject::getSpotRadius(float height) {
   if (_type == LightObjectType::Spot) {
     return tanf(_coneAngle / 2.0f * (float)M_PI / 180) * height;

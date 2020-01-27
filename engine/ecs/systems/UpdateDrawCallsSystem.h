@@ -2,7 +2,6 @@
 
 #include <mutex>
 #include "ecs/System.h"
-#include "render/renderer/RenderOperation.h"
 #include "render/renderer/IRenderer.h"
 #include "ecs/components/DrawCall.h"
 #include "render/renderer/DrawCallManager.h"

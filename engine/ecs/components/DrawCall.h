@@ -30,7 +30,7 @@ namespace core { namespace ECS { namespace components {
 		} culling_data;*/
 
 		const Mesh* mesh = nullptr;
-		ShaderBufferStruct::ObjectParams* object_params;
+		Device::ShaderBufferStruct::ObjectParams* object_params;
 		Device::ShaderProgram* shader;
 		vk::DescriptorSet descriptor_set;
 		Device::ShaderProgram* depth_only_shader;

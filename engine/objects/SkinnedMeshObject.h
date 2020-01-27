@@ -20,7 +20,6 @@ public:
   void setSkinningData(ModelBundlePtr bundle, SkinningDataPtr skinningData);
   SkinningDataPtr skinningData() const { return _skinningData; };
 
-  void render(std::function<void(core::Device::RenderOperation& rop, RenderQueue queue)> callback) override;
   void start() override;
   void postUpdate() override;
 

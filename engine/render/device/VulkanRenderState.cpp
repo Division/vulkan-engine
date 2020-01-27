@@ -12,7 +12,6 @@
 #include "render/shader/ShaderBindings.h"
 #include "render/shader/ShaderResource.h"
 #include "render/shader/ShaderDefines.h"
-#include "render/renderer/RenderOperation.h"
 #include "render/mesh/Mesh.h"
 #include "render/texture/Texture.h"
 #include "ecs/components/DrawCall.h"

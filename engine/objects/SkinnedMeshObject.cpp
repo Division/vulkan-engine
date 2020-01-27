@@ -86,15 +86,3 @@ void SkinnedMeshObject::postUpdate() {
     _skinningMatrices.matrices[i] = _jointList[i]->transform()->worldMatrix() * _skinningData->bindPoses[i];
   }
 }
-
-void SkinnedMeshObject::render(std::function<void(core::Device::RenderOperation& rop, RenderQueue queue)> callback) {
-  if (!_mesh || !_material) {
-    return;
-  }
-
-  RenderOperation rop = _getDefaultRenderOp();
-  rop.skinning_matrices= &_skinningMatrices;
-  rop.mesh = _mesh.get();
-  rop.material = _material.get();
-  callback(rop, _renderQueue);
-}

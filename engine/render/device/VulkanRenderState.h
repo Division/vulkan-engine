@@ -29,7 +29,6 @@ namespace core { namespace Device {
 	class VulkanCommandBuffer;
 	class VulkanRenderPass;
 	class VulkanRenderTarget;
-	struct RenderOperation;
 	class Texture;
 
 	enum class BlendFactor : int

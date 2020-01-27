@@ -28,10 +28,6 @@ void GameObject::postUpdate() {
 
 }
 
-void GameObject::render(std::function<void(core::Device::RenderOperation& rop, RenderQueue queue)> callback) {
-
-}
-
 void GameObject::_processAnimations(float dt) {
   if (_animation->autoUpdate() && _animation->hasAnimation()) {
     _animation->update(dt);
