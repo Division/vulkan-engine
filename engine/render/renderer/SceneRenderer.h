@@ -2,7 +2,6 @@
 
 #include "CommonIncludes.h"
 #include "utils/Pool.h"
-#include "render/renderer/DrawCall.h"
 #include "render/renderer/IRenderer.h"
 #include "render/shader/ShaderResource.h"
 #include "render/shader/Shader.h"
@@ -73,8 +72,6 @@ namespace core { namespace render {
 		void CreateDrawCalls();
 		void UploadDrawCalls();
 		void UpdateGlobalBindings();
-		DrawCall* GetDrawCall(RenderOperation& rop, bool depth_only = false, uint32_t camera_index = 0);
-		void ReleaseDrawCalls();
 		void SetupShaderBindings(RenderOperation& rop, ShaderProgram& shader, ShaderBindings& bindings, uint32_t camera_index); // TODO: remove
 		void OnRecreateSwapchain(int32_t width, int32_t height);
 		std::tuple<vk::Buffer, size_t, size_t> GetBufferFromROP(RenderOperation& rop, ShaderBufferName buffer_name, uint32_t camera_index);
@@ -98,8 +95,6 @@ namespace core { namespace render {
 		uint32_t global_shader_binding_camera_index;
 
 		std::unique_ptr<graph::RenderGraph> render_graph;
-		core::utils::Pool<DrawCall> draw_call_pool;
-		std::vector<std::unique_ptr<DrawCall>> used_draw_calls;
 		
 		ShaderProgram* compute_program;
 		std::unique_ptr<ShaderBindings> compute_bindings;
@@ -108,7 +103,6 @@ namespace core { namespace render {
 		std::unique_ptr<VulkanRenderTargetAttachment> main_depth_attachment;
 		std::unique_ptr<VulkanRenderTargetAttachment> shadowmap_atlas_attachment;
 
-		//std::array<std::vector<DrawCall*>, (size_t)RenderQueue::Count> render_queues;
 		uint32_t depth_only_fragment_shader_hash;
 		std::vector<std::pair<IShadowCaster*, core::ECS::systems::CullingSystem>> shadow_casters;
 	};

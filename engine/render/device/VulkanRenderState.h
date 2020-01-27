@@ -4,16 +4,12 @@
 #include "VulkanCaps.h"
 #include "render/shader/Shader.h"
 #include "render/shader/ShaderBindings.h"
+#include "render/renderer/IRenderer.h"
 
 class Mesh;
 
 namespace core
 {
-	namespace render
-	{
-		struct DrawCall;
-	}
-
 	namespace ECS
 	{
 		namespace components
@@ -172,7 +168,6 @@ namespace core { namespace Device {
 		void SetBindings(ShaderBindings& bindings);
 		void SetGlobalBindings(const ShaderBindings& global_bindings);
 		void SetClearValue(uint32_t index, vk::ClearValue value);
-		void RenderDrawCall(const core::render::DrawCall* draw_call);
 		void RenderDrawCall(const ECS::components::DrawCall* draw_call, bool is_depth);
 		VulkanCommandBuffer* GetCurrentCommandBuffer() const { return command_buffers[current_frame]; }
 		vk::Semaphore GetCurrentSemaphore() const { return semaphores[current_frame].get(); }

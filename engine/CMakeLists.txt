@@ -66,8 +66,6 @@ set(ENGINE_SOURCES
 	render/material/MaterialManager.cpp
 	render/renderer/IRenderer.h
 	render/renderer/ICameraParamsProvider.h
-	render/renderer/DrawCall.h
-	render/renderer/DrawCall.cpp
 	render/renderer/DrawCallManager.h
 	render/renderer/DrawCallManager.cpp
 	render/renderer/SceneRenderer.h

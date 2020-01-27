@@ -13,7 +13,6 @@
 #include "render/shader/ShaderResource.h"
 #include "render/shader/ShaderDefines.h"
 #include "render/renderer/RenderOperation.h"
-#include "render/renderer/DrawCall.h"
 #include "render/mesh/Mesh.h"
 #include "render/texture/Texture.h"
 #include "ecs/components/DrawCall.h"
@@ -473,33 +472,6 @@ namespace core { namespace Device {
 		dynamic_offsets.push_back(draw_call->dynamic_offset);
 		auto descriptor_set = is_depth ? draw_call->depth_only_descriptor_set : draw_call->descriptor_set;
 		command_buffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, current_pipeline->GetPipelineLayout(), DescriptorSet::Object, 1u, &draw_call->descriptor_set, dynamic_offsets.size(), dynamic_offsets.data());
-
-		command_buffer.drawIndexed(static_cast<uint32_t>(mesh->indexCount()), 1, 0, 0, 0);
-	}
-
-	void VulkanRenderState::RenderDrawCall(const core::render::DrawCall* draw_call)
-	{
-		auto* mesh = draw_call->mesh;
-
-		SetMesh(*mesh);
-		SetShader(*draw_call->shader);
-		SetBindings(*draw_call->shader_bindings);
-
-		UpdateState();
-
-		if (!mesh->hasIndices())
-		{
-			throw std::runtime_error("mesh should have indices");
-		}
-
-		vk::DeviceSize offset = { 0 };
-		vk::Buffer vertex_buffer = mesh->vertexBuffer()->Buffer();
-		vk::Buffer index_buffer = mesh->indexBuffer()->Buffer();
-		auto command_buffer = GetCurrentCommandBuffer()->GetCommandBuffer();
-		command_buffer.bindVertexBuffers(0, 1, &vertex_buffer, &offset);
-		command_buffer.bindIndexBuffer(index_buffer, offset, vk::IndexType::eUint16);
-
-		BindFrameDescriptorSets(command_buffer, vk::PipelineBindPoint::eGraphics);
 
 		command_buffer.drawIndexed(static_cast<uint32_t>(mesh->indexCount()), 1, 0, 0, 0);
 	}

@@ -3,7 +3,6 @@
 #include "CommonIncludes.h"
 #include "render/shading/IShadowCaster.h"
 #include "utils/Math.h"
-#include "render/renderer/DrawCall.h"
 
 class Renderer;
 class IShadowCaster;

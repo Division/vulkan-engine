@@ -321,8 +321,6 @@ namespace core { namespace render {
 
 		render_graph->Prepare();
 		render_graph->Render();
-
-		ReleaseDrawCalls();
 	}
 
 	std::tuple<vk::Buffer, size_t> SceneRenderer::GetBufferData(ShaderBufferName buffer_name)
@@ -553,32 +551,6 @@ namespace core { namespace render {
 		}
 	}
 
-	DrawCall* SceneRenderer::GetDrawCall(RenderOperation& rop, bool depth_only, uint32_t camera_index)
-	{
-		auto draw_call = draw_call_pool.Obtain();
-		draw_call->mesh = nullptr;
-		draw_call->shader = nullptr;
-		draw_call->shader_bindings->Clear();
-		assert(rop.object_params && "Object params data must be set");
-
-		draw_call->mesh = rop.mesh;
-
-		auto caps = depth_only ? ShaderCapsSet() : rop.material->shaderCaps();
-		if (rop.skinning_matrices)
-			caps.addCap(ShaderCaps::Skinning);
-
-		auto vertex_name_hash = depth_only ? rop.material->GetVertexShaderDepthOnlyNameHash() : rop.material->GetVertexShaderNameHash();
-		auto vertex_hash =  ShaderCache::GetCombinedHash(vertex_name_hash, caps);
-		auto fragment_hash = depth_only ? depth_only_fragment_shader_hash : ShaderCache::GetCombinedHash(rop.material->GetFragmentShaderNameHash(), caps);
-
-		draw_call->shader = shader_cache->GetShaderProgram(vertex_hash, fragment_hash);
-		SetupShaderBindings(rop, *draw_call->shader, *draw_call->shader_bindings, camera_index);
-
-		auto* result = draw_call.get();
-		used_draw_calls.push_back(std::move(draw_call));
-		return result;
-	}
-
 	void SceneRenderer::UpdateGlobalBindings()
 	{
 		global_shader_bindings = std::make_unique<ShaderBindings>();
@@ -603,16 +575,6 @@ namespace core { namespace render {
 			}
 
 		assert(global_shader_binding_camera_index != -1);
-	}
-
-	void SceneRenderer::ReleaseDrawCalls()
-	{
-		for (auto& draw_call : used_draw_calls)
-		{
-			draw_call_pool.Release(std::move(draw_call));
-		}
-
-		used_draw_calls.clear();
 	}
 
 } }
