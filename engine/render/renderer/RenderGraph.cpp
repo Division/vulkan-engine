@@ -142,7 +142,7 @@ namespace core { namespace render { namespace graph {
 		});
 
 #if DEBUG_LOG
-		for (auto& pass : render_passes)
+		/*for (auto& pass : render_passes)
 		{
 			if (pass->order == -1)
 				continue;
@@ -152,7 +152,7 @@ namespace core { namespace render { namespace graph {
 			OutputDebugStringA("\n");
 		}
 
-		OutputDebugStringA("=============================\n");
+		OutputDebugStringA("=============================\n"); */
 #endif
 
 	}
@@ -492,6 +492,10 @@ namespace core { namespace render { namespace graph {
 
 	void RenderGraph::RecordGraphicsPass(Pass* pass)
 	{
+		OutputDebugStringA("Recording Pass ");
+		OutputDebugStringA(pass->name);
+		OutputDebugStringA("\n");
+
 		auto* context = Engine::GetVulkanContext();
 		auto* state = context->GetRenderState();
 		auto initializer = GetPassInitializer(pass);

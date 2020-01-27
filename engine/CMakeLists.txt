@@ -30,11 +30,16 @@ set(ENGINE_SOURCES
 	ecs/systems/TransformSystem.cpp
 	ecs/systems/RendererSystem.h
 	ecs/systems/RendererSystem.cpp
+	ecs/systems/CullingSystem.h
+	ecs/systems/CullingSystem.cpp
+	ecs/systems/UpdateDrawCallsSystem.h
+	ecs/systems/UpdateDrawCallsSystem.cpp
 	render/device/VkObjects.h
 	render/device/VkObjects.cpp
 	render/device/VulkanContext.h
 	render/device/VulkanContext.cpp
 	render/device/VulkanDescriptorCache.h
+	render/device/VulkanDescriptorCache.cpp
 	render/device/VulkanUploader.h
 	render/device/VulkanUploader.cpp
 	render/device/VulkanRenderPass.h
@@ -61,8 +66,6 @@ set(ENGINE_SOURCES
 	render/material/MaterialManager.cpp
 	render/renderer/IRenderer.h
 	render/renderer/ICameraParamsProvider.h
-	render/renderer/DrawCall.h
-	render/renderer/DrawCall.cpp
 	render/renderer/DrawCallManager.h
 	render/renderer/DrawCallManager.cpp
 	render/renderer/SceneRenderer.h

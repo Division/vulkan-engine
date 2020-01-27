@@ -3,9 +3,9 @@
 #include "ecs/components/MeshRenderer.h"
 #include "ecs/components/Transform.h"
 #include "ecs/systems/RendererSystem.h"
+#include "ecs/systems/UpdateDrawCallsSystem.h"
 #include "scene/Scene.h"
 #include "render/device/VulkanUtils.h"
-#include "render/shader/Shader.h"
 #include "CommonIncludes.h"
 #include "Engine.h"
 #include "render/device/VulkanContext.h"
@@ -26,9 +26,9 @@
 #include "render/shading/ShadowMap.h"
 #include "render/mesh/Mesh.h"
 #include "render/shading/IShadowCaster.h"
-#include "render/shader/Shader.h"
 #include "render/shader/ShaderCache.h"
 #include "render/shader/ShaderBindings.h"
+#include "render/shader/ShaderDefines.h"
 #include "render/renderer/RenderOperation.h"
 #include "render/renderer/RenderGraph.h"
 #include "render/material/Material.h"
@@ -45,6 +45,8 @@ using namespace core::Device;
 
 namespace core { namespace render {
 
+	using namespace ECS;
+
 	static const int32_t shadow_atlas_size = 4096;
 
 	int32_t SceneRenderer::ShadowAtlasSize()
@@ -54,10 +56,17 @@ namespace core { namespace render {
 
 	SceneRenderer::~SceneRenderer() = default;
 
-	SceneRenderer::SceneRenderer(ShaderCache* shader_cache)
-		: shader_cache(shader_cache)
+	SceneRenderer::SceneRenderer(Scene& scene, ShaderCache* shader_cache)
+		: scene(scene)
+		, shader_cache(shader_cache)
 	{
 		scene_buffers = std::make_unique<SceneBuffers>();
+
+		draw_call_manager = std::make_unique<DrawCallManager>(*this);
+		create_draw_calls_system = std::make_unique<systems::CreateDrawCallsSystem>(*scene.GetEntityManager(), *draw_call_manager);
+		upload_draw_calls_system = std::make_unique<systems::UploadDrawCallsSystem>(*draw_call_manager, *scene_buffers);
+		renderer_to_rop_system = std::make_unique<systems::RendererToROPSystem>(*scene.GetEntityManager());
+
 		light_grid = std::make_unique<LightGrid>();
 		shadow_map = std::make_unique<ShadowMap>(ShadowAtlasSize(), ShadowAtlasSize());
 		render_graph = std::make_unique<graph::RenderGraph>();
@@ -79,6 +88,19 @@ namespace core { namespace render {
 		main_depth_attachment = std::make_unique<VulkanRenderTargetAttachment>(VulkanRenderTargetAttachment::Type::Depth, width, height, Format::D24_unorm_S8_uint);
 	}
 
+	void SceneRenderer::CreateDrawCalls()
+	{
+		auto* entity_manager = scene.GetEntityManager();
+		auto list = entity_manager->GetChunkListsWithComponent<components::MeshRenderer>();
+		create_draw_calls_system->ProcessChunks(list);
+	}
+
+	void SceneRenderer::UploadDrawCalls()
+	{
+		auto list = draw_call_manager->GetDrawCallChunks();
+		upload_draw_calls_system->ProcessChunks(list);
+	}
+
 	static ShaderBufferStruct::Camera GetCameraData(ICameraParamsProvider* camera)
 	{
 		ShaderBufferStruct::Camera result;
@@ -92,14 +114,14 @@ namespace core { namespace render {
 
 	void SceneRenderer::AddRenderOperation(core::Device::RenderOperation& rop, RenderQueue queue)
 	{
-		auto* draw_call = GetDrawCall(rop);
+		/*auto* draw_call = GetDrawCall(rop);
 		render_queues[(size_t)queue].push_back(draw_call);
 
 		if (queue == RenderQueue::Opaque)
 		{
 			auto* depth_draw_call = GetDrawCall(rop, true);
 			render_queues[(size_t)RenderQueue::DepthOnly].push_back(depth_draw_call);
-		}
+		}*/
 	}
 
 	void SceneRenderer::AddROPsFromECS(ECS::EntityManager* manager)
@@ -114,40 +136,36 @@ namespace core { namespace render {
 		}
 	}
 
-	void SceneRenderer::RenderScene(Scene* scene)
+	void SceneRenderer::RenderScene()
 	{
-		auto* entity_manager = scene->GetEntityManager();
+		auto* entity_manager = scene.GetEntityManager();
 
-		// TODO: init in a proper way after ecs is integrated properly
-		if (!renderer_to_rop_system)
-			renderer_to_rop_system = std::make_unique<core::ECS::systems::RendererToROPSystem>(*scene->GetEntityManager());
+		CreateDrawCalls();
+		draw_call_manager->ReleaseDrawCallLists();
 
 		auto* context = Engine::GetVulkanContext();
 		auto vk_device = context->GetDevice();
 		auto vk_physical_device = context->GetPhysicalDevice();
 		auto vk_swapchain = context->GetSwapchain();
 
-		for (auto& queue : render_queues)
-			queue.clear();
-
-		auto visible_objects = scene->visibleObjects(scene->GetCamera());
+		auto visible_objects = scene.visibleObjects(scene.GetCamera());
 
 		// Shadow casters
-		auto &visibleLights = scene->visibleLights(scene->GetCamera());
+		auto &visibleLights = scene.visibleLights(scene.GetCamera());
 		shadow_casters.clear();
 		for (auto &light : visibleLights) {
 			if (light->castShadows()) {
 				shadow_casters.push_back(
-					std::make_pair(static_cast<IShadowCaster*>(light.get()), std::vector<DrawCall*>())
+					std::make_pair(static_cast<IShadowCaster*>(light.get()), systems::CullingSystem(*draw_call_manager, *light))
 				);
 			}
 		}
 
-		auto &visibleProjectors = scene->visibleProjectors(scene->GetCamera());
+		auto &visibleProjectors = scene.visibleProjectors(scene.GetCamera());
 		for (auto &projector : visibleProjectors) {
 			if (projector->castShadows()) {
 				shadow_casters.push_back(
-					std::make_pair(static_cast<IShadowCaster*>(projector.get()), std::vector<DrawCall*>())
+					std::make_pair(static_cast<IShadowCaster*>(projector.get()), systems::CullingSystem(*draw_call_manager, *projector))
 				);
 			}
 		}
@@ -157,35 +175,37 @@ namespace core { namespace render {
 		object_params_buffer->Map();
 		skinning_matrices_buffer->Map();
 
+		UploadDrawCalls();
+
 		auto* camera_buffer = scene_buffers->GetCameraBuffer();
 		camera_buffer->Map();
-		camera_buffer->Append(GetCameraData(scene->GetCamera()));
+		camera_buffer->Append(GetCameraData(scene.GetCamera()));
+		auto draw_calls = draw_call_manager->GetDrawCallChunks();
+
+		systems::CullingSystem main_camera_culling_system(*draw_call_manager, *scene.GetCamera());
+		main_camera_culling_system.ProcessChunks(draw_calls);
+
 		for (auto& shadow_caster : shadow_casters)
 		{
+			shadow_caster.second.ProcessChunks(draw_calls); // Cull and fill draw call list
 			auto offset = camera_buffer->Append(GetCameraData(shadow_caster.first));
-
-			auto& light_visible_objects = scene->visibleObjects(shadow_caster.first);
-			for (auto& object : light_visible_objects)
-			{
-				object->render([&](core::Device::RenderOperation& rop, RenderQueue queue) {
-					auto* depth_draw_call = GetDrawCall(rop, true, offset);
-					shadow_caster.second.push_back(depth_draw_call);
-				});
-			}
+			shadow_caster.first->cameraIndex(offset);
 		}
+
 		camera_buffer->Unmap();
 		shadow_map->SetupShadowCasters(shadow_casters);
 
 		// Light grid setup
-		auto window_size = scene->GetCamera()->cameraViewSize();
+		auto window_size = scene.GetCamera()->cameraViewSize();
 		light_grid->Update(window_size.x, window_size.y);
 
-		light_grid->appendLights(visibleLights, scene->GetCamera());
-		light_grid->appendProjectors(visibleProjectors, scene->GetCamera());
+		light_grid->appendLights(visibleLights, scene.GetCamera());
+		light_grid->appendProjectors(visibleProjectors, scene.GetCamera());
 		light_grid->upload();
 
-		if (entity_manager)
-			AddROPsFromECS(entity_manager);
+		UpdateGlobalBindings();
+
+		AddROPsFromECS(entity_manager);
 
 		for (auto& object : visible_objects)
 		{
@@ -237,9 +257,12 @@ namespace core { namespace render {
 			mode.SetDepthFunc(CompareOp::Less);
 
 			state.SetRenderMode(mode);
+			state.SetGlobalBindings(*global_shader_bindings);
+
+			auto& render_queues = main_camera_culling_system.GetDrawCallList()->queues;
 			for (auto* draw_call : render_queues[(size_t)RenderQueue::DepthOnly])
 			{
-				state.RenderDrawCall(draw_call);
+				state.RenderDrawCall(draw_call, true);
 			}
 		});
 
@@ -256,13 +279,17 @@ namespace core { namespace render {
 			mode.SetDepthFunc(CompareOp::Less);
 			state.SetRenderMode(mode);
 			state.SetScissor(vec4(0, 0, ShadowAtlasSize(), ShadowAtlasSize()));
+			ShaderBindings global_bindings = *global_shader_bindings;
 
 			for (auto& shadow_caster : shadow_casters)
 			{
+				global_bindings.GetBufferBindings()[global_shader_binding_camera_index].offset = shadow_caster.first->cameraIndex();
+				state.SetGlobalBindings(global_bindings);
 				state.SetViewport(shadow_caster.first->cameraViewport());
-				for (auto* draw_call : shadow_caster.second)
+				auto& render_queues = shadow_caster.second.GetDrawCallList()->queues;
+				for (auto* draw_call : render_queues[(size_t)RenderQueue::DepthOnly])
 				{
-					state.RenderDrawCall(draw_call);
+					state.RenderDrawCall(draw_call, true);
 				}
 			}
 
@@ -283,25 +310,96 @@ namespace core { namespace render {
 			mode.SetDepthFunc(CompareOp::LessOrEqual);
 
 			state.SetRenderMode(mode);
+			state.SetGlobalBindings(*global_shader_bindings);
+
+			auto& render_queues = main_camera_culling_system.GetDrawCallList()->queues;
 			for (auto* draw_call : render_queues[(size_t)RenderQueue::Opaque])
 			{
-				state.RenderDrawCall(draw_call);
+				state.RenderDrawCall(draw_call, false);
 			}
 		});
 
 		render_graph->Prepare();
 		render_graph->Render();
-
-		ReleaseDrawCalls();
 	}
 
-	Texture* SceneRenderer::GetTextureFromROP(RenderOperation& rop, ShaderTextureName texture_name)
+	std::tuple<vk::Buffer, size_t> SceneRenderer::GetBufferData(ShaderBufferName buffer_name)
 	{
-		auto* material = rop.material;
+		vk::Buffer buffer = nullptr;
+		size_t size;
+		switch (buffer_name)
+		{
+		case ShaderBufferName::ObjectParams:
+		{
+			auto* object_params_buffer = scene_buffers->GetObjectParamsBuffer();
+			buffer = object_params_buffer->GetBuffer()->Buffer();
+			size = object_params_buffer->GetElementSize();
+			break;
+		}
+
+		case ShaderBufferName::Camera:
+		{
+			auto* camera_buffer = scene_buffers->GetCameraBuffer();
+			buffer = camera_buffer->GetBuffer()->Buffer();
+			size = camera_buffer->GetElementSize();
+			break;
+		}
+
+		case ShaderBufferName::SkinningMatrices:
+		{
+			auto* skinning_matrices_buffer = scene_buffers->GetSkinningMatricesBuffer();
+			buffer = skinning_matrices_buffer->GetBuffer()->Buffer();
+			size = skinning_matrices_buffer->GetElementSize();
+			break;
+		}
+
+		case ShaderBufferName::Projector:
+		{
+			auto* uniform_buffer = light_grid->GetProjectorBuffer();
+			buffer = uniform_buffer->GetBuffer()->Buffer();
+			size = uniform_buffer->GetSize();
+			break;
+		}
+
+		case ShaderBufferName::Light:
+		{
+			auto* uniform_buffer = light_grid->GetLightsBuffer();
+			buffer = uniform_buffer->GetBuffer()->Buffer();
+			size = uniform_buffer->GetSize();
+			break;
+		}
+
+		case ShaderBufferName::LightIndices:
+		{
+			auto* uniform_buffer = light_grid->GetLightIndexBuffer();
+			buffer = uniform_buffer->GetBuffer()->Buffer();
+			size = uniform_buffer->GetSize();
+			break;
+		}
+
+		case ShaderBufferName::LightGrid:
+		{
+			auto* uniform_buffer = light_grid->GetLightGridBuffer();
+			buffer = uniform_buffer->GetBuffer()->Buffer();
+			size = uniform_buffer->GetSize();
+			break;
+		}
+
+		default:
+			throw std::runtime_error("unknown shader buffer");
+		}
+
+		assert(buffer && "buffer should be defined");
+
+		return std::make_tuple(buffer, size);
+	}
+
+	Texture* SceneRenderer::GetTexture(ShaderTextureName texture_name, const Material& material)
+	{
 		switch (texture_name)
 		{
 		case ShaderTextureName::Texture0:
-			return material->texture0().get();
+			return material.texture0().get();
 
 		case ShaderTextureName::ShadowMap:
 			return shadowmap_atlas_attachment->GetTexture(0).get();
@@ -394,71 +492,89 @@ namespace core { namespace render {
 
 	void SceneRenderer::SetupShaderBindings(RenderOperation& rop, ShaderProgram& shader, ShaderBindings& bindings, uint32_t camera_index)
 	{
-		for (auto& set : shader.GetDescriptorSets())
+		auto* set = shader.GetDescriptorSet(DescriptorSet::Object);
+
+		for (auto& binding : set->bindings)
 		{
-			for (auto& binding : set.bindings)
+			auto& address = binding.address;
+			switch (binding.type)
 			{
-				auto& address = binding.address;
-				switch (binding.type)
+				case ShaderProgram::BindingType::Sampler:
+					bindings.AddTextureBinding(address.set, address.binding, GetTexture((ShaderTextureName)binding.id, *rop.material));
+					break;
+
+				case ShaderProgram::BindingType::UniformBuffer:
+				case ShaderProgram::BindingType::StorageBuffer:
 				{
-					case ShaderProgram::BindingType::Sampler:
-						bindings.AddTextureBinding(address.set, address.binding, GetTextureFromROP(rop, (ShaderTextureName)binding.id));
-						break;
+					auto buffer_data = GetBufferFromROP(rop, (ShaderBufferName)binding.id, camera_index);
+					vk::Buffer buffer;
+					size_t offset;
+					size_t size;
+					std::tie(buffer, offset, size) = buffer_data;
 
-					case ShaderProgram::BindingType::UniformBuffer:
-					case ShaderProgram::BindingType::StorageBuffer:
-					{
-						auto buffer_data = GetBufferFromROP(rop, (ShaderBufferName)binding.id, camera_index);
-						vk::Buffer buffer;
-						size_t offset;
-						size_t size;
-						std::tie(buffer, offset, size) = buffer_data;
-
-						bindings.AddBufferBinding(address.set, address.binding, offset, size, buffer);
-						break;
-					}
-
-					default:
-						throw std::runtime_error("unknown shader binding");
+					bindings.AddBufferBinding(address.set, address.binding, offset, size, buffer);
+					break;
 				}
+
+				default:
+					throw std::runtime_error("unknown shader binding");
 			}
 		}
 	}
 
-	DrawCall* SceneRenderer::GetDrawCall(RenderOperation& rop, bool depth_only, uint32_t camera_index)
+	void SceneRenderer::SetupShaderBindings(const Material& material, const ShaderProgram::DescriptorSet& descriptor_set, ShaderBindings& bindings)
 	{
-		auto draw_call = draw_call_pool.Obtain();
-		draw_call->mesh = nullptr;
-		draw_call->shader = nullptr;
-		draw_call->shader_bindings->Clear();
-		assert(rop.object_params && "Object params data must be set");
+		for (auto& binding : descriptor_set.bindings)
+		{
+			auto& address = binding.address;
+			switch (binding.type)
+			{
+			case ShaderProgram::BindingType::Sampler:
+				bindings.AddTextureBinding(address.set, address.binding, GetTexture((ShaderTextureName)binding.id, material));
+				break;
 
-		draw_call->mesh = rop.mesh;
+			case ShaderProgram::BindingType::UniformBuffer:
+			case ShaderProgram::BindingType::StorageBuffer:
+			{
+				auto buffer_data = GetBufferData((ShaderBufferName)binding.id);
+				vk::Buffer buffer;
+				size_t size;
+				std::tie(buffer, size) = buffer_data;
 
-		auto caps = depth_only ? ShaderCapsSet() : rop.material->shaderCaps();
-		if (rop.skinning_matrices)
-			caps.addCap(ShaderCaps::Skinning);
+				bindings.AddBufferBinding(address.set, address.binding, 0, size, buffer);
+				break;
+			}
 
-		auto vertex_name_hash = depth_only ? rop.material->GetVertexShaderDepthOnlyNameHash() : rop.material->GetVertexShaderNameHash();
-		auto vertex_hash =  ShaderCache::GetCombinedHash(vertex_name_hash, caps);
-		auto fragment_hash = depth_only ? depth_only_fragment_shader_hash : ShaderCache::GetCombinedHash(rop.material->GetFragmentShaderNameHash(), caps);
-
-		draw_call->shader = shader_cache->GetShaderProgram(vertex_hash, fragment_hash);
-		SetupShaderBindings(rop, *draw_call->shader, *draw_call->shader_bindings, camera_index);
-
-		auto* result = draw_call.get();
-		used_draw_calls.push_back(std::move(draw_call));
-		return result;
+			default:
+				throw std::runtime_error("unknown shader binding");
+			}
+		}
 	}
 
-	void SceneRenderer::ReleaseDrawCalls()
+	void SceneRenderer::UpdateGlobalBindings()
 	{
-		for (auto& draw_call : used_draw_calls)
-		{
-			draw_call_pool.Release(std::move(draw_call));
-		}
+		global_shader_bindings = std::make_unique<ShaderBindings>();
+		Material material;
+		material.lightingEnabled(true); // For now it's enough to get all the global bindings
+		auto vertex_name_hash = material.GetVertexShaderNameHash();
+		auto vertex_hash =  ShaderCache::GetCombinedHash(vertex_name_hash, material.shaderCaps());
+		auto fragment_hash = ShaderCache::GetCombinedHash(material.GetFragmentShaderNameHash(), material.shaderCaps());
 
-		used_draw_calls.clear();
+		auto* shader = shader_cache->GetShaderProgram(vertex_hash, fragment_hash);
+		auto* descriptor_set = shader->GetDescriptorSet(DescriptorSet::Global);
+
+		SetupShaderBindings(material, *descriptor_set, *global_shader_bindings);
+
+		// Getting camera binding index since it will be modified within the shadowmap pass
+		global_shader_binding_camera_index = -1;
+		for (int i = 0; i < global_shader_bindings->GetBufferBindings().size(); i++)
+			if (global_shader_bindings->GetBufferBindings()[i].buffer == vk::Buffer(scene_buffers->GetCameraBuffer()->GetBuffer()->Buffer()))
+			{
+				global_shader_binding_camera_index = i;
+				break;
+			}
+
+		assert(global_shader_binding_camera_index != -1);
 	}
 
 } }

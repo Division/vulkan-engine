@@ -8,8 +8,10 @@ namespace core { namespace ECS {
 	class System
 	{
 	public:
-		System(EntityManager& manager)
-			: manager(manager) {}
+		System(EntityManager& manager, bool multithreaded = true)
+			: manager(manager)
+			, supports_multithreading(multithreaded) 
+		{}
 
 		virtual void ProcessChunks(const ChunkList::List& list)
 		{
@@ -27,6 +29,7 @@ namespace core { namespace ECS {
 		virtual void Process(Chunk* chunk) = 0;
 
 	protected:
+		bool supports_multithreading;
 		EntityManager& manager;
 	};
 

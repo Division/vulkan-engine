@@ -60,10 +60,11 @@ namespace core { namespace Device {
 
 		struct DescriptorSet
 		{
-			unsigned set_index;
+			unsigned set_index = -1;
 			std::vector<vk::DescriptorSetLayoutBinding> layout_bindings;
 			vk::UniqueDescriptorSetLayout layout;
 			std::vector<BindingData> bindings;
+			uint32_t layout_hash = 0;
 			bool Empty() const { return bindings.empty(); }
 		};
 

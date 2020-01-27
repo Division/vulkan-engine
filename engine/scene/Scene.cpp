@@ -10,6 +10,7 @@
 #include "ecs/TransformGraph.h"
 #include "ecs/systems/RendererSystem.h"
 #include "ecs/systems/TransformSystem.h"
+#include "ecs/systems/UpdateDrawCallsSystem.h"
 #include "ecs/components/MeshRenderer.h"
 #include "render/renderer/DrawCallManager.h"
 
@@ -32,11 +33,12 @@ Scene::Scene() {
 
     entity_manager = std::make_unique<EntityManager>();
     transform_graph = std::make_unique<TransformGraph>(*entity_manager);
-    draw_call_manager = std::make_unique<core::render::DrawCallManager>();
 
     no_child_system = std::make_unique<systems::NoChildTransformSystem>(*transform_graph, *entity_manager);
     root_transform_system = std::make_unique<systems::RootTransformSystem>(*transform_graph, *entity_manager);
     update_renderer_system = std::make_unique<systems::UpdateRendererSystem>(*entity_manager);
+
+    entity_manager->AddEntityDestroyCallback(std::bind(&Scene::OnEntityDestroyed, this, std::placeholders::_1));
 }
 
 void Scene::addGameObject(GameObjectPtr object) {
@@ -221,21 +223,30 @@ Scene::Visibility &Scene::_getVisibilityForCamera(const ICameraParamsProvider* c
 
 // ECS
 
+void Scene::OnEntityDestroyed(EntityID entity)
+{
+
+}
+
 void Scene::ProcessTransformSystems()
 {
-    auto root_list = entity_manager->GetChunkListsWithComponents<components::RootTransform, components::Transform>();
-    auto no_child_list = entity_manager->GetChunkLists([](ChunkList* chunk_list) {
+    // List of objects with top level transforms both with and without children
+    auto top_level_list = entity_manager->GetChunkLists([](ChunkList* chunk_list) {
         auto child_hash = GetComponentHash<components::ChildTransform>();
         auto transform_hash = GetComponentHash<components::Transform>();
         return !chunk_list->HasComponent(child_hash) && chunk_list->HasComponent(transform_hash);
         });
 
-    no_child_system->ProcessChunks(no_child_list);
+    // List of objects with top level transforms that have children
+    auto root_list = entity_manager->GetChunkListsWithComponents<components::RootTransform, components::Transform>();
+
+    no_child_system->ProcessChunks(top_level_list);
     root_transform_system->ProcessChunks(root_list);
 }
 
 void Scene::ProcessRendererSystems()
 {
+    // Append render data to MeshRenderer component
     auto list = entity_manager->GetChunkListsWithComponents<components::MeshRenderer, components::Transform>();
     update_renderer_system->ProcessChunks(list);
 }

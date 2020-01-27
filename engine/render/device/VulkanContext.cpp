@@ -30,6 +30,8 @@ namespace core { namespace Device {
 		allocatorInfo.physicalDevice = physicalDevice;
 		allocatorInfo.device = device;
 		vmaCreateAllocator(&allocatorInfo, &allocator);
+
+		descriptor_cache = std::make_unique<VulkanDescriptorCache>(device);
 	}
 
 	void VulkanContext::initialize() // todo: remove

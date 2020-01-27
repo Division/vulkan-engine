@@ -53,6 +53,8 @@ namespace core { namespace ECS {
 	public:
 		ComponentLayout(const ComponentLayout&) = default;
 
+		//ComponentLayout(ComponentLayout&&) = delete;
+
 		explicit ComponentLayout(size_t chunk_size)
 			: chunk_size(chunk_size)
 		{
@@ -327,6 +329,7 @@ namespace core { namespace ECS {
 		class ComponentFetcher(Chunk& chunk)
 			: chunk(chunk)
 			, memory(chunk.GetMemory())
+			, entity_count(chunk.GetEntityCount())
 		{
 			auto* data_ptr = chunk.GetComponentLayout().GetComponentData(GetComponentHash<T>());
 			has_component = data_ptr != nullptr;
@@ -339,16 +342,17 @@ namespace core { namespace ECS {
 		T* GetComponent(uint32_t index)
 		{
 			assert(has_component);
-			if (index >= chunk.GetEntityCount())
+			if (index >= entity_count)
 				throw std::runtime_error("entity index is greater than maximum entities");
 
 			return (T*)Chunk::GetComponentPointer(memory, index, data);
 		}
 	
 	private:
+		Chunk& chunk;
 		bool has_component;
 		ComponentData data;
-		Chunk& chunk;
+		uint32_t entity_count;
 		void* memory;
 	};
 

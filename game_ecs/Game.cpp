@@ -29,6 +29,7 @@ EntityID Game::CreateCubeEntity(vec3 position, EntityID parent)
 	transform->position = position;
 
 	auto* mesh_renderer = manager->AddComponent<components::MeshRenderer>(entity);
+	*mesh_renderer = components::MeshRenderer();
 	mesh_renderer->render_queue = RenderQueue::Opaque;
 	mesh_renderer->mesh = box_mesh.get();
 	mesh_renderer->material_id = core::Engine::Get()->GetMaterialManager()->GetMaterialID(*material_default);
@@ -61,6 +62,7 @@ void Game::init()
 	entity2 = CreateCubeEntity(vec3(2, 0, 0), entity1);
 
 	auto light = CreateGameObject<LightObject>();
+	light->castShadows(true);
 	light->color(vec3(1, 1, 1));
 	light->transform()->setPosition(vec3(7, 7, 3));
 	light->radius(30);

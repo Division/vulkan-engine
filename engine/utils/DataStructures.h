@@ -1,3 +1,5 @@
+#pragma once
+
 #include <set>
 #include <vector>
 #include <array>
@@ -30,7 +32,8 @@ namespace core { namespace utils {
 		bool directed;
 	};
 
-	template <typename T, bool allow_heap_allocation = true>
+	// TODO: move to cpp
+	template <typename T>
 	class SmallVectorBase
 	{
 	public:
@@ -38,7 +41,17 @@ namespace core { namespace utils {
 			: _begin(begin)
 			, _end(end)
 			, _capacity(capacity)
+			, allocated_heap(false)
 		{}
+
+		SmallVectorBase(const SmallVectorBase& other)
+			: _begin(0)
+			, _end(0)
+			, _capacity(0)
+			, allocated_heap(false)
+		{
+			*this = other;
+		}
 
 		// TODO: move and copy construct
 
@@ -58,6 +71,26 @@ namespace core { namespace utils {
 		T* end() { return _end; }
 		const T* begin() const { return _begin; }
 		const T* end() const { return _end; }
+		const T* data() const { return _begin; }
+		T* data() { return _begin; }
+
+		SmallVectorBase& operator=(const SmallVectorBase& other)
+		{
+			if (this != &other)
+			{
+				clear();
+				reserve(other.size());
+				_end = _begin + other.size();
+				for (int i = 0; i < other.size(); i++)
+				{
+					new (_begin + i) T();
+					*(_begin + i) = other[i];
+				}
+			}
+
+			return *this;
+		}
+
 
 		T& operator[](size_t index) noexcept {
 			assert(index < size());
@@ -73,7 +106,8 @@ namespace core { namespace utils {
 		{
 			if (begin() + capacity() == end())
 			{
-				reserve(capacity() + 1);
+				auto new_capacity = pow(2, (size_t)ceil(log2((double)(capacity() + 1))));
+				reserve(new_capacity);
 			}
 
 			assert(end() < begin() + capacity());
@@ -93,11 +127,9 @@ namespace core { namespace utils {
 
 		void reserve(size_t new_size)
 		{
-			if (!allow_heap_allocation)
-				throw std::runtime_error("push out of small vector bounds");
-			else if (new_size > capacity())
+			if (new_size > capacity())
 			{
-				auto new_capacity = pow(2, (size_t)ceil(log2((double)new_size)));
+				auto new_capacity = new_size;
 				auto new_begin = (T*)malloc(new_capacity * sizeof(T));
 				const auto count = size();
 				for (size_t i = 0; i < count; i++)
@@ -156,11 +188,17 @@ namespace core { namespace utils {
 		bool allocated_heap = false;
 	};
 
-	template <typename T, size_t N, bool allow_heap_allocation = true>
-	class SmallVector : public SmallVectorBase<T, allow_heap_allocation>
+	template <typename T, size_t N>
+	class SmallVector : public SmallVectorBase<T>
 	{
 	public:
 		SmallVector() : SmallVectorBase((T*)buffer, (T*)buffer, N) {};
+		
+		SmallVector(const SmallVector<T, N>& other)
+			: SmallVectorBase((T*)buffer, (T*)buffer, N)
+		{
+			*this = other;
+		}
 
 	private:
 		char buffer[sizeof(T) * N];

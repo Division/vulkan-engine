@@ -49,10 +49,10 @@ namespace core
 		vulkan_context->initialize();
 		glfwSetTime(0);
 
-		shader_cache = std::make_unique<Device::ShaderCache>();
-		scene_renderer = std::make_unique<render::SceneRenderer>(shader_cache.get());
-		material_manager = std::make_unique<render::MaterialManager>();
 		scene = std::make_unique<Scene>();
+		shader_cache = std::make_unique<Device::ShaderCache>();
+		scene_renderer = std::make_unique<render::SceneRenderer>(*scene, shader_cache.get());
+		material_manager = std::make_unique<render::MaterialManager>();
 		input = std::make_unique<system::Input>(window);
 
 		vulkan_context->RecreateSwapChain(); // creating swapchain after scene renderer to handle subscribtion to the recreate event
@@ -113,7 +113,7 @@ namespace core
 			game->update(dt);
 
 			context->WaitForRenderFence();
-			scene_renderer->RenderScene(scene.get());
+			scene_renderer->RenderScene();
 			context->Present();
 			glfwSwapBuffers(window);
 
