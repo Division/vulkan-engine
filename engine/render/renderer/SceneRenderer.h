@@ -6,7 +6,7 @@
 #include "render/renderer/IRenderer.h"
 #include "render/shader/ShaderResource.h"
 #include "render/shader/Shader.h"
-//#include "render/buffer/UniformBuffer.h"
+#include "ecs/systems/CullingSystem.h"
 
 class Scene;
 class IShadowCaster;
@@ -71,6 +71,7 @@ namespace core { namespace render {
 
 	private:
 		void CreateDrawCalls();
+		void UploadDrawCalls();
 		void UpdateGlobalBindings();
 		DrawCall* GetDrawCall(RenderOperation& rop, bool depth_only = false, uint32_t camera_index = 0);
 		void ReleaseDrawCalls();
@@ -107,9 +108,9 @@ namespace core { namespace render {
 		std::unique_ptr<VulkanRenderTargetAttachment> main_depth_attachment;
 		std::unique_ptr<VulkanRenderTargetAttachment> shadowmap_atlas_attachment;
 
-		std::array<std::vector<DrawCall*>, (size_t)RenderQueue::Count> render_queues;
+		//std::array<std::vector<DrawCall*>, (size_t)RenderQueue::Count> render_queues;
 		uint32_t depth_only_fragment_shader_hash;
-		std::vector<std::pair<IShadowCaster*, std::vector<DrawCall*>>> shadow_casters;
+		std::vector<std::pair<IShadowCaster*, core::ECS::systems::CullingSystem>> shadow_casters;
 	};
 
 } }

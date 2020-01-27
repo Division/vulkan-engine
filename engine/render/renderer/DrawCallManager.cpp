@@ -7,6 +7,7 @@
 #include "ecs/components/DrawCall.h"
 #include "render/device/VulkanDescriptorCache.h"
 #include "Engine.h"
+#include "utils/Pool.h"
 
 namespace core { namespace render {
 
@@ -20,6 +21,7 @@ namespace core { namespace render {
 		manager = std::make_unique<EntityManager>();
 		shader_cache = scene_renderer.GetShaderCache();
 		depth_only_fragment_shader_hash = ShaderCache::GetShaderPathHash(L"shaders/noop.frag");
+		draw_call_list_pool = std::make_unique<utils::Pool<DrawCallList>>();
 	}
 
 	std::pair<EntityID, components::DrawCall*> DrawCallManager::AddDrawCall(const Mesh& mesh, const Material& material)
@@ -36,7 +38,7 @@ namespace core { namespace render {
 
 		*draw_call = components::DrawCall();
 		draw_call->mesh = &mesh;
-		
+
 		bool has_skinning = false; // TODO: proper check
 
 		ShaderCapsSet depth_caps;
@@ -68,9 +70,34 @@ namespace core { namespace render {
 		return std::make_pair(entity, draw_call);
 	}
 
+	ChunkList::List DrawCallManager::GetDrawCallChunks()
+	{
+		return manager->GetChunkListsWithComponent<components::DrawCall>();
+	}
+
 	void DrawCallManager::RemoveDrawCall(EntityID entity)
 	{
 		manager->DestroyEntity(entity);
+	}
+
+	DrawCallList* DrawCallManager::ObtaintDrawCallList()
+	{
+		auto list = draw_call_list_pool->Obtain();
+		auto* result = list.get();
+		obtained_draw_call_lists.push_back(std::move(list));
+		
+		result->Clear();
+		return result;
+	}
+
+	void DrawCallManager::ReleaseDrawCallLists()
+	{
+		for (auto& list : obtained_draw_call_lists)
+		{
+			draw_call_list_pool->Release(std::move(list));
+		}
+
+		obtained_draw_call_lists.clear();
 	}
 
 } }

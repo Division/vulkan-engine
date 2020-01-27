@@ -16,6 +16,7 @@
 #include "render/renderer/DrawCall.h"
 #include "render/mesh/Mesh.h"
 #include "render/texture/Texture.h"
+#include "ecs/components/DrawCall.h"
 
 namespace core { namespace Device {
 
@@ -104,7 +105,7 @@ namespace core { namespace Device {
 			elements[6]  = (int)blend;
 			elements[7]  = (int)blend_alpha;
 			elements[8]  = (int)src_blend;
-			elements[9] = (int)dst_blend;
+			elements[9]  = (int)dst_blend;
 			elements[10] = (int)src_blend_alpha;
 			elements[11] = (int)dst_blend_alpha;
 			hash = FastHash(elements.data(), sizeof(elements));
@@ -258,7 +259,7 @@ namespace core { namespace Device {
 
 		if (dirty_flags & (int)DirtyFlags::DescriptorSet)
 		{
-			UpdateFrameDescriptorSets();
+			//UpdateFrameDescriptorSets();
 		}
 
 		if (dirty_flags & (int)DirtyFlags::GlobalDescriptorSet)
@@ -443,6 +444,37 @@ namespace core { namespace Device {
 	{
 		auto& dynamic_offsets = descriptor_sets[DescriptorSet::Object].dynamic_offsets;
 		command_buffer.bindDescriptorSets(bind_point, current_pipeline->GetPipelineLayout(), DescriptorSet::Object, 1u, &frame_descriptor_sets[DescriptorSet::Object], dynamic_offsets.size(), dynamic_offsets.data());
+	}
+
+	void VulkanRenderState::RenderDrawCall(const ECS::components::DrawCall* draw_call, bool is_depth)
+	{
+		auto* mesh = draw_call->mesh;
+		SetMesh(*mesh);
+
+		auto* shader = is_depth ? draw_call->depth_only_shader : draw_call->shader;
+		SetShader(*shader);
+		// TODO: skinning offset
+
+		UpdateState();
+
+		if (!mesh->hasIndices())
+		{
+			throw std::runtime_error("mesh should have indices");
+		}
+
+		vk::DeviceSize offset = { 0 };
+		vk::Buffer vertex_buffer = mesh->vertexBuffer()->Buffer();
+		vk::Buffer index_buffer = mesh->indexBuffer()->Buffer();
+		auto command_buffer = GetCurrentCommandBuffer()->GetCommandBuffer();
+		command_buffer.bindVertexBuffers(0, 1, &vertex_buffer, &offset);
+		command_buffer.bindIndexBuffer(index_buffer, offset, vk::IndexType::eUint16);
+
+		utils::SmallVector<uint32_t, 4> dynamic_offsets;
+		dynamic_offsets.push_back(draw_call->dynamic_offset);
+		auto descriptor_set = is_depth ? draw_call->depth_only_descriptor_set : draw_call->descriptor_set;
+		command_buffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, current_pipeline->GetPipelineLayout(), DescriptorSet::Object, 1u, &draw_call->descriptor_set, dynamic_offsets.size(), dynamic_offsets.data());
+
+		command_buffer.drawIndexed(static_cast<uint32_t>(mesh->indexCount()), 1, 0, 0, 0);
 	}
 
 	void VulkanRenderState::RenderDrawCall(const core::render::DrawCall* draw_call)

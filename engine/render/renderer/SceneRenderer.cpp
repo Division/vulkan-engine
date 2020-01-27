@@ -95,6 +95,12 @@ namespace core { namespace render {
 		create_draw_calls_system->ProcessChunks(list);
 	}
 
+	void SceneRenderer::UploadDrawCalls()
+	{
+		auto list = draw_call_manager->GetDrawCallChunks();
+		upload_draw_calls_system->ProcessChunks(list);
+	}
+
 	static ShaderBufferStruct::Camera GetCameraData(ICameraParamsProvider* camera)
 	{
 		ShaderBufferStruct::Camera result;
@@ -108,14 +114,14 @@ namespace core { namespace render {
 
 	void SceneRenderer::AddRenderOperation(core::Device::RenderOperation& rop, RenderQueue queue)
 	{
-		auto* draw_call = GetDrawCall(rop);
+		/*auto* draw_call = GetDrawCall(rop);
 		render_queues[(size_t)queue].push_back(draw_call);
 
 		if (queue == RenderQueue::Opaque)
 		{
 			auto* depth_draw_call = GetDrawCall(rop, true);
 			render_queues[(size_t)RenderQueue::DepthOnly].push_back(depth_draw_call);
-		}
+		}*/
 	}
 
 	void SceneRenderer::AddROPsFromECS(ECS::EntityManager* manager)
@@ -135,14 +141,12 @@ namespace core { namespace render {
 		auto* entity_manager = scene.GetEntityManager();
 
 		CreateDrawCalls();
+		draw_call_manager->ReleaseDrawCallLists();
 
 		auto* context = Engine::GetVulkanContext();
 		auto vk_device = context->GetDevice();
 		auto vk_physical_device = context->GetPhysicalDevice();
 		auto vk_swapchain = context->GetSwapchain();
-
-		for (auto& queue : render_queues)
-			queue.clear();
 
 		auto visible_objects = scene.visibleObjects(scene.GetCamera());
 
@@ -152,7 +156,7 @@ namespace core { namespace render {
 		for (auto &light : visibleLights) {
 			if (light->castShadows()) {
 				shadow_casters.push_back(
-					std::make_pair(static_cast<IShadowCaster*>(light.get()), std::vector<DrawCall*>())
+					std::make_pair(static_cast<IShadowCaster*>(light.get()), systems::CullingSystem(*draw_call_manager, *light))
 				);
 			}
 		}
@@ -161,7 +165,7 @@ namespace core { namespace render {
 		for (auto &projector : visibleProjectors) {
 			if (projector->castShadows()) {
 				shadow_casters.push_back(
-					std::make_pair(static_cast<IShadowCaster*>(projector.get()), std::vector<DrawCall*>())
+					std::make_pair(static_cast<IShadowCaster*>(projector.get()), systems::CullingSystem(*draw_call_manager, *projector))
 				);
 			}
 		}
@@ -171,23 +175,23 @@ namespace core { namespace render {
 		object_params_buffer->Map();
 		skinning_matrices_buffer->Map();
 
+		UploadDrawCalls();
+
 		auto* camera_buffer = scene_buffers->GetCameraBuffer();
 		camera_buffer->Map();
 		camera_buffer->Append(GetCameraData(scene.GetCamera()));
+		auto draw_calls = draw_call_manager->GetDrawCallChunks();
+
+		systems::CullingSystem main_camera_culling_system(*draw_call_manager, *scene.GetCamera());
+		main_camera_culling_system.ProcessChunks(draw_calls);
+
 		for (auto& shadow_caster : shadow_casters)
 		{
+			shadow_caster.second.ProcessChunks(draw_calls); // Cull and fill draw call list
 			auto offset = camera_buffer->Append(GetCameraData(shadow_caster.first));
 			shadow_caster.first->cameraIndex(offset);
-
-			auto& light_visible_objects = scene.visibleObjects(shadow_caster.first);
-			for (auto& object : light_visible_objects)
-			{
-				object->render([&](core::Device::RenderOperation& rop, RenderQueue queue) {
-					auto* depth_draw_call = GetDrawCall(rop, true, offset);
-					shadow_caster.second.push_back(depth_draw_call);
-				});
-			}
 		}
+
 		camera_buffer->Unmap();
 		shadow_map->SetupShadowCasters(shadow_casters);
 
@@ -254,9 +258,11 @@ namespace core { namespace render {
 
 			state.SetRenderMode(mode);
 			state.SetGlobalBindings(*global_shader_bindings);
+
+			auto& render_queues = main_camera_culling_system.GetDrawCallList()->queues;
 			for (auto* draw_call : render_queues[(size_t)RenderQueue::DepthOnly])
 			{
-				state.RenderDrawCall(draw_call);
+				state.RenderDrawCall(draw_call, true);
 			}
 		});
 
@@ -280,9 +286,10 @@ namespace core { namespace render {
 				global_bindings.GetBufferBindings()[global_shader_binding_camera_index].offset = shadow_caster.first->cameraIndex();
 				state.SetGlobalBindings(global_bindings);
 				state.SetViewport(shadow_caster.first->cameraViewport());
-				for (auto* draw_call : shadow_caster.second)
+				auto& render_queues = shadow_caster.second.GetDrawCallList()->queues;
+				for (auto* draw_call : render_queues[(size_t)RenderQueue::DepthOnly])
 				{
-					state.RenderDrawCall(draw_call);
+					state.RenderDrawCall(draw_call, true);
 				}
 			}
 
@@ -305,9 +312,10 @@ namespace core { namespace render {
 			state.SetRenderMode(mode);
 			state.SetGlobalBindings(*global_shader_bindings);
 
+			auto& render_queues = main_camera_culling_system.GetDrawCallList()->queues;
 			for (auto* draw_call : render_queues[(size_t)RenderQueue::Opaque])
 			{
-				state.RenderDrawCall(draw_call);
+				state.RenderDrawCall(draw_call, false);
 			}
 		});
 

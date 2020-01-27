@@ -3,7 +3,7 @@
 #include "IShadowCaster.h"
 #include "render/texture/Texture.h"
 #include "render/device/VulkanRenderState.h"
-
+#include "ecs/systems/CullingSystem.h"
 
 namespace core { namespace render {
 
@@ -18,7 +18,7 @@ namespace core { namespace render {
 	  _cellSize = vec2(_cellPixelSize) / vec2(_resolution);
 	}
 
-	void ShadowMap::SetupShadowCasters(std::vector<std::pair<IShadowCaster*, std::vector<DrawCall*>>> &shadow_casters) {
+	void ShadowMap::SetupShadowCasters(std::vector<std::pair<IShadowCaster*, core::ECS::systems::CullingSystem>>& shadow_casters) {
 		unsigned int index = 0;
 
 		for (auto& caster : shadow_casters) {

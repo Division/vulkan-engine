@@ -27,6 +27,8 @@ namespace core { namespace ECS { namespace systems {
 			auto* material = material_manager->GetMaterial(mesh_renderer->material_id);
 			auto result = draw_call_manager.AddDrawCall(*mesh_renderer->mesh, *material);
 			mesh_renderer->draw_call_id = result.first;
+			result.second->queue = mesh_renderer->render_queue;
+			result.second->object_params = &mesh_renderer->object_params; // TODO: move to AddDrawCall
 
 			/*if (culling_data_fetcher.HasData())
 			{

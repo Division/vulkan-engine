@@ -29,6 +29,7 @@ EntityID Game::CreateCubeEntity(vec3 position, EntityID parent)
 	transform->position = position;
 
 	auto* mesh_renderer = manager->AddComponent<components::MeshRenderer>(entity);
+	*mesh_renderer = components::MeshRenderer();
 	mesh_renderer->render_queue = RenderQueue::Opaque;
 	mesh_renderer->mesh = box_mesh.get();
 	mesh_renderer->material_id = core::Engine::Get()->GetMaterialManager()->GetMaterialID(*material_default);

@@ -30,6 +30,8 @@ set(ENGINE_SOURCES
 	ecs/systems/TransformSystem.cpp
 	ecs/systems/RendererSystem.h
 	ecs/systems/RendererSystem.cpp
+	ecs/systems/CullingSystem.h
+	ecs/systems/CullingSystem.cpp
 	ecs/systems/UpdateDrawCallsSystem.h
 	ecs/systems/UpdateDrawCallsSystem.cpp
 	render/device/VkObjects.h

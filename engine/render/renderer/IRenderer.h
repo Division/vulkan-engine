@@ -13,6 +13,7 @@ enum class RendererMode : int {
 enum class RenderQueue : int {
   DepthOnly,
   Opaque,
+  AlphaTest,
   Translucent,
   Debug,
   UI,

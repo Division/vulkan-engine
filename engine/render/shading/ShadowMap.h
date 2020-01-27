@@ -14,6 +14,14 @@ namespace core
 	{
 		class VulkanRenderState;
 	}
+
+	namespace ECS
+	{
+		namespace systems
+		{
+			class CullingSystem;
+		}
+	}
 }
 
 namespace core { namespace render {
@@ -22,7 +30,7 @@ namespace core { namespace render {
 	public:
 		ShadowMap(unsigned int resolutionX, unsigned int resolutionY);
 
-		void SetupShadowCasters(std::vector<std::pair<IShadowCaster*, std::vector<DrawCall*>>>& shadow_casters);
+		void SetupShadowCasters(std::vector<std::pair<IShadowCaster*, core::ECS::systems::CullingSystem>>& shadow_casters);
 	
 	private:
 		uvec2 _resolution;

@@ -37,6 +37,7 @@ namespace core { namespace ECS { namespace components {
 		vk::DescriptorSet depth_only_descriptor_set;
 		uint32_t dynamic_offset = 0;
 		uint32_t visible = 0;
+		RenderQueue queue = RenderQueue::Opaque;
 	};
 #pragma pack(pop)
 

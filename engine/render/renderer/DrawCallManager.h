@@ -23,6 +23,11 @@ namespace core
 		class ShaderProgram;
 		class ShaderCache;
 	}
+
+	namespace utils
+	{
+		template<typename T> class Pool;
+	}
 }
 
 class Material;
@@ -54,6 +59,10 @@ namespace core { namespace render {
 
 		std::pair<ECS::EntityID, ECS::components::DrawCall*> AddDrawCall(const Mesh& mesh, const Material& material);
 		void RemoveDrawCall(ECS::EntityID entity);
+		ECS::ChunkList::List GetDrawCallChunks();
+
+		DrawCallList* ObtaintDrawCallList();
+		void ReleaseDrawCallLists();
 
 	private:
 		std::mutex mutex;
@@ -62,7 +71,8 @@ namespace core { namespace render {
 		SceneRenderer& scene_renderer;
 		uint32_t depth_only_fragment_shader_hash;
 
-		std::list<DrawCallList> draw_calls_lists;
+		std::unique_ptr<utils::Pool<DrawCallList>> draw_call_list_pool;
+		std::vector<std::unique_ptr<DrawCallList>> obtained_draw_call_lists;
 	};
 
 } }
