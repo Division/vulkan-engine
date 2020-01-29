@@ -32,6 +32,7 @@
 #include "render/renderer/RenderGraph.h"
 #include "render/material/Material.h"
 #include "render/buffer/UniformBuffer.h"
+#include "render/debug/DebugDraw.h"
 #include "objects/LightObject.h"
 #include "objects/Projector.h"
 #include "SceneBuffers.h"
@@ -261,6 +262,11 @@ namespace core { namespace render {
 
 		});
 
+		auto* debug_draw = Engine::Get()->GetDebugDraw();
+		auto& debug_draw_calls_lines = debug_draw->GetLineDrawCalls();
+		auto& debug_draw_calls_points = debug_draw->GetPointDrawCalls();
+
+
 		auto main_pass_info = render_graph->AddPass<PassInfo>("main", [&](graph::IRenderPassBuilder& builder)
 		{
 			PassInfo result;
@@ -282,6 +288,29 @@ namespace core { namespace render {
 			for (auto* draw_call : render_queues[(size_t)RenderQueue::Opaque])
 			{
 				state.RenderDrawCall(draw_call, false);
+			}
+
+			// Debug
+			mode.SetDepthWriteEnabled(false);
+			mode.SetDepthTestEnabled(false);
+			mode.SetPolygonMode(PolygonMode::Line);
+			mode.SetPrimitiveTopology(PrimitiveTopology::LineList);
+
+			state.SetRenderMode(mode);
+
+			for (auto& draw_call : debug_draw_calls_lines)
+			{
+				state.RenderDrawCall(&draw_call, false);
+			}
+
+			mode.SetPolygonMode(PolygonMode::Point);
+			mode.SetPrimitiveTopology(PrimitiveTopology::PointList);
+
+			state.SetRenderMode(mode);
+
+			for (auto& draw_call : debug_draw_calls_points)
+			{
+				state.RenderDrawCall(&draw_call, false);
 			}
 		});
 

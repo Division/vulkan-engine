@@ -10,6 +10,7 @@
 #include "scene/Scene.h"
 #include "objects/LightObject.h"
 #include "render/material/MaterialManager.h"
+#include "render/debug/DebugDraw.h"
 
 Game::Game() = default;
 Game::~Game() = default;
@@ -77,12 +78,22 @@ void Game::init()
 	manager->GetComponent<components::Transform>(light_pos_entity)->scale = vec3(0.1, 0.1, 0.1);
 	auto* material_manager = core::Engine::Get()->GetMaterialManager();
 	manager->GetComponent<components::MeshRenderer>(light_pos_entity)->material_id = material_manager->GetMaterialID(*material_no_light);
+
+
 }
 
 void Game::update(float dt)
 {
 	auto* transform1 = manager->GetComponent<components::Transform>(entity1);
 	transform1->Rotate(vec3(0, 0, 1), M_PI * dt);
+	
+	auto* debug_draw = core::Engine::Get()->GetDebugDraw();
+	debug_draw->DrawAABB(AABB(vec3(0, 0, 0), vec3(4, 4, 4)), vec4(1, 0, 0, 1));
+	debug_draw->DrawAABB(AABB(vec3(5, 5, 0), vec3(8, 8, 8)), vec4(0.5, 1, 0, 1));
+	debug_draw->DrawLine(vec3(5, 5, 0), vec3(8, 8, 8), vec4(0.5, 0.5, 1, 1));
+
+	debug_draw->DrawPoint(vec3(0, 0, 0), vec3(0, 0, 1), 6.0f);
+	debug_draw->DrawPoint(vec3(4, 4, 4), vec3(0, 0, 1), 6.0f);
 }
 
 void Game::cleanup()

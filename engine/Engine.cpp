@@ -7,6 +7,7 @@
 #include "system/Input.h"
 #include "render/shader/ShaderCache.h"
 #include "render/material/MaterialManager.h"
+#include "render/debug/DebugDraw.h"
 
 namespace core
 {
@@ -51,6 +52,7 @@ namespace core
 
 		scene = std::make_unique<Scene>();
 		shader_cache = std::make_unique<Device::ShaderCache>();
+		debug_draw = std::make_unique<render::DebugDraw>(*shader_cache);
 		scene_renderer = std::make_unique<render::SceneRenderer>(*scene, shader_cache.get());
 		material_manager = std::make_unique<render::MaterialManager>();
 		input = std::make_unique<system::Input>(window);
@@ -68,6 +70,7 @@ namespace core
 		scene = nullptr;
 		scene_renderer = nullptr;
 		shader_cache = nullptr;
+		debug_draw = nullptr;
 		vulkan_context->Cleanup();
 		vulkan_context = nullptr;
 
@@ -111,6 +114,7 @@ namespace core
 			input->update();
 			scene->update(dt);
 			game->update(dt);
+			debug_draw->Update();
 
 			context->WaitForRenderFence();
 			scene_renderer->RenderScene();

@@ -71,13 +71,13 @@ void SkinnedMeshObject::_debugDraw() {
                   _skinningMatrices.matrices[(int)jointIndices.y] * weight.y +
                   _skinningMatrices.matrices[(int)jointIndices.z] * weight.z;
     vertex = vec3(matrix * vec4(vertex, 1));
-    //getEngine()->debugDraw()->drawPoint(vertex, vec3(1, 1, 1));
+    //getEngine()->debugDraw()->DrawPoint(vertex, vec3(1, 1, 1));
   }
 
 
   transform()->forEachChild(true, [&](TransformPtr transform) {
     if (transform->parent()->gameObject()->id() == this->id()) { return; }
-    //getEngine()->debugDraw()->drawLine(transform->worldPosition(), transform->parent()->worldPosition(), vec4(1, 0, 0, 1));
+    //getEngine()->debugDraw()->DrawLine(transform->worldPosition(), transform->parent()->worldPosition(), vec4(1, 0, 0, 1));
   }); */
 };
 

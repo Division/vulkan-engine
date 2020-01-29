@@ -63,7 +63,7 @@ namespace core { namespace render { namespace graph {
 
 		if (resource.type == ResourceType::Attachment && resource.GetAttachment()->IsSwapchain())
 		{
-			assert(!present_node);
+//			assert(!present_node);
 			present_node = node;
 		}
 

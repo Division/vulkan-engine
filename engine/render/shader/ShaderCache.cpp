@@ -82,6 +82,13 @@ namespace core { namespace Device {
 		return result;
 	}
 
+	ShaderProgram* ShaderCache::GetShaderProgram(const std::wstring& vertex_path, const std::wstring& fragment_path)
+	{
+		auto vertex_hash = ShaderCache::GetShaderPathHash(vertex_path);
+		auto fragment_hash = ShaderCache::GetShaderPathHash(fragment_path);
+		return ShaderCache::GetShaderProgram(vertex_hash, fragment_hash);
+	}
+
 	ShaderProgram* ShaderCache::GetShaderProgram(uint32_t vertex_hash, uint32_t fragment_hash, uint32_t compute_hash)
 	{
 		// TODO: async shader loading

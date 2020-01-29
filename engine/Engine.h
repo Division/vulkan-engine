@@ -24,6 +24,7 @@ namespace core
 	{
 		class SceneRenderer;
 		class MaterialManager;
+		class DebugDraw;
 	}
 
 	namespace system
@@ -50,6 +51,7 @@ namespace core
 		Scene* GetScene() const { return scene.get(); }
 		render::MaterialManager* GetMaterialManager() const { return material_manager.get(); }
 		system::Input* GetInput() const { return input.get(); }
+		render::DebugDraw* GetDebugDraw() const { return debug_draw.get(); }
 
 		void MainLoop();
 
@@ -66,6 +68,7 @@ namespace core
 		std::unique_ptr<Scene> scene;
 		std::unique_ptr<render::SceneRenderer> scene_renderer;
 		std::unique_ptr<render::MaterialManager> material_manager;
+		std::unique_ptr<render::DebugDraw> debug_draw;
 		std::unique_ptr<system::Input> input;
 
 		bool loop_started = false;

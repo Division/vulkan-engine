@@ -75,6 +75,28 @@ namespace core { namespace Device {
 		Always = VK_COMPARE_OP_ALWAYS
 	};
 
+	enum class PolygonMode : int
+	{
+		Fill = VK_POLYGON_MODE_FILL,
+		Line = VK_POLYGON_MODE_LINE,
+		Point = VK_POLYGON_MODE_POINT
+	};
+
+	enum class PrimitiveTopology : int
+	{
+		PointList = VK_PRIMITIVE_TOPOLOGY_POINT_LIST,
+		LineList = VK_PRIMITIVE_TOPOLOGY_LINE_LIST,
+		LineStrip = VK_PRIMITIVE_TOPOLOGY_LINE_STRIP,
+		TriangleList = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
+		TriangleStrip = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP,
+		TriangleFan = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_FAN,
+		LineListWithAdjacency = VK_PRIMITIVE_TOPOLOGY_LINE_LIST_WITH_ADJACENCY,
+		LineStripWithAdjacency = VK_PRIMITIVE_TOPOLOGY_LINE_STRIP_WITH_ADJACENCY,
+		TriangleListWithAdjacency = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST_WITH_ADJACENCY,
+		TriangleStripWithAdjacency = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP_WITH_ADJACENCY,
+		PatchList = VK_PRIMITIVE_TOPOLOGY_PATCH_LIST
+	};
+
 	enum class CullMode
 	{
 		None,
@@ -105,6 +127,8 @@ namespace core { namespace Device {
 		void SetDestBlend(BlendFactor blend_mode);
 		void SetSrcBlendAlpha(BlendFactor blend_mode);
 		void SetDestBlendAlpha(BlendFactor blend_mode);
+		void SetPolygonMode(PolygonMode polygon_mode);
+		void SetPrimitiveTopology(PrimitiveTopology topology);
 
 		CullMode GetCullMode() const { return cull_mode; };
 		bool GetDepthTestEnabled() const { return depth_test_enabled; };
@@ -118,6 +142,8 @@ namespace core { namespace Device {
 		BlendFactor GetDestBlend() const { return dst_blend; };
 		BlendFactor GetSrcBlendAlpha() const { return src_blend_alpha; };
 		BlendFactor GetDestBlendAlpha() const { return dst_blend_alpha; };
+		PolygonMode GetPolygonMode() const { return polygon_mode; };
+		PrimitiveTopology GetPrimitiveTopology() const { return primitive_topology; };
 
 		uint32_t GetHash() const;
 
@@ -134,7 +160,9 @@ namespace core { namespace Device {
 		BlendFactor dst_blend = BlendFactor::One;
 		BlendFactor src_blend_alpha = BlendFactor::One;
 		BlendFactor dst_blend_alpha = BlendFactor::One;
-		
+		PolygonMode polygon_mode = PolygonMode::Fill;
+		PrimitiveTopology primitive_topology = PrimitiveTopology::TriangleList;
+
 		mutable bool hash_dirty = true;
 		mutable uint32_t hash = 0;
 	};

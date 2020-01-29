@@ -158,7 +158,7 @@ void Scene::update(float dt) {
 
   for (auto &object : _gameObjects) {
     if (object->active()) {
-//      getEngine()->debugDraw()->drawOBB({ object->transform()->worldMatrix(), object->cullingData().bounds.min, object->cullingData().bounds.max }, vec4(1, 1, 0, 1));
+//      getEngine()->debugDraw()->DrawOBB({ object->transform()->worldMatrix(), object->cullingData().bounds.min, object->cullingData().bounds.max }, vec4(1, 1, 0, 1));
       object->_processAnimations(dt);
     }
   }

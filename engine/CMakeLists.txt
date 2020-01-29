@@ -74,6 +74,8 @@ set(ENGINE_SOURCES
 	render/renderer/SceneBuffers.cpp
 	render/renderer/RenderGraph.h
 	render/renderer/RenderGraph.cpp
+	render/debug/DebugDraw.h
+	render/debug/DebugDraw.cpp
 	render/shader/Shader.h
 	render/shader/Shader.cpp
 	render/shader/ReflectionInfo.h

@@ -363,11 +363,17 @@ void Mesh::createBuffer() {
     }
   }
 
+  if (!_isStatic)
+  {
+      last_frame_vertex_buffer = std::move(_vertexBuffer);
+      last_frame_index_buffer = std::move(_indexBuffer);
+  }
+
   auto vertex_initializer = core::Device::VulkanBufferInitializer(data_buffer.size())
 	  .SetVertex()
 	  .MemoryUsage(VMA_MEMORY_USAGE_GPU_ONLY)
 	  .Data(data_buffer.data());
-  _vertexBuffer = std::make_shared<core::Device::VulkanBuffer>(vertex_initializer);
+  _vertexBuffer = std::make_unique<core::Device::VulkanBuffer>(vertex_initializer);
 
   if (_hasIndices) {
     unsigned int indexSize = (unsigned int)_indices.size() * (unsigned int)sizeof(uint16_t);
@@ -375,7 +381,7 @@ void Mesh::createBuffer() {
 		.SetIndex()
 		.MemoryUsage(VMA_MEMORY_USAGE_GPU_ONLY)
 		.Data(_indices.data());
-	_indexBuffer = std::make_shared<core::Device::VulkanBuffer>(index_initializer);
+	_indexBuffer = std::make_unique<core::Device::VulkanBuffer>(index_initializer);
   }
 
   _calculateAABB();

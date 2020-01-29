@@ -28,7 +28,7 @@ void Projector::postUpdate() {
 
   if (_debugEnabled) {
     //auto debugDraw = getEngine()->debugDraw();
-    //debugDraw->drawFrustum(_viewProjection, glm::vec4(1,1,1,1));
+    //debugDraw->DrawFrustum(_viewProjection, glm::vec4(1,1,1,1));
   }
 }
 

@@ -20,8 +20,8 @@ public:
   static const int JOINTS_MAX = 70;
   static const int JOINT_PER_VERTEX_MAX = 3;
 
-  std::shared_ptr<core::Device::VulkanBuffer> vertexBuffer() const { return _vertexBuffer; }
-  std::shared_ptr<core::Device::VulkanBuffer> indexBuffer() const { return _indexBuffer; }
+  core::Device::VulkanBuffer* vertexBuffer() const { return _vertexBuffer.get(); }
+  core::Device::VulkanBuffer* indexBuffer() const { return _indexBuffer.get(); }
   const VertexAttribSet &vertexAttribSet() const { return _attribSet; }
 
   void setVertices(const vec3 *vertices, int vertexCount);
@@ -108,8 +108,11 @@ private:
   AABB _aabb;
   VertexAttribSet _attribSet;
 
-  std::shared_ptr<core::Device::VulkanBuffer> _vertexBuffer;
-  std::shared_ptr<core::Device::VulkanBuffer> _indexBuffer;
+  std::unique_ptr<core::Device::VulkanBuffer> _vertexBuffer;
+  std::unique_ptr<core::Device::VulkanBuffer> _indexBuffer;
+
+  std::unique_ptr<core::Device::VulkanBuffer> last_frame_vertex_buffer;
+  std::unique_ptr<core::Device::VulkanBuffer> last_frame_index_buffer;
 
   bool _isStatic;
   bool _keepData;

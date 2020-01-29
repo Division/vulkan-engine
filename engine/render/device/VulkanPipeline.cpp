@@ -112,18 +112,18 @@ namespace core { namespace Device {
 			pipeline = device.createComputePipelineUnique({}, compute_pipeline_info);
 		} else
 		{
+			auto* render_mode = initializer.render_mode;
 			vk::PipelineVertexInputStateCreateInfo vertex_input_state_create_info({}, 1, &vertex_binding_description, vertex_attribute_descriptions.size(), vertex_attribute_descriptions.data());
-			vk::PipelineInputAssemblyStateCreateInfo input_assembly_create_info({}, vk::PrimitiveTopology::eTriangleList, VK_FALSE);
+			vk::PipelineInputAssemblyStateCreateInfo input_assembly_create_info({}, vk::PrimitiveTopology(render_mode->GetPrimitiveTopology()), VK_FALSE);
 		
 			vk::Viewport viewport(0, 0, 0, 0, 0, 1);
 			vk::Rect2D scissor(vk::Offset2D(0, 0), vk::Extent2D(0, 0));
 			vk::PipelineViewportStateCreateInfo viewport_state({}, 1, &viewport, 1, &scissor);
 
-			auto* render_mode = initializer.render_mode;
 			vk::PipelineRasterizationStateCreateInfo rasterization_state_create_info(
-				{}, VK_FALSE, VK_FALSE, 
-				vk::PolygonMode::eFill, 
-				vk::CullModeFlagBits(render_mode->GetCullMode()), 
+				{}, VK_FALSE, VK_FALSE,
+				vk::PolygonMode(render_mode->GetPolygonMode()), 
+				vk::CullModeFlagBits(render_mode->GetCullMode()),
 				vk::FrontFace::eCounterClockwise, VK_FALSE, 0, 0, 0.0f, 1.0f
 			);
 

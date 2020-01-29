@@ -89,11 +89,23 @@ namespace core { namespace Device {
 		hash_dirty = true;
 	}
 
+	void RenderMode::SetPolygonMode(PolygonMode mode)
+	{
+		polygon_mode = mode;
+		hash_dirty = true;
+	}
+
+	void RenderMode::SetPrimitiveTopology(PrimitiveTopology topology)
+	{
+		primitive_topology = topology;
+		hash_dirty = true;
+	}
+
 	uint32_t RenderMode::GetHash() const
 	{
 		if (hash_dirty)
 		{
-			std::array<uint32_t, 12> elements;
+			std::array<uint32_t, 14> elements;
 			elements[0]  = (int)cull_mode;
 			elements[1]  = (int)depth_test_enabled;
 			elements[2]  = (int)depth_write_enabled;
@@ -106,13 +118,14 @@ namespace core { namespace Device {
 			elements[9]  = (int)dst_blend;
 			elements[10] = (int)src_blend_alpha;
 			elements[11] = (int)dst_blend_alpha;
+			elements[12] = (int)polygon_mode;
+			elements[13] = (int)primitive_topology;
 			hash = FastHash(elements.data(), sizeof(elements));
 			hash_dirty = false;
 		}
 			
 		return hash;
 	}
-
 
 	VulkanRenderState::VulkanRenderState() 
 		: current_render_mode()
@@ -455,24 +468,36 @@ namespace core { namespace Device {
 
 		UpdateState();
 
-		if (!mesh->hasIndices())
+		/*if (!mesh->hasIndices())
 		{
 			throw std::runtime_error("mesh should have indices");
-		}
+		}*/
 
 		vk::DeviceSize offset = { 0 };
-		vk::Buffer vertex_buffer = mesh->vertexBuffer()->Buffer();
-		vk::Buffer index_buffer = mesh->indexBuffer()->Buffer();
 		auto command_buffer = GetCurrentCommandBuffer()->GetCommandBuffer();
+		
+		vk::Buffer vertex_buffer = mesh->vertexBuffer()->Buffer();
 		command_buffer.bindVertexBuffers(0, 1, &vertex_buffer, &offset);
-		command_buffer.bindIndexBuffer(index_buffer, offset, vk::IndexType::eUint16);
+		
 
-		utils::SmallVector<uint32_t, 4> dynamic_offsets;
-		dynamic_offsets.push_back(draw_call->dynamic_offset);
-		auto descriptor_set = is_depth ? draw_call->depth_only_descriptor_set : draw_call->descriptor_set;
-		command_buffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, current_pipeline->GetPipelineLayout(), DescriptorSet::Object, 1u, &draw_call->descriptor_set, dynamic_offsets.size(), dynamic_offsets.data());
+		if (draw_call->descriptor_set)
+		{
+			utils::SmallVector<uint32_t, 4> dynamic_offsets;
+			dynamic_offsets.push_back(draw_call->dynamic_offset);
+			auto descriptor_set = is_depth ? draw_call->depth_only_descriptor_set : draw_call->descriptor_set;
+			command_buffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, current_pipeline->GetPipelineLayout(), DescriptorSet::Object, 1u, &draw_call->descriptor_set, dynamic_offsets.size(), dynamic_offsets.data());
+		}
 
-		command_buffer.drawIndexed(static_cast<uint32_t>(mesh->indexCount()), 1, 0, 0, 0);
+		if (mesh->hasIndices())
+		{
+			vk::Buffer index_buffer = mesh->indexBuffer()->Buffer();
+			command_buffer.bindIndexBuffer(index_buffer, offset, vk::IndexType::eUint16);
+			command_buffer.drawIndexed(static_cast<uint32_t>(mesh->indexCount()), 1, 0, 0, 0);
+		}
+		else
+		{
+			command_buffer.draw(static_cast<uint32_t>(mesh->indexCount()), 1, 0, 0);
+		}
 	}
 
 	void VulkanRenderState::BeginRecording()

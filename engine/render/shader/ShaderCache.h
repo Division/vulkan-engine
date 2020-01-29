@@ -24,6 +24,7 @@ namespace core { namespace Device {
 		ShaderCache();
 		~ShaderCache();
 		ShaderProgram* GetShaderProgram(uint32_t vertex_hash, uint32_t fragment_hash, uint32_t compute_hash = 0);
+		ShaderProgram* GetShaderProgram(const std::wstring& vertex_path, const std::wstring& fragment_path);
 		ShaderModule* GetShaderModule(uint32_t hash);
 
 	private:
