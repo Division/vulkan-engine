@@ -12,6 +12,17 @@ set(ENGINE_SOURCES
 	lib/VulkanMemoryAllocator/vk_mem_alloc.h
 	lib/murmurhash/MurmurHash3.h
 	lib/murmurhash/MurmurHash3.cpp
+	lib/imgui/imconfig.h
+	lib/imgui/imgui.h
+	lib/imgui/imgui.cpp
+	lib/imgui/imgui_draw.cpp
+	lib/imgui/imgui_impl_glfw.h
+	lib/imgui/imgui_impl_glfw.cpp
+	lib/imgui/imgui_internal.h
+	lib/imgui/imgui_widgets.cpp
+	lib/imgui/imstb_rectpack.h
+	lib/imgui/imstb_textedit.h
+	lib/imgui/imstb_truetype.h
 	Engine.h
 	Engine.cpp
 	IGame.h
@@ -76,6 +87,8 @@ set(ENGINE_SOURCES
 	render/renderer/RenderGraph.cpp
 	render/debug/DebugDraw.h
 	render/debug/DebugDraw.cpp
+	render/debug/DebugUI.h
+	render/debug/DebugUI.cpp
 	render/shader/Shader.h
 	render/shader/Shader.cpp
 	render/shader/ReflectionInfo.h

@@ -8,6 +8,7 @@
 #include "render/shader/ShaderCache.h"
 #include "render/material/MaterialManager.h"
 #include "render/debug/DebugDraw.h"
+#include "render/debug/DebugUI.h"
 
 namespace core
 {
@@ -59,11 +60,15 @@ namespace core
 
 		vulkan_context->RecreateSwapChain(); // creating swapchain after scene renderer to handle subscribtion to the recreate event
 
+		render::DebugUI::Initialize(window);
+
 		this->game->init();
 	}
 
 	Engine::~Engine()
 	{
+		render::DebugUI::Deinitialize();
+
 		game->cleanup();
 		game = nullptr;
 		input = nullptr;
@@ -111,10 +116,15 @@ namespace core
 			float dt = (float)(current_time - last_time);
 
 			glfwPollEvents();
+			
+			render::DebugUI::NewFrame();
+
 			input->update();
 			scene->update(dt);
 			game->update(dt);
 			debug_draw->Update();
+
+			render::DebugUI::Update(dt);
 
 			context->WaitForRenderFence();
 			scene_renderer->RenderScene();
