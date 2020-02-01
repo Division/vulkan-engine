@@ -206,15 +206,6 @@ namespace core { namespace Device {
 		global_layout_hash = global_descriptor_set_data->layout_hash;
 	}
 
-	void VulkanRenderState::UpdateFrameDescriptorSets()
-	{
-		for (auto& set : frame_descriptor_sets)
-			set = vk::DescriptorSet();
-
-		auto& descriptor_set = descriptor_sets[DescriptorSet::Object];
-		frame_descriptor_sets[DescriptorSet::Object] = GetDescriptorSet(descriptor_set, DescriptorSet::Object, current_shader);
-	}
-
 	void VulkanRenderState::UpdateState()
 	{
 		if (dirty_flags == 0)
@@ -222,7 +213,7 @@ namespace core { namespace Device {
 
 		bool update_pipeline = false;
 
-		if (dirty_flags & (int)DirtyFlags::Mesh)
+		if (dirty_flags & (int)DirtyFlags::VertexLayout)
 		{
 			update_pipeline = true;
 		}
@@ -258,19 +249,14 @@ namespace core { namespace Device {
 
 		if (update_pipeline)
 		{
-			if (!current_render_pass || !current_shader || !current_mesh)
+			if (!current_render_pass || !current_shader || !current_vertex_layout)
 				throw new std::runtime_error("RenderState not ready");
 
-			VulkanPipelineInitializer initializer(current_shader, current_render_pass, current_mesh, &current_render_mode);
+			VulkanPipelineInitializer initializer(current_shader, current_render_pass, current_vertex_layout, &current_render_mode);
 			current_pipeline = GetPipeline(initializer);
 
 			auto command_buffer = GetCurrentCommandBuffer()->GetCommandBuffer();
 			command_buffer.bindPipeline( vk::PipelineBindPoint::eGraphics, current_pipeline->GetPipeline());
-		}
-
-		if (dirty_flags & (int)DirtyFlags::DescriptorSet)
-		{
-			//UpdateFrameDescriptorSets();
 		}
 
 		if (dirty_flags & (int)DirtyFlags::GlobalDescriptorSet)
@@ -302,12 +288,12 @@ namespace core { namespace Device {
 		clear_values[index] = value;
 	}
 	
-	void VulkanRenderState::SetMesh(const Mesh& mesh)
+	void VulkanRenderState::SetVertexLayout(const VertexLayout& layout)
 	{
-		if (!current_mesh || current_mesh->GetVertexAttribHash() != mesh.GetVertexAttribHash())
+		if (!current_vertex_layout || current_vertex_layout->GetHash() != layout.GetHash())
 		{
-			dirty_flags |= (int)DirtyFlags::Mesh;
-			current_mesh = &mesh;
+			dirty_flags |= (int)DirtyFlags::VertexLayout;
+			current_vertex_layout = &layout;
 		}
 	}
 
@@ -362,13 +348,6 @@ namespace core { namespace Device {
 		}
 	}
 
-	vk::DescriptorSet VulkanRenderState::GetDescriptorSet(DescriptorSetData& set_data, const uint32_t set_index, const ShaderProgram* current_shader)
-	{
-		auto vk_context = Engine::Get()->GetContext();
-		auto descriptor_cache = vk_context->GetDescriptorCache();
-		return descriptor_cache->GetDescriptorSet(set_data.bindings, *current_shader->GetDescriptorSet(set_index));
-	}
-
 	vk::Sampler VulkanRenderState::GetSampler(const SamplerMode& sampler_mode)
 	{
 		auto hash = sampler_mode.GetHash();
@@ -389,42 +368,6 @@ namespace core { namespace Device {
 		return result;
 	}
 
-	void VulkanRenderState::SetBindings(ShaderBindings& bindings)
-	{
-		dirty_flags |= (int)DirtyFlags::DescriptorSet;
-
-		for (auto& set_data : descriptor_sets)
-		{
-			set_data.bindings.Clear();
-			//memset(set_data.dynamic_offsets.data(), 0, sizeof(set_data.dynamic_offsets));
-			set_data.dynamic_offsets.clear();
-			set_data.active = false;
-		}
-
-		descriptor_sets[DescriptorSet::Object].active = true;
-
-		for (auto& binding : bindings.GetBufferBindings())
-		{
-			assert(binding.set == DescriptorSet::Object);
-			descriptor_sets[DescriptorSet::Object].bindings.AddBufferBinding(binding.set, binding.index, 0, binding.size, binding.buffer);
-			//descriptor_sets[binding.set].dynamic_offsets.push_back(binding.offset);
-		}
-
-		auto sorted_bindings = bindings.GetBufferBindings();
-		std::sort(sorted_bindings.begin(), sorted_bindings.end());
-		for (int i = 0; i < sorted_bindings.size(); i++)
-		{
-			descriptor_sets[DescriptorSet::Object].dynamic_offsets.push_back(sorted_bindings[i].offset);
-		}
-
-		for (auto& binding : bindings.GetTextureBindings())
-		{
-			assert(binding.set == DescriptorSet::Object);
-			descriptor_sets[DescriptorSet::Object].bindings.AddTextureBinding(DescriptorSet::Object, binding.index, binding.texture);
-		}
-
-	}
-
 	void VulkanRenderState::SetGlobalBindings(const ShaderBindings& bindings)
 	{
 		global_bindings = bindings;
@@ -432,54 +375,16 @@ namespace core { namespace Device {
 		dirty_flags |= (int)DirtyFlags::GlobalDescriptorSet;
 	}
 
-	const std::vector<uint32_t>& VulkanRenderState::GetDynamicOffsets(uint32_t first_set, uint32_t last_set)
-	{
-		dynamic_offsets.clear();
-		for (int set = first_set; set <= last_set; set++)
-		{
-			assert(frame_descriptor_sets[set]);
-			for (int i = 0; i < descriptor_sets[set].buffer_bindings.size(); i++)
-			{
-				auto& buffer_binding = descriptor_sets[set].buffer_bindings[i];
-				if (!buffer_binding.buffer)
-					continue;
-
-				dynamic_offsets.push_back(descriptor_sets[set].dynamic_offsets[i]);
-			}
-		}
-
-		return dynamic_offsets;
-	}
-
-	void VulkanRenderState::BindFrameDescriptorSets(vk::CommandBuffer command_buffer, vk::PipelineBindPoint bind_point)
-	{
-		auto& dynamic_offsets = descriptor_sets[DescriptorSet::Object].dynamic_offsets;
-		command_buffer.bindDescriptorSets(bind_point, current_pipeline->GetPipelineLayout(), DescriptorSet::Object, 1u, &frame_descriptor_sets[DescriptorSet::Object], dynamic_offsets.size(), dynamic_offsets.data());
-	}
-
 	void VulkanRenderState::RenderDrawCall(const ECS::components::DrawCall* draw_call, bool is_depth)
 	{
 		auto* mesh = draw_call->mesh;
-		SetMesh(*mesh);
+		SetVertexLayout(mesh->GetVertexLayout());
 
 		auto* shader = is_depth ? draw_call->depth_only_shader : draw_call->shader;
 		SetShader(*shader);
-		// TODO: skinning offset
-
 		UpdateState();
 
-		/*if (!mesh->hasIndices())
-		{
-			throw std::runtime_error("mesh should have indices");
-		}*/
-
-		vk::DeviceSize offset = { 0 };
 		auto command_buffer = GetCurrentCommandBuffer()->GetCommandBuffer();
-		
-		vk::Buffer vertex_buffer = mesh->vertexBuffer()->Buffer();
-		command_buffer.bindVertexBuffers(0, 1, &vertex_buffer, &offset);
-		
-
 		if (draw_call->descriptor_set)
 		{
 			utils::SmallVector<uint32_t, 4> dynamic_offsets;
@@ -489,15 +394,33 @@ namespace core { namespace Device {
 		}
 
 		if (mesh->hasIndices())
-		{
-			vk::Buffer index_buffer = mesh->indexBuffer()->Buffer();
-			command_buffer.bindIndexBuffer(index_buffer, offset, vk::IndexType::eUint16);
-			command_buffer.drawIndexed(static_cast<uint32_t>(mesh->indexCount()), 1, 0, 0, 0);
-		}
+			DrawIndexed(*mesh->vertexBuffer(), *mesh->indexBuffer(), 0, mesh->indexCount(), 0);
 		else
-		{
-			command_buffer.draw(static_cast<uint32_t>(mesh->indexCount()), 1, 0, 0);
-		}
+			Draw(*mesh->vertexBuffer(), mesh->indexCount(), 0);
+	}
+
+	void VulkanRenderState::Draw(const VulkanBuffer& buffer, uint32_t vertex_count, uint32_t first_vertex)
+	{
+		UpdateState();
+
+		auto command_buffer = GetCurrentCommandBuffer()->GetCommandBuffer();
+		vk::DeviceSize offset = { 0 };
+		vk::Buffer vertex_buffer = buffer.Buffer();
+		command_buffer.bindVertexBuffers(0, 1, &vertex_buffer, &offset);
+		command_buffer.draw(vertex_count, 1, first_vertex, 0);
+	}
+
+	void VulkanRenderState::DrawIndexed(const VulkanBuffer& vertex_buffer, const VulkanBuffer& index_buffer, uint32_t index_offset, uint32_t index_count, uint32_t first_index)
+	{
+		UpdateState();
+
+		auto command_buffer = GetCurrentCommandBuffer()->GetCommandBuffer();
+		vk::DeviceSize offset = { 0 };
+		vk::Buffer vk_vertex_buffer = vertex_buffer.Buffer();
+		vk::Buffer vk_index_buffer = index_buffer.Buffer();
+		command_buffer.bindIndexBuffer(vk_index_buffer, offset, vk::IndexType::eUint16);
+		command_buffer.bindVertexBuffers(0, 1, &vk_vertex_buffer, &offset);
+		command_buffer.draw(index_count, 1, first_index, 0);
 	}
 
 	void VulkanRenderState::BeginRecording()
@@ -512,15 +435,12 @@ namespace core { namespace Device {
 		dirty_flags = (uint32_t)DirtyFlags::All;
 		current_render_pass = nullptr;
 		current_render_mode = RenderMode();
-		current_mesh = nullptr;
+		current_vertex_layout = nullptr;
 		current_shader = nullptr;
 		current_pipeline = nullptr;
 		current_render_target = &render_target;
 		render_pass_started = false;
 		global_layout_hash = 0;
-
-		for (auto& set_data : descriptor_sets)
-			set_data.hash = 0;
 
 		SetRenderPass(render_pass);
 
@@ -545,7 +465,7 @@ namespace core { namespace Device {
 
 	void VulkanRenderState::RecordCompute(const ShaderProgram& program, ShaderBindings& bindings, uvec3 group_size)
 	{
-		SetShader(program);
+		/*SetShader(program);
 		VulkanPipelineInitializer compute_pipeline_initializer(&program);
 		current_pipeline = GetPipeline(compute_pipeline_initializer);
 		SetBindings(bindings);
@@ -557,7 +477,7 @@ namespace core { namespace Device {
 
 		vkCmdDispatch(command_buffer, group_size.x, group_size.y, group_size.z);
 
-		dirty_flags = (uint32_t)DirtyFlags::All;
+		dirty_flags = (uint32_t)DirtyFlags::All; */
 	}
 
 	VulkanPipeline* VulkanRenderState::GetPipeline(const VulkanPipelineInitializer& initializer)

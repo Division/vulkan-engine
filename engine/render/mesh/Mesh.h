@@ -22,7 +22,8 @@ public:
 
   core::Device::VulkanBuffer* vertexBuffer() const { return _vertexBuffer.get(); }
   core::Device::VulkanBuffer* indexBuffer() const { return _indexBuffer.get(); }
-  const VertexAttribSet &vertexAttribSet() const { return _attribSet; }
+  //const VertexAttribSet &vertexAttribSet() const { return _attribSet; }
+  const core::VertexLayout& GetVertexLayout() const { return layout; }
 
   void setVertices(const vec3 *vertices, int vertexCount);
   void setVertices(const float *vertexComponents, int vertexCount);
@@ -43,7 +44,7 @@ public:
 
   void setIndices(const uint16_t *indices, int indexCount);
   void setIndices(const std::vector<uint16_t> &indices);
-  uint32_t GetVertexAttribHash() const;
+  //uint32_t GetVertexAttribHash() const;
 
   void calculateNormals();
   void calculateTBN();
@@ -106,7 +107,8 @@ private:
 
 private:
   AABB _aabb;
-  VertexAttribSet _attribSet;
+  //VertexAttribSet _attribSet;
+  core::VertexLayout layout;
 
   std::unique_ptr<core::Device::VulkanBuffer> _vertexBuffer;
   std::unique_ptr<core::Device::VulkanBuffer> _indexBuffer;

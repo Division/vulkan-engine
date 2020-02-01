@@ -17,6 +17,8 @@ namespace core
 			struct DrawCall;
 		}
 	}
+
+	class VertexLayout;
 }
 
 
@@ -174,12 +176,11 @@ namespace core { namespace Device {
 		enum class DirtyFlags : uint32_t
 		{
 			Viewport = 1 << 0,
-			Mesh = 1 << 1,
+			VertexLayout = 1 << 1,
 			RenderMode = 1 << 2,
 			Shader = 1 << 3,
 			RenderPass = 1 << 4,
 			GlobalDescriptorSet = 1 << 5,
-			DescriptorSet = 1 << 6,
 			Scissor = 1 << 7,
 			All = ~0u
 		};
@@ -193,9 +194,14 @@ namespace core { namespace Device {
 		void SetScissor(vec4 scissor);
 		void SetShader(const ShaderProgram& program);
 		void SetBindings(ShaderBindings& bindings);
+		void SetVertexLayout(const VertexLayout& layout);
 		void SetGlobalBindings(const ShaderBindings& global_bindings);
 		void SetClearValue(uint32_t index, vk::ClearValue value);
+
 		void RenderDrawCall(const ECS::components::DrawCall* draw_call, bool is_depth);
+		void DrawIndexed(const VulkanBuffer& vertex_buffer, const VulkanBuffer& index_buffer, uint32_t index_offset, uint32_t index_count, uint32_t first_index);
+		void Draw(const VulkanBuffer& buffer, uint32_t vertexCount, uint32_t firstVertex);
+
 		VulkanCommandBuffer* GetCurrentCommandBuffer() const { return command_buffers[current_frame]; }
 		vk::Semaphore GetCurrentSemaphore() const { return semaphores[current_frame].get(); }
 		void UpdateGlobalDescriptorSet();
@@ -207,30 +213,11 @@ namespace core { namespace Device {
 
 		void BeginRecording();
 		void EndRecording();
-	private:
-		struct DescriptorSetData
-		{
-			std::vector<vk::WriteDescriptorSet> writes;
-			ShaderBindings bindings;
-			std::array<vk::DescriptorImageInfo, caps::max_texture_bindings> texture_bindings;
-			std::array<vk::DescriptorBufferInfo, caps::max_ubo_bindings> buffer_bindings;
-			//utils::SmallVector<uint32_t, caps::max_ubo_bindings, false> dynamic_offsets;
-			std::vector<uint32_t> dynamic_offsets;
-
-			bool active;
-			bool dirty;
-			uint32_t hash;
-		};
 
 	private:
-		void UpdateFrameDescriptorSets();
-		void BindFrameDescriptorSets(vk::CommandBuffer command_buffer, vk::PipelineBindPoint bind_point);
 		void UpdateState();
-		void SetMesh(const Mesh& mesh);
 		VulkanPipeline* GetPipeline(const VulkanPipelineInitializer& initializer);
-		vk::DescriptorSet GetDescriptorSet(DescriptorSetData& set_data, const uint32_t set_index, const ShaderProgram* current_shader);
 		vk::Sampler GetSampler(const SamplerMode& sampler_mode);
-		const std::vector<uint32_t>& GetDynamicOffsets(uint32_t first_set, uint32_t last_set);
 
 		ShaderBindings global_bindings;
 		uint32_t global_layout_hash = 0;
@@ -240,16 +227,13 @@ namespace core { namespace Device {
 		bool render_pass_started = false;
 
 		RenderMode current_render_mode;
-		const Mesh* current_mesh = nullptr;
+		const VertexLayout* current_vertex_layout = nullptr;
 		const VulkanRenderTarget* current_render_target = nullptr;
 		const VulkanRenderPass* current_render_pass = nullptr;
 		const ShaderProgram* current_shader = nullptr;
 		const VulkanPipeline* current_pipeline = nullptr;
 		vec4 current_viewport;
 		vec4 current_scissor;
-
-		std::array<DescriptorSetData, ShaderProgram::max_descriptor_sets> descriptor_sets;
-		std::array<vk::DescriptorSet, ShaderProgram::max_descriptor_sets> frame_descriptor_sets;
 
 		std::vector<uint32_t> dynamic_offsets;
 		std::unordered_map<uint32_t, vk::UniqueSampler> sampler_cache;

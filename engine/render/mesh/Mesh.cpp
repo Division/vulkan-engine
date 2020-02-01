@@ -107,10 +107,10 @@ int Mesh::attribOffsetBytes(VertexAttrib attrib) const
 	}
 }
 
-uint32_t Mesh::GetVertexAttribHash() const
+/*uint32_t Mesh::GetVertexAttribHash() const
 {
 	return _attribSet.getBitmask() | ((1u * (unsigned)hasIndices()) << 31u);
-}
+}*/
 
 // Setting mesh data
 
@@ -239,8 +239,8 @@ void Mesh::_deleteBuffer() {
 void Mesh::createBuffer() {
   _stride = _getStrideSize();
   _strideBytes = _stride * 4;
-
-  _attribSet = VertexAttribSet();
+  layout.Clear();
+  //_attribSet = VertexAttribSet();
 
   int currentOffset = 0;
   if (_hasVertices) {
@@ -248,55 +248,65 @@ void Mesh::createBuffer() {
     _vertexOffsetBytes = currentOffset * 4;
     currentOffset += VERTEX_SIZE;
     _vertexCount = (int)floor(_vertices.size() / 3.0f);
-	_attribSet.addCap(VertexAttrib::Position);
+	//_attribSet.addCap(VertexAttrib::Position);
+    layout.AddAttrib(VertexAttrib::Position, VERTEX_SIZE * 4);
   }
   if (_hasNormals) {
     _normalOffset = currentOffset;
     _normalOffsetBytes = currentOffset * 4;
     currentOffset += NORMAL_SIZE;
-	_attribSet.addCap(VertexAttrib::Normal);
+	//_attribSet.addCap(VertexAttrib::Normal);
+    layout.AddAttrib(VertexAttrib::Normal, NORMAL_SIZE * 4);
   }
   if (_hasTBN) {
     _tangentOffset = currentOffset;
     _tangentOffsetBytes = currentOffset * 4;
     currentOffset += NORMAL_SIZE;
-	_attribSet.addCap(VertexAttrib::Tangent);
+	//_attribSet.addCap(VertexAttrib::Tangent);
+    layout.AddAttrib(VertexAttrib::Tangent, NORMAL_SIZE * 4);
 
     _bitangentOffset = currentOffset;
     _bitangentOffsetBytes = currentOffset * 4;
     currentOffset += NORMAL_SIZE;
-	_attribSet.addCap(VertexAttrib::Bitangent);
+	//_attribSet.addCap(VertexAttrib::Bitangent);
+    layout.AddAttrib(VertexAttrib::Bitangent, NORMAL_SIZE * 4);
   }
   if (_hasTexCoord0) {
     _texCoord0Offset = currentOffset;
     _texCoord0OffsetBytes = currentOffset * 4;
     currentOffset += TEXCOORD_SIZE;
-	_attribSet.addCap(VertexAttrib::TexCoord0);
+	//_attribSet.addCap(VertexAttrib::TexCoord0);
+    layout.AddAttrib(VertexAttrib::TexCoord0, TEXCOORD_SIZE * 4);
   }
   if (_hasCorners) {
     _cornerOffset = currentOffset;
     _cornerOffsetBytes = currentOffset * 4;
     currentOffset += CORNER_SIZE;
-	_attribSet.addCap(VertexAttrib::Corner);
+	//_attribSet.addCap(VertexAttrib::Corner);
+    layout.AddAttrib(VertexAttrib::Corner, CORNER_SIZE * 4);
   }
   if (_hasWeights) {
     _weightOffset = currentOffset;
     _weightOffsetBytes = currentOffset * 4;
     currentOffset += WEIGHT_SIZE;
-	_attribSet.addCap(VertexAttrib::JointWeights);
+	//_attribSet.addCap(VertexAttrib::JointWeights);
+    layout.AddAttrib(VertexAttrib::JointWeights, WEIGHT_SIZE * 4);
 
     _jointIndexOffset = currentOffset;
     _jointIndexOffsetBytes = currentOffset * 4;
     currentOffset += JOINT_INDEX_SIZE;
-	_attribSet.addCap(VertexAttrib::JointIndices);
+	//_attribSet.addCap(VertexAttrib::JointIndices);
+    layout.AddAttrib(VertexAttrib::JointIndices, JOINT_INDEX_SIZE * 4);
   }
   if (_hasColors) {
     _colorOffset = currentOffset;
     _colorOffsetBytes = currentOffset * 4;
     currentOffset += COLOR_SIZE;
-	_attribSet.addCap(VertexAttrib::VertexColor);
+	//_attribSet.addCap(VertexAttrib::VertexColor);
+    layout.AddAttrib(VertexAttrib::VertexColor, COLOR_SIZE * 4);
   }
 
+  assert(_strideBytes == layout.GetStride());
 
   std::vector<char> data_buffer(_strideBytes * _vertexCount);
 

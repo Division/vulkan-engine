@@ -11,13 +11,13 @@
 
 namespace core { namespace Device {
 
-	VulkanPipelineInitializer::VulkanPipelineInitializer(const ShaderProgram* shader_program, const VulkanRenderPass* render_pass, const Mesh* mesh, const RenderMode* render_mode)
+	VulkanPipelineInitializer::VulkanPipelineInitializer(const ShaderProgram* shader_program, const VulkanRenderPass* render_pass, const VertexLayout* layout, const RenderMode* render_mode)
 		: shader_program(shader_program)
 		, render_pass(render_pass)
-		, mesh(mesh)
+		, layout(layout)
 		, render_mode(render_mode)
 	{
-		size_t hashes[] = { this->mesh->GetVertexAttribHash(), render_pass->GetHash(), shader_program->GetHash(), render_mode->GetHash() };
+		size_t hashes[] = { layout->GetHash(), render_pass->GetHash(), shader_program->GetHash(), render_mode->GetHash() };
 		hash = FastHash(hashes, sizeof(hashes));
 	}
 
@@ -33,7 +33,7 @@ namespace core { namespace Device {
 	{
 		auto* shader_program = initializer.shader_program;
 		auto* render_pass = initializer.render_pass;
-		auto* mesh = initializer.mesh;
+		auto* layout = initializer.layout;
 		auto* context = Engine::GetVulkanContext();
 		auto device = context->GetDevice();
 
@@ -79,7 +79,7 @@ namespace core { namespace Device {
 			shader_stages[shader_stage_count++] = compute_shader_stage_info;
 		}
 
-		vk::VertexInputBindingDescription vertex_binding_description(0, mesh->strideBytes(), vk::VertexInputRate::eVertex);
+		vk::VertexInputBindingDescription vertex_binding_description(0, layout->GetStride(), vk::VertexInputRate::eVertex);
 
 		std::vector<vk::VertexInputAttributeDescription> vertex_attribute_descriptions;
 		auto& vertex_attribs = shader_program->VertexModule()->GetReflectionInfo()->VertexAttribs();
@@ -90,7 +90,7 @@ namespace core { namespace Device {
 					attrib.location, 
 					0, 
 					VERTEX_ATTRIB_FORMATS.at(attrib.vertex_attrib), 
-					mesh->attribOffsetBytes(attrib.vertex_attrib)
+					layout->GetAttribOffset(attrib.vertex_attrib)
 				)
 			);
 		}

@@ -2,7 +2,10 @@
 
 #include "CommonIncludes.h"
 
-class Mesh;
+namespace core
+{
+	class VertexLayout;
+}
 
 namespace core { namespace Device {
 
@@ -12,12 +15,12 @@ namespace core { namespace Device {
 
 	struct VulkanPipelineInitializer
 	{
-		VulkanPipelineInitializer(const ShaderProgram* shader_program, const VulkanRenderPass* render_pass, const Mesh* mesh, const RenderMode* render_mode); // graphics
+		VulkanPipelineInitializer(const ShaderProgram* shader_program, const VulkanRenderPass* render_pass, const VertexLayout* layout, const RenderMode* render_mode); // graphics
 		VulkanPipelineInitializer(const ShaderProgram* shader_program); // compute
 
 		const ShaderProgram const* shader_program = nullptr;
 		const VulkanRenderPass const* render_pass = nullptr;
-		const Mesh const* mesh = nullptr;
+		const VertexLayout const* layout = nullptr;
 		const RenderMode const* render_mode = nullptr;
 		bool is_compute = false;
 
