@@ -197,6 +197,7 @@ namespace core { namespace Device {
 		void SetVertexLayout(const VertexLayout& layout);
 		void SetGlobalBindings(const ShaderBindings& global_bindings);
 		void SetClearValue(uint32_t index, vk::ClearValue value);
+		void PushConstants(ShaderProgram::Stage stage, uint32_t offset, uint32_t size, void* data);
 
 		void RenderDrawCall(const ECS::components::DrawCall* draw_call, bool is_depth);
 		void DrawIndexed(const VulkanBuffer& vertex_buffer, const VulkanBuffer& index_buffer, uint32_t index_offset, uint32_t index_count, uint32_t first_index);

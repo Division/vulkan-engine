@@ -70,7 +70,7 @@ set(ENGINE_SOURCES
 	render/device/Types.cpp
 	render/buffer/VulkanBuffer.h
 	render/buffer/VulkanBuffer.cpp
-	render/buffer/UniformBuffer.h
+	render/buffer/DynamicBuffer.h
 	render/material/Material.h
 	render/material/Material.cpp
 	render/material/MaterialManager.h

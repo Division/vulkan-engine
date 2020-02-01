@@ -375,6 +375,31 @@ namespace core { namespace Device {
 		dirty_flags |= (int)DirtyFlags::GlobalDescriptorSet;
 	}
 
+	void VulkanRenderState::PushConstants(ShaderProgram::Stage stage, uint32_t offset, uint32_t size, void* data)
+	{
+		UpdateState();
+		
+		auto command_buffer = GetCurrentCommandBuffer()->GetCommandBuffer();
+		vk::ShaderStageFlags vk_stage;
+
+		switch (stage)
+		{
+		case ShaderProgram::Stage::Compute:
+			vk_stage = vk::ShaderStageFlagBits::eCompute;
+			break;
+
+		case ShaderProgram::Stage::Fragment:
+			vk_stage = vk::ShaderStageFlagBits::eFragment;
+			break;
+
+		case ShaderProgram::Stage::Vertex:
+			vk_stage = vk::ShaderStageFlagBits::eVertex;
+			break;
+		}
+
+		command_buffer.pushConstants(current_pipeline->GetPipelineLayout(), vk_stage, offset, size, data);
+	}
+
 	void VulkanRenderState::RenderDrawCall(const ECS::components::DrawCall* draw_call, bool is_depth)
 	{
 		auto* mesh = draw_call->mesh;

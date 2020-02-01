@@ -20,7 +20,7 @@ namespace core
 		class ShaderBindings;
 		class ShaderCache;
 		class Texture;
-		template<typename T> class UniformBuffer;
+		template<typename T> class DynamicBuffer;
 	}
 
 	namespace ECS
@@ -92,7 +92,7 @@ namespace core { namespace render {
 		
 		core::Device::ShaderProgram* compute_program;
 		std::unique_ptr<core::Device::ShaderBindings> compute_bindings;
-		std::unique_ptr<core::Device::UniformBuffer<unsigned char>> compute_buffer;
+		std::unique_ptr<core::Device::DynamicBuffer<unsigned char>> compute_buffer;
 
 		std::unique_ptr<core::Device::VulkanRenderTargetAttachment> main_depth_attachment;
 		std::unique_ptr<core::Device::VulkanRenderTargetAttachment> shadowmap_atlas_attachment;

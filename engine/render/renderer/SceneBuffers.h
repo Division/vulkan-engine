@@ -1,7 +1,7 @@
 #pragma once
 
 #include "CommonIncludes.h"
-#include "render/buffer/UniformBuffer.h"
+#include "render/buffer/DynamicBuffer.h"
 #include "render/shader/ShaderBufferStruct.h"
 
 namespace core { namespace render {
@@ -18,9 +18,9 @@ namespace core { namespace render {
 		auto* GetSkinningMatricesBuffer() const { return skinning_matrices.get(); };
 
 	private:
-		std::unique_ptr<UniformBuffer<ShaderBufferStruct::Camera>> camera_buffer;
-		std::unique_ptr<UniformBuffer<ShaderBufferStruct::ObjectParams>> object_params;
-		std::unique_ptr<UniformBuffer<ShaderBufferStruct::SkinningMatrices>> skinning_matrices;
+		std::unique_ptr<DynamicBuffer<ShaderBufferStruct::Camera>> camera_buffer;
+		std::unique_ptr<DynamicBuffer<ShaderBufferStruct::ObjectParams>> object_params;
+		std::unique_ptr<DynamicBuffer<ShaderBufferStruct::SkinningMatrices>> skinning_matrices;
 
 	};
 

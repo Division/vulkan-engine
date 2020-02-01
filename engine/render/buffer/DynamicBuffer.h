@@ -9,18 +9,33 @@
 namespace core { namespace Device {
 
 	template<typename T>
-	class UniformBuffer
+	class DynamicBuffer
 	{
 	public:
-		UniformBuffer(size_t size, bool ssbo = false, bool align = true)
+		DynamicBuffer(size_t size, BufferType type = BufferType::Uniform, bool align = true)
 			: size(size), alignment(align ? 256 : 1) // TODO: get from API
 		{
 			assert(size >= sizeof(T) && "buffer size must be greater than the element size");
 			auto main_initializer = VulkanBufferInitializer(size);
-			if (ssbo)
-				main_initializer.SetStorage();
-			else
+
+			switch (type)
+			{
+			case BufferType::Uniform:
 				main_initializer.SetUniform();
+				break;
+
+			case BufferType::Storage:
+				main_initializer.SetStorage();
+				break;
+
+			case BufferType::Vertex:
+				main_initializer.SetVertex();
+				break;
+
+			case BufferType::Index:
+				main_initializer.SetIndex();
+				break;
+			}
 
 			buffer = std::make_unique<VulkanBuffer>(main_initializer);
 

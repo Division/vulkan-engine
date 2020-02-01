@@ -8,7 +8,7 @@
 #include "render/renderer/ICameraParamsProvider.h"
 #include "render/device/VulkanContext.h"
 #include "render/shader/ShaderResource.h"
-#include "render/buffer/UniformBuffer.h"
+#include "render/buffer/DynamicBuffer.h"
 
 namespace core { namespace render {
 
@@ -57,12 +57,12 @@ void LightGrid::_clearCells() {
 }
 
 template <typename T>
-void ResizeBuffer(std::unique_ptr<UniformBuffer<T>> buffer[2], size_t size, bool is_storage)
+void ResizeBuffer(std::unique_ptr<DynamicBuffer<T>> buffer[2], size_t size, bool is_storage)
 {
 	if (!buffer[0] || buffer[0]->GetSize() < size)
 	{
 		buffer[1] = std::move(buffer[0]);
-		buffer[0] = std::make_unique<UniformBuffer<T>>(std::max(size, buffer[0]->GetElementSize()) , is_storage, false);
+		buffer[0] = std::make_unique<DynamicBuffer<T>>(std::max(size, buffer[0]->GetElementSize()) , is_storage ? BufferType::Storage : BufferType::Uniform, false);
 	}
 }
 

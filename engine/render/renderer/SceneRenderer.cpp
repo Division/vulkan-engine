@@ -31,7 +31,7 @@
 #include "render/shader/ShaderDefines.h"
 #include "render/renderer/RenderGraph.h"
 #include "render/material/Material.h"
-#include "render/buffer/UniformBuffer.h"
+#include "render/buffer/DynamicBuffer.h"
 #include "render/debug/DebugDraw.h"
 #include "objects/LightObject.h"
 #include "objects/Projector.h"
@@ -74,7 +74,7 @@ namespace core { namespace render {
 		context->AddRecreateSwapchainCallback(std::bind(&SceneRenderer::OnRecreateSwapchain, this, std::placeholders::_1, std::placeholders::_2));
 		shadowmap_atlas_attachment = std::make_unique<VulkanRenderTargetAttachment>(VulkanRenderTargetAttachment::Type::Depth, ShadowAtlasSize(), ShadowAtlasSize(), Format::D24_unorm_S8_uint);
 
-		compute_buffer = std::make_unique<UniformBuffer<unsigned char>>(128 * 128 * sizeof(vec4), true);
+		compute_buffer = std::make_unique<DynamicBuffer<unsigned char>>(128 * 128 * sizeof(vec4), BufferType::Storage);
 		compute_program = shader_cache->GetShaderProgram(0, 0, ShaderCache::GetShaderPathHash(L"shaders/test.comp"));
 		auto* buffer_binding = compute_program->GetBindingByName("buf");
 		compute_bindings = std::make_unique<ShaderBindings>();

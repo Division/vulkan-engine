@@ -3,6 +3,14 @@
 
 namespace core { namespace Device {
 
+	enum BufferType : int
+	{
+		Uniform,
+		Storage,
+		Vertex,
+		Index
+	};
+
 	struct VulkanBufferInitializer {
 
 		VulkanBufferInitializer(uint32_t size) : size(size) {}
@@ -35,12 +43,12 @@ namespace core { namespace Device {
 
 		VulkanBufferInitializer& SetVertex()
 		{
-			return Usage(VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
+			return MemoryUsage(VMA_MEMORY_USAGE_GPU_ONLY).Usage(VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
 		}
 
 		VulkanBufferInitializer& SetIndex()
 		{
-			return Usage(VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
+			return MemoryUsage(VMA_MEMORY_USAGE_GPU_ONLY).Usage(VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
 		}
 
 		VulkanBufferInitializer& MemoryUsage(VmaMemoryUsage memory_usage)

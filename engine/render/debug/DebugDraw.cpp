@@ -145,17 +145,18 @@ namespace core { namespace render {
         }
 
       
-      if (!points.empty()) {
-        point_mesh->setVertices(points);
-        point_mesh->setColors(point_colors);
-        point_mesh->createBuffer();
+        if (!points.empty()) 
+        {
+            point_mesh->setVertices(points);
+            point_mesh->setColors(point_colors);
+            point_mesh->createBuffer();
 
-        components::DrawCall draw_call;
-        draw_call.shader = shader;
-        draw_call.mesh = point_mesh.get();
-        draw_call.descriptor_set = nullptr;
-        point_draw_calls.push_back(draw_call);
-      }
+            components::DrawCall draw_call;
+            draw_call.shader = shader;
+            draw_call.mesh = point_mesh.get();
+            draw_call.descriptor_set = nullptr;
+            point_draw_calls.push_back(draw_call);
+        }
 
         lines.clear();
         points.clear();
