@@ -17,6 +17,8 @@ namespace core { namespace ECS { namespace systems {
 
 	void UpdateRendererSystem::ProcessMeshRenderer(Chunk* chunk)
 	{
+		ZoneScoped;
+
 		ComponentFetcher<MeshRenderer> mesh_renderer_fetcher(*chunk);
 		ComponentFetcher<Transform> transform_fetcher(*chunk);
 		ComponentFetcher<CullingData> culling_data_fetcher(*chunk);

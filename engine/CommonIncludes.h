@@ -50,6 +50,8 @@
 #include <glm/gtc/matrix_inverse.hpp>
 #include <glm/gtx/euler_angles.hpp>
 #include <glm/gtx/norm.hpp>
+#include "Configuration.h"
+#include "tracy/Tracy.hpp"
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846

@@ -8,6 +8,8 @@ namespace core { namespace ECS { namespace systems {
 
 	void RootTransformSystem::Process(Chunk* chunk)
 	{
+		ZoneScoped;
+
 		ComponentFetcher<RootTransform> root_transform_fetcher(*chunk);
 		ComponentFetcher<Transform> transform_fetcher(*chunk);
 
@@ -34,6 +36,7 @@ namespace core { namespace ECS { namespace systems {
 
 	void NoChildTransformSystem::Process(Chunk* chunk)
 	{
+		ZoneScoped;
 		ComponentFetcher<Transform> transform_fetcher(*chunk);
 
 		for (int i = 0; i < chunk->GetEntityCount(); i++)

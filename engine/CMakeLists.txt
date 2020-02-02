@@ -24,6 +24,7 @@ set(ENGINE_SOURCES
 	lib/imgui/imstb_rectpack.h
 	lib/imgui/imstb_textedit.h
 	lib/imgui/imstb_truetype.h
+	lib/tracy/TracyClient.cpp
 	Engine.h
 	Engine.cpp
 	IGame.h
@@ -169,6 +170,9 @@ set(ENGINE_SOURCES
 	utils/Frustum.h
 )
  
+ add_compile_definitions(TRACY_ENABLE)
+
+
 include_directories(./ lib)
 
 find_package(Vulkan REQUIRED)
@@ -176,6 +180,7 @@ find_package(Vulkan REQUIRED)
 set(GLFW_BUILD_DOCS false)
 set(GLFW_BUILD_EXAMPLES false)
 set(GLFW_BUILD_TESTS false)
+set(GLFW_INSTALL false)
 add_subdirectory(lib/glfw-3.3)
 set(EXPORT_TARGETS ${EXPORT_TARGETS} glfw)
 

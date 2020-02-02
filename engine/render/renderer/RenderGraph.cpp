@@ -10,7 +10,7 @@
 
 #include "Engine.h"
 
-#define DEBUG_LOG true
+#define DEBUG_LOG false
 
 namespace core { namespace render { namespace graph {
 
@@ -492,9 +492,10 @@ namespace core { namespace render { namespace graph {
 
 	void RenderGraph::RecordGraphicsPass(Pass* pass)
 	{
-		OutputDebugStringA("Recording Pass ");
+		/*OutputDebugStringA("Recording Pass ");
 		OutputDebugStringA(pass->name);
-		OutputDebugStringA("\n");
+		OutputDebugStringA("\n"); */
+		ZoneScopedN(pass->name);
 
 		auto* context = Engine::GetVulkanContext();
 		auto* state = context->GetRenderState();
@@ -591,6 +592,7 @@ namespace core { namespace render { namespace graph {
 
 	void RenderGraph::RecordCommandBuffers()
 	{
+		ZoneScoped;
 		auto* context = Engine::GetVulkanContext();
 
 		for (auto& pass : render_passes)

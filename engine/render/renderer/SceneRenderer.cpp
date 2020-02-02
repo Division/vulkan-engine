@@ -114,6 +114,8 @@ namespace core { namespace render {
 
 	void SceneRenderer::RenderScene()
 	{
+		ZoneScoped;
+
 		auto* entity_manager = scene.GetEntityManager();
 
 		CreateDrawCalls();
