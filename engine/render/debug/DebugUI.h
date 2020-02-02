@@ -23,6 +23,11 @@ namespace core { namespace render {
 		void Update(float dt);
 		void Render(core::Device::VulkanRenderState& state);
 
+		bool WantCaptureMouse();
+		bool WantCaptureKeyboard();
+
+		void SetMainWidgetVisible(bool visible);
+
 	} 
 
 } }

@@ -78,8 +78,6 @@ void Game::init()
 	manager->GetComponent<components::Transform>(light_pos_entity)->scale = vec3(0.1, 0.1, 0.1);
 	auto* material_manager = core::Engine::Get()->GetMaterialManager();
 	manager->GetComponent<components::MeshRenderer>(light_pos_entity)->material_id = material_manager->GetMaterialID(*material_no_light);
-
-
 }
 
 void Game::update(float dt)

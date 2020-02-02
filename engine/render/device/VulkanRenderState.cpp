@@ -276,7 +276,7 @@ namespace core { namespace Device {
 		{
 			assert(current_scissor.w > 0 && current_scissor.z > 0);
 			auto command_buffer = GetCurrentCommandBuffer()->GetCommandBuffer();
-			vk::Rect2D scissor(vk::Offset2D(current_scissor.x, current_scissor.y), vk::Extent2D(current_scissor.z, current_viewport.w));
+			vk::Rect2D scissor(vk::Offset2D(current_scissor.x, current_scissor.y), vk::Extent2D(current_scissor.z, current_scissor.w));
 			command_buffer.setScissor(0, 1, &scissor);
 		}
 
@@ -328,7 +328,7 @@ namespace core { namespace Device {
 	{
 		if (current_scissor != scissor)
 		{
-			dirty_flags |= (int)DirtyFlags::Viewport;
+			dirty_flags |= (int)DirtyFlags::Scissor;
 			current_scissor = scissor;
 		}
 	}

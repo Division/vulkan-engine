@@ -15,6 +15,7 @@ set(ENGINE_SOURCES
 	lib/imgui/imconfig.h
 	lib/imgui/imgui.h
 	lib/imgui/imgui.cpp
+	lib/imgui/imgui_demo.cpp
 	lib/imgui/imgui_draw.cpp
 	lib/imgui/imgui_impl_glfw.h
 	lib/imgui/imgui_impl_glfw.cpp
@@ -89,6 +90,7 @@ set(ENGINE_SOURCES
 	render/debug/DebugDraw.cpp
 	render/debug/DebugUI.h
 	render/debug/DebugUI.cpp
+	render/debug/widgets/MainWidget.cpp
 	render/shader/Shader.h
 	render/shader/Shader.cpp
 	render/shader/ReflectionInfo.h
