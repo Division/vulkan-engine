@@ -22,7 +22,6 @@ public:
 
   core::Device::VulkanBuffer* vertexBuffer() const { return _vertexBuffer.get(); }
   core::Device::VulkanBuffer* indexBuffer() const { return _indexBuffer.get(); }
-  //const VertexAttribSet &vertexAttribSet() const { return _attribSet; }
   const core::VertexLayout& GetVertexLayout() const { return layout; }
 
   void setVertices(const vec3 *vertices, int vertexCount);
@@ -44,7 +43,6 @@ public:
 
   void setIndices(const uint16_t *indices, int indexCount);
   void setIndices(const std::vector<uint16_t> &indices);
-  //uint32_t GetVertexAttribHash() const;
 
   void calculateNormals();
   void calculateTBN();
@@ -54,8 +52,6 @@ public:
   AABB aabb() const { return _aabb; }
 
   // Properties
-
-  //std::shared_ptr<VertexBufferObject> vbo() { return _vbo; }
 
   int componentCount() const { return _componentCount; } // Number of vertices to complete the primitive (3 for triangle)
   int strideBytes() const { return _strideBytes; };
@@ -87,7 +83,6 @@ public:
   bool hasWeights() const { return _hasWeights; }
   bool hasColors() const { return _hasColors; }
 
-  int attribOffsetBytes(VertexAttrib attrib) const;
   int vertexOffsetBytes() const { return _vertexOffsetBytes; };
   int normalOffsetBytes() const { return _normalOffsetBytes; };
   int tangentOffsetBytes() const { return _tangentOffsetBytes; };
@@ -107,7 +102,6 @@ private:
 
 private:
   AABB _aabb;
-  //VertexAttribSet _attribSet;
   core::VertexLayout layout;
 
   std::unique_ptr<core::Device::VulkanBuffer> _vertexBuffer;

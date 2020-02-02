@@ -60,7 +60,7 @@ namespace core
 
 		vulkan_context->RecreateSwapChain(); // creating swapchain after scene renderer to handle subscribtion to the recreate event
 
-		render::DebugUI::Initialize(window);
+		render::DebugUI::Initialize(window, shader_cache.get());
 
 		this->game->init();
 	}

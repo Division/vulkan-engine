@@ -1,7 +1,9 @@
+
 #pragma once
 
 #include "render/device/VulkanContext.h"
 #include "ReflectionInfo.h"
+#include "utils/DataStructures.h"
 
 namespace core { namespace Device {
 	
@@ -68,6 +70,15 @@ namespace core { namespace Device {
 			bool Empty() const { return bindings.empty(); }
 		};
 
+		struct PushConstants
+		{
+			uint32_t id;
+			uint32_t offset;
+			uint32_t range;
+			std::string name;
+			uint32_t stage_flags;
+		};
+
 		static const unsigned max_descriptor_sets = 4;
 
 		static uint32_t CalculateHash(uint32_t fragment_hash, uint32_t vertex_hash, uint32_t compute_hash = 0);
@@ -81,14 +92,16 @@ namespace core { namespace Device {
 		const ShaderModule* ComputeModule() const { return compute_module; }
 		
 		const auto& GetDescriptorSets() const { return descriptor_sets; }
-		const DescriptorSet* GetDescriptorSet(unsigned set) const { return &descriptor_sets[set]; };
+		const DescriptorSet* GetDescriptorSet(unsigned set) const { return &descriptor_sets[set]; }
 		const BindingData* GetBinding(unsigned set, unsigned binding) const;
 		const BindingData* GetBindingByName(const std::string& name) const;
+		const utils::SmallVectorBase<PushConstants>* GetPushConstants() const { return &push_constants; }
 
 		uint32_t GetHash() const;
 
 	private:
 		void AppendBindings(const ShaderModule& module, ShaderProgram::Stage stage, std::map<std::pair<unsigned, unsigned>, int>& existing_bindings);
+		void AppendPushConstants(const ShaderModule& module, ShaderProgram::Stage stage);
 
 	private:
 		ShaderModule* vertex_module = nullptr;
@@ -99,6 +112,7 @@ namespace core { namespace Device {
 
 		std::unordered_map<std::string, BindingAddress> name_binding_map;
 		std::array<DescriptorSet, max_descriptor_sets> descriptor_sets;
+		utils::SmallVector<PushConstants, 1> push_constants;
 	};
 
 } }

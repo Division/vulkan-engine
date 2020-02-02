@@ -98,6 +98,45 @@ namespace core { namespace Device {
 		}
 	}
 
+	void ShaderProgram::AppendPushConstants(const ShaderModule& module, ShaderProgram::Stage stage)
+	{
+		auto* reflection = module.GetReflectionInfo();
+		auto stage_flags = shader_stage_flag_map.at(stage);
+
+		auto find_or_create_push_constants = [&](uint32_t id)
+		{
+			auto existing = std::find_if(push_constants.begin(), push_constants.end(), [id](PushConstants& item) {
+				return item.id == id;
+			});
+
+			PushConstants* item = nullptr;
+
+			if (existing != push_constants.end())
+			{
+				item = existing;
+			}
+			else
+			{
+				PushConstants pc;
+				pc.id = id;
+				pc.stage_flags = 0;
+				push_constants.push_back(pc);
+				item = &push_constants[push_constants.size() - 1];
+			}
+
+			return item;
+		};
+
+		for (auto& push_constant : reflection->PushConstants())
+		{
+			auto* item = find_or_create_push_constants(push_constant.id);
+			item->offset = push_constant.offset;
+			item->range = push_constant.size;
+			item->name = push_constant.name;
+			item->stage_flags |= (unsigned)stage_flags;
+		}
+	}
+
 	ShaderProgram::ShaderProgram()
 	{
 		for (int i = 0; i < max_descriptor_sets; i++)
@@ -115,18 +154,21 @@ namespace core { namespace Device {
 		{
 			vertex_hash = vertex_module->GetHash();
 			AppendBindings(*vertex_module, Stage::Vertex, existing_bindings);
+			AppendPushConstants(*vertex_module, Stage::Vertex);
 		}
 
 		if (fragment_module)
 		{
 			fragment_hash = fragment_module->GetHash();
 			AppendBindings(*fragment_module, Stage::Fragment, existing_bindings);
+			AppendPushConstants(*fragment_module, Stage::Fragment);
 		}
 
 		if (compute_module)
 		{
 			compute_hash = compute_module->GetHash();
 			AppendBindings(*compute_module, Stage::Compute, existing_bindings);
+			AppendPushConstants(*compute_module, Stage::Compute);
 		}
 
 		hash = ShaderProgram::CalculateHash(fragment_hash, vertex_hash, compute_hash);

@@ -168,7 +168,7 @@ namespace core { namespace Device {
 	{
 		ShaderBindings common_bindings;
 		auto* global_descriptor_set_data = current_shader->GetDescriptorSet(DescriptorSet::Global);
-		if (global_descriptor_set_data->Empty())
+		if (!global_bindings_set || global_descriptor_set_data->Empty())
 			return;
 
 		for (auto& binding : global_descriptor_set_data->bindings)
@@ -341,7 +341,7 @@ namespace core { namespace Device {
 			current_shader = &program;
 
 			auto* global_descriptor_set_data = program.GetDescriptorSet(DescriptorSet::Global);
-			if (!global_descriptor_set_data->Empty() && global_layout_hash != global_descriptor_set_data->layout_hash)
+			if (global_bindings_set && !global_descriptor_set_data->Empty() && global_layout_hash != global_descriptor_set_data->layout_hash)
 			{
 				dirty_flags |= (int)DirtyFlags::GlobalDescriptorSet;
 			}
@@ -373,6 +373,14 @@ namespace core { namespace Device {
 		global_bindings = bindings;
 		global_layout_hash = 0;
 		dirty_flags |= (int)DirtyFlags::GlobalDescriptorSet;
+		global_bindings_set = true;
+	}
+
+	void VulkanRenderState::RemoveGlobalBindings()
+	{
+		global_bindings.Clear();
+		global_layout_hash = 0;
+		global_bindings_set = false;
 	}
 
 	void VulkanRenderState::PushConstants(ShaderProgram::Stage stage, uint32_t offset, uint32_t size, void* data)
@@ -419,7 +427,7 @@ namespace core { namespace Device {
 		}
 
 		if (mesh->hasIndices())
-			DrawIndexed(*mesh->vertexBuffer(), *mesh->indexBuffer(), 0, mesh->indexCount(), 0);
+			DrawIndexed(*mesh->vertexBuffer(), *mesh->indexBuffer(), 0, mesh->indexCount(), 0, IndexType::UINT16);
 		else
 			Draw(*mesh->vertexBuffer(), mesh->indexCount(), 0);
 	}
@@ -435,7 +443,7 @@ namespace core { namespace Device {
 		command_buffer.draw(vertex_count, 1, first_vertex, 0);
 	}
 
-	void VulkanRenderState::DrawIndexed(const VulkanBuffer& vertex_buffer, const VulkanBuffer& index_buffer, uint32_t index_offset, uint32_t index_count, uint32_t first_index)
+	void VulkanRenderState::DrawIndexed(const VulkanBuffer& vertex_buffer, const VulkanBuffer& index_buffer, uint32_t vertex_offset, uint32_t index_count, uint32_t first_index, IndexType index_type)
 	{
 		UpdateState();
 
@@ -443,9 +451,9 @@ namespace core { namespace Device {
 		vk::DeviceSize offset = { 0 };
 		vk::Buffer vk_vertex_buffer = vertex_buffer.Buffer();
 		vk::Buffer vk_index_buffer = index_buffer.Buffer();
-		command_buffer.bindIndexBuffer(vk_index_buffer, offset, vk::IndexType::eUint16);
+		command_buffer.bindIndexBuffer(vk_index_buffer, offset, index_type == IndexType::UINT16 ? vk::IndexType::eUint16 : vk::IndexType::eUint32);
 		command_buffer.bindVertexBuffers(0, 1, &vk_vertex_buffer, &offset);
-		command_buffer.draw(index_count, 1, first_index, 0);
+		command_buffer.drawIndexed(index_count, 1, first_index, vertex_offset, 0);
 	}
 
 	void VulkanRenderState::BeginRecording()
@@ -466,6 +474,7 @@ namespace core { namespace Device {
 		current_render_target = &render_target;
 		render_pass_started = false;
 		global_layout_hash = 0;
+		global_bindings_set = false;
 
 		SetRenderPass(render_pass);
 

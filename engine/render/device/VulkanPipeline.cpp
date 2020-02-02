@@ -88,8 +88,8 @@ namespace core { namespace Device {
 			vertex_attribute_descriptions.push_back(
 				vk::VertexInputAttributeDescription(
 					attrib.location, 
-					0, 
-					VERTEX_ATTRIB_FORMATS.at(attrib.vertex_attrib), 
+					0,
+					vk::Format(layout->GetAttribFormat(attrib.vertex_attrib)),
 					layout->GetAttribOffset(attrib.vertex_attrib)
 				)
 			);
@@ -102,7 +102,16 @@ namespace core { namespace Device {
 			descriptor_set_layouts.push_back(set.layout.get());
 		}
 
-		vk::PipelineLayoutCreateInfo pipeline_layout_info({}, descriptor_set_layouts.size(), descriptor_set_layouts.data());
+		auto* push_constants = shader_program->GetPushConstants();
+
+		utils::SmallVector<vk::PushConstantRange, 2> push_constant_ranges;
+		for (int i = 0; i < push_constants->size(); i++)
+		{
+			auto& item = (*push_constants)[i];
+			push_constant_ranges.push_back(vk::PushConstantRange(vk::ShaderStageFlags(item.stage_flags), item.offset, item.range));
+		}
+
+		vk::PipelineLayoutCreateInfo pipeline_layout_info({}, descriptor_set_layouts.size(), descriptor_set_layouts.data(), push_constant_ranges.size(), push_constant_ranges.data());
 		pipeline_layout = device.createPipelineLayoutUnique(pipeline_layout_info);
 
 		if (initializer.is_compute)

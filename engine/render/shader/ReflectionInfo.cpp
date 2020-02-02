@@ -60,6 +60,27 @@ namespace core { namespace Device {
 
 			storage_buffers.push_back(data);
 		}
+
+		for (auto& push_constant_buffer : resources.push_constant_buffers)
+		{
+			PushConstantsData data;
+			data.id = push_constant_buffer.id;
+			data.name = push_constant_buffer.name;
+			data.size = 0;
+			auto ranges = compiler.get_active_buffer_ranges(data.id);
+			for (auto &range : ranges)
+			{
+				data.size += range.range;
+			}
+			
+			if (ranges.size())
+			{
+
+				data.offset = ranges[0].offset;
+				push_constants.push_back(data);
+			}
+
+		}
 	}
 
 } }

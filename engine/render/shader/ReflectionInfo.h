@@ -46,12 +46,21 @@ namespace core { namespace Device {
 			ShaderBufferName storage_buffer_name = ShaderBufferName::Unknown;
 		};
 
+		struct PushConstantsData
+		{
+			uint32_t id;
+			uint32_t offset;
+			uint32_t size;
+			std::string name;
+		};
+
 		ReflectionInfo(uint32_t* spirv_data, size_t count);
 
 		const std::vector<UniformBufferData>& UniformBuffers() const { return uniform_buffers; }
 		const std::vector<StorageBufferData>& StorageBuffers() const { return storage_buffers; }
 		const std::vector<VertexAttribData>& VertexAttribs() const { return vertex_attribs; }
 		const std::vector<SamplerData>& Samplers() const { return samplers; }
+		const std::vector<PushConstantsData>& PushConstants() const { return push_constants; }
 
 	private:
 		spirv_cross::CompilerGLSL compiler;
@@ -59,6 +68,7 @@ namespace core { namespace Device {
 		std::vector<VertexAttribData> vertex_attribs;
 		std::vector<StorageBufferData> storage_buffers;
 		std::vector<SamplerData> samplers;
+		std::vector<PushConstantsData> push_constants;
 
 	};
 

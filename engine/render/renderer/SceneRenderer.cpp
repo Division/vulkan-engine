@@ -33,6 +33,7 @@
 #include "render/material/Material.h"
 #include "render/buffer/DynamicBuffer.h"
 #include "render/debug/DebugDraw.h"
+#include "render/debug/DebugUI.h"
 #include "objects/LightObject.h"
 #include "objects/Projector.h"
 #include "SceneBuffers.h"
@@ -312,6 +313,8 @@ namespace core { namespace render {
 			{
 				state.RenderDrawCall(&draw_call, false);
 			}
+
+			DebugUI::Render(state);
 		});
 
 		render_graph->Prepare();

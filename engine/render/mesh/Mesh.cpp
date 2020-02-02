@@ -7,18 +7,32 @@
 #include <iostream>
 #include "system/Logging.h"
 #include "render/buffer/VulkanBuffer.h"
+#include "render/device/Types.h"
 #include "utils/Math.h"
 
 const int JOINT_PER_VERTEX_MAX = Mesh::JOINT_PER_VERTEX_MAX;
 const int JOINTS_MAX = Mesh::JOINTS_MAX;
 
 const int VERTEX_SIZE = 3;
+const core::Device::Format VERTEX_FORMAT = core::Device::Format::R32G32B32_float;
+
 const int NORMAL_SIZE = 3;
+const core::Device::Format NORMAL_FORMAT = core::Device::Format::R32G32B32_float;
+
 const int TEXCOORD_SIZE = 2;
+const core::Device::Format TEXCOORD_FORMAT = core::Device::Format::R32G32_float;
+
 const int CORNER_SIZE = 2;
+const core::Device::Format CORNER_FORMAT = core::Device::Format::R32G32_float;
+
 const int JOINT_INDEX_SIZE = JOINT_PER_VERTEX_MAX;
+const core::Device::Format JOINT_INDEX_FORMAT = core::Device::Format::R32G32B32_float;
+
 const int WEIGHT_SIZE = JOINT_PER_VERTEX_MAX;
+const core::Device::Format WEIGHTS_FORMAT = core::Device::Format::R32G32B32_float;
+
 const int COLOR_SIZE = 4;
+const core::Device::Format COLOR_FORMAT = core::Device::Format::R32G32B32A32_float;
 
 #define BUFFER_OFFSET(i) ((char *)NULL + (i))
 
@@ -62,55 +76,6 @@ Mesh::Mesh(bool keepData, int componentCount, bool isStatic) :
 Mesh::~Mesh() {
   _deleteBuffer();
 }
-
-int Mesh::attribOffsetBytes(VertexAttrib attrib) const
-{
-	switch (attrib)
-	{
-	case VertexAttrib::Position:
-		return vertexOffsetBytes();
-
-	case VertexAttrib::TexCoord0:
-		if (!hasTexCoord0()) throw std::runtime_error("Mesh doesn't have attrib required by shader");
-		return texCoordOffsetBytes();
-
-	case VertexAttrib::Normal:
-		if (!hasNormals()) throw std::runtime_error("Mesh doesn't have attrib required by shader");
-		return normalOffsetBytes();
-
-	case VertexAttrib::Bitangent:
-		if (!hasTBN()) throw std::runtime_error("Mesh doesn't have attrib required by shader");
-		return bitangentOffsetBytes();
-
-	case VertexAttrib::Tangent:
-		if (!hasTBN()) throw std::runtime_error("Mesh doesn't have attrib required by shader");
-		return tangentOffsetBytes();
-
-	case VertexAttrib::Corner:
-		if (!_hasCorners) throw std::runtime_error("Mesh doesn't have attrib required by shader");
-		return cornerOffsetBytes();
-
-	case VertexAttrib::VertexColor:
-		if (!hasColors()) throw std::runtime_error("Mesh doesn't have attrib required by shader");
-		return colorOffsetBytes();
-
-	case VertexAttrib::JointWeights:
-		if (!hasWeights()) throw std::runtime_error("Mesh doesn't have attrib required by shader");
-		return weightOffsetBytes();
-
-	case VertexAttrib::JointIndices:
-		if (!hasWeights()) throw std::runtime_error("Mesh doesn't have attrib required by shader");
-		return jointIndexOffsetBytes();
-
-	default:
-		throw std::runtime_error("unsupported vertex attrib");
-	}
-}
-
-/*uint32_t Mesh::GetVertexAttribHash() const
-{
-	return _attribSet.getBitmask() | ((1u * (unsigned)hasIndices()) << 31u);
-}*/
 
 // Setting mesh data
 
@@ -240,7 +205,6 @@ void Mesh::createBuffer() {
   _stride = _getStrideSize();
   _strideBytes = _stride * 4;
   layout.Clear();
-  //_attribSet = VertexAttribSet();
 
   int currentOffset = 0;
   if (_hasVertices) {
@@ -248,62 +212,53 @@ void Mesh::createBuffer() {
     _vertexOffsetBytes = currentOffset * 4;
     currentOffset += VERTEX_SIZE;
     _vertexCount = (int)floor(_vertices.size() / 3.0f);
-	//_attribSet.addCap(VertexAttrib::Position);
-    layout.AddAttrib(VertexAttrib::Position, VERTEX_SIZE * 4);
+    layout.AddAttrib(VertexAttrib::Position, VERTEX_FORMAT, VERTEX_SIZE * 4);
   }
   if (_hasNormals) {
     _normalOffset = currentOffset;
     _normalOffsetBytes = currentOffset * 4;
     currentOffset += NORMAL_SIZE;
-	//_attribSet.addCap(VertexAttrib::Normal);
-    layout.AddAttrib(VertexAttrib::Normal, NORMAL_SIZE * 4);
+    layout.AddAttrib(VertexAttrib::Normal, NORMAL_FORMAT, NORMAL_SIZE * 4);
   }
   if (_hasTBN) {
     _tangentOffset = currentOffset;
     _tangentOffsetBytes = currentOffset * 4;
     currentOffset += NORMAL_SIZE;
-	//_attribSet.addCap(VertexAttrib::Tangent);
-    layout.AddAttrib(VertexAttrib::Tangent, NORMAL_SIZE * 4);
+    layout.AddAttrib(VertexAttrib::Tangent, NORMAL_FORMAT, NORMAL_SIZE * 4);
 
     _bitangentOffset = currentOffset;
     _bitangentOffsetBytes = currentOffset * 4;
     currentOffset += NORMAL_SIZE;
-	//_attribSet.addCap(VertexAttrib::Bitangent);
-    layout.AddAttrib(VertexAttrib::Bitangent, NORMAL_SIZE * 4);
+    layout.AddAttrib(VertexAttrib::Bitangent, NORMAL_FORMAT, NORMAL_SIZE * 4);
   }
   if (_hasTexCoord0) {
     _texCoord0Offset = currentOffset;
     _texCoord0OffsetBytes = currentOffset * 4;
     currentOffset += TEXCOORD_SIZE;
-	//_attribSet.addCap(VertexAttrib::TexCoord0);
-    layout.AddAttrib(VertexAttrib::TexCoord0, TEXCOORD_SIZE * 4);
+    layout.AddAttrib(VertexAttrib::TexCoord0, TEXCOORD_FORMAT, TEXCOORD_SIZE * 4);
   }
   if (_hasCorners) {
     _cornerOffset = currentOffset;
     _cornerOffsetBytes = currentOffset * 4;
     currentOffset += CORNER_SIZE;
-	//_attribSet.addCap(VertexAttrib::Corner);
-    layout.AddAttrib(VertexAttrib::Corner, CORNER_SIZE * 4);
+    layout.AddAttrib(VertexAttrib::Corner, CORNER_FORMAT, CORNER_SIZE * 4);
   }
   if (_hasWeights) {
     _weightOffset = currentOffset;
     _weightOffsetBytes = currentOffset * 4;
     currentOffset += WEIGHT_SIZE;
-	//_attribSet.addCap(VertexAttrib::JointWeights);
-    layout.AddAttrib(VertexAttrib::JointWeights, WEIGHT_SIZE * 4);
+    layout.AddAttrib(VertexAttrib::JointWeights, WEIGHTS_FORMAT, WEIGHT_SIZE * 4);
 
     _jointIndexOffset = currentOffset;
     _jointIndexOffsetBytes = currentOffset * 4;
     currentOffset += JOINT_INDEX_SIZE;
-	//_attribSet.addCap(VertexAttrib::JointIndices);
-    layout.AddAttrib(VertexAttrib::JointIndices, JOINT_INDEX_SIZE * 4);
+    layout.AddAttrib(VertexAttrib::JointIndices, JOINT_INDEX_FORMAT, JOINT_INDEX_SIZE * 4);
   }
   if (_hasColors) {
     _colorOffset = currentOffset;
     _colorOffsetBytes = currentOffset * 4;
     currentOffset += COLOR_SIZE;
-	//_attribSet.addCap(VertexAttrib::VertexColor);
-    layout.AddAttrib(VertexAttrib::VertexColor, COLOR_SIZE * 4);
+    layout.AddAttrib(VertexAttrib::VertexColor, COLOR_FORMAT, COLOR_SIZE * 4);
   }
 
   assert(_strideBytes == layout.GetStride());

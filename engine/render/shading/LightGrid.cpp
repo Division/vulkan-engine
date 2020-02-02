@@ -28,6 +28,8 @@ LightGrid::LightGrid(unsigned int cellSize) : _cellSize(cellSize)
 {	
 	auto* context = Engine::GetVulkanContext();
 	context->AddRecreateSwapchainCallback(std::bind(&LightGrid::OnRecreateSwapchain, this, std::placeholders::_1, std::placeholders::_2));
+    projectors[0] = std::make_unique<DynamicBuffer<ShaderBufferStruct::Projector>>(sizeof(ShaderBufferStruct::Projector), BufferType::Uniform, true);
+    lights[0] = std::make_unique<DynamicBuffer<ShaderBufferStruct::Light>>(sizeof(ShaderBufferStruct::Light), BufferType::Uniform, true);
 }
 
 void LightGrid::Update(unsigned int screenWidth, unsigned int screenHeight) {
@@ -108,6 +110,9 @@ void LightGrid::_appendItem(ICameraParamsProvider* camera, const std::vector<vec
 void LightGrid::appendLights(const std::vector<LightObjectPtr> &light_list,
                              ICameraParamsProvider* camera) {
   _lightCount = light_list.size();
+  if (!_lightCount)
+      return;
+
   auto size = light_list.size() * sizeof(ShaderBufferStruct::Light);
   ResizeBuffer(lights, std::max(size, sizeof(ShaderBufferStruct::Light)), false);
   lights[0]->Map();
@@ -148,6 +153,8 @@ void LightGrid::appendLights(const std::vector<LightObjectPtr> &light_list,
 void LightGrid::appendProjectors(const std::vector<std::shared_ptr<Projector>> &projectors_list, ICameraParamsProvider* camera) {
 
   _projectorCount = projectors_list.size();
+  if (!_projectorCount)
+      return;
   ResizeBuffer(projectors, projectors_list.size() * sizeof(ShaderBufferStruct::Projector), false);
   projectors[0]->Map();
 
@@ -179,7 +186,11 @@ void LightGrid::appendProjectors(const std::vector<std::shared_ptr<Projector>> &
 // Upload grid data into the GPU buffers
 void LightGrid::upload() 
 {
-	ResizeBuffer(light_grid, _cells.size() * sizeof(LightGridStruct), true);
+    auto light_grid_size = _cells.size() * sizeof(LightGridStruct);
+    if (!light_grid_size)
+        return;
+
+	ResizeBuffer(light_grid, light_grid_size, true);
 
 	// Little bit unsafe but convenient way to directly modify data within the memory
 	auto gridBufferPointer = (LightGridStruct *)light_grid[0]->Map();
@@ -231,11 +242,13 @@ void LightGrid::upload()
 		}
 		currentOffset += gridBufferPointer[i].decalCount;
 	}
+    light_grid[0]->SetUploadSize(light_grid_size);
 	light_grid[0]->Unmap();
 
 	ResizeBuffer(light_index, temp_data.size(), true);
 	auto light_index_pointer = (char*)light_index[0]->Map();
 	memcpy(light_index_pointer, temp_data.data(), temp_data.size());
+    light_index[0]->SetUploadSize(temp_data.size());
 	light_index[0]->Unmap();
 }
 

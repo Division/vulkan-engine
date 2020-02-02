@@ -14,8 +14,6 @@ namespace core { namespace Device {
 	};
 
 	extern const std::map<std::string, VertexAttrib> VERTEX_ATTRIB_NAMES;
-	extern const std::map<VertexAttrib, vk::Format> VERTEX_ATTRIB_FORMATS;
-
 	extern const std::map<ShaderCaps, std::string> SHADER_CAPS_DEFINES;
 
 } }

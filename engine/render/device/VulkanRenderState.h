@@ -169,6 +169,12 @@ namespace core { namespace Device {
 		mutable uint32_t hash = 0;
 	};
 
+	enum class IndexType
+	{
+		UINT16 = VK_INDEX_TYPE_UINT16,
+		UINT32 = VK_INDEX_TYPE_UINT32,
+	};
+
 	class VulkanRenderState : NonCopyable
 	{
 	public:
@@ -191,16 +197,19 @@ namespace core { namespace Device {
 		void SetRenderMode(const RenderMode& mode);
 		void SetRenderPass(const VulkanRenderPass& render_pass);
 		void SetViewport(vec4 viewport);
+		vec4 GetViewport() const { return current_viewport; };
 		void SetScissor(vec4 scissor);
 		void SetShader(const ShaderProgram& program);
-		void SetBindings(ShaderBindings& bindings);
 		void SetVertexLayout(const VertexLayout& layout);
 		void SetGlobalBindings(const ShaderBindings& global_bindings);
+		void RemoveGlobalBindings();
 		void SetClearValue(uint32_t index, vk::ClearValue value);
 		void PushConstants(ShaderProgram::Stage stage, uint32_t offset, uint32_t size, void* data);
+		const VulkanPipeline* GetCurrentPipeline() const { return current_pipeline; }
 
+		void UpdateState();
 		void RenderDrawCall(const ECS::components::DrawCall* draw_call, bool is_depth);
-		void DrawIndexed(const VulkanBuffer& vertex_buffer, const VulkanBuffer& index_buffer, uint32_t index_offset, uint32_t index_count, uint32_t first_index);
+		void DrawIndexed(const VulkanBuffer& vertex_buffer, const VulkanBuffer& index_buffer, uint32_t vertex_offset, uint32_t index_count, uint32_t first_index, IndexType index_type);
 		void Draw(const VulkanBuffer& buffer, uint32_t vertexCount, uint32_t firstVertex);
 
 		VulkanCommandBuffer* GetCurrentCommandBuffer() const { return command_buffers[current_frame]; }
@@ -216,12 +225,12 @@ namespace core { namespace Device {
 		void EndRecording();
 
 	private:
-		void UpdateState();
 		VulkanPipeline* GetPipeline(const VulkanPipelineInitializer& initializer);
 		vk::Sampler GetSampler(const SamplerMode& sampler_mode);
 
 		ShaderBindings global_bindings;
 		uint32_t global_layout_hash = 0;
+		bool global_bindings_set = false;
 
 		uint32_t dirty_flags = 0;
 		uint32_t current_frame = 0;

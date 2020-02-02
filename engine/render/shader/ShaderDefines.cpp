@@ -15,19 +15,6 @@ namespace core { namespace Device {
 		{ "joint_indices", VertexAttrib::JointIndices }
 	};
 
-	const std::map<VertexAttrib, vk::Format> VERTEX_ATTRIB_FORMATS
-	{
-		{ VertexAttrib::Position, vk::Format::eR32G32B32Sfloat },
-		{ VertexAttrib::Normal, vk::Format::eR32G32B32Sfloat },
-		{ VertexAttrib::Tangent, vk::Format::eR32G32B32Sfloat },
-		{ VertexAttrib::Bitangent, vk::Format::eR32G32B32Sfloat },
-		{ VertexAttrib::TexCoord0, vk::Format::eR32G32Sfloat },
-		{ VertexAttrib::Corner, vk::Format::eR32G32Sfloat  },
-		{ VertexAttrib::VertexColor, vk::Format::eR32G32B32A32Sfloat },
-		{ VertexAttrib::JointWeights, vk::Format::eR32G32B32Sfloat },
-		{ VertexAttrib::JointIndices, vk::Format::eR32G32B32Sfloat }
-	};
-
 	const std::map<ShaderCaps, std::string> SHADER_CAPS_DEFINES = {
 		{ ShaderCaps::Color, "COLOR" },
 		{ ShaderCaps::VertexColor, "VERTEX_COLOR" },
