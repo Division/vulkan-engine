@@ -240,6 +240,9 @@ namespace core { namespace render {
 							scissor.y = (int32_t)(clip_rect.y);
 							scissor.z = (uint32_t)(clip_rect.z - clip_rect.x);
 							scissor.w = (uint32_t)(clip_rect.w - clip_rect.y);
+							if (scissor.z == 0 || scissor.w == 0)
+								continue;
+
 							state.SetScissor(scissor);
 
 							// Draw
