@@ -7,7 +7,7 @@
 #include "render/device/VulkanRenderState.h"
 #include "render/device/VkObjects.h"
 #include "render/texture/Texture.h"
-
+#include "lib/optick/src/optick.h"
 #include "Engine.h"
 
 #define DEBUG_LOG false
@@ -495,7 +495,7 @@ namespace core { namespace render { namespace graph {
 		/*OutputDebugStringA("Recording Pass ");
 		OutputDebugStringA(pass->name);
 		OutputDebugStringA("\n"); */
-		ZoneScopedN(pass->name);
+		OPTICK_EVENT(pass->name);
 
 		auto* context = Engine::GetVulkanContext();
 		auto* state = context->GetRenderState();
@@ -592,7 +592,7 @@ namespace core { namespace render { namespace graph {
 
 	void RenderGraph::RecordCommandBuffers()
 	{
-		ZoneScoped;
+		OPTICK_EVENT();
 		auto* context = Engine::GetVulkanContext();
 
 		for (auto& pass : render_passes)

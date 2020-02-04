@@ -24,7 +24,6 @@ set(ENGINE_SOURCES
 	lib/imgui/imstb_rectpack.h
 	lib/imgui/imstb_textedit.h
 	lib/imgui/imstb_truetype.h
-	lib/tracy/TracyClient.cpp
 	Engine.h
 	Engine.cpp
 	IGame.h
@@ -169,9 +168,6 @@ set(ENGINE_SOURCES
 	utils/CapsSet.h
 	utils/Frustum.h
 )
- 
- add_compile_definitions(TRACY_ENABLE)
-
 
 include_directories(./ lib)
 
@@ -183,9 +179,12 @@ set(GLFW_BUILD_TESTS false)
 set(GLFW_INSTALL false)
 add_subdirectory(lib/glfw-3.3)
 set(EXPORT_TARGETS ${EXPORT_TARGETS} glfw)
+set(OPTICK_ENABLED true)
+set(OPTICK_USE_VULKAN false)
 
 add_subdirectory(lib/glm)
 add_subdirectory(lib/SPIRV-Cross)
+add_subdirectory(lib/optick)
 
 add_library(vk_engine ${ENGINE_SOURCES})
 target_compile_definitions(vk_engine PRIVATE VK_USE_PLATFORM_WIN32_KHR)
@@ -196,6 +195,7 @@ target_link_libraries(vk_engine spirv-cross-core)
 target_link_libraries(vk_engine spirv-cross-glsl)
 target_link_libraries(vk_engine spirv-cross-cpp)
 target_link_libraries(vk_engine spirv-cross-reflect)
+target_link_libraries(vk_engine OptickCore)
 
 # Tests
 set(TEST_SOURCES

@@ -12,7 +12,7 @@ namespace core { namespace ECS { namespace systems {
 
 	void CreateDrawCallsSystem::Process(Chunk* chunk)
 	{
-		ZoneScoped;
+		OPTICK_EVENT();
 		ComponentFetcher<MeshRenderer> mesh_renderer_fetcher(*chunk);
 		ComponentFetcher<Transform> transform_fetcher(*chunk);
 		ComponentFetcher<CullingData> culling_data_fetcher(*chunk);
@@ -44,7 +44,7 @@ namespace core { namespace ECS { namespace systems {
 
 	void UploadDrawCallsSystem::Process(Chunk* chunk)
 	{
-		ZoneScoped;
+		OPTICK_EVENT();
 		ComponentFetcher<DrawCall> draw_call_fetcher(*chunk);
 		// TODO: add skinning
 		auto* buffer = scene_buffers.GetObjectParamsBuffer();

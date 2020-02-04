@@ -51,7 +51,7 @@
 #include <glm/gtx/euler_angles.hpp>
 #include <glm/gtx/norm.hpp>
 #include "Configuration.h"
-#include "tracy/Tracy.hpp"
+#include "lib/optick/src/optick.h"
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846

@@ -114,7 +114,7 @@ namespace core { namespace render {
 
 	void SceneRenderer::RenderScene()
 	{
-		ZoneScoped;
+		OPTICK_EVENT();
 
 		auto* entity_manager = scene.GetEntityManager();
 

@@ -17,7 +17,7 @@ namespace core { namespace ECS { namespace systems {
 
 	void UpdateRendererSystem::ProcessMeshRenderer(Chunk* chunk)
 	{
-		ZoneScoped;
+		OPTICK_EVENT();
 
 		ComponentFetcher<MeshRenderer> mesh_renderer_fetcher(*chunk);
 		ComponentFetcher<Transform> transform_fetcher(*chunk);

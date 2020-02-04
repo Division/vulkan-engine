@@ -9,7 +9,6 @@
 #include "render/material/MaterialManager.h"
 #include "render/debug/DebugDraw.h"
 #include "render/debug/DebugUI.h"
-#include "tracy/Tracy.hpp"
 
 namespace core
 {
@@ -111,7 +110,7 @@ namespace core
 
 		while (!glfwWindowShouldClose(window))
 		{
-			ZoneScoped;
+			OPTICK_FRAME("MainThread");
 
 			auto* context = GetContext();
 
@@ -135,8 +134,6 @@ namespace core
 			glfwSwapBuffers(window);
 
 			last_time = current_time;
-
-			FrameMark;
 		}
 
 		// Wait idle before shutdown
