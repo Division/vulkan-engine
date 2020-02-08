@@ -27,16 +27,16 @@ namespace core { namespace Memory {
 		
 		const AllocationsData& GetAllocationsData(Tag tag);
 
-		void Initialize();
-
 		void StartFrame();
-		void EndFrame();
 
 		void OnAllocation(size_t size, Tag tag);
 		void OnDeallocation(size_t size, Tag tag);
 
 		size_t GetFrameAllocations();
 		size_t GetFrameAllocationsSize();
+
+		void MakeSnapshot();
+		void ValidateSnapshot();
 	};
 
 } }

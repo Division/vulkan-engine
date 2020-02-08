@@ -13,8 +13,8 @@
 
 #include "components/Entity.h"
 #include "utils/Math.h"
-#include "memory/Profiler.h"
 #include "memory/Allocator.h"
+#include "memory/Containers.h"
 
 namespace core { namespace ECS {
 
@@ -181,8 +181,6 @@ namespace core { namespace ECS {
 			if (memory)
 				allocator.deallocate(memory, CHUNK_SIZE);
 			memory = nullptr;
-
-			Memory::Profiler::OnDeallocation(CHUNK_SIZE, Memory::Tag::ECS);
 		}
 		
 		void* GetMemory() const { return memory; }
@@ -221,7 +219,7 @@ namespace core { namespace ECS {
 			else
 			{
 				if (!next)
-					next = std::make_unique<Chunk>(layout, entity_address_callback);
+					next = Memory::Pointer<Chunk, Memory::Tag::ECS>::Create(layout, entity_address_callback);
 
 				return next->AllocateAddress(); // todo: make non-recursive
 			}
@@ -301,7 +299,7 @@ namespace core { namespace ECS {
 		Memory::TaggedAllocator<char, Memory::Tag::ECS> allocator;
 		const ComponentLayout& layout;
 		char* memory;
-		std::unique_ptr<Chunk> next;
+		Memory::Pointer<Chunk, Memory::Tag::ECS> next;
 		uint32_t entity_count;
 		EntityAddressChangedCallback entity_address_callback;
 	};

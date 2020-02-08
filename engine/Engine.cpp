@@ -20,19 +20,13 @@ namespace core
 	{
 		std::vector<int> v;
 		int i;
+		std::string s;
 
-		temp(int i) : i(i){}
+		temp(int i, std::string s) : i(i), s(s) {}
 	};
 
 	Engine::Engine(std::unique_ptr<IGame> game) : game(std::move(game))
 	{
-		Memory::Profiler::Initialize();
-		//auto ints = Memory::MakePointer<int[], Memory::Tag::Render>(100);
-
-
-		//temp t;
-		auto ptr = Memory::MakePointer<temp, Memory::Tag::Render>(1);
-
 		instance = this;
 		ENGLogSetOutputFile("log.txt");
 

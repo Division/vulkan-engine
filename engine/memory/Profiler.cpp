@@ -1,5 +1,6 @@
 #include "Profiler.h"
 #include <mutex>
+#include <iostream>
 
 namespace core { namespace Memory {
 
@@ -7,6 +8,7 @@ namespace core { namespace Memory {
 	{
 
 		std::array<std::string, Tag::Count> tag_names = { "Render", "Texture", "ECS", "Unknown" };
+		std::array<AllocationsData, Tag::Count> snapshot;
 
 		struct ProfilerData
 		{
@@ -51,10 +53,6 @@ namespace core { namespace Memory {
 			return GetProfilerData().allocations[tag];
 		}
 
-		void Initialize()
-		{
-		}
-
 		void StartFrame()
 		{
 			for (auto& alloc : GetProfilerData().allocations)
@@ -62,11 +60,6 @@ namespace core { namespace Memory {
 
 			GetProfilerData().total_frame_allocations = 0;
 			GetProfilerData().total_frame_allocations_size = 0;
-		}
-
-		void EndFrame()
-		{
-
 		}
 
 		void OnAllocation(size_t size, Tag tag)
@@ -84,6 +77,25 @@ namespace core { namespace Memory {
 			std::scoped_lock<std::mutex> lock(GetProfilerData().mutex);
 			GetProfilerData().allocations[tag].allocated_size -= size;
 			GetProfilerData().allocations[tag].num_allocations -= 1;
+		}
+
+		void MakeSnapshot()
+		{
+			snapshot = GetProfilerData().allocations;
+		}
+
+		void ValidateSnapshot()
+		{
+			auto last_snapshot = GetProfilerData().allocations;
+
+			for (int i = 0; i < Tag::Count; i++)
+				if (snapshot[i].allocated_size != last_snapshot[i].allocated_size)
+				{
+					std::cout << "Memory leak at tag: " << tag_names[i] << "\n";
+					throw std::runtime_error("Memory leak at tag: " + tag_names[i]);
+				}
+
+			std::cout << "No memory leaks detected";
 		}
 
 	};
