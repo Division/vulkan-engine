@@ -9,13 +9,30 @@
 #include "render/material/MaterialManager.h"
 #include "render/debug/DebugDraw.h"
 #include "render/debug/DebugUI.h"
+#include "memory/Profiler.h"
+#include "memory/Containers.h"
 
 namespace core
 {
 	Engine* Engine::instance;
 
+	struct temp
+	{
+		std::vector<int> v;
+		int i;
+
+		temp(int i) : i(i){}
+	};
+
 	Engine::Engine(std::unique_ptr<IGame> game) : game(std::move(game))
 	{
+		Memory::Profiler::Initialize();
+		//auto ints = Memory::MakePointer<int[], Memory::Tag::Render>(100);
+
+
+		//temp t;
+		auto ptr = Memory::MakePointer<temp, Memory::Tag::Render>(1);
+
 		instance = this;
 		ENGLogSetOutputFile("log.txt");
 
@@ -26,10 +43,10 @@ namespace core
 
 		if (glfwVulkanSupported())
 		{
-			std::cout << "vk +";
+			std::cout << "Vulkan supported";
 		}
 		else {
-			std::cout << "vk -";
+			std::cout << "Vulkan unsupported";
 		}
 
 		auto working_dir = std::filesystem::current_path();
@@ -110,6 +127,8 @@ namespace core
 
 		while (!glfwWindowShouldClose(window))
 		{
+			Memory::Profiler::StartFrame();
+
 			OPTICK_FRAME("MainThread");
 
 			auto* context = GetContext();

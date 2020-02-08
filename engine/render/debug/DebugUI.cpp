@@ -14,6 +14,7 @@
 #include "render/shader/Shader.h"
 #include "render/shader/ShaderCache.h"
 #include "render/shader/ShaderDefines.h"
+#include "widgets/EngineStats.h"
 
 namespace core { namespace render { 
 	
@@ -31,6 +32,10 @@ namespace core { namespace render {
 			vk::DescriptorSet vk_descriptor_set;
 			VertexLayout vertex_layout;
 			bool main_widget_visible = true;
+			uint32_t engine_stats_index = 0;
+
+			typedef void (*engine_stats_callback)(void);
+			std::array<engine_stats_callback, 1> engine_stats_functions;
 		}
 
 		void DrawMainWidget();
@@ -85,6 +90,8 @@ namespace core { namespace render {
 			vertex_layout.AddAttrib(VertexAttrib::Position, Format::R32G32_float, sizeof(vec2));
 			vertex_layout.AddAttrib(VertexAttrib::TexCoord0, Format::R32G32_float, sizeof(vec2));
 			vertex_layout.AddAttrib(VertexAttrib::VertexColor, Format::R8G8B8A8_unorm, sizeof(uint32_t));
+
+			engine_stats_functions[0] = EngineStatsMemory;
 		}
 
 		void NewFrame()
@@ -136,6 +143,11 @@ namespace core { namespace render {
 
 		void Update(float dt)
 		{
+			if (engine_stats_index != -1)
+			{
+				(*engine_stats_functions[engine_stats_index])();
+			}
+
 			if (main_widget_visible)
 			{
 				DrawMainWidget();

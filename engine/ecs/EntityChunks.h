@@ -13,6 +13,8 @@
 
 #include "components/Entity.h"
 #include "utils/Math.h"
+#include "memory/Profiler.h"
+#include "memory/Allocator.h"
 
 namespace core { namespace ECS {
 
@@ -168,15 +170,19 @@ namespace core { namespace ECS {
 			: layout(layout) 
 			, entity_address_callback(entity_address_callback)
 			, entity_count(0)
-			, memory(malloc(CHUNK_SIZE))
-		{}
+		{
+			memory = allocator.allocate(CHUNK_SIZE);
+		}
 
 		Chunk(ComponentLayout&& layout, EntityAddressChangedCallback entity_address_callback) = delete;
 		
 		~Chunk()
 		{
 			if (memory)
-				free(memory);
+				allocator.deallocate(memory, CHUNK_SIZE);
+			memory = nullptr;
+
+			Memory::Profiler::OnDeallocation(CHUNK_SIZE, Memory::Tag::ECS);
 		}
 		
 		void* GetMemory() const { return memory; }
@@ -292,8 +298,9 @@ namespace core { namespace ECS {
 		}
 
 	private:
+		Memory::TaggedAllocator<char, Memory::Tag::ECS> allocator;
 		const ComponentLayout& layout;
-		void* memory;
+		char* memory;
 		std::unique_ptr<Chunk> next;
 		uint32_t entity_count;
 		EntityAddressChangedCallback entity_address_callback;
