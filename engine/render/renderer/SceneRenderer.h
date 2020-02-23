@@ -45,6 +45,11 @@ namespace core { namespace render {
 	class ShadowMap;
 	class DrawCallManager;
 
+	namespace effects
+	{
+		class Skybox;
+	}
+
 	namespace graph
 	{
 		class RenderGraph;
@@ -80,6 +85,7 @@ namespace core { namespace render {
 		std::unique_ptr<DrawCallManager> draw_call_manager;
 		std::unique_ptr<core::ECS::systems::CreateDrawCallsSystem> create_draw_calls_system;
 		std::unique_ptr<core::ECS::systems::UploadDrawCallsSystem> upload_draw_calls_system;
+		std::unique_ptr<core::Device::Texture> environment_cubemap;
 
 		core::Device::ShaderCache* shader_cache;
 		std::unique_ptr<SceneBuffers> scene_buffers;
@@ -99,6 +105,8 @@ namespace core { namespace render {
 
 		uint32_t depth_only_fragment_shader_hash;
 		std::vector<std::pair<IShadowCaster*, core::ECS::systems::CullingSystem>> shadow_casters;
+
+		std::unique_ptr<effects::Skybox> skybox;
 	};
 
 } }

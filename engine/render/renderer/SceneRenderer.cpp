@@ -38,6 +38,7 @@
 #include "objects/Projector.h"
 #include "SceneBuffers.h"
 #include "objects/Camera.h"
+#include "render/effects/Skybox.h"
 
 #include <functional>
 
@@ -80,6 +81,12 @@ namespace core { namespace render {
 		auto* buffer_binding = compute_program->GetBindingByName("buf");
 		compute_bindings = std::make_unique<ShaderBindings>();
 		compute_bindings->AddBufferBinding(buffer_binding->address.set, buffer_binding->address.binding, 0, compute_buffer->GetSize(), compute_buffer->GetBuffer()->Buffer());
+
+		//environment_cubemap = loader::LoadTexture("resources/environment/skybox_unorm.ktx"); // TODO: assign via setter
+		environment_cubemap = loader::LoadTexture("resources/environment/skybox2.ktx");
+		//environment_cubemap = loader::LoadTexture("resources/lama.ktx"); // TODO: assign via setter
+		skybox = std::make_unique<effects::Skybox>(*shader_cache);
+		skybox->SetTexture(environment_cubemap.get());
 	}
 
 	void SceneRenderer::OnRecreateSwapchain(int32_t width, int32_t height)
@@ -279,13 +286,15 @@ namespace core { namespace render {
 			return result;
 		}, [&](VulkanRenderState& state)
 		{
+			state.SetGlobalBindings(*global_shader_bindings);
+			skybox->Render(state);
+
 			RenderMode mode;
 			mode.SetDepthWriteEnabled(false);
 			mode.SetDepthTestEnabled(true);
 			mode.SetDepthFunc(CompareOp::LessOrEqual);
 
 			state.SetRenderMode(mode);
-			state.SetGlobalBindings(*global_shader_bindings);
 
 			auto& render_queues = main_camera_culling_system.GetDrawCallList()->queues;
 			for (auto* draw_call : render_queues[(size_t)RenderQueue::Opaque])
@@ -403,6 +412,10 @@ namespace core { namespace render {
 
 		case ShaderTextureName::ShadowMap:
 			return shadowmap_atlas_attachment->GetTexture(0).get();
+
+		case ShaderTextureName::EnvironmentCubemap:
+			return environment_cubemap.get();
+
 
 		default:
 			throw std::runtime_error("unknown texture");

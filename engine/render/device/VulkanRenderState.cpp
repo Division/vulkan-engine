@@ -423,7 +423,7 @@ namespace core { namespace Device {
 			utils::SmallVector<uint32_t, 4> dynamic_offsets;
 			dynamic_offsets.push_back(draw_call->dynamic_offset);
 			auto descriptor_set = is_depth ? draw_call->depth_only_descriptor_set : draw_call->descriptor_set;
-			command_buffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, current_pipeline->GetPipelineLayout(), DescriptorSet::Object, 1u, &draw_call->descriptor_set, dynamic_offsets.size(), dynamic_offsets.data());
+			command_buffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, current_pipeline->GetPipelineLayout(), DescriptorSet::Object, 1u, &descriptor_set, dynamic_offsets.size(), dynamic_offsets.data());
 		}
 
 		if (mesh->hasIndices())

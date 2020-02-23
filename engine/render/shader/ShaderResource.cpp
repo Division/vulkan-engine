@@ -9,6 +9,7 @@ const std::map<std::string, ShaderTextureName> SHADER_SAMPLER_NAMES =
 	{ "specular_map", ShaderTextureName::SpecularMap },
 	{ "shadow_map", ShaderTextureName::ShadowMap },
 	{ "projector_texture", ShaderTextureName::ProjectorTexture },
+	{ "environment_cubemap", ShaderTextureName::EnvironmentCubemap },
 };
 
 const std::map<std::string, ShaderBufferName> SHADER_BUFFER_NAMES = 

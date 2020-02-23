@@ -1,17 +1,106 @@
 #include "TextureLoader.h"
 #include "system/Logging.h"
+#include <filesystem>
+#include <lib/ktx/ktx.h>
+#include <lib/ktx/ktxvulkan.h>
+#include <lib/ktx/ktxint.h>
 
 using namespace core::Device;
 
-std::shared_ptr<Texture> loader::LoadTexture(const std::string &name, bool sRGB) {
-  int32_t w, h, channels;
-  auto data = stbi_load(name.c_str(), &w, &h, &channels, 4);
+std::unique_ptr<Texture> loader::LoadTexture(const std::string &name, bool sRGB) {
 
-  ENGLog("Loading texture %s", name.c_str());
+    auto path = std::filesystem::path(name);
+    auto extension = path.extension();
 
-  TextureInitializer initializer(w, h, 4, data, sRGB);
-  auto texture = std::make_shared<Texture>(initializer);
-  stbi_image_free(data);
+    ENGLog("Loading texture %s", name.c_str());
+    if (extension == ".ktx")
+    {
+        ktxTexture* texture;
+        KTX_error_code result = ktxTexture_CreateFromNamedFile(name.c_str(), KTX_TEXTURE_CREATE_LOAD_IMAGE_DATA_BIT, &texture);
+        
+        if (result == KTX_error_code::KTX_SUCCESS)
+        {
+            VkFormat vk_format = ktxTexture_GetVkFormat(texture);
+            ktx_uint8_t* image;
+            uint32_t num_iterations;
 
-  return texture;
+            TextureInitializer initializer(texture->baseWidth, texture->baseHeight, texture->baseDepth, texture->numLayers * texture->numFaces, (Format)vk_format, texture->numLevels);
+            initializer.SetData(texture->pData, texture->dataSize)
+                       .SetArray(texture->isArray)
+                       .SetCube(texture->isCubemap)
+                       .SetNumDimensions(texture->numDimensions);
+
+            auto element_size = ktxTexture_GetElementSize(texture);
+
+            for (int miplevel = 0; miplevel < texture->numLevels; miplevel++)
+            {
+                GLsizei width, height, depth;
+                ktx_uint32_t levelSize;
+                ktx_size_t offset;
+
+                /* Array textures have the same number of layers at each mip level. */
+                width = std::max(1u, texture->baseWidth >> miplevel);
+                height = std::max(1u, texture->baseHeight >> miplevel);
+                depth = std::max(1u, texture->baseDepth >> miplevel);
+
+                levelSize = (ktx_uint32_t)ktxTexture_levelSize(texture, miplevel);
+
+                /* All array layers are passed in a group because that is how
+                * GL & Vulkan need them. Hence no
+                *    for (layer = 0; layer < This->numLayers)
+                */
+
+                auto faceLodSize = (ktx_uint32_t)ktxTexture_faceLodSize(texture, miplevel);
+
+                /* All array layers are passed in a group because that is how
+                * GL & Vulkan need them. Hence no
+                *    for (layer = 0; layer < This->numLayers)
+                */
+                if (texture->isCubemap && !texture->isArray)
+                    num_iterations = texture->numFaces;
+                else
+                    num_iterations = 1;
+
+
+                for (int face = 0; face < num_iterations; ++face)
+                {
+                    /* And all z_slices are also passed as a group hence no
+                    *    for (slice = 0; slice < This->depth)
+                    */
+                    ktx_size_t offset;
+                    ktxTexture_GetImageOffset(texture, miplevel, 0, face, &offset);
+
+                    initializer.AddCopy(
+                        vk::BufferImageCopy(offset, 0, 0,
+                            vk::ImageSubresourceLayers(vk::ImageAspectFlagBits::eColor, miplevel, face, texture->numLayers),
+                            vk::Offset3D(0, 0, 0),
+                            vk::Extent3D(width, height, depth)
+                        ));
+                }
+
+            }
+
+            return std::make_unique<Texture>(initializer);
+
+        }
+        else
+        {
+            throw std::runtime_error("Error loading texture");
+        }
+
+    }
+    else
+    {
+        int32_t w, h, channels;
+        auto data = stbi_load(name.c_str(), &w, &h, &channels, 4);
+
+
+        TextureInitializer initializer(w, h, 4, data, sRGB);
+        auto texture = std::make_unique<Texture>(initializer);
+        stbi_image_free(data);
+
+        return texture;
+    }
+
+    return nullptr;
 };

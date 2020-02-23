@@ -11,10 +11,13 @@
 #include "objects/LightObject.h"
 #include "render/material/MaterialManager.h"
 #include "render/debug/DebugDraw.h"
+#include "render/texture/Texture.h"
+#include "loader/TextureLoader.h"
 
 Game::Game() = default;
 Game::~Game() = default;
 
+using namespace core;
 using namespace core::system;
 using namespace core::ECS;
 using namespace core::ECS::systems;
@@ -44,11 +47,15 @@ void Game::init()
 	manager = engine->GetEntityManager();
 	graph = engine->GetTransformGraph();
 
+	//lama_tex = loader::LoadTexture("resources/lama.jpg");
+	environment = loader::LoadTexture("resources/environment/skybox.ktx");
+	lama_tex = loader::LoadTexture("resources/lama.ktx");
+
 	camera = CreateGameObject<FollowCamera>();
 	camera->setFreeCamera(true);
 	
 	box_mesh = std::make_shared<Mesh>();
-	MeshGeneration::generateBox(box_mesh, 1, 1, 1);
+	MeshGeneration::generateBox(box_mesh.get(), 1, 1, 1);
 	box_mesh->calculateNormals();
 	std::vector<vec4> colors(box_mesh->vertexCount(), vec4(1, 0, 0, 1));
 	box_mesh->setColors(colors.data(), colors.size());
@@ -58,6 +65,7 @@ void Game::init()
 	material_no_light->lightingEnabled(false);
 	material_default = std::make_shared<Material>();
 	material_default->lightingEnabled(true);
+	material_default->texture0(lama_tex);
 
 	entity1 = CreateCubeEntity(vec3(0, 3, 0), 0);
 	entity2 = CreateCubeEntity(vec3(2, 0, 0), entity1);
@@ -85,6 +93,7 @@ void Game::update(float dt)
 	auto* transform1 = manager->GetComponent<components::Transform>(entity1);
 	transform1->Rotate(vec3(0, 0, 1), M_PI * dt);
 	
+
 	auto* debug_draw = core::Engine::Get()->GetDebugDraw();
 	debug_draw->DrawAABB(AABB(vec3(0, 0, 0), vec3(4, 4, 4)), vec4(1, 0, 0, 1));
 	debug_draw->DrawAABB(AABB(vec3(5, 5, 0), vec3(8, 8, 8)), vec4(0.5, 1, 0, 1));
@@ -96,5 +105,5 @@ void Game::update(float dt)
 
 void Game::cleanup()
 {
-	
+	material_default->texture0(nullptr);
 }

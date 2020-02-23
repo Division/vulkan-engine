@@ -18,6 +18,14 @@ class MeshObject;
 class PlayerController;
 class Material;
 
+namespace core
+{
+	namespace Device
+	{
+		class Texture;
+	}
+}
+
 class Game : public core::IGame {
 public:
 	Game();
@@ -39,6 +47,8 @@ private:
 	std::shared_ptr<Material> material_no_light;
 	std::shared_ptr<Material> material_default;
 	std::shared_ptr<Mesh> box_mesh;
+	std::shared_ptr<core::Device::Texture> lama_tex;
+	std::shared_ptr<core::Device::Texture> environment;
 
 	core::ECS::EntityManager* manager;
 	core::ECS::TransformGraph* graph;

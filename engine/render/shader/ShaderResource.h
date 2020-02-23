@@ -11,6 +11,7 @@ enum class ShaderTextureName : uint32_t
 	SpecularMap,
 	ShadowMap,
 	ProjectorTexture,
+	EnvironmentCubemap,
 	Unknown,
 	Count
 };

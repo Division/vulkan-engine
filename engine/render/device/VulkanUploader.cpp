@@ -59,7 +59,7 @@ namespace core { namespace Device {
 		);
 	}
 
-	void TransitionImageLayout(vk::CommandBuffer& command_buffer, vk::Image& image, vk::ImageLayout old_layout, vk::ImageLayout new_layout)
+	void TransitionImageLayout(vk::CommandBuffer& command_buffer, vk::Image& image, vk::ImageLayout old_layout, vk::ImageLayout new_layout, uint32_t mip_level_count, uint32_t layer_count)
 	{
 		vk::ImageMemoryBarrier barrier;
 		barrier.oldLayout = old_layout;
@@ -69,9 +69,9 @@ namespace core { namespace Device {
 		barrier.image = image;
 		barrier.subresourceRange.aspectMask = vk::ImageAspectFlagBits::eColor;
 		barrier.subresourceRange.baseMipLevel = 0;
-		barrier.subresourceRange.levelCount = 1;
+		barrier.subresourceRange.levelCount = mip_level_count;
 		barrier.subresourceRange.baseArrayLayer = 0;
-		barrier.subresourceRange.layerCount = 1;
+		barrier.subresourceRange.layerCount = layer_count;
 
 		vk::PipelineStageFlags source_stage;
 		vk::PipelineStageFlags destination_stage;
@@ -121,9 +121,9 @@ namespace core { namespace Device {
 
 	void VulkanUploader::ImageUpload::Process(vk::CommandBuffer& command_buffer, std::vector<std::unique_ptr<VulkanBuffer>>& buffers_in_upload)
 	{
-		TransitionImageLayout(command_buffer, dst_image, vk::ImageLayout::eUndefined, vk::ImageLayout::eTransferDstOptimal);
+		TransitionImageLayout(command_buffer, dst_image, vk::ImageLayout::eUndefined, vk::ImageLayout::eTransferDstOptimal, mip_count, array_count);
 		command_buffer.copyBufferToImage(src_buffer_pointer->Buffer(), dst_image, vk::ImageLayout::eTransferDstOptimal, copies.size(), copies.data());
-		TransitionImageLayout(command_buffer, dst_image, vk::ImageLayout::eTransferDstOptimal, vk::ImageLayout::eShaderReadOnlyOptimal);
+		TransitionImageLayout(command_buffer, dst_image, vk::ImageLayout::eTransferDstOptimal, vk::ImageLayout::eShaderReadOnlyOptimal, mip_count, array_count);
 
 		if (src_buffer)
 			buffers_in_upload.push_back(std::move(src_buffer));

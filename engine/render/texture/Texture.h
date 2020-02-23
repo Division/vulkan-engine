@@ -21,10 +21,18 @@ namespace core { namespace Device {
 			: width(width), height(height), data(data), sRGB(sRGB) 
 		{
 			format = channel_count == 4 ? Format::R8G8B8A8_unorm : Format::R8G8B8_unorm;
+			data_size = width * height * depth * (uint32_t)format_sizes.at(format) / 8;
 		}
 
-		TextureInitializer(uint32_t width, uint32_t height, uint32_t depth, uint32_t array_layers, Format format)
-			: width(width), height(height), depth(depth), array_layers(array_layers), format(format) {}
+		TextureInitializer(uint32_t width, uint32_t height, uint32_t depth, uint32_t array_layers, Format format, uint32_t mip_levels = 1)
+			: width(width), height(height), depth(depth), array_layers(array_layers), format(format), mip_levels(mip_levels) {}
+
+		TextureInitializer& TextureInitializer::SetData(void* data, size_t size)
+		{
+			this->data = data;
+			this->data_size = size;
+			return *this;
+		}
 
 		TextureInitializer& TextureInitializer::SetDepth()
 		{
@@ -43,6 +51,31 @@ namespace core { namespace Device {
 			mode = ColorTarget;
 			return *this;
 		}
+
+		TextureInitializer& TextureInitializer::SetNumDimensions(int dimensions)
+		{
+			num_dimensions = dimensions;
+			return *this;
+		}
+
+		TextureInitializer& TextureInitializer::SetCube(bool value)
+		{
+			is_cube = value;
+			return *this;
+		}
+
+		TextureInitializer& TextureInitializer::SetArray(bool value)
+		{
+			is_array = value;
+			return *this;
+		}
+
+		TextureInitializer& TextureInitializer::AddCopy(vk::BufferImageCopy copy)
+		{
+			copies.push_back(copy);
+			return *this;
+		}
+
 
 		// Allows mapping and dynamic uploading
 		TextureInitializer& SetDynamic()
@@ -63,7 +96,12 @@ namespace core { namespace Device {
 		uint32_t height = 0;
 		uint32_t depth = 1;
 		uint32_t array_layers = 1;
+		uint32_t mip_levels = 1;
 		Format format = Format::Undefined;
+		std::vector<vk::BufferImageCopy> copies;
+		uint32_t num_dimensions = 2;
+		bool is_array = false;
+		bool is_cube = false;
 	};
 
 	class Texture {
@@ -89,6 +127,7 @@ namespace core { namespace Device {
 		uint32_t height = 0;
 		uint32_t depth = 0;
 		uint32_t array_layers = 0;
+		uint32_t mip_levels = 0;
 		vk::DeviceSize size;
 		Format format;
 		VmaAllocation allocation;

@@ -40,7 +40,7 @@ void Game::init()
 	obj2 = CreateGameObject<MeshObject>();
 
 	std::shared_ptr<Mesh> mesh = std::shared_ptr<Mesh>(new Mesh());
-	MeshGeneration::generateBox(mesh, 1, 1, 1);
+	MeshGeneration::generateBox(mesh.get(), 1, 1, 1);
 	mesh->createBuffer();
 	auto material = std::make_shared<Material>();
 	material->lightingEnabled(false);

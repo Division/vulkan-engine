@@ -1,13 +1,17 @@
 #pragma once
 
 #include <vector>
+#include <deque>
 #include "Allocator.h"
 
 namespace core { namespace Memory {
 
 	template <typename T, Tag tag>
 	using Vector = std::vector<T, TaggedAllocator<T, tag>>;
-	
+
+	//template <typename T, Tag tag>
+	//using Deque = std::deque<T, TaggedAllocator<T, tag>>;
+
 	template <typename T, Tag tag>
 	class Pointer
 	{
@@ -19,6 +23,7 @@ namespace core { namespace Memory {
 		static Pointer<T, tag> Create(Args&&... args)
 		{
 			TaggedAllocator<T, tag> allocator;
+			sizeof(allocator);
 			T* instance = allocator.allocate(1);
 			new (instance) T(std::forward<Args>(args)...);
 			return Pointer<T, tag>(std::unique_ptr<T, void(*)(T*)>(instance, deleter));

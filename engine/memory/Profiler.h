@@ -8,6 +8,7 @@ namespace core { namespace Memory {
 	enum Tag : int
 	{
 		Render = 0,
+		JobSystem,
 		Texture,
 		ECS,
 		Unknown,

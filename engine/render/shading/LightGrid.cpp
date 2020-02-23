@@ -242,8 +242,12 @@ void LightGrid::upload()
 		}
 		currentOffset += gridBufferPointer[i].decalCount;
 	}
+
     light_grid[0]->SetUploadSize(light_grid_size);
 	light_grid[0]->Unmap();
+    
+    if (!temp_data.size())
+        return;
 
 	ResizeBuffer(light_index, temp_data.size(), true);
 	auto light_index_pointer = (char*)light_index[0]->Map();

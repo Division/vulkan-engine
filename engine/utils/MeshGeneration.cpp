@@ -6,7 +6,17 @@
 #include <vector>
 #include <algorithm>
 
-void MeshGeneration::generateSphere(MeshPtr mesh, int parallelCount, int meridianCount, float radius) {
+uint32_t sign(float v)
+{
+    return v > 0 ? 1 : -1;
+}
+
+uint32_t sign01(float v)
+{
+    return (sign(v) + 1) / 2;
+}
+
+void MeshGeneration::generateSphere(Mesh* mesh, int parallelCount, int meridianCount, float radius) {
   std::vector<vec3> vertices;
   std::vector<uint16_t> indices;
 
@@ -34,7 +44,7 @@ void MeshGeneration::generateSphere(MeshPtr mesh, int parallelCount, int meridia
   mesh->setIndices(indices);
 }
 
-void MeshGeneration::generateBox(MeshPtr mesh, float sizeX, float sizeY, float sizeZ) {
+void MeshGeneration::generateBox(Mesh* mesh, float sizeX, float sizeY, float sizeZ) {
   auto halfX = sizeX * 0.5f;
   auto halfY = sizeY * 0.5f;
   auto halfZ = sizeZ * 0.5f;
@@ -59,8 +69,11 @@ void MeshGeneration::generateBox(MeshPtr mesh, float sizeX, float sizeY, float s
     7, 3, 6, 6, 3, 2  // +z
   };
 
+  std::vector<vec2> tex_coords;
   std::vector<vec3> vertices;
   std::vector<uint16_t> indices;
+
+
 
   // duplicate vertices
   for (int i = 0; i < 12; i++) {
@@ -76,16 +89,25 @@ void MeshGeneration::generateBox(MeshPtr mesh, float sizeX, float sizeY, float s
 							   srcVertices[srcIndices[i * 3 + 2] * 3 + 1],
 							   srcVertices[srcIndices[i * 3 + 2] * 3 + 2]));
 	
+
 	indices.push_back(i * 3);
 	indices.push_back(i * 3 + 1);
 	indices.push_back(i * 3 + 2);
   }
 
+  for (int i = 0; i < 12; i++)
+      tex_coords.emplace_back(vec2(sign01(vertices[i].x), sign01(vertices[i].z)));
+  for (int i = 12; i < 24; i++)
+      tex_coords.emplace_back(vec2(sign01(vertices[i].y), sign01(vertices[i].z)));
+  for (int i = 24; i < 36; i++)
+      tex_coords.emplace_back(vec2(sign01(vertices[i].x), sign01(vertices[i].y)));
+
   mesh->setVertices(vertices);
+  mesh->setTexCoord0(tex_coords);
   mesh->setIndices(indices);
 }
 
-void MeshGeneration::generateCone(MeshPtr mesh, float height, float radius, int segments) {
+void MeshGeneration::generateCone(Mesh* mesh, float height, float radius, int segments) {
   vec3 origin = vec3(0,0,0);
   vec3 baseCenter = vec3(0, 0, -height);
 
@@ -107,11 +129,11 @@ void MeshGeneration::generateCone(MeshPtr mesh, float height, float radius, int 
   mesh->setVertices(vertices);
 }
 
-void MeshGeneration::generateFullScreenQuad(MeshPtr mesh) {
+void MeshGeneration::generateFullScreenQuad(Mesh* mesh) {
   generateQuad(mesh, vec2(2, 2));
 }
 
-void MeshGeneration::generateQuad(MeshPtr mesh, vec2 size, vec2 origin) {
+void MeshGeneration::generateQuad(Mesh* mesh, vec2 size, vec2 origin) {
   auto halfSize = vec3(size / 2.0f, 0);
   auto offset = vec3((vec2(0.5f, 0.5f) - origin) * size, 0);
 

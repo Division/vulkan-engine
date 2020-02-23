@@ -26,6 +26,33 @@ set(ENGINE_SOURCES
 	lib/imgui/imstb_rectpack.h
 	lib/imgui/imstb_textedit.h
 	lib/imgui/imstb_truetype.h
+	lib/ktx/checkheader.c
+	lib/ktx/errstr.c
+	lib/ktx/filestream.c
+	#lib/ktx/glloader.c
+	lib/ktx/hashlist.c
+	lib/ktx/hashtable.c
+	lib/ktx/memstream.c
+	lib/ktx/swap.c
+	lib/ktx/texture.c
+	#lib/ktx/writer.c
+	#lib/ktx/writer_v1.c
+	#lib/ktx/etcdec.cxx
+    #lib/ktx/etcunpack.cxx
+	lib/ktx/ktx.h
+	lib/ktx/filestream.h
+	lib/ktx/gl_format.h
+	lib/ktx/gl_funcptrs.h
+	lib/ktx/gles1_funcptrs.h
+	lib/ktx/gles2_funcptrs.h
+	lib/ktx/gles3_funcptrs.h
+	lib/ktx/ktxgl.h
+	lib/ktx/ktxint.h
+	lib/ktx/memstream.h
+	lib/ktx/stream.h
+	lib/ktx/uthash.h
+	lib/ktx/vkloader.c
+	lib/ktx/vk_funcs.c
 	Engine.h
 	Engine.cpp
 	IGame.h
@@ -52,6 +79,8 @@ set(ENGINE_SOURCES
 	memory/Profiler.cpp
 	memory/Allocator.h
 	memory/Allocator.cpp
+	memory/PoolAllocator.h
+	memory/PoolAllocator.cpp
 	memory/Containers.h
 	render/device/VkObjects.h
 	render/device/VkObjects.cpp
@@ -120,6 +149,8 @@ set(ENGINE_SOURCES
 	render/shading/LightGrid.cpp
 	render/shading/ShadowMap.h
 	render/shading/ShadowMap.cpp
+	render/effects/Skybox.h
+	render/effects/Skybox.cpp
 	render/mesh/Mesh.h
 	render/mesh/Mesh.cpp
 	render/texture/Texture.h
@@ -167,6 +198,8 @@ set(ENGINE_SOURCES
 	system/utils.h
 	system/Input.h
 	system/Input.cpp
+	system/JobSystem.h
+	system/JobSystem.cpp
 	utils/Math.h
 	utils/DataStructures.h
 	utils/StringUtils.h
@@ -214,6 +247,9 @@ set(TEST_SOURCES
 	tests/test_systems.cpp
 	tests/test_transform_system.cpp
 	tests/test_containers.cpp
+	tests/test_allocators.cpp
+	tests/test_job_system.cpp
+	tests/test_ktx.cpp
 )
 
 add_executable(engine_tests ${TEST_SOURCES})

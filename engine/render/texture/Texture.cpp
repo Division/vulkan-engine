@@ -21,9 +21,31 @@ namespace core { namespace Device {
 	{
 		auto image_view_info = vk::ImageViewCreateInfo({}, image, vk::ImageViewType::e2D, vk::Format(initializer.format));
 		if (initializer.mode == TextureInitializer::DepthBuffer)
-			image_view_info.setSubresourceRange(vk::ImageSubresourceRange(vk::ImageAspectFlagBits::eDepth, 0, 1, 0, 1));
+			image_view_info.setSubresourceRange(vk::ImageSubresourceRange(vk::ImageAspectFlagBits::eDepth, 0, initializer.mip_levels, 0, initializer.array_layers));
 		else
-			image_view_info.setSubresourceRange(vk::ImageSubresourceRange(vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1));
+		{
+			image_view_info.setSubresourceRange(vk::ImageSubresourceRange(vk::ImageAspectFlagBits::eColor, 0, initializer.mip_levels, 0, initializer.array_layers));
+			switch (initializer.num_dimensions)
+			{
+				case 1:
+					image_view_info.setViewType(initializer.is_array ? vk::ImageViewType::e1DArray : vk::ImageViewType::e1D);
+					break;
+				case 2:
+					image_view_info.setViewType(initializer.is_array ? vk::ImageViewType::e2DArray : vk::ImageViewType::e2D);
+					break;
+				case 3:
+					image_view_info.setViewType(vk::ImageViewType::e3D);
+					break;
+				default:
+					assert(false);
+			}
+
+			if (initializer.is_cube)
+			{
+				image_view_info.setViewType(initializer.is_array ? vk::ImageViewType::eCubeArray : vk::ImageViewType::eCube);
+			}
+				
+		}
 
 		image_view_info.setComponents(vk::ComponentMapping(vk::ComponentSwizzle::eR, vk::ComponentSwizzle::eG, vk::ComponentSwizzle::eB, vk::ComponentSwizzle::eA));
 
@@ -40,10 +62,11 @@ namespace core { namespace Device {
 		create_info.extent.width = initializer.width;
 		create_info.extent.height = initializer.height;
 		create_info.extent.depth = initializer.depth;
-		create_info.mipLevels = 1;
+		create_info.mipLevels = initializer.mip_levels;
 		create_info.arrayLayers = initializer.array_layers;
 		create_info.samples = VK_SAMPLE_COUNT_1_BIT;
 		create_info.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+		create_info.flags = 0;
 
 		switch (initializer.mode)
 		{
@@ -56,9 +79,13 @@ namespace core { namespace Device {
 		case TextureInitializer::ColorTarget:
 			create_info.usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 			break;
+
 		default:
 			throw std::runtime_error("unknown mode");
 		}
+
+		if (initializer.is_cube)
+			create_info.flags |= VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT;
 
 		if (initializer.force_sampled)
 			create_info.usage |= VK_IMAGE_USAGE_SAMPLED_BIT;
@@ -66,7 +93,6 @@ namespace core { namespace Device {
 		create_info.queueFamilyIndexCount = 0;
 		create_info.pQueueFamilyIndices = NULL;
 		create_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-		create_info.flags = 0;
 
 		return create_info;
 	}
@@ -89,9 +115,12 @@ namespace core { namespace Device {
 		width = initializer.width;
 		height = initializer.height;
 		array_layers = initializer.array_layers;
+		mip_levels = initializer.mip_levels;
 		depth = initializer.depth;
 		format = initializer.format;
-		size = width * height * depth * (uint32_t)format_sizes.at(format) / 8;
+		size = initializer.data_size;
+		if (!size)
+			size = width * height * depth * (uint32_t)format_sizes.at(format) / 8;
 
 		auto allocator = Engine::GetVulkanContext()->GetAllocator();
 		auto& device = Engine::GetVulkanDevice();
@@ -128,7 +157,7 @@ namespace core { namespace Device {
 			auto upload_staging_buffer = std::make_unique<VulkanBuffer>(
 				VulkanBufferInitializer(size).SetStaging().Data(initializer.data)
 			);
-			uploader->AddImageToUpload(std::move(upload_staging_buffer), image, 1, array_layers, GetCopies());
+			uploader->AddImageToUpload(std::move(upload_staging_buffer), image, mip_levels, array_layers, initializer.copies.empty() ? GetCopies() : initializer.copies);
 		}
 	}
 
@@ -145,7 +174,7 @@ namespace core { namespace Device {
 	{
 		staging_buffers[current_staging_buffer]->Unmap();
 		auto* uploader = Engine::GetVulkanContext()->GetUploader();
-		uploader->AddImageToUpload(staging_buffers[current_staging_buffer].get(), image, 1, array_layers, GetCopies());
+		uploader->AddImageToUpload(staging_buffers[current_staging_buffer].get(), image, 1, array_layers, GetCopies()); // TODO: fix that
 
 		current_staging_buffer = (current_staging_buffer + 1) % caps::MAX_FRAMES_IN_FLIGHT;
 		mapped_pointer = nullptr;

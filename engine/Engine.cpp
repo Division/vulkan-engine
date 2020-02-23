@@ -84,6 +84,7 @@ namespace core
 		game = nullptr;
 		input = nullptr;
 		scene = nullptr;
+		material_manager = nullptr;
 		scene_renderer = nullptr;
 		shader_cache = nullptr;
 		debug_draw = nullptr;
