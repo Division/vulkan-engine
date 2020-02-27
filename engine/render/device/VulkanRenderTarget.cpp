@@ -25,7 +25,7 @@ namespace core { namespace Device {
 		switch (type)
 		{
 		case Type::Color:
-			texture_init.SetColorTarget();
+			texture_init.SetColorTarget().SetSampled();
 			for (int i = 0; i < frames.size(); i++)
 			{
 				frames[i].color_texture = std::make_shared<Texture>(texture_init);

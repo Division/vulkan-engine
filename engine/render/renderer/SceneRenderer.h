@@ -48,6 +48,7 @@ namespace core { namespace render {
 	namespace effects
 	{
 		class Skybox;
+		class PostProcess;
 	}
 
 	namespace graph
@@ -102,11 +103,13 @@ namespace core { namespace render {
 
 		std::unique_ptr<core::Device::VulkanRenderTargetAttachment> main_depth_attachment;
 		std::unique_ptr<core::Device::VulkanRenderTargetAttachment> shadowmap_atlas_attachment;
+		std::unique_ptr<core::Device::VulkanRenderTargetAttachment> main_color_attachment;
 
 		uint32_t depth_only_fragment_shader_hash;
 		std::vector<std::pair<IShadowCaster*, core::ECS::systems::CullingSystem>> shadow_casters;
 
 		std::unique_ptr<effects::Skybox> skybox;
+		std::unique_ptr<effects::PostProcess> post_process;
 	};
 
 } }

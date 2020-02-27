@@ -5,7 +5,23 @@
 
 namespace core { namespace Device {
 
-	void ShaderBindings::AddTextureBinding(unsigned set, unsigned index, Texture* texture)
+	void ShaderBindings::AddTextureBindingSafe(ShaderProgram::BindingAddress address, const Texture* texture)
+	{
+		if (address.set == -1 || address.binding == -1)
+			return;
+
+		AddTextureBinding(address.set, address.binding, texture);
+	}
+
+	void ShaderBindings::AddBufferBindingSafe(ShaderProgram::BindingAddress address, size_t offset, size_t size, vk::Buffer buffer)
+	{
+		if (address.set == -1 || address.binding == -1)
+			return;
+
+		AddBufferBinding(address.set, address.binding, offset, size, buffer);
+	}
+
+	void ShaderBindings::AddTextureBinding(unsigned set, unsigned index, const Texture* texture)
 	{
 		texture_bindings.push_back(TextureBinding{ (unsigned char)set, (unsigned char)index, texture });
 	}

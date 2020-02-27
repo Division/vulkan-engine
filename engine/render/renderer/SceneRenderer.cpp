@@ -39,6 +39,7 @@
 #include "SceneBuffers.h"
 #include "objects/Camera.h"
 #include "render/effects/Skybox.h"
+#include "render/effects/PostProcess.h"
 
 #include <functional>
 
@@ -87,12 +88,16 @@ namespace core { namespace render {
 		//environment_cubemap = loader::LoadTexture("resources/lama.ktx"); // TODO: assign via setter
 		skybox = std::make_unique<effects::Skybox>(*shader_cache);
 		skybox->SetTexture(environment_cubemap.get());
+
+		post_process = std::make_unique<effects::PostProcess>(*shader_cache);
 	}
 
 	void SceneRenderer::OnRecreateSwapchain(int32_t width, int32_t height)
 	{
 		render_graph->ClearCache();
 		main_depth_attachment = std::make_unique<VulkanRenderTargetAttachment>(VulkanRenderTargetAttachment::Type::Depth, width, height, Format::D24_unorm_S8_uint);
+		main_color_attachment = std::make_unique<VulkanRenderTargetAttachment>(VulkanRenderTargetAttachment::Type::Color, width, height, Format::R8G8B8A8_unorm);
+		post_process->OnRecreateSwapchain(width, height);
 	}
 
 	void SceneRenderer::CreateDrawCalls()
@@ -205,9 +210,11 @@ namespace core { namespace render {
 		};
 
 		auto* main_color = render_graph->RegisterAttachment(*swapchain->GetColorAttachment());
+		auto* main_offscreen_color = render_graph->RegisterAttachment(*main_color_attachment);
 		auto* main_depth = render_graph->RegisterAttachment(*main_depth_attachment);
 		auto* shadow_map = render_graph->RegisterAttachment(*shadowmap_atlas_attachment);
 		auto* compute_buffer_resource = render_graph->RegisterBuffer(*compute_buffer->GetBuffer());
+		post_process->PrepareRendering(*render_graph);
 
 		/*auto compute_pass_info = render_graph->AddPass<PassInfo>("compute pass", [&](graph::IRenderPassBuilder& builder)
 		{
@@ -282,6 +289,7 @@ namespace core { namespace render {
 			PassInfo result;
 			builder.AddInput(*depth_pre_pass_info.depth_output, graph::InputUsage::DepthAttachment);
 			builder.AddInput(*shadow_map_info.depth_output);
+			//result.color_output = builder.AddOutput(*main_offscreen_color)->Clear(vec4(0));
 			result.color_output = builder.AddOutput(*main_color)->Clear(vec4(0));
 			return result;
 		}, [&](VulkanRenderState& state)
@@ -327,6 +335,8 @@ namespace core { namespace render {
 
 			DebugUI::Render(state);
 		});
+
+		//post_process->AddPostProcess(*render_graph, *main_pass_info.color_output, *main_color);
 
 		render_graph->Prepare();
 		render_graph->Render();

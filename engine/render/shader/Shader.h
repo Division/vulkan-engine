@@ -8,6 +8,8 @@
 namespace core { namespace Device {
 	
 	class ReflectionInfo;
+	class ShaderBindings;
+	class Texture;
 
 	class ShaderModule
 	{
@@ -68,6 +70,7 @@ namespace core { namespace Device {
 			std::vector<BindingData> bindings;
 			uint32_t layout_hash = 0;
 			bool Empty() const { return bindings.empty(); }
+			uint32_t GetBindingIndexByName(std::string name);
 		};
 
 		struct PushConstants
@@ -82,6 +85,7 @@ namespace core { namespace Device {
 		static const unsigned max_descriptor_sets = 4;
 
 		static uint32_t CalculateHash(uint32_t fragment_hash, uint32_t vertex_hash, uint32_t compute_hash = 0);
+		BindingAddress GetBindingAddress(const std::string& name);
 
 		ShaderProgram();
 		void AddModule(ShaderModule* shader_module, Stage stage);

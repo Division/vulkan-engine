@@ -16,7 +16,7 @@ namespace core { namespace Device {
 		{
 			unsigned char set;
 			unsigned char index;
-			Texture* texture;
+			const Texture* texture;
 		};
 
 		struct BufferBinding
@@ -38,8 +38,10 @@ namespace core { namespace Device {
 		utils::SmallVectorBase<TextureBinding>& GetTextureBindings() { return texture_bindings; }
 		const utils::SmallVectorBase<BufferBinding>& GetBufferBindings() const { return buffer_bindings; }
 		utils::SmallVectorBase<BufferBinding>& GetBufferBindings() { return buffer_bindings; }
-		
-		void AddTextureBinding(unsigned set, unsigned index, Texture* texture);
+
+		void AddTextureBindingSafe(ShaderProgram::BindingAddress address, const Texture* texture);
+		void AddBufferBindingSafe(ShaderProgram::BindingAddress address, size_t offset, size_t size, vk::Buffer buffer);
+		void AddTextureBinding(unsigned set, unsigned index, const Texture* texture);
 		void AddBufferBinding(unsigned set, unsigned index, size_t offset, size_t size, vk::Buffer buffer);
 		int GetBindingIndex(uint32_t index, ShaderProgram::BindingType type);
 		void Clear();

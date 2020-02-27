@@ -2,9 +2,33 @@
 #include "CommonIncludes.h"
 #include "Engine.h"
 #include "utils/Math.h"
+#include "ShaderBindings.h"
 
 namespace core { namespace Device {
 	
+	uint32_t ShaderProgram::DescriptorSet::GetBindingIndexByName(std::string name)
+	{
+		for (uint32_t i = 0; i < bindings.size(); i++)
+			if (bindings[i].name == name)
+				return i;
+
+		return (uint32_t)-1;
+	}
+
+	ShaderProgram::BindingAddress ShaderProgram::GetBindingAddress(const std::string& name)
+	{
+		for (int set = 0; set < descriptor_sets.size(); set++)
+		{
+			auto index = descriptor_sets[set].GetBindingIndexByName(name);
+			if (index != -1)
+			{
+				return { (unsigned)set, (unsigned)index };
+			}
+		}
+
+		return { (unsigned)-1, (unsigned)-1 };
+	}
+
 	ShaderModule::ShaderModule(void* data, size_t size, uint32_t hash)
 		: hash(hash)
 	{

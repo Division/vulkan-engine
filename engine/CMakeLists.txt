@@ -151,6 +151,8 @@ set(ENGINE_SOURCES
 	render/shading/ShadowMap.cpp
 	render/effects/Skybox.h
 	render/effects/Skybox.cpp
+	render/effects/PostProcess.h
+	render/effects/PostProcess.cpp
 	render/mesh/Mesh.h
 	render/mesh/Mesh.cpp
 	render/texture/Texture.h
