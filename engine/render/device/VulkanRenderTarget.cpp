@@ -7,14 +7,14 @@
 
 namespace core { namespace Device {
 
-	vk::ImageView VulkanRenderTargetAttachment::GetImageView(uint32_t frame) const 
+	vk::ImageView VulkanRenderTargetAttachment::GetImageView() const 
 	{ 
-		return type == Type::Color ? frames[frame].image_view : depth_texture->GetImageView(); 
+		return type == Type::Color ? frame.image_view : depth_texture->GetImageView(); 
 	}
 
-	vk::Image VulkanRenderTargetAttachment::GetImage(uint32_t frame) const 
+	vk::Image VulkanRenderTargetAttachment::GetImage() const 
 	{ 
-		return type == Type::Color ? frames[frame].image : depth_texture->GetImage(); 
+		return type == Type::Color ? frame.image : depth_texture->GetImage(); 
 	}
 
 	VulkanRenderTargetAttachment::VulkanRenderTargetAttachment(Type type, uint32_t width, uint32_t height, Format format, uint32_t sample_count)
@@ -26,12 +26,9 @@ namespace core { namespace Device {
 		{
 		case Type::Color:
 			texture_init.SetColorTarget().SetSampled();
-			for (int i = 0; i < frames.size(); i++)
-			{
-				frames[i].color_texture = std::make_shared<Texture>(texture_init);
-				frames[i].image_view = frames[i].color_texture->GetImageView();
-				frames[i].image = frames[i].color_texture->GetImage();
-			}
+			frame.color_texture = std::make_shared<Texture>(texture_init);
+			frame.image_view = frame.color_texture->GetImageView();
+			frame.image = frame.color_texture->GetImage();
 			break;
 
 		case Type::Depth:
@@ -41,19 +38,16 @@ namespace core { namespace Device {
 		}
 	}
 
-	VulkanRenderTargetAttachment::VulkanRenderTargetAttachment(VulkanSwapchain* swapchain)
+	VulkanRenderTargetAttachment::VulkanRenderTargetAttachment(VulkanSwapchain* swapchain, uint32_t image_index)
 		: swapchain(swapchain), width(swapchain->GetWidth()), height(swapchain->GetHeight()), type(Type::Color), format(swapchain->GetImageFormat())
 	{
 		auto device = Engine::GetVulkanDevice();
 		auto& swapchain_images = swapchain->GetImages();
-		for (int i = 0; i < frames.size(); i++)
-		{
-			vk::ImageSubresourceRange range(vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1);
-			vk::ImageViewCreateInfo view_create_info({}, swapchain_images[i], vk::ImageViewType::e2D, (vk::Format)format, vk::ComponentMapping(), range);
-			frames[i].swapchain_image_view = device.createImageViewUnique(view_create_info);
-			frames[i].image_view = frames[i].swapchain_image_view.get();
-			frames[i].image = swapchain_images[i];
-		}
+		vk::ImageSubresourceRange range(vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1);
+		vk::ImageViewCreateInfo view_create_info({}, swapchain_images[image_index], vk::ImageViewType::e2D, (vk::Format)format, vk::ComponentMapping(), range);
+		frame.swapchain_image_view = device.createImageViewUnique(view_create_info);
+		frame.image_view = frame.swapchain_image_view.get();
+		frame.image = swapchain_images[image_index];
 	}
 
 	VulkanRenderTargetInitializer::VulkanRenderTargetInitializer(VulkanSwapchain* swapchain)
@@ -77,7 +71,7 @@ namespace core { namespace Device {
 		VulkanRenderPassInitializer render_pass_initializer;
 
 		const vk::Image* images = nullptr;
-		std::vector<vk::ImageView> attachments[caps::MAX_FRAMES_IN_FLIGHT];
+		std::vector<vk::ImageView> attachments;
 		for (int i = 0; i < color_attachment_count; i++)
 		{
 			assert(color_attachments[i]->GetType() == VulkanRenderTargetAttachment::Type::Color);
@@ -87,8 +81,7 @@ namespace core { namespace Device {
 			auto final_layout = color_attachments[i]->IsSwapchain() ? ImageLayout::PresentSrc : ImageLayout::ColorAttachmentOptimal;
 			render_pass_initializer.SetImageLayout(ImageLayout::Undefined, final_layout);
 
-			for (int j = 0; j < caps::MAX_FRAMES_IN_FLIGHT; j++)
-				attachments[j].push_back(color_attachments[i]->GetImageView(j));
+			attachments.push_back(color_attachments[i]->GetImageView());
 		}
 
 		if (depth_attachment)
@@ -99,17 +92,13 @@ namespace core { namespace Device {
 			render_pass_initializer.SetLoadStoreOp(AttachmentLoadOp::DontCare, AttachmentStoreOp::Store);
 			render_pass_initializer.SetImageLayout(ImageLayout::Undefined, ImageLayout::DepthStencilAttachmentOptimal);
 			
-			for (int j = 0; j < caps::MAX_FRAMES_IN_FLIGHT; j++)
-				attachments[j].push_back(depth_attachment->GetImageView(j));
+			attachments.push_back(depth_attachment->GetImageView());
 		}
 
 		VulkanRenderPass render_pass(render_pass_initializer);
 
-		for (int j = 0; j < caps::MAX_FRAMES_IN_FLIGHT; j++)
-		{
-			vk::FramebufferCreateInfo framebuffer_create_info({}, render_pass.GetRenderPass(), attachments[j].size(), attachments[j].data(), width, height, 1);
-			framebuffers[j] = device.createFramebufferUnique(framebuffer_create_info);
-		}
+		vk::FramebufferCreateInfo framebuffer_create_info({}, render_pass.GetRenderPass(), attachments.size(), attachments.data(), width, height, 1);
+		framebuffer = device.createFramebufferUnique(framebuffer_create_info);
 	}
 
 } }

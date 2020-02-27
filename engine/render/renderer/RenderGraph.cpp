@@ -272,7 +272,7 @@ namespace core { namespace render { namespace graph {
 		
 		auto* attachment = resource.GetAttachment();
 		bool is_swapchain = attachment->IsSwapchain();
-		auto image = attachment->GetImage(context->GetCurrentFrame());
+		auto image = attachment->GetImage();
 		auto& command_buffer = state.GetCurrentCommandBuffer()->GetCommandBuffer();
 
 		bool is_color = attachment->GetType() == VulkanRenderTargetAttachment::Type::Color;

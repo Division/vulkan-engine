@@ -20,7 +20,7 @@ namespace core { namespace Device {
 		uint32_t GetWidth() const { return width; }
 		uint32_t GetHeight() const { return height; }
 		const std::vector<vk::Image>& GetImages() const { return images; }
-		VulkanRenderTargetAttachment* GetColorAttachment() const { return color_attachment.get(); }
+		VulkanRenderTargetAttachment* GetColorAttachment(uint32_t index) const { return color_attachments[index].get(); }
 
 	private:
 		vk::UniqueSwapchainKHR swapchain;
@@ -30,7 +30,7 @@ namespace core { namespace Device {
 		std::vector<vk::Image> images;
 		vk::Format image_format;
 		uint32_t sample_count = 1;
-		std::unique_ptr<VulkanRenderTargetAttachment> color_attachment;
+		std::array<std::unique_ptr<VulkanRenderTargetAttachment>, 2> color_attachments;
 	};
 
 } }

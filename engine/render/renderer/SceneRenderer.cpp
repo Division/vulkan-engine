@@ -198,7 +198,6 @@ namespace core { namespace render {
 		object_params_buffer->Unmap();
 		skinning_matrices_buffer->Unmap();
 
-		auto* swapchain = context->GetSwapchain();
 		// Render Graph
 		render_graph->Clear();
 		
@@ -209,7 +208,8 @@ namespace core { namespace render {
 			graph::DependencyNode* compute_output = nullptr;
 		};
 
-		auto* main_color = render_graph->RegisterAttachment(*swapchain->GetColorAttachment());
+		auto* swapchain = context->GetSwapchain();
+		auto* main_color = render_graph->RegisterAttachment(*swapchain->GetColorAttachment(context->GetCurrentFrame()));
 		auto* main_offscreen_color = render_graph->RegisterAttachment(*main_color_attachment);
 		auto* main_depth = render_graph->RegisterAttachment(*main_depth_attachment);
 		auto* shadow_map = render_graph->RegisterAttachment(*shadowmap_atlas_attachment);
@@ -421,7 +421,7 @@ namespace core { namespace render {
 			return material.texture0().get();
 
 		case ShaderTextureName::ShadowMap:
-			return shadowmap_atlas_attachment->GetTexture(0).get();
+			return shadowmap_atlas_attachment->GetTexture().get();
 
 		case ShaderTextureName::EnvironmentCubemap:
 			return environment_cubemap.get();

@@ -225,12 +225,11 @@ namespace core { namespace Device {
 
 		if (dirty_flags & (int)DirtyFlags::RenderPass)
 		{
-			auto* context = Engine::GetVulkanContext();
 			auto attachment_count = std::min(current_render_target->GetColorAttachmentCount() + current_render_target->HasDepth() ? 1u : 0u, (uint32_t)clear_values.size());
 
 			vk::RenderPassBeginInfo render_pass_begin_info(
 				current_render_pass->GetRenderPass(),
-				current_render_target->GetFramebuffer(context->GetCurrentFrame()),
+				current_render_target->GetFramebuffer(),
 				vk::Rect2D(vk::Offset2D(0, 0), vk::Extent2D(current_render_target->GetWidth(), current_render_target->GetHeight())),
 				attachment_count, clear_values.data()
 			);

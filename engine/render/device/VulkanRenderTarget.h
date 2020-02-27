@@ -29,11 +29,11 @@ namespace core { namespace Device {
 			std::shared_ptr<Texture> color_texture;
 		};
 
-		vk::ImageView GetImageView(uint32_t frame) const;
-		vk::Image GetImage(uint32_t frame) const;
-		std::shared_ptr<Texture>& GetTexture(uint32_t frame) { return type == Type::Depth ? depth_texture : frames[frame].color_texture; }
+		vk::ImageView GetImageView() const;
+		vk::Image GetImage() const;
+		std::shared_ptr<Texture>& GetTexture() { return type == Type::Depth ? depth_texture : frame.color_texture; }
 		VulkanRenderTargetAttachment(Type type, uint32_t width, uint32_t height, Format format, uint32_t sample_count = 1);
-		VulkanRenderTargetAttachment(VulkanSwapchain* swapchain);
+		VulkanRenderTargetAttachment(VulkanSwapchain* swapchain, uint32_t image_index);
 		bool IsSwapchain() const { return (bool)swapchain; }
 
 		Format GetFormat() const { return format; }
@@ -49,7 +49,7 @@ namespace core { namespace Device {
 
 		VulkanSwapchain* swapchain = nullptr;
 		std::shared_ptr<Texture> depth_texture;
-		std::array<Frame, caps::MAX_FRAMES_IN_FLIGHT> frames;
+		Frame frame;
 	};
 
 	struct VulkanRenderTargetInitializer {
@@ -115,7 +115,7 @@ namespace core { namespace Device {
 
 		uint32_t GetWidth() const { return width; }
 		uint32_t GetHeight() const { return height; }
-		vk::Framebuffer GetFramebuffer(uint32_t index) const { return framebuffers[index].get(); }
+		vk::Framebuffer GetFramebuffer() const { return framebuffer.get(); }
 		bool IsSwapchain() const { return swapchain != nullptr; }
 		bool HasColor() const { return color_attachment_count > 0; }
 		bool HasDepth() const { return (bool)depth_attachment; }
@@ -125,7 +125,7 @@ namespace core { namespace Device {
 		uint32_t color_attachment_count = 0;
 		std::array<VulkanRenderTargetAttachment*, caps::max_color_attachments> color_attachments;
 		VulkanRenderTargetAttachment* depth_attachment;
-		std::array<vk::UniqueFramebuffer, caps::MAX_FRAMES_IN_FLIGHT> framebuffers;
+		vk::UniqueFramebuffer framebuffer;
 
 		uint32_t sample_count = 1;
 		uint32_t width = 0;

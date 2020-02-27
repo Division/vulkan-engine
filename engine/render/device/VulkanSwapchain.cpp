@@ -135,7 +135,9 @@ namespace core { namespace Device {
 		height = extent.height;
 
 		images = device.getSwapchainImagesKHR(swapchain.get());
-		color_attachment = std::make_unique<VulkanRenderTargetAttachment>(this);
+		assert(images.size() == 2); // TODO: handle swapchain images properly
+		color_attachments[0] = std::make_unique<VulkanRenderTargetAttachment>(this, 0);
+		color_attachments[1] = std::make_unique<VulkanRenderTargetAttachment>(this, 1);
 	}
 
 } }
