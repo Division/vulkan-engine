@@ -289,8 +289,8 @@ namespace core { namespace render {
 			PassInfo result;
 			builder.AddInput(*depth_pre_pass_info.depth_output, graph::InputUsage::DepthAttachment);
 			builder.AddInput(*shadow_map_info.depth_output);
-			//result.color_output = builder.AddOutput(*main_offscreen_color)->Clear(vec4(0));
-			result.color_output = builder.AddOutput(*main_color)->Clear(vec4(0));
+			result.color_output = builder.AddOutput(*main_offscreen_color)->Clear(vec4(0));
+			//result.color_output = builder.AddOutput(*main_color)->Clear(vec4(0));
 			return result;
 		}, [&](VulkanRenderState& state)
 		{
@@ -336,7 +336,7 @@ namespace core { namespace render {
 			DebugUI::Render(state);
 		});
 
-		//post_process->AddPostProcess(*render_graph, *main_pass_info.color_output, *main_color);
+		post_process->AddPostProcess(*render_graph, *main_pass_info.color_output, *main_color);
 
 		render_graph->Prepare();
 		render_graph->Render();

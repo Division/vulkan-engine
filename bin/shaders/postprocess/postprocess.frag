@@ -5,7 +5,13 @@ layout(location = 1) in vec2 frag_texcoord;
 
 layout(location = 0) out vec4 out_color;
 
-void main() 
+layout(set = 0, binding = 0) uniform sampler2D src_texture;
+
+void main()
 {
-	out_color = vec4(frag_texcoord.x,frag_texcoord.y,1,1);
+	vec4 src_sample = texture(src_texture, frag_texcoord);
+
+	float luminance = dot(src_sample, src_sample);
+
+	out_color = vec4(luminance, luminance, luminance, 1);
 }
