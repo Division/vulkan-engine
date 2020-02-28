@@ -333,10 +333,21 @@ namespace core { namespace render {
 				state.RenderDrawCall(&draw_call, false);
 			}
 
-			DebugUI::Render(state);
+			//DebugUI::Render(state);
 		});
 
-		post_process->AddPostProcess(*render_graph, *main_pass_info.color_output, *main_color);
+		auto post_process_result = post_process->AddPostProcess(*render_graph, *main_pass_info.color_output, *main_color);
+
+		auto ui_pass_info = render_graph->AddPass<PassInfo>("Debug UI", [&](graph::IRenderPassBuilder& builder)
+			{
+				PassInfo result;
+				builder.AddInput(*post_process_result);
+				result.color_output = builder.AddOutput(*main_color)->PresentSwapchain();
+				return result;
+			}, [&](VulkanRenderState& state)
+			{
+				DebugUI::Render(state);
+			});
 
 		render_graph->Prepare();
 		render_graph->Render();

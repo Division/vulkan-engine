@@ -14,6 +14,16 @@
 
 namespace core { namespace render { namespace graph {
 
+	uint32_t GetOperationIndex(DependencyNode& node, uint32_t pass_index, bool is_output);
+
+	DependencyNode* DependencyNode::PresentSwapchain()
+	{
+		assert(resource->type == ResourceType::Attachment);
+		assert(resource->GetAttachment()->IsSwapchain());
+		present_swapchain = true;
+		return this;
+	}
+
 	bool RenderGraph::ResourceRegistered(void* resource)
 	{
 		return std::any_of(resources.begin(), resources.end(), [=](auto& item) { return item->resource_pointer == resource; });
@@ -38,7 +48,6 @@ namespace core { namespace render { namespace graph {
 		render_passes.clear();
 		resources.clear();
 		nodes.clear();
-		present_node = nullptr;
 	}
 
 	void RenderGraph::ClearCache()
@@ -61,12 +70,6 @@ namespace core { namespace render { namespace graph {
 		node->render_pass = current_render_pass;
 		current_render_pass->output_nodes.push_back(node);
 
-		if (resource.type == ResourceType::Attachment && resource.GetAttachment()->IsSwapchain())
-		{
-//			assert(!present_node);
-			present_node = node;
-		}
-
 		return node;
 	}
 
@@ -77,7 +80,6 @@ namespace core { namespace render { namespace graph {
 
 	void RenderGraph::Prepare()
 	{
-		assert(present_node);
 		utils::Graph graph(nodes.size());
 		for (auto& pass : render_passes)
 			for (auto& input : pass->input_nodes)
@@ -129,9 +131,7 @@ namespace core { namespace render { namespace graph {
 		while (!execution_order.empty())
 		{
 			nodes[execution_order.top()]->order = current_order;
-			
-			//if (nodes[execution_order.top()]->group == present_node->group)
-				nodes[execution_order.top()]->render_pass->order = std::max(nodes[execution_order.top()]->render_pass->order, current_order);
+			nodes[execution_order.top()]->render_pass->order = std::max(nodes[execution_order.top()]->render_pass->order, current_order);
 
 			current_order += 1;
 			execution_order.pop();
@@ -141,6 +141,7 @@ namespace core { namespace render { namespace graph {
 			return a->order < b->order;
 		});
 
+		PrepareResourceOperations();
 #if DEBUG_LOG
 		/*for (auto& pass : render_passes)
 		{
@@ -157,6 +158,81 @@ namespace core { namespace render { namespace graph {
 
 	}
 
+	void AddOutputOperation(DependencyNode& node, Pass& pass)
+	{
+		auto* resource = node.resource;
+		ResourceOperation operation;
+		operation.operation = OperationType::Write;
+		operation.pass_index = pass.index;
+
+		if (resource->type == ResourceType::Attachment)
+		{
+			bool is_color = resource->GetAttachment()->GetType() == VulkanRenderTargetAttachment::Type::Color;
+			operation.access |= is_color ? vk::AccessFlagBits::eColorAttachmentWrite : vk::AccessFlagBits::eDepthStencilAttachmentWrite;
+			operation.stage |= is_color ? vk::PipelineStageFlagBits::eColorAttachmentOutput : vk::PipelineStageFlagBits::eLateFragmentTests;
+			operation.layout = is_color ? ImageLayout::ColorAttachmentOptimal : ImageLayout::DepthStencilAttachmentOptimal;
+		}
+		else
+		{
+			throw std::runtime_error("unsupported");
+		}
+
+		node.pass_operation_index = resource->operations.size();
+		resource->operations.push_back(operation);
+
+		if (node.present_swapchain)
+		{
+			ResourceOperation present_operation;
+			present_operation.operation = OperationType::Read;
+			present_operation.pass_index = pass.index + 1;
+			present_operation.access |= vk::AccessFlagBits::eColorAttachmentRead;
+			present_operation.stage |= vk::PipelineStageFlagBits::eColorAttachmentOutput;
+			present_operation.layout = ImageLayout::PresentSrc;
+			resource->operations.push_back(present_operation);
+		}
+	}
+
+	void AddInputOperation(DependencyNode& node, Pass& pass, InputUsage usage)
+	{
+		auto* resource = node.resource;
+		ResourceOperation operation;
+		operation.operation = OperationType::Read;
+		operation.pass_index = pass.index;
+
+		if (resource->type == ResourceType::Attachment)
+		{
+			bool is_color = resource->GetAttachment()->GetType() == VulkanRenderTargetAttachment::Type::Color;
+
+			operation.access |= is_color ? vk::AccessFlagBits::eShaderRead : vk::AccessFlagBits::eDepthStencilAttachmentRead;
+			operation.stage |= is_color ? vk::PipelineStageFlagBits::eFragmentShader : vk::PipelineStageFlagBits::eLateFragmentTests;
+			operation.layout = usage == InputUsage::DepthAttachment ? ImageLayout::DepthStencilReadOnlyOptimal : ImageLayout::ShaderReadOnlyOptimal;
+		}
+		else
+		{
+			throw std::runtime_error("unsupported");
+		}
+
+		resource->operations.push_back(operation);
+	}
+
+	void RenderGraph::PrepareResourceOperations()
+	{
+		for (uint32_t i = 0; i < render_passes.size(); i++)
+		{
+			auto* pass = render_passes[i].get();
+			pass->index = i;
+			for (auto* output_node : pass->output_nodes)
+			{
+				AddOutputOperation(*output_node, *pass);
+			}
+
+			for (auto& data : pass->input_nodes)
+			{
+				AddInputOperation(*data.first, *pass, data.second);
+			}
+		}
+	}
+
 	std::tuple<VulkanRenderPassInitializer, VulkanRenderTargetInitializer, vec2> GetPassInitializer(Pass* pass)
 	{
 		VulkanRenderPassInitializer render_pass_initializer;
@@ -171,21 +247,33 @@ namespace core { namespace render { namespace graph {
 			for (auto* output : pass->output_nodes)
 			{
 				auto* resource = output->resource;
+				auto operation_index = GetOperationIndex(*output, pass->index, true);
+				auto& operation = resource->operations[operation_index];
+				auto* prev_operation = operation_index > 0 ? &resource->operations[operation_index - 1] : nullptr;
+
 				switch (resource->type)
 				{
 				case ResourceType::Attachment:
 					{
 						auto& attachment = *resource->GetAttachment();
 						render_pass_initializer.AddAttachment(attachment);
-						render_pass_initializer.SetLoadStoreOp(AttachmentLoadOp::Clear, AttachmentStoreOp::Store);
+						auto initial_layout = ImageLayout::Undefined;
+
+						AttachmentLoadOp load_op;
+						if (prev_operation)
+						{
+							load_op = output->should_clear ? AttachmentLoadOp::Clear : AttachmentLoadOp::Load;
+							initial_layout = prev_operation->layout;
+						}
+						else
+							load_op = output->should_clear ? AttachmentLoadOp::Clear : AttachmentLoadOp::DontCare;
+							
+						render_pass_initializer.SetLoadStoreOp(load_op, AttachmentStoreOp::Store);
 
 						render_target_initializer.Size(attachment.GetWidth(), attachment.GetHeight());
 						size = glm::max(size, vec2(attachment.GetWidth(), attachment.GetHeight()));
 						render_target_initializer.AddAttachment(attachment);
 
-						if (resource->last_operation != ResourceWrapper::LastOperation::None)
-							throw std::runtime_error("write after read/write not implemented");
-						auto initial_layout = ImageLayout::Undefined;
 
 						if (attachment.GetType() == VulkanRenderTargetAttachment::Type::Color)
 						{
@@ -216,9 +304,12 @@ namespace core { namespace render { namespace graph {
 					auto& attachment = *resource->GetAttachment();
 					size = glm::max(size, vec2(attachment.GetWidth(), attachment.GetHeight()));
 
+					auto operation_index = GetOperationIndex(*input.first, pass->index, false);
+					auto& operation = input.first->resource->operations[operation_index];
+
 					render_pass_initializer.AddAttachment(attachment);
 					render_pass_initializer.SetLoadStoreOp(AttachmentLoadOp::Load, AttachmentStoreOp::DontCare);
-					render_pass_initializer.SetImageLayout(resource->image_layout, ImageLayout::DepthStencilReadOnlyOptimal);
+					render_pass_initializer.SetImageLayout(operation.layout, ImageLayout::DepthStencilReadOnlyOptimal);
 
 					render_target_initializer.Size(attachment.GetWidth(), attachment.GetHeight());
 					render_target_initializer.AddAttachment(attachment);
@@ -265,209 +356,134 @@ namespace core { namespace render { namespace graph {
 		AfterWrite
 	};
 
-	void TransitionImageLayout(ResourceWrapper& resource, ImageLayout layout, VulkanRenderState& state, BarrierType barrier_type)
+	struct ImageBarrierData
 	{
-		assert(resource.type == ResourceType::Attachment);
+		vk::ImageAspectFlags image_aspect_flags = {};
+		vk::ImageLayout src_layout = vk::ImageLayout::eUndefined;
+		vk::ImageLayout dst_layout = vk::ImageLayout::eUndefined;
+		vk::AccessFlags src_access_flags = {};
+		vk::AccessFlags dst_access_flags = {};
+		vk::PipelineStageFlags src_stage = {};
+		vk::PipelineStageFlags dst_stage = {};
+		vk::Image image = nullptr;
+	};
+
+	void ImagePipelineBarrier(
+		ImageBarrierData& data,
+		vk::CommandBuffer& command_buffer
+	) {
 		auto* context = Engine::GetVulkanContext();
-		
-		auto* attachment = resource.GetAttachment();
-		bool is_swapchain = attachment->IsSwapchain();
-		auto image = attachment->GetImage();
-		auto& command_buffer = state.GetCurrentCommandBuffer()->GetCommandBuffer();
-
-		bool is_color = attachment->GetType() == VulkanRenderTargetAttachment::Type::Color;
-
-		vk::AccessFlags src_access_flags;
-		vk::AccessFlags dst_access_flags;
-		vk::PipelineStageFlags src_stage;
-		vk::PipelineStageFlags dst_stage;
-
-		if (is_swapchain)
-		{
-			switch (barrier_type) {
-			case BarrierType::BeforeWrite:
-				src_stage = vk::PipelineStageFlagBits::eColorAttachmentOutput;
-				src_access_flags = {};
-				dst_stage = vk::PipelineStageFlagBits::eColorAttachmentOutput;
-				dst_access_flags = vk::AccessFlagBits::eColorAttachmentWrite;
-				break;
-			case BarrierType::AfterWrite:
-				src_stage = vk::PipelineStageFlagBits::eColorAttachmentOutput;
-				src_access_flags = vk::AccessFlagBits::eColorAttachmentWrite;
-				dst_stage = vk::PipelineStageFlagBits::eBottomOfPipe;
-				dst_access_flags = vk::AccessFlagBits::eMemoryRead;
-				break;
-			default:
-				throw std::runtime_error("invalid barrier type");
-			}
-		} else {
-			switch (resource.last_operation)
-			{
-			case ResourceWrapper::LastOperation::None:
-				src_access_flags = is_color ? vk::AccessFlagBits::eColorAttachmentWrite : vk::AccessFlagBits::eDepthStencilAttachmentWrite;
-				src_stage = is_color ? vk::PipelineStageFlagBits::eColorAttachmentOutput : vk::PipelineStageFlagBits::eLateFragmentTests;
-				break;
-			case ResourceWrapper::LastOperation::Read:
-				src_access_flags = is_color ? vk::AccessFlagBits::eColorAttachmentRead : vk::AccessFlagBits::eDepthStencilAttachmentRead;
-				src_stage = is_color ? vk::PipelineStageFlagBits::eColorAttachmentOutput : vk::PipelineStageFlagBits::eLateFragmentTests;
-				break;
-			case ResourceWrapper::LastOperation::Write:
-				src_access_flags = is_color ? vk::AccessFlagBits::eColorAttachmentWrite : vk::AccessFlagBits::eDepthStencilAttachmentWrite;
-				src_stage = is_color ? vk::PipelineStageFlagBits::eColorAttachmentOutput : vk::PipelineStageFlagBits::eLateFragmentTests;
-				break;
-			}
-
-			switch (layout)
-			{
-			case ImageLayout::ShaderReadOnlyOptimal:
-				dst_access_flags = vk::AccessFlagBits::eShaderRead;
-				dst_stage = vk::PipelineStageFlagBits::eFragmentShader; // no vertex shader reads for now
-				break;
-
-			case ImageLayout::PresentSrc:
-				dst_access_flags = vk::AccessFlagBits::eColorAttachmentRead;
-				dst_stage = vk::PipelineStageFlagBits::eColorAttachmentOutput;
-				break;
-
-			case ImageLayout::ColorAttachmentOptimal:
-				dst_access_flags = vk::AccessFlagBits::eColorAttachmentWrite;
-				dst_stage = vk::PipelineStageFlagBits::eColorAttachmentOutput;
-				break;
-
-			case ImageLayout::DepthStencilAttachmentOptimal:
-				dst_access_flags = vk::AccessFlagBits::eDepthStencilAttachmentWrite;
-				dst_stage = vk::PipelineStageFlagBits::eLateFragmentTests;
-				break;
-
-			case ImageLayout::DepthStencilReadOnlyOptimal:
-				dst_access_flags = vk::AccessFlagBits::eDepthStencilAttachmentRead;
-				dst_stage = vk::PipelineStageFlagBits::eLateFragmentTests;
-				break;
-
-			default:
-				throw std::runtime_error("unsupported");
-			}
-		}
-
 
 		vk::ImageSubresourceRange range(
-			is_color ? vk::ImageAspectFlagBits::eColor : vk::ImageAspectFlagBits::eDepth | vk::ImageAspectFlagBits::eStencil,
+			data.image_aspect_flags,
 			0, 1, 0, 1
 		);
 
 		vk::ImageMemoryBarrier image_memory_barrier(
-			src_access_flags, dst_access_flags, 
-			(vk::ImageLayout)resource.image_layout, (vk::ImageLayout)layout, 
+			data.src_access_flags, data.dst_access_flags,
+			data.src_layout, data.dst_layout, 
 			VK_QUEUE_FAMILY_IGNORED, VK_QUEUE_FAMILY_IGNORED, 
-			image, range
+			data.image, range
 		);
 
 		command_buffer.pipelineBarrier(
-			src_stage, 
-			dst_stage,
+			data.src_stage, 
+			data.dst_stage,
 			{}, 
 			0, nullptr, 
 			0, nullptr, 
 			1, &image_memory_barrier
 		);
-
-#if DEBUG_LOG
-		OutputDebugStringA(("[TransitionImageLayout] " + std::string("\n")).c_str());
-#endif
 	}
 
-	// TODO: here should go compute->compute barriers as well
+	ImageBarrierData GetImageBarrierData(uint32_t operation_index, DependencyNode& node)
+	{
+		assert(node.resource->type == ResourceType::Attachment);
+		auto& resource = node.resource;
+		bool is_color = resource->GetAttachment()->GetType() == VulkanRenderTargetAttachment::Type::Color;
+		ImageBarrierData data;
+		
+		// Has previous pass
+		if (operation_index > 0)
+		{
+			auto& prev_operation = resource->operations[operation_index - 1];
+			data.src_access_flags = prev_operation.access;
+			data.src_stage = prev_operation.stage;
+			data.src_layout = (vk::ImageLayout)prev_operation.layout;
+		}
+		else
+		{
+			data.src_stage = is_color ? vk::PipelineStageFlagBits::eColorAttachmentOutput : vk::PipelineStageFlagBits::eLateFragmentTests;
+		}
+
+		auto& current_operation = resource->operations[operation_index];
+		data.dst_access_flags = current_operation.access;
+		data.dst_stage = current_operation.stage;
+		data.dst_layout = (vk::ImageLayout)current_operation.layout;
+		data.image = resource->GetAttachment()->GetImage();
+		data.image_aspect_flags = is_color
+			? vk::ImageAspectFlagBits::eColor
+			: vk::ImageAspectFlagBits::eDepth | vk::ImageAspectFlagBits::eStencil;
+
+		return data;
+	}
+
+	uint32_t GetOperationIndex(DependencyNode& node, uint32_t pass_index, bool is_output)
+	{
+		auto& resource = node.resource;
+		uint32_t operation_index = -1;
+		if (is_output)
+			operation_index = node.pass_operation_index;
+		else
+		{
+			for (uint32_t i = 0; i < resource->operations.size(); i++)
+				if (resource->operations[i].pass_index == pass_index)
+				{
+					operation_index = i;
+					break;
+				}
+		}
+		if (operation_index == -1)
+			throw std::runtime_error("logic_error");
+
+		return operation_index;
+	}
+
 	void RenderGraph::ApplyPreBarriers(Pass& pass, VulkanRenderState& state)
 	{
-#if DEBUG_LOG
-		OutputDebugStringA(("[ApplyPreBarriers] " + std::string(pass.name) + "\n").c_str());
-#endif
+		auto command_buffer = state.GetCurrentCommandBuffer()->GetCommandBuffer();
 
-		for (auto* resource : pass.output_nodes)
+		for (auto* node : pass.output_nodes)
 		{
-			ImageLayout target_layout = ImageLayout::Undefined;
-			switch (resource->resource->type)
-			{
-			case ResourceType::Attachment:
-			{
-				auto* attachment = resource->resource->GetAttachment();
-				bool is_depth = attachment->GetType() == VulkanRenderTargetAttachment::Type::Depth;
-				target_layout =  is_depth ? ImageLayout::DepthStencilAttachmentOptimal : ImageLayout::ColorAttachmentOptimal;
-				
-				if (resource->resource->image_layout != target_layout)
-				{
-					TransitionImageLayout(*resource->resource, target_layout, state, BarrierType::BeforeWrite);
-					resource->resource->image_layout = target_layout;
-				}
-				break;
-			}
-
-			default:
-				throw std::runtime_error("not implemented");
-			}
+			auto operation_index = GetOperationIndex(*node, pass.index, true);
+			ImagePipelineBarrier(GetImageBarrierData(operation_index, *node), command_buffer);
 		}
 
 		for (auto node_data : pass.input_nodes)
 		{
-			auto* resource = node_data.first;
-			ImageLayout target_layout = ImageLayout::Undefined;
-			switch (resource->resource->type)
-			{
-			case ResourceType::Attachment:
-			{
-				auto* attachment = resource->resource->GetAttachment();
-				auto usage = node_data.second;
-				bool is_depth = attachment->GetType() == VulkanRenderTargetAttachment::Type::Depth;
-				if (usage == InputUsage::DepthAttachment)
-				{
-					assert(is_depth);
-					target_layout =  ImageLayout::DepthStencilAttachmentOptimal;
-				} else
-				{
-					target_layout = ImageLayout::ShaderReadOnlyOptimal;
-				}
-
-				if (resource->resource->image_layout != target_layout)
-				{
-					TransitionImageLayout(*resource->resource, target_layout, state, BarrierType::BeforeRead);
-					resource->resource->image_layout = target_layout;
-				}
-				break;
-			}
-
-			default:
-				throw std::runtime_error("not implemented");
-			}
-
+			auto operation_index = GetOperationIndex(*node_data.first, pass.index, false);
+			ImagePipelineBarrier(GetImageBarrierData(operation_index, *node_data.first), command_buffer);
 		}
 	}
 
 	void RenderGraph::ApplyPostBarriers(Pass& pass, VulkanRenderState& state)
 	{
-#if DEBUG_LOG
-		OutputDebugStringA(("[ApplyPostBarriers] " + std::string(pass.name) + "\n").c_str());
-#endif
-
+		auto command_buffer = state.GetCurrentCommandBuffer()->GetCommandBuffer();
 		BarrierType barrier_type;
-		for (auto* resource : pass.output_nodes)
+		for (auto* node : pass.output_nodes)
 		{
 			ImageLayout target_layout = ImageLayout::Undefined;
 
-			switch (resource->resource->type)
+			switch (node->resource->type)
 			{
 			case ResourceType::Attachment:
 			{
-				auto* attachment = resource->resource->GetAttachment();
-				if (!attachment->IsSwapchain())
+				auto* attachment = node->resource->GetAttachment();
+				if (!attachment->IsSwapchain() || !node->present_swapchain)
 					return;
 
-				barrier_type = BarrierType::AfterWrite;
-				target_layout = ImageLayout::PresentSrc;
-				if (resource->resource->image_layout != target_layout)
-				{
-					TransitionImageLayout(*resource->resource, target_layout, state, barrier_type);
-					resource->resource->image_layout = target_layout;
-				}
+				auto operation_index = GetOperationIndex(*node, pass.index + 1, false);
+				ImagePipelineBarrier(GetImageBarrierData(operation_index, *node), command_buffer);
 				break;
 			}
 
@@ -484,11 +500,6 @@ namespace core { namespace render { namespace graph {
 			output->resource->semaphore = semaphore;
 	}
 
-	void SetResourceQueue(Pass* pass, PassQueue queue)
-	{
-		for (auto* output : pass->output_nodes)
-			output->resource->ownership_queue = queue;
-	}
 
 	void RenderGraph::RecordGraphicsPass(Pass* pass)
 	{
@@ -540,9 +551,6 @@ namespace core { namespace render { namespace graph {
 
 	void TransferOwnershipQueue(ResourceWrapper& resource, PassQueue queue)
 	{
-		if (resource.ownership_queue == queue)
-			return;
-
 		
 	}
 

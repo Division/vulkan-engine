@@ -45,6 +45,22 @@ namespace core { namespace render { namespace graph {
 		None
 	};
 
+	enum class OperationType : int
+	{
+		None,
+		Write,
+		Read
+	};
+
+	struct ResourceOperation
+	{
+		uint32_t pass_index = -1;
+		OperationType operation = OperationType::None;
+		vk::AccessFlags access = {};
+		vk::PipelineStageFlags stage = {};
+		ImageLayout layout = ImageLayout::Undefined;
+	};
+
 	struct ResourceWrapper
 	{
 		enum class LastOperation : int
@@ -73,9 +89,7 @@ namespace core { namespace render { namespace graph {
 			return reinterpret_cast<VulkanRenderTargetAttachment*>(resource_pointer);
 		}
 
-		PassQueue ownership_queue = PassQueue::None;
-		LastOperation last_operation = LastOperation::None;
-		ImageLayout image_layout = ImageLayout::Undefined;
+		std::vector <ResourceOperation> operations;
 		vk::Semaphore semaphore; // signalled when write is done
 		//vk::AccessFlags access_flags;
 	};
@@ -84,13 +98,17 @@ namespace core { namespace render { namespace graph {
 
 	struct DependencyNode
 	{
+
 		ResourceWrapper* resource = nullptr;
+
 		Pass* render_pass = nullptr;
 		uint32_t index = -1;
 		uint32_t order = 0;
+		uint32_t pass_operation_index = -1;
 
 		bool on_stack = false;
 		bool visited = false;
+		bool present_swapchain = false;
 
 		vk::ClearValue clear_value;
 		bool should_clear = false;
@@ -108,6 +126,10 @@ namespace core { namespace render { namespace graph {
 			should_clear = true;
 			return this;
 		}
+
+		DependencyNode* PresentSwapchain();
+		
+
 	};
 
 	class IRenderPassBuilder;
@@ -125,6 +147,7 @@ namespace core { namespace render { namespace graph {
 		RecordCallback record_callback;
 
 		int order = -1;
+		uint32_t index = -1;
 
 		const char* name;
 
@@ -170,6 +193,7 @@ namespace core { namespace render { namespace graph {
 		void AddInput(DependencyNode& node, InputUsage usage = InputUsage::Default) override;
 		DependencyNode* AddOutput(ResourceWrapper& render_target) override;
 	private:
+		void PrepareResourceOperations();
 		bool ResourceRegistered(void* resource);
 		void RecordGraphicsPass(Pass* pass);
 		void RecordComputePass(Pass* pass);
@@ -185,7 +209,6 @@ namespace core { namespace render { namespace graph {
 
 	private:
 		Pass* current_render_pass = nullptr;
-		DependencyNode* present_node = nullptr;
 		std::vector<std::unique_ptr<Pass>> render_passes;
 		std::vector<std::unique_ptr<ResourceWrapper>> resources;
 		std::vector<std::unique_ptr<DependencyNode>> nodes;
