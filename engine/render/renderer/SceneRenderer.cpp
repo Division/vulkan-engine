@@ -34,6 +34,7 @@
 #include "render/buffer/DynamicBuffer.h"
 #include "render/debug/DebugDraw.h"
 #include "render/debug/DebugUI.h"
+#include "EnvironmentSettings.h"
 #include "objects/LightObject.h"
 #include "objects/Projector.h"
 #include "SceneBuffers.h"
@@ -63,6 +64,7 @@ namespace core { namespace render {
 		: scene(scene)
 		, shader_cache(shader_cache)
 	{
+		environment_settings = std::make_unique<EnvironmentSettings>();
 		scene_buffers = std::make_unique<SceneBuffers>();
 
 		draw_call_manager = std::make_unique<DrawCallManager>(*this);
@@ -89,14 +91,14 @@ namespace core { namespace render {
 		skybox = std::make_unique<effects::Skybox>(*shader_cache);
 		skybox->SetTexture(environment_cubemap.get());
 
-		post_process = std::make_unique<effects::PostProcess>(*shader_cache);
+		post_process = std::make_unique<effects::PostProcess>(*shader_cache, *environment_settings);
 	}
 
 	void SceneRenderer::OnRecreateSwapchain(int32_t width, int32_t height)
 	{
 		render_graph->ClearCache();
 		main_depth_attachment = std::make_unique<VulkanRenderTargetAttachment>(VulkanRenderTargetAttachment::Type::Depth, width, height, Format::D24_unorm_S8_uint);
-		main_color_attachment = std::make_unique<VulkanRenderTargetAttachment>(VulkanRenderTargetAttachment::Type::Color, width, height, Format::R8G8B8A8_unorm);
+		main_color_attachment = std::make_unique<VulkanRenderTargetAttachment>(VulkanRenderTargetAttachment::Type::Color, width, height, Format::R16G16B16A16_float);
 		post_process->OnRecreateSwapchain(width, height);
 	}
 
@@ -290,7 +292,6 @@ namespace core { namespace render {
 			builder.AddInput(*depth_pre_pass_info.depth_output, graph::InputUsage::DepthAttachment);
 			builder.AddInput(*shadow_map_info.depth_output);
 			result.color_output = builder.AddOutput(*main_offscreen_color)->Clear(vec4(0));
-			//result.color_output = builder.AddOutput(*main_color)->Clear(vec4(0));
 			return result;
 		}, [&](VulkanRenderState& state)
 		{
@@ -333,7 +334,6 @@ namespace core { namespace render {
 				state.RenderDrawCall(&draw_call, false);
 			}
 
-			//DebugUI::Render(state);
 		});
 
 		auto post_process_result = post_process->AddPostProcess(*render_graph, *main_pass_info.color_output, *main_color);

@@ -15,6 +15,7 @@
 #include "render/shader/ShaderCache.h"
 #include "render/shader/ShaderDefines.h"
 #include "widgets/EngineStats.h"
+#include "render/renderer/EnvironmentSettings.h"
 
 namespace core { namespace render { 
 	
@@ -32,17 +33,26 @@ namespace core { namespace render {
 			vk::DescriptorSet vk_descriptor_set;
 			VertexLayout vertex_layout;
 			bool main_widget_visible = true;
+			bool environment_widget_visible = true;
 			uint32_t engine_stats_index = 0;
+
+			EnvironmentSettings* environment_settings = nullptr;
 
 			typedef void (*engine_stats_callback)(void);
 			std::array<engine_stats_callback, 1> engine_stats_functions;
 		}
 
 		void DrawMainWidget();
+		void DrawEnvironmentEditorWidget(EnvironmentSettings& settings);
 
 		void SetMainWidgetVisible(bool visible)
 		{
 			main_widget_visible = visible;
+		}
+
+		void SetEnvironmentWidgetVisible(bool visible)
+		{
+			environment_widget_visible = visible;
 		}
 
 		bool WantCaptureMouse()
@@ -57,8 +67,9 @@ namespace core { namespace render {
 
 		//
 
-		void Initialize(GLFWwindow* window, ShaderCache* shader_cache)
+		void Initialize(GLFWwindow* window, ShaderCache* shader_cache, EnvironmentSettings& _environment_settings)
 		{
+			environment_settings = &_environment_settings;
 			shader = shader_cache->GetShaderProgram(L"shaders/imgui.vert", L"shaders/imgui.frag");
 
 			ImGui::CreateContext();
@@ -149,9 +160,10 @@ namespace core { namespace render {
 			}
 
 			if (main_widget_visible)
-			{
 				DrawMainWidget();
-			}
+
+			if (environment_widget_visible && environment_settings)
+				DrawEnvironmentEditorWidget(*environment_settings);
 
 			ImGui::Render();
 			UpdateBuffers();

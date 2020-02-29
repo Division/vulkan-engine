@@ -10,6 +10,7 @@
 #include "render/texture/Texture.h"
 #include "render/mesh/Mesh.h"
 #include "render/shader/ShaderCache.h"
+#include "render/renderer/EnvironmentSettings.h"
 #include "utils/MeshGeneration.h"
 #include "ecs/components/DrawCall.h"
 #include "Engine.h"
@@ -19,7 +20,8 @@ namespace core::render::effects
 {
 	using namespace core::render::graph;
 	using namespace core::ECS;
-	PostProcess::PostProcess(ShaderCache& shader_cache)
+	PostProcess::PostProcess(ShaderCache& shader_cache, EnvironmentSettings& environment_settings)
+		: environment_settings(environment_settings)
 	{
 		shader = shader_cache.GetShaderProgram(L"shaders/postprocess/postprocess.vert", L"shaders/postprocess/postprocess.frag");
 		full_screen_quad_mesh = std::make_unique<Mesh>(false);
@@ -70,6 +72,8 @@ namespace core::render::effects
 				state.UpdateState();
 
 				auto pipeline = state.GetCurrentPipeline();
+
+				command_buffer.pushConstants(pipeline->GetPipelineLayout(), vk::ShaderStageFlagBits::eFragment, 0, sizeof(float), &environment_settings.exposure);
 				command_buffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipeline->GetPipelineLayout(), 0, 1u, &vk_descriptor_set, 0, nullptr);
 				state.Draw(*full_screen_quad_mesh->vertexBuffer(), full_screen_quad_mesh->indexCount(), 0);
 			});
@@ -81,8 +85,8 @@ namespace core::render::effects
 
 	void PostProcess::OnRecreateSwapchain(int32_t width, int32_t height)
 	{
-		attachments[0] = std::make_unique<VulkanRenderTargetAttachment>(VulkanRenderTargetAttachment::Type::Color, width, height, Format::R8G8B8A8_unorm);
-		attachments[1] = std::make_unique<VulkanRenderTargetAttachment>(VulkanRenderTargetAttachment::Type::Color, width, height, Format::R8G8B8A8_unorm);
+		attachments[0] = std::make_unique<VulkanRenderTargetAttachment>(VulkanRenderTargetAttachment::Type::Color, width, height, Format::R16G16B16A16_float);
+		attachments[1] = std::make_unique<VulkanRenderTargetAttachment>(VulkanRenderTargetAttachment::Type::Color, width, height, Format::R16G16B16A16_float);
 	}
 
 }

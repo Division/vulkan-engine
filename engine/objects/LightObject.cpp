@@ -4,8 +4,8 @@
 
 #include "LightObject.h"
 #include <memory>
-//#include "EngineMain.h"
-//#include "render/debug/DebugDraw.h"
+#include "Engine.h"
+#include "render/debug/DebugDraw.h"
 #include "render/renderer/SceneRenderer.h"
 #include "utils/Math.h"
 #include "utils/MeshGeneration.h"
@@ -85,6 +85,12 @@ void LightObject::postUpdate() {
     _cullingData.sphere.position = position;
     _cullingData.sphere.radius = _radius;
   };
+
+  if (_type == LightObjectType::Spot || castShadows())
+  {
+      auto debug_draw = core::Engine::Get()->GetDebugDraw();
+      debug_draw->DrawFrustum(_projectionMatrix * _viewMatrix, glm::vec4(1,1,1,1));
+  }
 }
 
 void LightObject::setFlare(const std::shared_ptr<Texture> &texture, float size) {

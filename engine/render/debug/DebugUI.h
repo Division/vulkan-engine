@@ -11,13 +11,18 @@ namespace core
 		class VulkanRenderState;
 		class ShaderCache;
 	}
+
+	namespace render
+	{
+		struct EnvironmentSettings;
+	}
 }
 
 namespace core { namespace render { 
 
 	namespace DebugUI 
 	{
-		void Initialize(GLFWwindow* window, core::Device::ShaderCache* shader_cache);
+		void Initialize(GLFWwindow* window, core::Device::ShaderCache* shader_cache, EnvironmentSettings& environment_settings);
 		void Deinitialize();
 		void NewFrame();
 		void Update(float dt);
@@ -27,6 +32,7 @@ namespace core { namespace render {
 		bool WantCaptureKeyboard();
 
 		void SetMainWidgetVisible(bool visible);
+		void SetEnvironmentWidgetVisible(bool visible);
 
 	} 
 

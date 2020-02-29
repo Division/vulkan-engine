@@ -348,14 +348,6 @@ namespace core { namespace render { namespace graph {
 		return result;
 	}
 
-	enum class BarrierType
-	{
-		BeforeRead,
-		AfterRead,
-		BeforeWrite,
-		AfterWrite
-	};
-
 	struct ImageBarrierData
 	{
 		vk::ImageAspectFlags image_aspect_flags = {};
@@ -469,7 +461,6 @@ namespace core { namespace render { namespace graph {
 	void RenderGraph::ApplyPostBarriers(Pass& pass, VulkanRenderState& state)
 	{
 		auto command_buffer = state.GetCurrentCommandBuffer()->GetCommandBuffer();
-		BarrierType barrier_type;
 		for (auto* node : pass.output_nodes)
 		{
 			ImageLayout target_layout = ImageLayout::Undefined;

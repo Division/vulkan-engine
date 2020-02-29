@@ -187,7 +187,7 @@ void main() {
 #if 1
     vec3 I = -eyeDir_worldspace;
     vec3 R = reflect(I, normalize(normal_worldspace));
-    light_color = vec4(texture(environment_cubemap, R.xyz).rgb, 1.0) * 0.8;
+    light_color = mix(vec4(texture(environment_cubemap, R.xyz).rgb, 1.0), light_color, 0.8);
 #endif
 
 	//light_color = vec4((normal_worldspace + vec3(1,1,1)) / 2.0, 1);

@@ -36,6 +36,11 @@ namespace core
 	
 }
 
+namespace core::render
+{
+	struct EnvironmentSettings;
+};
+
 class Scene;
 
 namespace core { namespace render {
@@ -71,6 +76,7 @@ namespace core { namespace render {
 		core::Device::Texture* SceneRenderer::GetTexture(ShaderTextureName texture_name, const Material& material);
 		core::Device::ShaderCache* GetShaderCache() const { return shader_cache; }
 		void SetupShaderBindings(const Material& material, const core::Device::ShaderProgram::DescriptorSet& descriptor_set, core::Device::ShaderBindings& bindings);
+		auto* GetEnvironmentSettings() const { return environment_settings.get(); }
 
 	private:
 		void CreateDrawCalls();
@@ -108,6 +114,7 @@ namespace core { namespace render {
 		uint32_t depth_only_fragment_shader_hash;
 		std::vector<std::pair<IShadowCaster*, core::ECS::systems::CullingSystem>> shadow_casters;
 
+		std::unique_ptr<EnvironmentSettings> environment_settings;
 		std::unique_ptr<effects::Skybox> skybox;
 		std::unique_ptr<effects::PostProcess> post_process;
 	};

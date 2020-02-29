@@ -17,6 +17,7 @@ class ModelBundle;
 class MeshObject;
 class PlayerController;
 class Material;
+class LightObject;
 
 namespace core
 {
@@ -43,15 +44,20 @@ private:
 
 	core::ECS::EntityID entity1;
 	core::ECS::EntityID entity2;
+	core::ECS::EntityID plane;
 
+	std::shared_ptr<Material> material_light_only;
 	std::shared_ptr<Material> material_no_light;
 	std::shared_ptr<Material> material_default;
 	std::shared_ptr<Mesh> box_mesh;
+	std::shared_ptr<Mesh> plane_mesh;
 	std::shared_ptr<core::Device::Texture> lama_tex;
 	std::shared_ptr<core::Device::Texture> environment;
 
 	core::ECS::EntityManager* manager;
 	core::ECS::TransformGraph* graph;
+
+	std::shared_ptr<LightObject> light;
 
 	bool camera_control = false;
 };

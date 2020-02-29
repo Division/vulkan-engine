@@ -122,6 +122,7 @@ set(ENGINE_SOURCES
 	render/renderer/SceneBuffers.cpp
 	render/renderer/RenderGraph.h
 	render/renderer/RenderGraph.cpp
+	render/renderer/EnvironmentSettings.h
 	render/debug/DebugDraw.h
 	render/debug/DebugDraw.cpp
 	render/debug/DebugUI.h
@@ -129,6 +130,7 @@ set(ENGINE_SOURCES
 	render/debug/widgets/EngineStats.h
 	render/debug/widgets/EngineStats.cpp
 	render/debug/widgets/MainWidget.cpp
+	render/debug/widgets/EnvironmentEditor.cpp
 	render/shader/Shader.h
 	render/shader/Shader.cpp
 	render/shader/ReflectionInfo.h
