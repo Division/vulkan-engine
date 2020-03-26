@@ -1,6 +1,7 @@
 #include "RenderGraph.h"
 #include "utils/DataStructures.h"
 #include "render/device/VulkanRenderPass.h"
+#include "render/buffer/VulkanBuffer.h"
 #include "render/device/VulkanRenderTarget.h"
 #include "render/device/VulkanContext.h"
 #include "render/device/VulkanSwapchain.h"
@@ -80,7 +81,7 @@ namespace core { namespace render { namespace graph {
 
 	void RenderGraph::Prepare()
 	{
-		utils::Graph graph(nodes.size());
+		/*utils::Graph graph(nodes.size());
 		for (auto& pass : render_passes)
 			for (auto& input : pass->input_nodes)
 				for (auto& output : pass->output_nodes)
@@ -139,7 +140,7 @@ namespace core { namespace render { namespace graph {
 
 		std::sort(render_passes.begin(), render_passes.end(), [](auto& a, auto& b) {
 			return a->order < b->order;
-		});
+		}); */
 
 		PrepareResourceOperations();
 #if DEBUG_LOG
@@ -174,8 +175,14 @@ namespace core { namespace render { namespace graph {
 		}
 		else
 		{
-			throw std::runtime_error("unsupported");
+			operation.access |= vk::AccessFlagBits::eShaderWrite; 
+			operation.stage |= vk::PipelineStageFlagBits::eFragmentShader; // Don't care about vertex shaders yet
 		}
+
+		if (pass.is_compute)
+			operation.stage = vk::PipelineStageFlagBits::eComputeShader;
+
+		operation.queue_family_index = pass.queue_family_index;
 
 		node.pass_operation_index = resource->operations.size();
 		resource->operations.push_back(operation);
@@ -188,6 +195,7 @@ namespace core { namespace render { namespace graph {
 			present_operation.access |= vk::AccessFlagBits::eColorAttachmentRead;
 			present_operation.stage |= vk::PipelineStageFlagBits::eColorAttachmentOutput;
 			present_operation.layout = ImageLayout::PresentSrc;
+			present_operation.queue_family_index = pass.queue_family_index;
 			resource->operations.push_back(present_operation);
 		}
 	}
@@ -198,6 +206,7 @@ namespace core { namespace render { namespace graph {
 		ResourceOperation operation;
 		operation.operation = OperationType::Read;
 		operation.pass_index = pass.index;
+		operation.queue_family_index = pass.queue_family_index;
 
 		if (resource->type == ResourceType::Attachment)
 		{
@@ -209,18 +218,26 @@ namespace core { namespace render { namespace graph {
 		}
 		else
 		{
-			throw std::runtime_error("unsupported");
+			operation.access |= vk::AccessFlagBits::eShaderRead; 
+			operation.stage |= vk::PipelineStageFlagBits::eFragmentShader | vk::PipelineStageFlagBits::eVertexShader;
 		}
+
+		if (pass.is_compute)
+			operation.stage = vk::PipelineStageFlagBits::eComputeShader;
 
 		resource->operations.push_back(operation);
 	}
 
 	void RenderGraph::PrepareResourceOperations()
 	{
+		auto* context = Engine::GetVulkanContext();
+
 		for (uint32_t i = 0; i < render_passes.size(); i++)
 		{
 			auto* pass = render_passes[i].get();
 			pass->index = i;
+			pass->queue_family_index = context->GetQueueFamilyIndex(pass->is_compute ? PipelineBindPoint::Compute : PipelineBindPoint::Graphics);
+
 			for (auto* output_node : pass->output_nodes)
 			{
 				AddOutputOperation(*output_node, *pass);
@@ -229,6 +246,58 @@ namespace core { namespace render { namespace graph {
 			for (auto& data : pass->input_nodes)
 			{
 				AddInputOperation(*data.first, *pass, data.second);
+			}
+		}
+
+		// Checking ownership transfers
+		for (uint32_t i = 0; i < render_passes.size(); i++)
+		{
+			auto* pass = render_passes[i].get();
+			
+			uint32_t smallest_index = -1;
+			uint32_t smallest_pass_index = -1; // First pass after current one that needs ownership transfer for any output of the current one
+
+			for (auto* output_node : pass->output_nodes)
+			{
+				auto& operations = output_node->resource->operations;
+				auto operation_index = GetOperationIndex(*output_node, pass->index, true);
+				uint32_t index = operation_index + 1;
+				if (index < operations.size())
+				{
+					if (operations[index].queue_family_index != pass->queue_family_index)
+					{
+						smallest_index = index;
+						smallest_pass_index = operations[index].pass_index;
+						pass->signal_stages |= operations[index].stage;
+						output_node->should_transfer_ownership = true;
+					}
+				}
+			}
+
+			for (auto& input_node_pair : pass->input_nodes)
+			{
+				auto* input_node = input_node_pair.first;
+				auto& operations = input_node->resource->operations;
+				auto operation_index = GetOperationIndex(*input_node, pass->index, true);
+				uint32_t index = operation_index + 1;
+				if (index < operations.size())
+				{
+					if (operations[index].queue_family_index != pass->queue_family_index)
+					{
+						smallest_index = index;
+						smallest_pass_index = operations[index].pass_index;
+						pass->signal_stages |= operations[index].stage;
+						input_node->should_transfer_ownership = true;
+					}
+				}
+			}
+
+			// pass signals if it has pending ownership transfer (e.g. following pass uses current pass output in a different queue)
+			if (smallest_pass_index != -1)
+			{
+				pass->signal_semaphore = GetSemaphore();
+				render_passes[smallest_pass_index]->wait_semaphores.semaphores.push_back(pass->signal_semaphore);
+				render_passes[smallest_pass_index]->wait_semaphores.stage_flags.push_back(pass->signal_stages);
 			}
 		}
 	}
@@ -348,7 +417,7 @@ namespace core { namespace render { namespace graph {
 		return result;
 	}
 
-	struct ImageBarrierData
+	struct PipelineBarrierData
 	{
 		vk::ImageAspectFlags image_aspect_flags = {};
 		vk::ImageLayout src_layout = vk::ImageLayout::eUndefined;
@@ -357,24 +426,39 @@ namespace core { namespace render { namespace graph {
 		vk::AccessFlags dst_access_flags = {};
 		vk::PipelineStageFlags src_stage = {};
 		vk::PipelineStageFlags dst_stage = {};
+		uint32_t src_queue_family_index = -1;
+		uint32_t dst_queue_family_index = -1;
+		
 		vk::Image image = nullptr;
+		
+		vk::Buffer buffer = nullptr;
+		vk::DeviceSize buffer_size = 0;
 	};
 
 	void ImagePipelineBarrier(
-		ImageBarrierData& data,
+		PipelineBarrierData& data,
 		vk::CommandBuffer& command_buffer
 	) {
 		auto* context = Engine::GetVulkanContext();
 
-		vk::ImageSubresourceRange range(
+		vk::ImageSubresourceRange range( // TODO: proper range handling, support for rendering to mip/cubemap face
 			data.image_aspect_flags,
 			0, 1, 0, 1
 		);
 
+		uint32_t src_queue_family = VK_QUEUE_FAMILY_IGNORED;
+		uint32_t dst_queue_family = VK_QUEUE_FAMILY_IGNORED;
+
+		if (data.src_queue_family_index != data.dst_queue_family_index)
+		{
+			src_queue_family = data.src_queue_family_index;
+			dst_queue_family = data.dst_queue_family_index;
+		}
+
 		vk::ImageMemoryBarrier image_memory_barrier(
 			data.src_access_flags, data.dst_access_flags,
-			data.src_layout, data.dst_layout, 
-			VK_QUEUE_FAMILY_IGNORED, VK_QUEUE_FAMILY_IGNORED, 
+			data.src_layout, data.dst_layout,
+			src_queue_family, dst_queue_family,
 			data.image, range
 		);
 
@@ -388,13 +472,56 @@ namespace core { namespace render { namespace graph {
 		);
 	}
 
-	ImageBarrierData GetImageBarrierData(uint32_t operation_index, DependencyNode& node)
+	void BufferPipelineBarrier(
+		PipelineBarrierData& data,
+		vk::CommandBuffer& command_buffer
+	) {
+		auto* context = Engine::GetVulkanContext();
+
+		uint32_t src_queue_family = VK_QUEUE_FAMILY_IGNORED;
+		uint32_t dst_queue_family = VK_QUEUE_FAMILY_IGNORED;
+
+		if (data.src_queue_family_index != data.dst_queue_family_index)
+		{
+			src_queue_family = data.src_queue_family_index;
+			dst_queue_family = data.dst_queue_family_index;
+		}
+
+		vk::BufferMemoryBarrier buffer_memory_barrier(data.src_access_flags, data.dst_access_flags, src_queue_family, dst_queue_family, data.buffer, 0, data.buffer_size);
+
+		command_buffer.pipelineBarrier(
+			data.src_stage, 
+			data.dst_stage,
+			{},
+			0, nullptr, 
+			1, &buffer_memory_barrier,
+			0, nullptr
+		);
+	}
+
+	void PipelineBarrier(PipelineBarrierData& data, vk::CommandBuffer& command_buffer)
 	{
-		assert(node.resource->type == ResourceType::Attachment);
+		if (data.src_layout == data.dst_layout &&
+			data.src_access_flags == data.dst_access_flags &&
+			data.src_stage == data.dst_stage &&
+			data.src_queue_family_index == data.dst_queue_family_index)
+			return;
+
+		if (data.image)
+			ImagePipelineBarrier(data, command_buffer);
+		else
+			BufferPipelineBarrier(data, command_buffer);
+	}
+
+	PipelineBarrierData GetImageBarrierData(uint32_t operation_index, DependencyNode& node)
+	{
 		auto& resource = node.resource;
-		bool is_color = resource->GetAttachment()->GetType() == VulkanRenderTargetAttachment::Type::Color;
-		ImageBarrierData data;
+		bool is_buffer = node.resource->type == ResourceType::Buffer;
+		bool is_color = !is_buffer && resource->GetAttachment()->GetType() == VulkanRenderTargetAttachment::Type::Color;
+		PipelineBarrierData data;
 		
+		auto& current_operation = resource->operations[operation_index];
+
 		// Has previous pass
 		if (operation_index > 0)
 		{
@@ -402,17 +529,32 @@ namespace core { namespace render { namespace graph {
 			data.src_access_flags = prev_operation.access;
 			data.src_stage = prev_operation.stage;
 			data.src_layout = (vk::ImageLayout)prev_operation.layout;
+			data.src_queue_family_index = prev_operation.queue_family_index;
 		}
 		else
 		{
-			data.src_stage = is_color ? vk::PipelineStageFlagBits::eColorAttachmentOutput : vk::PipelineStageFlagBits::eLateFragmentTests;
+			data.src_queue_family_index = current_operation.queue_family_index;
+			if (is_buffer)
+				data.src_stage = vk::PipelineStageFlagBits::eTopOfPipe; // TODO: NOT SURE
+			else
+				data.src_stage = is_color ? vk::PipelineStageFlagBits::eColorAttachmentOutput : vk::PipelineStageFlagBits::eLateFragmentTests;
 		}
 
-		auto& current_operation = resource->operations[operation_index];
 		data.dst_access_flags = current_operation.access;
 		data.dst_stage = current_operation.stage;
 		data.dst_layout = (vk::ImageLayout)current_operation.layout;
-		data.image = resource->GetAttachment()->GetImage();
+		data.dst_queue_family_index = current_operation.queue_family_index;
+
+		if (is_buffer)
+		{
+			data.buffer = resource->GetBuffer()->Buffer();
+
+			auto* context = Engine::Get()->GetContext();
+			data.src_queue_family_index = context->GetQueueFamilyIndex(PipelineBindPoint::Graphics);
+		}
+		else
+			data.image = resource->GetAttachment()->GetImage();
+
 		data.image_aspect_flags = is_color
 			? vk::ImageAspectFlagBits::eColor
 			: vk::ImageAspectFlagBits::eDepth | vk::ImageAspectFlagBits::eStencil;
@@ -448,13 +590,13 @@ namespace core { namespace render { namespace graph {
 		for (auto* node : pass.output_nodes)
 		{
 			auto operation_index = GetOperationIndex(*node, pass.index, true);
-			ImagePipelineBarrier(GetImageBarrierData(operation_index, *node), command_buffer);
+			PipelineBarrier(GetImageBarrierData(operation_index, *node), command_buffer);
 		}
 
 		for (auto node_data : pass.input_nodes)
 		{
 			auto operation_index = GetOperationIndex(*node_data.first, pass.index, false);
-			ImagePipelineBarrier(GetImageBarrierData(operation_index, *node_data.first), command_buffer);
+			PipelineBarrier(GetImageBarrierData(operation_index, *node_data.first), command_buffer);
 		}
 	}
 
@@ -463,25 +605,18 @@ namespace core { namespace render { namespace graph {
 		auto command_buffer = state.GetCurrentCommandBuffer()->GetCommandBuffer();
 		for (auto* node : pass.output_nodes)
 		{
-			ImageLayout target_layout = ImageLayout::Undefined;
-
-			switch (node->resource->type)
+			if (node->should_transfer_ownership)
 			{
-			case ResourceType::Attachment:
+				auto operation_index = GetOperationIndex(*node, pass.index, true);
+				PipelineBarrier(GetImageBarrierData(operation_index, *node), command_buffer);
+			}
+
+			if (node->present_swapchain)
 			{
 				auto* attachment = node->resource->GetAttachment();
-				if (!attachment->IsSwapchain() || !node->present_swapchain)
-					return;
-
-				auto operation_index = GetOperationIndex(*node, pass.index + 1, false);
+				auto operation_index = GetOperationIndex(*node, pass.index + 1, false); // false here to perform full search
 				ImagePipelineBarrier(GetImageBarrierData(operation_index, *node), command_buffer);
-				break;
 			}
-
-			default:
-				throw std::runtime_error("not implemented");
-			}
-
 		}
 	}
 
@@ -498,119 +633,74 @@ namespace core { namespace render { namespace graph {
 		OutputDebugStringA(pass->name);
 		OutputDebugStringA("\n"); */
 		OPTICK_EVENT(pass->name);
+		bool is_graphics = !pass->is_compute;
+		core::Device::PipelineBindPoint binding_point = is_graphics ? core::Device::PipelineBindPoint::Graphics : core::Device::PipelineBindPoint::Compute;
 
 		auto* context = Engine::GetVulkanContext();
 		auto* state = context->GetRenderState();
-		auto initializer = GetPassInitializer(pass);
-		auto* vulkan_pass = GetRenderPass(std::get<0>(initializer));
-		auto* vulkan_render_target = GetRenderTarget(std::get<1>(initializer));
-		auto viewport = vec4(0, 0, std::get<2>(initializer));
+		state->BeginRecording(binding_point);
+		ApplyPreBarriers(*pass, *state);
+		auto* command_buffer = state->GetCurrentCommandBuffer();
 
-		uint32_t attach_index = 0;
-		for (auto* output : pass->output_nodes)
+		if (is_graphics)
 		{
-			if (output->resource->type == ResourceType::Attachment)
-				state->SetClearValue(attach_index++, output->clear_value);
+			auto initializer = GetPassInitializer(pass);
+			auto* vulkan_pass = GetRenderPass(std::get<0>(initializer));
+			auto* vulkan_render_target = GetRenderTarget(std::get<1>(initializer));
+			auto viewport = vec4(0, 0, std::get<2>(initializer));
+
+			uint32_t attach_index = 0;
+			for (auto* output : pass->output_nodes)
+			{
+				if (output->resource->type == ResourceType::Attachment)
+					state->SetClearValue(attach_index++, output->clear_value);
+			}
+
+			state->SetScissor(viewport);
+			state->SetViewport(viewport);
+
+			state->BeginRendering(*vulkan_render_target, *vulkan_pass);
 		}
 
-		auto* command_buffer = state->GetCurrentCommandBuffer();
-		state->BeginRecording();
-		ApplyPreBarriers(*pass, *state);
-
-		state->SetScissor(viewport);
-		state->SetViewport(viewport);
-
-		state->BeginRendering(*vulkan_render_target, *vulkan_pass);
 		pass->record_callback(*state);
-		state->EndRendering();
+
+		if (is_graphics)
+			state->EndRendering();
 
 		ApplyPostBarriers(*pass, *state);
 		state->EndRecording();
 
+
 		core::Device::FrameCommandBufferData data(
 			command_buffer->GetCommandBuffer(),
-			vk::Semaphore(),//state->GetCurrentSemaphore(), // TODO: only provide semaphore when other pass should wait for current
-			vk::Semaphore(),
-			vk::PipelineStageFlagBits::eAllCommands, // TODO: fix
-			core::Device::PipelineBindPoint::Graphics
+			pass->signal_semaphore,
+			std::move(pass->wait_semaphores),
+			binding_point
 		);
 
 		data.command_buffer = command_buffer->GetCommandBuffer();
-		data.queue = core::Device::PipelineBindPoint::Graphics;
-		context->AddFrameCommandBuffer(data);
-	}
-
-	void TransferOwnershipQueue(ResourceWrapper& resource, PassQueue queue)
-	{
-		
-	}
-
-	void ApplyPreComputeBarriers(Pass& pass, VulkanRenderState& state)
-	{
-		for (auto* resource : pass.output_nodes)
-		{
-			ImageLayout target_layout = ImageLayout::Undefined;
-			switch (resource->resource->type)
-			{
-			case ResourceType::Buffer:
-			{
-		
-
-				break;
-			}
-
-			default:
-				throw std::runtime_error("not implemented");
-			}
-		}
-	}
-
-	void RenderGraph::RecordComputePass(Pass* pass)
-	{
-		auto* context = Engine::GetVulkanContext();
-		auto* state = context->GetRenderState();
-
-		auto* command_buffer = state->GetCurrentCommandBuffer();
-		state->BeginRecording();
-		ApplyPreBarriers(*pass, *state);
-
-		pass->record_callback(*state);
-
-		ApplyPostBarriers(*pass, *state);
-		state->EndRecording();
-
-		core::Device::FrameCommandBufferData data(
-			command_buffer->GetCommandBuffer(),
-			vk::Semaphore(),
-			vk::Semaphore(),
-			vk::PipelineStageFlagBits::eAllCommands, // TODO: fix
-			core::Device::PipelineBindPoint::Compute
-		);
+		data.queue = binding_point;
 		context->AddFrameCommandBuffer(data);
 	}
 
 	void RenderGraph::RecordCommandBuffers()
 	{
 		OPTICK_EVENT();
-		auto* context = Engine::GetVulkanContext();
-
 		for (auto& pass : render_passes)
 		{
-			if (pass->is_compute)
-				RecordComputePass(pass.get());
-			else
-				RecordGraphicsPass(pass.get());
+			RecordGraphicsPass(pass.get());
 		}
 	}
 
 	void RenderGraph::Render()
 	{
+		UpdateInFlightSemaphores();
 		RecordCommandBuffers();
 	}
 
-	// TODO: remove since unused?
 	vk::Semaphore RenderGraph::GetSemaphore()
 	{
+		std::scoped_lock lock(semaphore_mutex);
 		vk::Semaphore semaphore;
 
 		if (available_semaphores.size())
@@ -630,12 +720,14 @@ namespace core { namespace render { namespace graph {
 
 	void RenderGraph::UpdateInFlightSemaphores()
 	{
+		std::scoped_lock lock(semaphore_mutex);
+
 		for (auto& pair : in_flight_semaphores)
 		{
 			pair.first += 1;
 		}
 
-		const int in_flight_count = 2;
+		const int in_flight_count = 3;
 		auto remove_pos = std::remove_if(in_flight_semaphores.begin(), in_flight_semaphores.end(), [=](auto& pair) { return pair.first >= in_flight_count; });
 		for (auto iter = remove_pos; iter != in_flight_semaphores.end(); iter++)
 		{

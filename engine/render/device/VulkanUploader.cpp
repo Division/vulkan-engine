@@ -131,7 +131,8 @@ namespace core { namespace Device {
 
 	VulkanUploader::VulkanUploader() 
 	{
-		command_pool = std::make_unique<VulkanCommandPool>();
+		auto* context = Engine::Get()->GetContext();
+		command_pool = std::make_unique<VulkanCommandPool>(context->GetQueueFamilyIndex(PipelineBindPoint::Graphics));
 		for (int i = 0; i < caps::MAX_FRAMES_IN_FLIGHT; i++)
 			command_buffers[i] = command_pool->GetCommandBuffer();
 	};

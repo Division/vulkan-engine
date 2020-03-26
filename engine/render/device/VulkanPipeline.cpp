@@ -22,6 +22,7 @@ namespace core { namespace Device {
 	}
 
 	VulkanPipelineInitializer::VulkanPipelineInitializer(const ShaderProgram* shader_program)
+		: shader_program(shader_program)
 	{
 		size_t hashes[] = { shader_program->GetHash() };
 		hash = FastHash(hashes, sizeof(hashes));
@@ -79,22 +80,6 @@ namespace core { namespace Device {
 			shader_stages[shader_stage_count++] = compute_shader_stage_info;
 		}
 
-		vk::VertexInputBindingDescription vertex_binding_description(0, layout->GetStride(), vk::VertexInputRate::eVertex);
-
-		std::vector<vk::VertexInputAttributeDescription> vertex_attribute_descriptions;
-		auto& vertex_attribs = shader_program->VertexModule()->GetReflectionInfo()->VertexAttribs();
-		for (auto& attrib : vertex_attribs)
-		{
-			vertex_attribute_descriptions.push_back(
-				vk::VertexInputAttributeDescription(
-					attrib.location, 
-					0,
-					vk::Format(layout->GetAttribFormat(attrib.vertex_attrib)),
-					layout->GetAttribOffset(attrib.vertex_attrib)
-				)
-			);
-		}
-
 		std::vector<vk::DescriptorSetLayout> descriptor_set_layouts;
 		for (auto& set : shader_program->GetDescriptorSets())
 		{
@@ -121,6 +106,22 @@ namespace core { namespace Device {
 			pipeline = device.createComputePipelineUnique({}, compute_pipeline_info);
 		} else
 		{
+			vk::VertexInputBindingDescription vertex_binding_description(0, layout->GetStride(), vk::VertexInputRate::eVertex);
+
+			std::vector<vk::VertexInputAttributeDescription> vertex_attribute_descriptions;
+			auto& vertex_attribs = shader_program->VertexModule()->GetReflectionInfo()->VertexAttribs();
+			for (auto& attrib : vertex_attribs)
+			{
+				vertex_attribute_descriptions.push_back(
+					vk::VertexInputAttributeDescription(
+						attrib.location, 
+						0,
+						vk::Format(layout->GetAttribFormat(attrib.vertex_attrib)),
+						layout->GetAttribOffset(attrib.vertex_attrib)
+					)
+				);
+			}
+
 			auto* render_mode = initializer.render_mode;
 			vk::PipelineVertexInputStateCreateInfo vertex_input_state_create_info({}, 1, &vertex_binding_description, vertex_attribute_descriptions.size(), vertex_attribute_descriptions.data());
 			vk::PipelineInputAssemblyStateCreateInfo input_assembly_create_info({}, vk::PrimitiveTopology(render_mode->GetPrimitiveTopology()), VK_FALSE);

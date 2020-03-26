@@ -13,25 +13,28 @@ namespace core { namespace Device {
 	class VulkanRenderState;
 	class VulkanDescriptorCache;
 	
+	struct SemaphoreList
+	{
+		std::vector<vk::Semaphore> semaphores;
+		std::vector<vk::PipelineStageFlags> stage_flags;
+	};
+
 	struct FrameCommandBufferData
 	{
 		FrameCommandBufferData(
 			vk::CommandBuffer command_buffer,
 			vk::Semaphore signal_semaphore,
-			vk::Semaphore wait_semaphore,
-			vk::PipelineStageFlags wait_flags,
+			SemaphoreList wait_semaphores,
 			PipelineBindPoint queue) 
 		: command_buffer(command_buffer)
 		, signal_semaphore(signal_semaphore)
-		, wait_semaphore(wait_semaphore)
-		, wait_flags(wait_flags)
+		, wait_semaphores(std::move(wait_semaphores))
 		, queue(queue)
 		{}
 
 		vk::CommandBuffer command_buffer;
 		vk::Semaphore signal_semaphore;
-		vk::Semaphore wait_semaphore;
-		vk::PipelineStageFlags wait_flags;
+		SemaphoreList wait_semaphores;
 		PipelineBindPoint queue;
 	};
 
@@ -56,6 +59,7 @@ namespace core { namespace Device {
 		vk::Queue GetPresentQueue() const { return present_queue; }
 		vk::Queue GetComputeQueue() const { return compute_queue; }
 		vk::Queue GetQueue(PipelineBindPoint bind_point);
+		uint32_t GetQueueFamilyIndex(PipelineBindPoint);
 
 		size_t GetCurrentFrame() const { return currentFrame; }
 		uint32_t GetSwapchainImageCount() const;
@@ -102,6 +106,10 @@ namespace core { namespace Device {
 		vk::Queue graphics_queue;
 		vk::Queue present_queue;
 		vk::Queue compute_queue;
+
+		uint32_t graphics_queue_index;
+		uint32_t present_queue_index;
+		uint32_t compute_queue_index;
 
 		std::vector<std::unique_ptr<VulkanRenderState>> render_states;
 		uint32_t current_render_state = 0;

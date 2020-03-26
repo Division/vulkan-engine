@@ -30,14 +30,10 @@ namespace core { namespace Device {
 	//-----------------------------------------------------------------------------
 
 	// TODO: queueFamilyIndex as parameter
-	VulkanCommandPool::VulkanCommandPool()
+	VulkanCommandPool::VulkanCommandPool(uint32_t queue_family)
 		: current_frame_allocated_buffers(0)
 	{
-		VulkanUtils::QueueFamilyIndices queueFamilyIndices = VulkanUtils::FindQueueFamilies(
-			Engine::GetVulkanContext()->GetPhysicalDevice(), Engine::GetVulkanContext()->GetSurface());
-
-		vk::CommandPoolCreateInfo pool_info({ vk::CommandPoolCreateFlagBits::eResetCommandBuffer }, queueFamilyIndices.graphicsFamily.value());
-
+		vk::CommandPoolCreateInfo pool_info({ vk::CommandPoolCreateFlagBits::eResetCommandBuffer }, queue_family);
 		command_pool = Engine::GetVulkanDevice().createCommandPoolUnique(pool_info);
 	}
 

@@ -230,9 +230,12 @@ namespace core { namespace Device {
 			throw std::runtime_error("failed to create logical device!");
 		}
 
-		graphics_queue = GetDevice().getQueue(indices.graphicsFamily.value(), 0);
-		present_queue = GetDevice().getQueue(indices.presentFamily.value(), 0);
-		compute_queue = GetDevice().getQueue(indices.compute_family.value(), 0);
+		graphics_queue_index = indices.graphicsFamily.value();
+		graphics_queue = GetDevice().getQueue(graphics_queue_index, 0);
+		present_queue_index = indices.presentFamily.value();
+		present_queue = GetDevice().getQueue(present_queue_index, 0);
+		compute_queue_index = indices.compute_family.value();
+		compute_queue = GetDevice().getQueue(compute_queue_index, 0);
 	}
 
     void VulkanContext::CreateSyncObjects() 
@@ -272,6 +275,21 @@ namespace core { namespace Device {
 		}
 	}
 
+	uint32_t VulkanContext::GetQueueFamilyIndex(PipelineBindPoint bind_point)
+	{
+		switch (bind_point)
+		{
+		case PipelineBindPoint::Graphics:
+			return graphics_queue_index;
+
+		case PipelineBindPoint::Compute:
+			return compute_queue_index;
+
+		default:
+			throw std::runtime_error("not supported");
+		}
+	}
+
 	void VulkanContext::WaitForRenderFence()
 	{
 		vk::Fence current_fence = GetInFlightFence(); 
@@ -298,6 +316,8 @@ namespace core { namespace Device {
 		}
 
 		GetUploader()->ProcessUpload();
+		vk::PipelineStageFlags color_wait_mask = vk::PipelineStageFlagBits::eColorAttachmentOutput;
+		SemaphoreList wait_semaphores;
 
 		for (int i = 0; i < frame_command_buffers.size(); i++)
 		{
@@ -306,20 +326,17 @@ namespace core { namespace Device {
 
 			auto& data = frame_command_buffers[i];
 			vk::SubmitInfo submit_info;
-			vk::PipelineStageFlags wait_mask;
-			if (data.wait_semaphore)
+			if (data.wait_semaphores.semaphores.size())
 			{
-				submit_info.waitSemaphoreCount = 1;
-				wait_mask = data.wait_flags;
-				submit_info.pWaitDstStageMask = &wait_mask;
-				submit_info.setPWaitSemaphores(&data.wait_semaphore);
+				submit_info.waitSemaphoreCount = data.wait_semaphores.semaphores.size();
+				submit_info.pWaitDstStageMask = data.wait_semaphores.stage_flags.data();
+				submit_info.setPWaitSemaphores(data.wait_semaphores.semaphores.data());
 			}
 
 			if (is_first)
 			{
 				submit_info.waitSemaphoreCount = 1;
-				wait_mask = vk::PipelineStageFlagBits::eColorAttachmentOutput;
-				submit_info.pWaitDstStageMask = &wait_mask;
+				submit_info.pWaitDstStageMask = &color_wait_mask;
 				submit_info.setPWaitSemaphores(&image_available_semaphone);
 			}
 

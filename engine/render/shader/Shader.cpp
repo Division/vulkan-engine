@@ -39,11 +39,14 @@ namespace core { namespace Device {
 	
 	void ShaderProgram::AddModule(ShaderModule* shader_module, Stage stage)
 	{
-		auto& module_var = stage == Stage::Vertex ? vertex_module : fragment_module;
-		if (module_var)
-			throw std::runtime_error("Shader module already set");
-
-		module_var = shader_module;
+		ShaderModule** module_var = nullptr;
+	
+		if (stage == Stage::Vertex)
+			vertex_module = shader_module;
+		if (stage == Stage::Fragment)
+			fragment_module = shader_module;
+		if (stage == Stage::Compute)
+			compute_module = shader_module;
 	}
 
 	std::unordered_map<ShaderProgram::Stage, vk::ShaderStageFlagBits> shader_stage_flag_map =
