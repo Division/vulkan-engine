@@ -26,10 +26,20 @@ namespace core { namespace Device {
 		texture_bindings.push_back(TextureBinding{ (unsigned char)set, (unsigned char)index, texture });
 	}
 
-	void ShaderBindings::AddBufferBinding(unsigned set, unsigned index, size_t offset, size_t size, vk::Buffer buffer)
+	void ShaderBindings::AddBufferBinding(unsigned set, unsigned index, size_t offset, size_t size, vk::Buffer buffer, size_t dynamic_offset)
 	{
-		buffer_bindings.push_back(BufferBinding{ (unsigned char)set, (unsigned char)index, (unsigned)offset, (unsigned)size, buffer });
+		buffer_bindings.push_back(BufferBinding{ (unsigned char)set, (unsigned char)index, (unsigned)offset, (unsigned)dynamic_offset, (unsigned)size, buffer });
+		UpdateBindings();
+	}
+
+	void ShaderBindings::UpdateBindings()
+	{
 		std::sort(buffer_bindings.begin(), buffer_bindings.end());
+		
+		dynamic_offsets.clear();
+		for (auto& binding : buffer_bindings)
+			if (binding.dynamic_offset != -1)
+				dynamic_offsets.push_back(binding.dynamic_offset);
 	}
 
 	int ShaderBindings::GetBindingIndex(uint32_t index, ShaderProgram::BindingType type)
@@ -49,10 +59,14 @@ namespace core { namespace Device {
 
 		case ShaderProgram::BindingType::StorageBuffer:
 		case ShaderProgram::BindingType::UniformBuffer:
+		case ShaderProgram::BindingType::UniformBufferDynamic:
 			{
 				auto it = std::find_if(buffer_bindings.begin(), buffer_bindings.end(), predicate);
 				return it != buffer_bindings.end() ? it - buffer_bindings.begin() : -1;
 			}
+		
+		default:
+			assert(false);
 		}
 
 		return -1;

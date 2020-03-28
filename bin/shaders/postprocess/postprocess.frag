@@ -11,6 +11,15 @@ layout(location = 0) out vec4 out_color;
 
 layout(set = 0, binding = 0) uniform sampler2D src_texture;
 
+struct Pixel{
+	vec4 value;
+};
+
+layout(std140, binding = 1) buffer hdr_data
+{
+   Pixel image_data[];
+};
+
 vec4 ToneMap(vec4 src_color, float exposure)
 {
 	//return vec4(src_color.rgb / (src_color.rgb + vec3(1.0)), 1.0);
@@ -20,5 +29,5 @@ vec4 ToneMap(vec4 src_color, float exposure)
 void main()
 {
 	vec4 src_sample = texture(src_texture, frag_texcoord);
-	out_color = ToneMap(src_sample, push_constants.exposure);
+	out_color = ToneMap(src_sample, push_constants.exposure) * image_data[0].value;
 }

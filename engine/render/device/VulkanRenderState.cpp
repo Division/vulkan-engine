@@ -195,18 +195,13 @@ namespace core { namespace Device {
 			{
 				auto& global_binding = global_bindings.GetBufferBindings()[index];
 				// TODO: remove set
-				common_bindings.AddBufferBinding(DescriptorSet::Global, global_binding.index, global_binding.offset, global_binding.size, global_binding.buffer);
+				common_bindings.AddBufferBinding(DescriptorSet::Global, global_binding.index, global_binding.offset, global_binding.size, global_binding.buffer, global_binding.dynamic_offset);
 			}
-		}
-
-		utils::SmallVector<uint32_t, 10> dynamic_offsets;
-		for (auto& binding : common_bindings.GetBufferBindings())
-		{
-			dynamic_offsets.push_back(binding.offset);
 		}
 
 		auto descriptor_cache = Engine::GetVulkanContext()->GetDescriptorCache();
 		auto descriptor_set = descriptor_cache->GetDescriptorSet(common_bindings, *global_descriptor_set_data);
+		auto& dynamic_offsets = common_bindings.GetDynamicOffsets();
 
 		auto command_buffer = GetCurrentCommandBuffer()->GetCommandBuffer();
 		command_buffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, current_pipeline->GetPipelineLayout(), DescriptorSet::Global, 1u, &descriptor_set, dynamic_offsets.size(), dynamic_offsets.data());
@@ -518,10 +513,8 @@ namespace core { namespace Device {
 		command_buffer.bindPipeline( vk::PipelineBindPoint::eCompute, current_pipeline->GetPipeline());
 		auto descriptor_set = descriptor_cache->GetDescriptorSet(bindings, *program.GetDescriptorSet(0));
 
-		uint32_t offset = 0;
-
 		if (!program.GetDescriptorSet(0)->Empty())
-			command_buffer.bindDescriptorSets(vk::PipelineBindPoint::eCompute, current_pipeline->GetPipelineLayout(), 0, 1u, &descriptor_set, 1u, &offset);
+			command_buffer.bindDescriptorSets(vk::PipelineBindPoint::eCompute, current_pipeline->GetPipelineLayout(), 0, 1u, &descriptor_set, 0, nullptr);
 
 		vkCmdDispatch(command_buffer, group_size.x, group_size.y, group_size.z);
 

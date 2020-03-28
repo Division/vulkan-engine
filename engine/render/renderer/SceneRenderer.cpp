@@ -27,6 +27,7 @@
 #include "render/mesh/Mesh.h"
 #include "render/shading/IShadowCaster.h"
 #include "render/shader/ShaderCache.h"
+#include "render/shader/ShaderResource.h"
 #include "render/shader/ShaderBindings.h"
 #include "render/shader/ShaderDefines.h"
 #include "render/renderer/RenderGraph.h"
@@ -218,7 +219,7 @@ namespace core { namespace render {
 		auto* compute_buffer_resource = render_graph->RegisterBuffer(*compute_buffer->GetBuffer());
 		post_process->PrepareRendering(*render_graph);
 
-		/*auto compute_pass_info = render_graph->AddPass<PassInfo>("compute pass", [&](graph::IRenderPassBuilder& builder)
+		auto compute_pass_info = render_graph->AddPass<PassInfo>("compute pass", [&](graph::IRenderPassBuilder& builder)
 		{
 			builder.SetCompute();
 
@@ -228,13 +229,13 @@ namespace core { namespace render {
 		}, [&](VulkanRenderState& state)
 		{
 			state.RecordCompute(*compute_program, *compute_bindings, uvec3(128, 128, 1));
-		});*/
+		});
 
 		auto depth_pre_pass_info = render_graph->AddPass<PassInfo>("depth pre pass", [&](graph::IRenderPassBuilder& builder)
 		{
 			PassInfo result;
 			result.depth_output = builder.AddOutput(*main_depth)->Clear(1.0f);
-			//builder.AddInput(*compute_pass_info.compute_output);
+			builder.AddInput(*compute_pass_info.compute_output);
 			return result;
 		}, [&](VulkanRenderState& state)
 		{
@@ -270,7 +271,8 @@ namespace core { namespace render {
 
 			for (auto& shadow_caster : shadow_casters)
 			{
-				global_bindings.GetBufferBindings()[global_shader_binding_camera_index].offset = shadow_caster.first->cameraIndex();
+				global_bindings.GetBufferBindings()[global_shader_binding_camera_index].dynamic_offset = shadow_caster.first->cameraIndex();
+				global_bindings.UpdateBindings(); // update dynamic offsets
 				state.SetGlobalBindings(global_bindings);
 				state.SetViewport(shadow_caster.first->cameraViewport());
 				auto& render_queues = shadow_caster.second.GetDrawCallList()->queues;
@@ -337,12 +339,12 @@ namespace core { namespace render {
 
 		});
 
-		auto post_process_result = post_process->AddPostProcess(*render_graph, *main_pass_info.color_output, *main_color);
+		auto post_process_result = post_process->AddPostProcess(*render_graph, *main_pass_info.color_output, *main_color, *compute_buffer_resource);
 
 		auto ui_pass_info = render_graph->AddPass<PassInfo>("Debug UI", [&](graph::IRenderPassBuilder& builder)
 			{
 				PassInfo result;
-				//builder.AddInput(*post_process_result);
+				builder.AddInput(*compute_pass_info.compute_output);
 				result.color_output = builder.AddOutput(*main_color)->PresentSwapchain();
 				return result;
 			}, [&](VulkanRenderState& state)
@@ -458,14 +460,16 @@ namespace core { namespace render {
 				break;
 
 			case ShaderProgram::BindingType::UniformBuffer:
+			case ShaderProgram::BindingType::UniformBufferDynamic:
 			case ShaderProgram::BindingType::StorageBuffer:
 			{
 				auto buffer_data = GetBufferData((ShaderBufferName)binding.id);
 				vk::Buffer buffer;
 				size_t size;
 				std::tie(buffer, size) = buffer_data;
+				uint32_t dynamic_offset = SHADER_DYNAMIC_OFFSET_BUFFERS.find((ShaderBufferName)binding.id) == SHADER_DYNAMIC_OFFSET_BUFFERS.end() ? -1 : 0;
 
-				bindings.AddBufferBinding(address.set, address.binding, 0, size, buffer);
+				bindings.AddBufferBinding(address.set, address.binding, 0, size, buffer, dynamic_offset);
 				break;
 			}
 

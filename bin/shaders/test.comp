@@ -15,6 +15,6 @@ layout(std140, binding = 0) buffer buf
 };
 
 void main() {
-	vec4 color = vec4(1.0,0.0,1.0,1.0);
+	vec4 color = vec4(0.0,0.0,1.0,1.0);
 	imageData[WIDTH * gl_GlobalInvocationID.y + gl_GlobalInvocationID.x].value = color;
 }

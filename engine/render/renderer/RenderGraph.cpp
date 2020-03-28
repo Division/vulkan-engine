@@ -402,7 +402,7 @@ namespace core { namespace render { namespace graph {
 		{
 			if (node->should_transfer_ownership)
 			{
-				auto operation_index = GetOperationIndex(*node, pass.index, true);
+				auto operation_index = GetOperationIndex(*node, pass.index, true) + 1;
 				PipelineBarrier(operation_index, *node, command_buffer);
 			}
 

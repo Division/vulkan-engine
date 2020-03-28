@@ -245,7 +245,6 @@ namespace core { namespace Device {
 		vec4 current_viewport;
 		vec4 current_scissor;
 
-		std::vector<uint32_t> dynamic_offsets;
 		std::unordered_map<uint32_t, vk::UniqueSampler> sampler_cache;
 		std::unordered_map<uint32_t, vk::DescriptorSet> descriptor_set_cache;
 		std::unordered_map<uint32_t, std::unique_ptr<VulkanPipeline>> pipeline_cache;

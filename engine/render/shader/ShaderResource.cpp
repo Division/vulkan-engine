@@ -22,3 +22,10 @@ const std::map<std::string, ShaderBufferName> SHADER_BUFFER_NAMES =
 	{ "LightGrid", ShaderBufferName::LightGrid },
 	{ "LightIndices", ShaderBufferName::LightIndices }
 };
+
+const std::set<ShaderBufferName> SHADER_DYNAMIC_OFFSET_BUFFERS =
+{
+	ShaderBufferName::ObjectParams,
+	ShaderBufferName::Camera,
+	ShaderBufferName::SkinningMatrices
+};
