@@ -202,6 +202,8 @@ namespace core { namespace Device {
 		void SetShader(const ShaderProgram& program);
 		void SetVertexLayout(const VertexLayout& layout);
 		void SetGlobalBindings(const ShaderBindings& global_bindings);
+		void SetDescriptorSetBindings(const ShaderBindings& bindings, const ShaderProgram::DescriptorSet& descriptor_set_data);
+		void SetDescriptorSet(vk::DescriptorSet descriptor_set, uint32_t index, uint32_t dynamic_offset_count, const uint32_t* dynamic_offsets);
 		void RemoveGlobalBindings();
 		void SetClearValue(uint32_t index, vk::ClearValue value);
 		void PushConstants(ShaderProgram::Stage stage, uint32_t offset, uint32_t size, void* data);

@@ -197,12 +197,7 @@ namespace core { namespace Device {
 			}
 		}
 
-		auto descriptor_cache = Engine::GetVulkanContext()->GetDescriptorCache();
-		auto descriptor_set = descriptor_cache->GetDescriptorSet(common_bindings, *global_descriptor_set_data);
-		auto& dynamic_offsets = common_bindings.GetDynamicOffsets();
-
-		auto command_buffer = GetCurrentCommandBuffer()->GetCommandBuffer();
-		command_buffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, current_pipeline->GetPipelineLayout(), DescriptorSet::Global, 1u, &descriptor_set, dynamic_offsets.size(), dynamic_offsets.data());
+		SetDescriptorSetBindings(common_bindings, *global_descriptor_set_data);
 		
 		global_layout_hash = global_descriptor_set_data->layout_hash;
 	}
@@ -383,6 +378,25 @@ namespace core { namespace Device {
 		global_bindings_set = false;
 	}
 
+	void VulkanRenderState::SetDescriptorSetBindings(const ShaderBindings& bindings, const ShaderProgram::DescriptorSet& descriptor_set_data)
+	{
+		assert(current_pipeline);
+		auto descriptor_cache = Engine::GetVulkanContext()->GetDescriptorCache();
+		auto descriptor_set = descriptor_cache->GetDescriptorSet(bindings, descriptor_set_data);
+		auto& dynamic_offsets = bindings.GetDynamicOffsets();
+
+		auto command_buffer = GetCurrentCommandBuffer()->GetCommandBuffer();
+		command_buffer.bindDescriptorSets((vk::PipelineBindPoint)pipeline_bind_point, current_pipeline->GetPipelineLayout(), descriptor_set_data.set_index, 1u, &descriptor_set, dynamic_offsets.size(), dynamic_offsets.data());
+	}
+
+	void VulkanRenderState::SetDescriptorSet(vk::DescriptorSet descriptor_set, uint32_t index, uint32_t dynamic_offset_count, const uint32_t* dynamic_offsets)
+	{
+		assert(current_pipeline);
+
+		auto command_buffer = GetCurrentCommandBuffer()->GetCommandBuffer();
+		command_buffer.bindDescriptorSets((vk::PipelineBindPoint)pipeline_bind_point, current_pipeline->GetPipelineLayout(), index, 1u, &descriptor_set, dynamic_offset_count, dynamic_offsets);
+	}
+
 	void VulkanRenderState::PushConstants(ShaderProgram::Stage stage, uint32_t offset, uint32_t size, void* data)
 	{
 		UpdateState();
@@ -423,7 +437,7 @@ namespace core { namespace Device {
 			utils::SmallVector<uint32_t, 4> dynamic_offsets;
 			dynamic_offsets.push_back(draw_call->dynamic_offset);
 			auto descriptor_set = is_depth ? draw_call->depth_only_descriptor_set : draw_call->descriptor_set;
-			command_buffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, current_pipeline->GetPipelineLayout(), DescriptorSet::Object, 1u, &descriptor_set, dynamic_offsets.size(), dynamic_offsets.data());
+			SetDescriptorSet(descriptor_set, DescriptorSet::Object, dynamic_offsets.size(), dynamic_offsets.data());
 		}
 
 		if (mesh->hasIndices())
@@ -505,14 +519,13 @@ namespace core { namespace Device {
 
 		VulkanPipelineInitializer compute_pipeline_initializer(&program);
 		current_pipeline = GetPipeline(compute_pipeline_initializer);
-		auto descriptor_cache = Engine::GetVulkanContext()->GetDescriptorCache();
 
 		auto command_buffer = GetCurrentCommandBuffer()->GetCommandBuffer();
 		command_buffer.bindPipeline( vk::PipelineBindPoint::eCompute, current_pipeline->GetPipeline());
-		auto descriptor_set = descriptor_cache->GetDescriptorSet(bindings, *program.GetDescriptorSet(0));
+		auto* descriptor_set_info = program.GetDescriptorSet(0);
 
-		if (!program.GetDescriptorSet(0)->Empty())
-			command_buffer.bindDescriptorSets(vk::PipelineBindPoint::eCompute, current_pipeline->GetPipelineLayout(), 0, 1u, &descriptor_set, 0, nullptr);
+		if (!descriptor_set_info->Empty())
+			SetDescriptorSetBindings(bindings, *descriptor_set_info);
 
 		vkCmdDispatch(command_buffer, group_size.x, group_size.y, group_size.z);
 

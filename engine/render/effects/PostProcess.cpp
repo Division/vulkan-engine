@@ -67,8 +67,7 @@ namespace core::render::effects
 
 				auto* buffer = hdr_buffer.GetBuffer();
 				bindings.AddBufferBindingSafe(hdr_buffer_address.binding, 0, buffer->Size(), buffer->Buffer());
-				auto* descriptor_cache = Engine::GetVulkanContext()->GetDescriptorCache();
-				auto vk_descriptor_set = descriptor_cache->GetDescriptorSet(bindings, *shader->GetDescriptorSet(0));
+				auto* descriptor_set_info = shader->GetDescriptorSet(0);
 				auto command_buffer = state.GetCurrentCommandBuffer()->GetCommandBuffer();
 
 				state.SetRenderMode(mode);
@@ -76,10 +75,8 @@ namespace core::render::effects
 				state.SetVertexLayout(full_screen_quad_mesh->GetVertexLayout());
 				state.UpdateState();
 
-				auto pipeline = state.GetCurrentPipeline();
-
-				command_buffer.pushConstants(pipeline->GetPipelineLayout(), vk::ShaderStageFlagBits::eFragment, 0, sizeof(float), &environment_settings.exposure);
-				command_buffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipeline->GetPipelineLayout(), 0, 1u, &vk_descriptor_set, 0, nullptr);
+				state.PushConstants(ShaderProgram::Stage::Fragment, 0, sizeof(float), &environment_settings.exposure);
+				state.SetDescriptorSetBindings(bindings, *descriptor_set_info);
 				state.Draw(*full_screen_quad_mesh->vertexBuffer(), full_screen_quad_mesh->indexCount(), 0);
 			});
 

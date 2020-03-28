@@ -203,11 +203,9 @@ namespace core { namespace render {
 			translate[0] = -1.0f - draw_data->DisplayPos.x * scale[0];
 			translate[1] = -1.0f - draw_data->DisplayPos.y * scale[1];
 
-			auto* pipeline = state.GetCurrentPipeline();
-
-			command_buffer.pushConstants(pipeline->GetPipelineLayout(), vk::ShaderStageFlagBits::eVertex, sizeof(float) * 0, sizeof(float) * 2, scale);
-			command_buffer.pushConstants(pipeline->GetPipelineLayout(), vk::ShaderStageFlagBits::eVertex, sizeof(float) * 2, sizeof(float) * 2, translate);
-			command_buffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipeline->GetPipelineLayout(), 0, 1u, &vk_descriptor_set, 0, nullptr);
+			state.PushConstants(ShaderProgram::Stage::Vertex, sizeof(float) * 0, sizeof(float) * 2, scale);
+			state.PushConstants(ShaderProgram::Stage::Vertex, sizeof(float) * 2, sizeof(float) * 2, translate);
+			state.SetDescriptorSet(vk_descriptor_set, 0, 0, nullptr);
 		}
 
 		void Render(VulkanRenderState& state)
