@@ -218,7 +218,7 @@ namespace core { namespace render {
 		auto* compute_buffer_resource = render_graph->RegisterBuffer(*compute_buffer->GetBuffer());
 		post_process->PrepareRendering(*render_graph);
 
-		auto compute_pass_info = render_graph->AddPass<PassInfo>("compute pass", [&](graph::IRenderPassBuilder& builder)
+		/*auto compute_pass_info = render_graph->AddPass<PassInfo>("compute pass", [&](graph::IRenderPassBuilder& builder)
 		{
 			builder.SetCompute();
 
@@ -228,13 +228,13 @@ namespace core { namespace render {
 		}, [&](VulkanRenderState& state)
 		{
 			state.RecordCompute(*compute_program, *compute_bindings, uvec3(128, 128, 1));
-		});
+		});*/
 
 		auto depth_pre_pass_info = render_graph->AddPass<PassInfo>("depth pre pass", [&](graph::IRenderPassBuilder& builder)
 		{
 			PassInfo result;
 			result.depth_output = builder.AddOutput(*main_depth)->Clear(1.0f);
-			builder.AddInput(*compute_pass_info.compute_output);
+			//builder.AddInput(*compute_pass_info.compute_output);
 			return result;
 		}, [&](VulkanRenderState& state)
 		{

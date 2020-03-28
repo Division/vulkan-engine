@@ -122,6 +122,8 @@ set(ENGINE_SOURCES
 	render/renderer/SceneBuffers.cpp
 	render/renderer/RenderGraph.h
 	render/renderer/RenderGraph.cpp
+	render/renderer/Synchronization.h
+	render/renderer/Synchronization.cpp
 	render/renderer/EnvironmentSettings.h
 	render/debug/DebugDraw.h
 	render/debug/DebugDraw.cpp

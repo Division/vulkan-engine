@@ -21,6 +21,8 @@ namespace core { namespace Device {
 
 	struct FrameCommandBufferData
 	{
+		FrameCommandBufferData() = default;
+
 		FrameCommandBufferData(
 			vk::CommandBuffer command_buffer,
 			vk::Semaphore signal_semaphore,

@@ -101,7 +101,8 @@ namespace core { namespace Device {
 	{
 		Graphics = VK_PIPELINE_BIND_POINT_GRAPHICS,
 		Compute = VK_PIPELINE_BIND_POINT_COMPUTE,
-		RayTracingNV = VK_PIPELINE_BIND_POINT_RAY_TRACING_NV
+		RayTracingNV = VK_PIPELINE_BIND_POINT_RAY_TRACING_NV,
+		Count = 3
 	};
 
 	extern const std::unordered_map<Format, size_t> format_sizes;

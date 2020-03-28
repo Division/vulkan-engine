@@ -3,6 +3,7 @@
 #include "CommonIncludes.h"
 #include "render/device/Types.h"
 #include "render/shader/ShaderBindings.h"
+#include "Synchronization.h"
 #include <mutex>
 
 namespace core
@@ -57,10 +58,7 @@ namespace core { namespace render { namespace graph {
 	{
 		uint32_t pass_index = -1;
 		uint32_t queue_family_index = -1;
-		OperationType operation = OperationType::None;
-		vk::AccessFlags access = {};
-		vk::PipelineStageFlags stage = {};
-		ImageLayout layout = ImageLayout::Undefined;
+		synchronization::ResourceOperationType type;
 	};
 
 	struct ResourceWrapper
@@ -86,7 +84,6 @@ namespace core { namespace render { namespace graph {
 
 		std::vector <ResourceOperation> operations;
 		vk::Semaphore semaphore; // signalled when write is done
-		uint32_t startup_queue = -1; // Will transfer to this queue at the end
 		//vk::AccessFlags access_flags;
 	};
 
@@ -195,7 +192,6 @@ namespace core { namespace render { namespace graph {
 		void AddInput(DependencyNode& node, InputUsage usage = InputUsage::Default) override;
 		DependencyNode* AddOutput(ResourceWrapper& render_target) override;
 	private:
-		void PrepareResourceOperations();
 		bool ResourceRegistered(void* resource);
 		void RecordGraphicsPass(Pass* pass);
 		VulkanRenderPass* GetRenderPass(const VulkanRenderPassInitializer& initializer);
