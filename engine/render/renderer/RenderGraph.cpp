@@ -1,20 +1,26 @@
 #include "RenderGraph.h"
 #include "utils/DataStructures.h"
 #include "render/device/VulkanRenderPass.h"
+#include "render/buffer/VulkanBuffer.h"
 #include "render/device/VulkanRenderTarget.h"
-#include "render/device/VulkanContext.h"
 #include "render/device/VulkanSwapchain.h"
 #include "render/device/VulkanRenderState.h"
+#include "render/device/VulkanContext.h"
 #include "render/device/VkObjects.h"
 #include "render/texture/Texture.h"
 #include "lib/optick/src/optick.h"
+
 #include "Engine.h"
 
 #define DEBUG_LOG false
 
 namespace core { namespace render { namespace graph {
 
+	using namespace synchronization;
+
 	uint32_t GetOperationIndex(DependencyNode& node, uint32_t pass_index, bool is_output);
+	void AddOutputOperation(DependencyNode& node, Pass& pass);
+	void AddInputOperation(DependencyNode& node, Pass& pass, InputUsage usage);
 
 	DependencyNode* DependencyNode::PresentSwapchain()
 	{
@@ -80,147 +86,14 @@ namespace core { namespace render { namespace graph {
 
 	void RenderGraph::Prepare()
 	{
-		utils::Graph graph(nodes.size());
-		for (auto& pass : render_passes)
-			for (auto& input : pass->input_nodes)
-				for (auto& output : pass->output_nodes)
-					graph.AddEdge(input.first->index, output->index);
+		auto* context = Engine::GetVulkanContext();
 
-		std::stack<uint32_t> stack;
-		std::stack<uint32_t> execution_order;
-
-		std::for_each(nodes.begin(), nodes.end(), [](auto& node) {
-			node->on_stack = false;
-			node->visited = false;
-		});
-
-		for (int i = 0; i < nodes.size(); i++)
-		{
-			if (nodes[i]->visited)
-				continue;
-
-			stack.push(i);
-
-			while (!stack.empty())
-			{
-				uint32_t vertex = stack.top();
-
-				if (!nodes[vertex]->visited)
-				{
-					nodes[vertex]->on_stack = true;
-					nodes[vertex]->visited = true;
-				} else
-				{
-					nodes[vertex]->on_stack = false;
-					execution_order.push(vertex);
-					stack.pop();
-				}
-
-				auto& bucket = graph.GetVertexBucket(vertex);
-				for (uint32_t connected_vertex : bucket)
-				{
-					if (!nodes[connected_vertex]->visited)
-						stack.push(connected_vertex);
-					else if (nodes[connected_vertex]->on_stack)
-						throw std::runtime_error("not a DAG");
-				}
-			}
-		}
-
-		int current_order = 0;
-		while (!execution_order.empty())
-		{
-			nodes[execution_order.top()]->order = current_order;
-			nodes[execution_order.top()]->render_pass->order = std::max(nodes[execution_order.top()]->render_pass->order, current_order);
-
-			current_order += 1;
-			execution_order.pop();
-		}
-
-		std::sort(render_passes.begin(), render_passes.end(), [](auto& a, auto& b) {
-			return a->order < b->order;
-		});
-
-		PrepareResourceOperations();
-#if DEBUG_LOG
-		/*for (auto& pass : render_passes)
-		{
-			if (pass->order == -1)
-				continue;
-
-			OutputDebugStringA("Pass ");
-			OutputDebugStringA(pass->name);
-			OutputDebugStringA("\n");
-		}
-
-		OutputDebugStringA("=============================\n"); */
-#endif
-
-	}
-
-	void AddOutputOperation(DependencyNode& node, Pass& pass)
-	{
-		auto* resource = node.resource;
-		ResourceOperation operation;
-		operation.operation = OperationType::Write;
-		operation.pass_index = pass.index;
-
-		if (resource->type == ResourceType::Attachment)
-		{
-			bool is_color = resource->GetAttachment()->GetType() == VulkanRenderTargetAttachment::Type::Color;
-			operation.access |= is_color ? vk::AccessFlagBits::eColorAttachmentWrite : vk::AccessFlagBits::eDepthStencilAttachmentWrite;
-			operation.stage |= is_color ? vk::PipelineStageFlagBits::eColorAttachmentOutput : vk::PipelineStageFlagBits::eLateFragmentTests;
-			operation.layout = is_color ? ImageLayout::ColorAttachmentOptimal : ImageLayout::DepthStencilAttachmentOptimal;
-		}
-		else
-		{
-			throw std::runtime_error("unsupported");
-		}
-
-		node.pass_operation_index = resource->operations.size();
-		resource->operations.push_back(operation);
-
-		if (node.present_swapchain)
-		{
-			ResourceOperation present_operation;
-			present_operation.operation = OperationType::Read;
-			present_operation.pass_index = pass.index + 1;
-			present_operation.access |= vk::AccessFlagBits::eColorAttachmentRead;
-			present_operation.stage |= vk::PipelineStageFlagBits::eColorAttachmentOutput;
-			present_operation.layout = ImageLayout::PresentSrc;
-			resource->operations.push_back(present_operation);
-		}
-	}
-
-	void AddInputOperation(DependencyNode& node, Pass& pass, InputUsage usage)
-	{
-		auto* resource = node.resource;
-		ResourceOperation operation;
-		operation.operation = OperationType::Read;
-		operation.pass_index = pass.index;
-
-		if (resource->type == ResourceType::Attachment)
-		{
-			bool is_color = resource->GetAttachment()->GetType() == VulkanRenderTargetAttachment::Type::Color;
-
-			operation.access |= is_color ? vk::AccessFlagBits::eShaderRead : vk::AccessFlagBits::eDepthStencilAttachmentRead;
-			operation.stage |= is_color ? vk::PipelineStageFlagBits::eFragmentShader : vk::PipelineStageFlagBits::eLateFragmentTests;
-			operation.layout = usage == InputUsage::DepthAttachment ? ImageLayout::DepthStencilReadOnlyOptimal : ImageLayout::ShaderReadOnlyOptimal;
-		}
-		else
-		{
-			throw std::runtime_error("unsupported");
-		}
-
-		resource->operations.push_back(operation);
-	}
-
-	void RenderGraph::PrepareResourceOperations()
-	{
 		for (uint32_t i = 0; i < render_passes.size(); i++)
 		{
 			auto* pass = render_passes[i].get();
 			pass->index = i;
+			pass->queue_family_index = context->GetQueueFamilyIndex(pass->is_compute ? PipelineBindPoint::Compute : PipelineBindPoint::Graphics);
+
 			for (auto* output_node : pass->output_nodes)
 			{
 				AddOutputOperation(*output_node, *pass);
@@ -231,6 +104,103 @@ namespace core { namespace render { namespace graph {
 				AddInputOperation(*data.first, *pass, data.second);
 			}
 		}
+
+		// Checking ownership transfers
+		for (uint32_t i = 0; i < render_passes.size(); i++)
+		{
+			auto* pass = render_passes[i].get();
+
+			uint32_t smallest_pass_index = -1; // First pass after current one that needs ownership transfer for any output of the current one
+
+			for (auto* output_node : pass->output_nodes)
+			{
+				auto& operations = output_node->resource->operations;
+				auto operation_index = GetOperationIndex(*output_node, pass->index, true);
+				uint32_t index = operation_index + 1;
+				if (index < operations.size())
+				{
+					if (operations[index].queue_family_index != pass->queue_family_index)
+					{
+						smallest_pass_index = std::min(operations[index].pass_index, smallest_pass_index);
+						pass->signal_stages |= GetImageAccessDst(operations[index].type).stage;
+						output_node->should_transfer_ownership = true;
+					}
+				}
+			}
+
+			for (auto& input_node_pair : pass->input_nodes)
+			{
+				auto* input_node = input_node_pair.first;
+				auto& operations = input_node->resource->operations;
+				auto operation_index = GetOperationIndex(*input_node, pass->index, false);
+				uint32_t index = operation_index + 1;
+				if (index < operations.size())
+				{
+					if (operations[index].queue_family_index != pass->queue_family_index)
+					{
+						smallest_pass_index = std::min(operations[index].pass_index, smallest_pass_index);
+						pass->signal_stages |= GetImageAccessDst(operations[index].type).stage;
+						input_node->should_transfer_ownership = true;
+					}
+				}
+			}
+
+			// pass signals if it has pending ownership transfer (e.g. following pass uses current pass output in a different queue)
+			if (smallest_pass_index != -1)
+			{
+				pass->signal_semaphore = GetSemaphore();
+				render_passes[smallest_pass_index]->wait_semaphores.semaphores.push_back(pass->signal_semaphore);
+				render_passes[smallest_pass_index]->wait_semaphores.stage_flags.push_back(pass->signal_stages);
+			}
+		}
+	}
+
+	void AddOutputOperation(DependencyNode& node, Pass& pass)
+	{
+		auto* resource = node.resource;
+		ResourceOperation operation;
+		operation.pass_index = pass.index;
+
+		if (resource->type == ResourceType::Attachment)
+		{
+			bool is_color = resource->GetAttachment()->GetType() == VulkanRenderTargetAttachment::Type::Color;
+			operation.type = is_color ? ResourceOperationType::ColorAttachment : ResourceOperationType::DepthStencilAttachment;
+		}
+		else
+		{
+			operation.type = pass.is_compute ? ResourceOperationType::ComputeShaderReadWrite : ResourceOperationType::GraphicsShaderReadWrite;
+		}
+
+		operation.queue_family_index = pass.queue_family_index;
+
+		node.pass_operation_index = resource->operations.size();
+		resource->operations.push_back(operation);
+
+		if (node.present_swapchain)
+		{
+			ResourceOperation present_operation;
+			present_operation.pass_index = pass.index + 1;
+			present_operation.type = ResourceOperationType::Present;
+			present_operation.queue_family_index = pass.queue_family_index;
+			resource->operations.push_back(present_operation);
+		}
+	}
+
+	void AddInputOperation(DependencyNode& node, Pass& pass, InputUsage usage)
+	{
+		auto* resource = node.resource;
+		ResourceOperation operation;
+		operation.pass_index = pass.index;
+		operation.queue_family_index = pass.queue_family_index;
+		operation.type = pass.is_compute ? ResourceOperationType::ComputeShaderRead : ResourceOperationType::GraphicsShaderRead;
+
+		if (resource->type == ResourceType::Attachment)
+		{
+			if (usage == InputUsage::DepthAttachment)
+				operation.type = ResourceOperationType::DepthStencilAttachment; // TODO: DepthStencilAttachmentRead
+		}
+
+		resource->operations.push_back(operation);
 	}
 
 	std::tuple<VulkanRenderPassInitializer, VulkanRenderTargetInitializer, vec2> GetPassInitializer(Pass* pass)
@@ -257,13 +227,13 @@ namespace core { namespace render { namespace graph {
 					{
 						auto& attachment = *resource->GetAttachment();
 						render_pass_initializer.AddAttachment(attachment);
-						auto initial_layout = ImageLayout::Undefined;
+						auto initial_layout = vk::ImageLayout::eUndefined;
 
 						AttachmentLoadOp load_op;
 						if (prev_operation)
 						{
 							load_op = output->should_clear ? AttachmentLoadOp::Clear : AttachmentLoadOp::Load;
-							initial_layout = prev_operation->layout;
+							initial_layout = GetImageAccessDst(prev_operation->type).layout;
 						}
 						else
 							load_op = output->should_clear ? AttachmentLoadOp::Clear : AttachmentLoadOp::DontCare;
@@ -278,10 +248,10 @@ namespace core { namespace render { namespace graph {
 						if (attachment.GetType() == VulkanRenderTargetAttachment::Type::Color)
 						{
 							auto final_layout = attachment.IsSwapchain() ? ImageLayout::PresentSrc : ImageLayout::ColorAttachmentOptimal;
-							render_pass_initializer.SetImageLayout(initial_layout, ImageLayout::ColorAttachmentOptimal);
+							render_pass_initializer.SetImageLayout((ImageLayout)initial_layout, ImageLayout::ColorAttachmentOptimal);
 						}
 						else
-							render_pass_initializer.SetImageLayout(initial_layout, ImageLayout::DepthStencilAttachmentOptimal);
+							render_pass_initializer.SetImageLayout((ImageLayout)initial_layout, ImageLayout::DepthStencilAttachmentOptimal);
 
 						break;
 					}
@@ -306,10 +276,11 @@ namespace core { namespace render { namespace graph {
 
 					auto operation_index = GetOperationIndex(*input.first, pass->index, false);
 					auto& operation = input.first->resource->operations[operation_index];
+					auto layout = GetImageAccessDst(operation.type).layout;
 
 					render_pass_initializer.AddAttachment(attachment);
 					render_pass_initializer.SetLoadStoreOp(AttachmentLoadOp::Load, AttachmentStoreOp::DontCare);
-					render_pass_initializer.SetImageLayout(operation.layout, ImageLayout::DepthStencilReadOnlyOptimal);
+					render_pass_initializer.SetImageLayout((ImageLayout)layout, ImageLayout::DepthStencilReadOnlyOptimal);
 
 					render_target_initializer.Size(attachment.GetWidth(), attachment.GetHeight());
 					render_target_initializer.AddAttachment(attachment);
@@ -348,76 +319,42 @@ namespace core { namespace render { namespace graph {
 		return result;
 	}
 
-	struct ImageBarrierData
+	void PipelineBarrier(uint32_t operation_index, DependencyNode& node, vk::CommandBuffer& command_buffer)
 	{
-		vk::ImageAspectFlags image_aspect_flags = {};
-		vk::ImageLayout src_layout = vk::ImageLayout::eUndefined;
-		vk::ImageLayout dst_layout = vk::ImageLayout::eUndefined;
-		vk::AccessFlags src_access_flags = {};
-		vk::AccessFlags dst_access_flags = {};
-		vk::PipelineStageFlags src_stage = {};
-		vk::PipelineStageFlags dst_stage = {};
-		vk::Image image = nullptr;
-	};
+		auto* resource = node.resource;
+		auto& current_operation = resource->operations[operation_index];
+		auto& prev_operation = operation_index > 0 ? resource->operations[operation_index - 1] : current_operation;
+		bool is_buffer = node.resource->type == ResourceType::Buffer;
 
-	void ImagePipelineBarrier(
-		ImageBarrierData& data,
-		vk::CommandBuffer& command_buffer
-	) {
-		auto* context = Engine::GetVulkanContext();
-
-		vk::ImageSubresourceRange range(
-			data.image_aspect_flags,
-			0, 1, 0, 1
-		);
-
-		vk::ImageMemoryBarrier image_memory_barrier(
-			data.src_access_flags, data.dst_access_flags,
-			data.src_layout, data.dst_layout, 
-			VK_QUEUE_FAMILY_IGNORED, VK_QUEUE_FAMILY_IGNORED, 
-			data.image, range
-		);
-
-		command_buffer.pipelineBarrier(
-			data.src_stage, 
-			data.dst_stage,
-			{}, 
-			0, nullptr, 
-			0, nullptr, 
-			1, &image_memory_barrier
-		);
-	}
-
-	ImageBarrierData GetImageBarrierData(uint32_t operation_index, DependencyNode& node)
-	{
-		assert(node.resource->type == ResourceType::Attachment);
-		auto& resource = node.resource;
-		bool is_color = resource->GetAttachment()->GetType() == VulkanRenderTargetAttachment::Type::Color;
-		ImageBarrierData data;
-		
-		// Has previous pass
-		if (operation_index > 0)
+		if (is_buffer)
 		{
-			auto& prev_operation = resource->operations[operation_index - 1];
-			data.src_access_flags = prev_operation.access;
-			data.src_stage = prev_operation.stage;
-			data.src_layout = (vk::ImageLayout)prev_operation.layout;
+			auto src_access = GetBufferAccessSrc(prev_operation.type);
+			if (operation_index == 0)
+			{
+				src_access.access = {};
+			}
+
+			auto dst_access = GetBufferAccessDst(current_operation.type);
+			//if (src_access == dst_access)
+				//return;
+
+			BufferPipelineBarrier(src_access, dst_access, resource->GetBuffer()->Buffer(), resource->GetBuffer()->Size(), command_buffer);
 		}
 		else
 		{
-			data.src_stage = is_color ? vk::PipelineStageFlagBits::eColorAttachmentOutput : vk::PipelineStageFlagBits::eLateFragmentTests;
+
+			auto src_access = GetImageAccessSrc(prev_operation.type);
+			if (operation_index == 0)
+			{
+				src_access.access = {};
+				src_access.layout = vk::ImageLayout::eUndefined;
+			}
+			auto dst_access = GetImageAccessDst(current_operation.type);
+			//if (src_access == dst_access)
+				//return;
+
+			ImagePipelineBarrier(src_access, dst_access, resource->GetAttachment()->GetImage(), command_buffer);
 		}
-
-		auto& current_operation = resource->operations[operation_index];
-		data.dst_access_flags = current_operation.access;
-		data.dst_stage = current_operation.stage;
-		data.dst_layout = (vk::ImageLayout)current_operation.layout;
-		data.image = resource->GetAttachment()->GetImage();
-		data.image_aspect_flags = is_color
-			? vk::ImageAspectFlagBits::eColor
-			: vk::ImageAspectFlagBits::eDepth | vk::ImageAspectFlagBits::eStencil;
-
-		return data;
 	}
 
 	uint32_t GetOperationIndex(DependencyNode& node, uint32_t pass_index, bool is_output)
@@ -448,13 +385,13 @@ namespace core { namespace render { namespace graph {
 		for (auto* node : pass.output_nodes)
 		{
 			auto operation_index = GetOperationIndex(*node, pass.index, true);
-			ImagePipelineBarrier(GetImageBarrierData(operation_index, *node), command_buffer);
+			PipelineBarrier(operation_index, *node, command_buffer);
 		}
 
 		for (auto node_data : pass.input_nodes)
 		{
 			auto operation_index = GetOperationIndex(*node_data.first, pass.index, false);
-			ImagePipelineBarrier(GetImageBarrierData(operation_index, *node_data.first), command_buffer);
+			PipelineBarrier(operation_index, *node_data.first, command_buffer);
 		}
 	}
 
@@ -463,25 +400,18 @@ namespace core { namespace render { namespace graph {
 		auto command_buffer = state.GetCurrentCommandBuffer()->GetCommandBuffer();
 		for (auto* node : pass.output_nodes)
 		{
-			ImageLayout target_layout = ImageLayout::Undefined;
-
-			switch (node->resource->type)
+			if (node->should_transfer_ownership)
 			{
-			case ResourceType::Attachment:
+				auto operation_index = GetOperationIndex(*node, pass.index, true) + 1;
+				PipelineBarrier(operation_index, *node, command_buffer);
+			}
+
+			if (node->present_swapchain)
 			{
 				auto* attachment = node->resource->GetAttachment();
-				if (!attachment->IsSwapchain() || !node->present_swapchain)
-					return;
-
-				auto operation_index = GetOperationIndex(*node, pass.index + 1, false);
-				ImagePipelineBarrier(GetImageBarrierData(operation_index, *node), command_buffer);
-				break;
+				auto operation_index = GetOperationIndex(*node, pass.index + 1, false); // false here to perform full search
+				PipelineBarrier(operation_index, *node, command_buffer);
 			}
-
-			default:
-				throw std::runtime_error("not implemented");
-			}
-
 		}
 	}
 
@@ -494,123 +424,75 @@ namespace core { namespace render { namespace graph {
 
 	void RenderGraph::RecordGraphicsPass(Pass* pass)
 	{
-		/*OutputDebugStringA("Recording Pass ");
-		OutputDebugStringA(pass->name);
-		OutputDebugStringA("\n"); */
 		OPTICK_EVENT(pass->name);
+		bool is_graphics = !pass->is_compute;
+		core::Device::PipelineBindPoint binding_point = is_graphics ? core::Device::PipelineBindPoint::Graphics : core::Device::PipelineBindPoint::Compute;
 
 		auto* context = Engine::GetVulkanContext();
 		auto* state = context->GetRenderState();
-		auto initializer = GetPassInitializer(pass);
-		auto* vulkan_pass = GetRenderPass(std::get<0>(initializer));
-		auto* vulkan_render_target = GetRenderTarget(std::get<1>(initializer));
-		auto viewport = vec4(0, 0, std::get<2>(initializer));
+		state->BeginRecording(binding_point);
+		ApplyPreBarriers(*pass, *state);
+		auto* command_buffer = state->GetCurrentCommandBuffer();
 
-		uint32_t attach_index = 0;
-		for (auto* output : pass->output_nodes)
+		if (is_graphics)
 		{
-			if (output->resource->type == ResourceType::Attachment)
-				state->SetClearValue(attach_index++, output->clear_value);
+			auto initializer = GetPassInitializer(pass);
+			auto* vulkan_pass = GetRenderPass(std::get<0>(initializer));
+			auto* vulkan_render_target = GetRenderTarget(std::get<1>(initializer));
+			auto viewport = vec4(0, 0, std::get<2>(initializer));
+
+			uint32_t attach_index = 0;
+			for (auto* output : pass->output_nodes)
+			{
+				if (output->resource->type == ResourceType::Attachment)
+					state->SetClearValue(attach_index++, output->clear_value);
+			}
+
+			state->SetScissor(viewport);
+			state->SetViewport(viewport);
+
+			state->BeginRendering(*vulkan_render_target, *vulkan_pass);
 		}
 
-		auto* command_buffer = state->GetCurrentCommandBuffer();
-		state->BeginRecording();
-		ApplyPreBarriers(*pass, *state);
-
-		state->SetScissor(viewport);
-		state->SetViewport(viewport);
-
-		state->BeginRendering(*vulkan_render_target, *vulkan_pass);
 		pass->record_callback(*state);
-		state->EndRendering();
+
+		if (is_graphics)
+			state->EndRendering();
 
 		ApplyPostBarriers(*pass, *state);
 		state->EndRecording();
 
+
 		core::Device::FrameCommandBufferData data(
 			command_buffer->GetCommandBuffer(),
-			vk::Semaphore(),//state->GetCurrentSemaphore(), // TODO: only provide semaphore when other pass should wait for current
-			vk::Semaphore(),
-			vk::PipelineStageFlagBits::eAllCommands, // TODO: fix
-			core::Device::PipelineBindPoint::Graphics
+			pass->signal_semaphore,
+			std::move(pass->wait_semaphores),
+			binding_point
 		);
 
 		data.command_buffer = command_buffer->GetCommandBuffer();
-		data.queue = core::Device::PipelineBindPoint::Graphics;
-		context->AddFrameCommandBuffer(data);
-	}
-
-	void TransferOwnershipQueue(ResourceWrapper& resource, PassQueue queue)
-	{
-		
-	}
-
-	void ApplyPreComputeBarriers(Pass& pass, VulkanRenderState& state)
-	{
-		for (auto* resource : pass.output_nodes)
-		{
-			ImageLayout target_layout = ImageLayout::Undefined;
-			switch (resource->resource->type)
-			{
-			case ResourceType::Buffer:
-			{
-		
-
-				break;
-			}
-
-			default:
-				throw std::runtime_error("not implemented");
-			}
-		}
-	}
-
-	void RenderGraph::RecordComputePass(Pass* pass)
-	{
-		auto* context = Engine::GetVulkanContext();
-		auto* state = context->GetRenderState();
-
-		auto* command_buffer = state->GetCurrentCommandBuffer();
-		state->BeginRecording();
-		ApplyPreBarriers(*pass, *state);
-
-		pass->record_callback(*state);
-
-		ApplyPostBarriers(*pass, *state);
-		state->EndRecording();
-
-		core::Device::FrameCommandBufferData data(
-			command_buffer->GetCommandBuffer(),
-			vk::Semaphore(),
-			vk::Semaphore(),
-			vk::PipelineStageFlagBits::eAllCommands, // TODO: fix
-			core::Device::PipelineBindPoint::Compute
-		);
+		data.queue = binding_point;
 		context->AddFrameCommandBuffer(data);
 	}
 
 	void RenderGraph::RecordCommandBuffers()
 	{
 		OPTICK_EVENT();
-		auto* context = Engine::GetVulkanContext();
-
 		for (auto& pass : render_passes)
 		{
-			if (pass->is_compute)
-				RecordComputePass(pass.get());
-			else
-				RecordGraphicsPass(pass.get());
+			RecordGraphicsPass(pass.get());
 		}
 	}
 
 	void RenderGraph::Render()
 	{
+		UpdateInFlightSemaphores();
 		RecordCommandBuffers();
 	}
 
-	// TODO: remove since unused?
 	vk::Semaphore RenderGraph::GetSemaphore()
 	{
+		std::scoped_lock lock(semaphore_mutex);
 		vk::Semaphore semaphore;
 
 		if (available_semaphores.size())
@@ -630,12 +512,14 @@ namespace core { namespace render { namespace graph {
 
 	void RenderGraph::UpdateInFlightSemaphores()
 	{
+		std::scoped_lock lock(semaphore_mutex);
+
 		for (auto& pair : in_flight_semaphores)
 		{
 			pair.first += 1;
 		}
 
-		const int in_flight_count = 2;
+		const int in_flight_count = 3;
 		auto remove_pos = std::remove_if(in_flight_semaphores.begin(), in_flight_semaphores.end(), [=](auto& pair) { return pair.first >= in_flight_count; });
 		for (auto iter = remove_pos; iter != in_flight_semaphores.end(); iter++)
 		{

@@ -13,14 +13,15 @@ namespace core { namespace Device {
 		const unsigned max_count = 10000;
 		const unsigned SamplerSlotCount = 20;
 
-		std::array<vk::DescriptorPoolSize, 7> pool_sizes = {
+		std::array<vk::DescriptorPoolSize, 8> pool_sizes = {
 			vk::DescriptorPoolSize(vk::DescriptorType::eUniformBufferDynamic, (int)ShaderBufferName::Count * max_count),
+			vk::DescriptorPoolSize(vk::DescriptorType::eUniformBuffer, (int)ShaderBufferName::Count * max_count),
 			vk::DescriptorPoolSize(vk::DescriptorType::eUniformTexelBuffer, (int)ShaderTextureName::Count * max_count),
 			vk::DescriptorPoolSize(vk::DescriptorType::eUniformBuffer, SamplerSlotCount * max_count),
 			vk::DescriptorPoolSize(vk::DescriptorType::eSampler, SamplerSlotCount * max_count),
 			vk::DescriptorPoolSize(vk::DescriptorType::eSampledImage, (int)ShaderTextureName::Count * max_count),
 			vk::DescriptorPoolSize(vk::DescriptorType::eCombinedImageSampler, (int)ShaderTextureName::Count * max_count),
-			vk::DescriptorPoolSize(vk::DescriptorType::eStorageBufferDynamic, (int)ShaderBufferName::Count * max_count)
+			vk::DescriptorPoolSize(vk::DescriptorType::eStorageBuffer, (int)ShaderBufferName::Count * max_count)
 		};
 
 		const auto descriptor_pool_info = vk::DescriptorPoolCreateInfo(
@@ -48,7 +49,7 @@ namespace core { namespace Device {
 		for (auto& binding : bindings.GetBufferBindings())
 		{
 			set_data.buffer_bindings[binding.index].buffer = binding.buffer;
-			set_data.buffer_bindings[binding.index].offset = 0;
+			set_data.buffer_bindings[binding.index].offset = binding.offset;
 			set_data.buffer_bindings[binding.index].range = binding.size;
 		}
 
@@ -109,13 +110,20 @@ namespace core { namespace Device {
 			}
 
 			case ShaderProgram::BindingType::UniformBuffer:
+			case ShaderProgram::BindingType::UniformBufferDynamic:
 			case ShaderProgram::BindingType::StorageBuffer:
 			{
 				assert(data.buffer_bindings[binding_index].buffer);
-
-				vk::DescriptorType buffer_descriptor_type = binding.type == ShaderProgram::BindingType::UniformBuffer 
-					? vk::DescriptorType::eUniformBufferDynamic 
-					: vk::DescriptorType::eStorageBufferDynamic;
+				
+				vk::DescriptorType buffer_descriptor_type;
+				if (binding.type == ShaderProgram::BindingType::UniformBuffer)
+					buffer_descriptor_type = vk::DescriptorType::eUniformBuffer;
+				else if (binding.type == ShaderProgram::BindingType::UniformBufferDynamic)
+					buffer_descriptor_type = vk::DescriptorType::eUniformBufferDynamic;
+				else if (binding.type == ShaderProgram::BindingType::StorageBuffer)
+					buffer_descriptor_type = vk::DescriptorType::eStorageBuffer;
+				else
+					assert(false);
 
 				auto& binding_data = data.buffer_bindings[binding_index];
 				

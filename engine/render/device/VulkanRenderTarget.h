@@ -120,6 +120,8 @@ namespace core { namespace Device {
 		bool HasColor() const { return color_attachment_count > 0; }
 		bool HasDepth() const { return (bool)depth_attachment; }
 		uint32_t GetColorAttachmentCount() const { return color_attachment_count; }
+		uint32_t GetOwnershipQueue() const { return ownership_queue; }
+		uint32_t SetOwnershipQueue(uint32_t value) { ownership_queue = value; }
 
 	private:
 		uint32_t color_attachment_count = 0;
@@ -127,6 +129,7 @@ namespace core { namespace Device {
 		VulkanRenderTargetAttachment* depth_attachment;
 		vk::UniqueFramebuffer framebuffer;
 
+		uint32_t ownership_queue = -1;
 		uint32_t sample_count = 1;
 		uint32_t width = 0;
 		uint32_t height = 0;

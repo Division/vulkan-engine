@@ -1,6 +1,7 @@
 ﻿#pragma once
 
 #include <map>
+#include <set>
 #include <string>
 
 enum class ShaderTextureName : uint32_t 
@@ -29,7 +30,6 @@ enum class ShaderBufferName : uint32_t
 	Count
 };
 
-
-
 extern const std::map<std::string, ShaderTextureName> SHADER_SAMPLER_NAMES;
 extern const std::map<std::string, ShaderBufferName> SHADER_BUFFER_NAMES;
+extern const std::set<ShaderBufferName> SHADER_DYNAMIC_OFFSET_BUFFERS;

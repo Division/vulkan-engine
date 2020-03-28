@@ -43,6 +43,7 @@ namespace core { namespace Device {
 		{
 			Sampler = 0,
 			UniformBuffer,
+			UniformBufferDynamic,
 			StorageBuffer,
 			Count
 		};

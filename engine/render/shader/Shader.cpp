@@ -3,6 +3,7 @@
 #include "Engine.h"
 #include "utils/Math.h"
 #include "ShaderBindings.h"
+#include "ShaderDefines.h"
 
 namespace core { namespace Device {
 	
@@ -39,11 +40,14 @@ namespace core { namespace Device {
 	
 	void ShaderProgram::AddModule(ShaderModule* shader_module, Stage stage)
 	{
-		auto& module_var = stage == Stage::Vertex ? vertex_module : fragment_module;
-		if (module_var)
-			throw std::runtime_error("Shader module already set");
-
-		module_var = shader_module;
+		ShaderModule** module_var = nullptr;
+	
+		if (stage == Stage::Vertex)
+			vertex_module = shader_module;
+		if (stage == Stage::Fragment)
+			fragment_module = shader_module;
+		if (stage == Stage::Compute)
+			compute_module = shader_module;
 	}
 
 	std::unordered_map<ShaderProgram::Stage, vk::ShaderStageFlagBits> shader_stage_flag_map =
@@ -56,8 +60,9 @@ namespace core { namespace Device {
 	std::unordered_map<ShaderProgram::BindingType, vk::DescriptorType> binding_type_map =
 	{
 		{ ShaderProgram::BindingType::Sampler, vk::DescriptorType::eCombinedImageSampler },
-		{ ShaderProgram::BindingType::UniformBuffer, vk::DescriptorType::eUniformBufferDynamic },
-		{ ShaderProgram::BindingType::StorageBuffer, vk::DescriptorType::eStorageBufferDynamic },
+		{ ShaderProgram::BindingType::UniformBuffer, vk::DescriptorType::eUniformBuffer },
+		{ ShaderProgram::BindingType::UniformBufferDynamic, vk::DescriptorType::eUniformBufferDynamic },
+		{ ShaderProgram::BindingType::StorageBuffer, vk::DescriptorType::eStorageBuffer },
 	};
 
 	vk::ShaderStageFlags GetShaderStageFlags(unsigned stage_flags)
@@ -113,7 +118,11 @@ namespace core { namespace Device {
 
 		for (auto& ubo : reflection->UniformBuffers())
 		{
-			append_binding_internal(BindingType::UniformBuffer, (uint32_t)ubo.shader_buffer, ubo.name, ubo.set, ubo.binding);
+			auto binding_type = SHADER_DYNAMIC_OFFSET_BUFFERS.find(ubo.shader_buffer) == SHADER_DYNAMIC_OFFSET_BUFFERS.end()
+				? BindingType::UniformBuffer
+				: BindingType::UniformBufferDynamic;
+
+			append_binding_internal(binding_type, (uint32_t)ubo.shader_buffer, ubo.name, ubo.set, ubo.binding);
 		}
 
 		for (auto& ubo : reflection->StorageBuffers())

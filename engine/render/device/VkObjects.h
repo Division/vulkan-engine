@@ -26,7 +26,7 @@ namespace core { namespace Device {
 	class VulkanCommandPool : NonCopyable
 	{
 	public:
-		VulkanCommandPool();
+		VulkanCommandPool(uint32_t queue_family);
 		virtual ~VulkanCommandPool();
 
 		vk::CommandPool GetCommandPool() const { return command_pool.get(); }

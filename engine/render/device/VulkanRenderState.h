@@ -212,8 +212,7 @@ namespace core { namespace Device {
 		void DrawIndexed(const VulkanBuffer& vertex_buffer, const VulkanBuffer& index_buffer, uint32_t vertex_offset, uint32_t index_count, uint32_t first_index, IndexType index_type);
 		void Draw(const VulkanBuffer& buffer, uint32_t vertexCount, uint32_t firstVertex);
 
-		VulkanCommandBuffer* GetCurrentCommandBuffer() const { return command_buffers[current_frame]; }
-		vk::Semaphore GetCurrentSemaphore() const { return semaphores[current_frame].get(); }
+		VulkanCommandBuffer* GetCurrentCommandBuffer() const;
 		void UpdateGlobalDescriptorSet();
 
 		VulkanCommandBuffer* BeginRendering(const VulkanRenderTarget& render_target, const VulkanRenderPass& render_pass);
@@ -221,7 +220,7 @@ namespace core { namespace Device {
 
 		void RecordCompute(const ShaderProgram& program, ShaderBindings& bindings, uvec3 group_size);
 
-		void BeginRecording();
+		void BeginRecording(PipelineBindPoint bind_point);
 		void EndRecording();
 
 	private:
@@ -231,6 +230,7 @@ namespace core { namespace Device {
 		ShaderBindings global_bindings;
 		uint32_t global_layout_hash = 0;
 		bool global_bindings_set = false;
+		PipelineBindPoint pipeline_bind_point = PipelineBindPoint::Graphics;
 
 		uint32_t dirty_flags = 0;
 		uint32_t current_frame = 0;
@@ -245,16 +245,14 @@ namespace core { namespace Device {
 		vec4 current_viewport;
 		vec4 current_scissor;
 
-		std::vector<uint32_t> dynamic_offsets;
 		std::unordered_map<uint32_t, vk::UniqueSampler> sampler_cache;
 		std::unordered_map<uint32_t, vk::DescriptorSet> descriptor_set_cache;
 		std::unordered_map<uint32_t, std::unique_ptr<VulkanPipeline>> pipeline_cache;
 		std::array<vk::ClearValue, caps::max_color_attachments + 1> clear_values;
 
-		std::unique_ptr<VulkanCommandPool> command_pool;
+		std::unordered_map<uint32_t, std::unique_ptr<VulkanCommandPool>> command_pools;
 		vk::UniqueDescriptorPool descriptor_pool;
-		std::array<VulkanCommandBuffer*, caps::MAX_FRAMES_IN_FLIGHT> command_buffers;
-		std::array<vk::UniqueSemaphore, caps::MAX_FRAMES_IN_FLIGHT> semaphores;
+		std::unordered_map<uint32_t, std::array<VulkanCommandBuffer*, caps::MAX_FRAMES_IN_FLIGHT>> command_buffers;
 	};
 
 } }

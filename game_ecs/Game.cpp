@@ -82,7 +82,7 @@ void Game::init()
 	mesh_renderer->mesh = plane_mesh.get();
 	manager->GetComponent<components::Transform>(plane)->rotation = glm::angleAxis((float)M_PI / 2, vec3(1, 0, 0));
 
-	light = CreateGameObject<LightObject>();
+ 	light = CreateGameObject<LightObject>();
 	light->castShadows(true);
 	light->color(vec3(10, 10, 10));
 	light->transform()->setPosition(vec3(7, 7, 3));

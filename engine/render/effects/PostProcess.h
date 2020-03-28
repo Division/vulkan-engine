@@ -32,7 +32,12 @@ namespace core { namespace render { namespace effects {
 		PostProcess(core::Device::ShaderCache& shader_cache, EnvironmentSettings& environment_settings);
 
 		void PrepareRendering(core::render::graph::RenderGraph& graph);
-		core::render::graph::DependencyNode* AddPostProcess(core::render::graph::RenderGraph& graph, core::render::graph::DependencyNode& src_target_node, core::render::graph::ResourceWrapper& destination_target);
+		core::render::graph::DependencyNode* AddPostProcess(
+			core::render::graph::RenderGraph& graph, 
+			core::render::graph::DependencyNode& src_target_node, 
+			core::render::graph::ResourceWrapper& destination_target, 
+			core::render::graph::ResourceWrapper& hdr_buffer
+		);
 		void OnRecreateSwapchain(int32_t width, int32_t height);
 
 	private:
@@ -41,6 +46,7 @@ namespace core { namespace render { namespace effects {
 		uint32_t current_target = 0;
 
 		core::Device::ShaderProgram::BindingAddress src_texture_address;
+		core::Device::ShaderProgram::BindingAddress hdr_buffer_address;
 
 		core::Device::Texture* cubemap_texture = nullptr;
 		std::unique_ptr<Mesh> full_screen_quad_mesh;

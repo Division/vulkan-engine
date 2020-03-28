@@ -3,6 +3,8 @@
 #include "CommonIncludes.h"
 #include "render/device/Types.h"
 #include "render/shader/ShaderBindings.h"
+#include "Synchronization.h"
+#include <mutex>
 
 namespace core
 {
@@ -55,21 +57,12 @@ namespace core { namespace render { namespace graph {
 	struct ResourceOperation
 	{
 		uint32_t pass_index = -1;
-		OperationType operation = OperationType::None;
-		vk::AccessFlags access = {};
-		vk::PipelineStageFlags stage = {};
-		ImageLayout layout = ImageLayout::Undefined;
+		uint32_t queue_family_index = -1;
+		synchronization::ResourceOperationType type;
 	};
 
 	struct ResourceWrapper
 	{
-		enum class LastOperation : int
-		{
-			None,
-			Write,
-			Read
-		};
-
 		ResourceType type = ResourceType::None;
 		void* resource_pointer = nullptr;
 
@@ -112,6 +105,7 @@ namespace core { namespace render { namespace graph {
 
 		vk::ClearValue clear_value;
 		bool should_clear = false;
+		bool should_transfer_ownership = false;
 
 		DependencyNode* Clear(vec4 color)
 		{
@@ -152,10 +146,15 @@ namespace core { namespace render { namespace graph {
 		const char* name;
 
 		bool is_compute = false;
+		uint32_t queue_family_index = -1;
 
 		uvec3 compute_group_size;
 		std::vector<std::pair<DependencyNode*, InputUsage>> input_nodes;
 		std::vector<DependencyNode*> output_nodes;
+
+		vk::Semaphore signal_semaphore;
+		vk::PipelineStageFlags signal_stages;
+		SemaphoreList wait_semaphores;
 	};
 
 	class IRenderPassBuilder
@@ -193,10 +192,8 @@ namespace core { namespace render { namespace graph {
 		void AddInput(DependencyNode& node, InputUsage usage = InputUsage::Default) override;
 		DependencyNode* AddOutput(ResourceWrapper& render_target) override;
 	private:
-		void PrepareResourceOperations();
 		bool ResourceRegistered(void* resource);
 		void RecordGraphicsPass(Pass* pass);
-		void RecordComputePass(Pass* pass);
 		VulkanRenderPass* GetRenderPass(const VulkanRenderPassInitializer& initializer);
 		VulkanRenderTarget* GetRenderTarget(const VulkanRenderTargetInitializer& initializer);
 		void ApplyPreBarriers(Pass& pass, VulkanRenderState& state);
@@ -217,6 +214,7 @@ namespace core { namespace render { namespace graph {
 		std::vector<std::pair<int, vk::Semaphore>> in_flight_semaphores;
 		std::unordered_map<uint32_t, std::unique_ptr<VulkanRenderPass>> render_pass_cache;
 		std::unordered_map<uint32_t, std::unique_ptr<VulkanRenderTarget>> render_target_cache;
+		std::mutex semaphore_mutex;
 	};
 
 } } }

@@ -7,6 +7,7 @@
 #include "render/device/VulkanRenderState.h"
 #include "render/device/VulkanDescriptorCache.h"
 #include "render/shader/Shader.h"
+#include "render/buffer/VulkanBuffer.h"
 #include "render/texture/Texture.h"
 #include "render/mesh/Mesh.h"
 #include "render/shader/ShaderCache.h"
@@ -29,6 +30,7 @@ namespace core::render::effects
 		full_screen_quad_mesh->createBuffer();
 
 		src_texture_address = shader->GetBindingAddress("src_texture");
+		hdr_buffer_address = shader->GetBindingAddress("hdr_data");
 	}
 
 	void PostProcess::PrepareRendering(RenderGraph& graph)
@@ -37,7 +39,7 @@ namespace core::render::effects
 		attachment_wrappers[1] = graph.RegisterAttachment(*attachments[1]);
 	}
 
-	graph::DependencyNode* PostProcess::AddPostProcess(RenderGraph& graph, DependencyNode& node, ResourceWrapper& destination_target)
+	graph::DependencyNode* PostProcess::AddPostProcess(RenderGraph& graph, DependencyNode& node, ResourceWrapper& destination_target, ResourceWrapper& hdr_buffer)
 	{
 		auto* destination_render_target = destination_target.GetAttachment();
 
@@ -62,6 +64,9 @@ namespace core::render::effects
 
 				ShaderBindings bindings;
 				bindings.AddTextureBindingSafe(src_texture_address, node.resource->GetAttachment()->GetTexture().get());
+
+				auto* buffer = hdr_buffer.GetBuffer();
+				bindings.AddBufferBindingSafe(hdr_buffer_address, 0, buffer->Size(), buffer->Buffer());
 				auto* descriptor_cache = Engine::GetVulkanContext()->GetDescriptorCache();
 				auto vk_descriptor_set = descriptor_cache->GetDescriptorSet(bindings, *shader->GetDescriptorSet(0));
 				auto command_buffer = state.GetCurrentCommandBuffer()->GetCommandBuffer();

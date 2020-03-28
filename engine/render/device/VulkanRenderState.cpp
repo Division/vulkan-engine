@@ -130,14 +130,16 @@ namespace core { namespace Device {
 	VulkanRenderState::VulkanRenderState() 
 		: current_render_mode()
 	{
-		command_pool = std::make_unique<core::Device::VulkanCommandPool>();
+		auto context = Engine::Get()->GetContext();
+		command_pools[context->GetQueueFamilyIndex(PipelineBindPoint::Graphics)] = std::make_unique<core::Device::VulkanCommandPool>(context->GetQueueFamilyIndex(PipelineBindPoint::Graphics));
+		command_pools[context->GetQueueFamilyIndex(PipelineBindPoint::Compute)] = std::make_unique<core::Device::VulkanCommandPool>(context->GetQueueFamilyIndex(PipelineBindPoint::Compute));
 		auto& device = Engine::GetVulkanDevice();
 
-		for (int i = 0; i < caps::MAX_FRAMES_IN_FLIGHT; i++)
-		{
-			command_buffers[i] = command_pool->GetCommandBuffer();
-			semaphores[i] = device.createSemaphoreUnique(vk::SemaphoreCreateInfo());
-		}
+		for (auto& it : command_pools)
+			for (int i = 0; i < caps::MAX_FRAMES_IN_FLIGHT; i++)
+			{
+				command_buffers[it.first][i] = it.second->GetCommandBuffer();
+			}
 
 		const unsigned max_count = 10000;
 		const unsigned SamplerSlotCount = 20;
@@ -164,6 +166,12 @@ namespace core { namespace Device {
 
 	}
 
+	VulkanCommandBuffer* VulkanRenderState::GetCurrentCommandBuffer() const 
+	{ 
+		auto* context = Engine::Get()->GetContext();
+		return command_buffers.at(context->GetQueueFamilyIndex(pipeline_bind_point))[current_frame]; 
+	}
+
 	void VulkanRenderState::UpdateGlobalDescriptorSet()
 	{
 		ShaderBindings common_bindings;
@@ -187,18 +195,13 @@ namespace core { namespace Device {
 			{
 				auto& global_binding = global_bindings.GetBufferBindings()[index];
 				// TODO: remove set
-				common_bindings.AddBufferBinding(DescriptorSet::Global, global_binding.index, global_binding.offset, global_binding.size, global_binding.buffer);
+				common_bindings.AddBufferBinding(DescriptorSet::Global, global_binding.index, global_binding.offset, global_binding.size, global_binding.buffer, global_binding.dynamic_offset);
 			}
-		}
-
-		utils::SmallVector<uint32_t, 10> dynamic_offsets;
-		for (auto& binding : common_bindings.GetBufferBindings())
-		{
-			dynamic_offsets.push_back(binding.offset);
 		}
 
 		auto descriptor_cache = Engine::GetVulkanContext()->GetDescriptorCache();
 		auto descriptor_set = descriptor_cache->GetDescriptorSet(common_bindings, *global_descriptor_set_data);
+		auto& dynamic_offsets = common_bindings.GetDynamicOffsets();
 
 		auto command_buffer = GetCurrentCommandBuffer()->GetCommandBuffer();
 		command_buffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, current_pipeline->GetPipelineLayout(), DescriptorSet::Global, 1u, &descriptor_set, dynamic_offsets.size(), dynamic_offsets.data());
@@ -255,7 +258,7 @@ namespace core { namespace Device {
 			current_pipeline = GetPipeline(initializer);
 
 			auto command_buffer = GetCurrentCommandBuffer()->GetCommandBuffer();
-			command_buffer.bindPipeline( vk::PipelineBindPoint::eGraphics, current_pipeline->GetPipeline());
+			command_buffer.bindPipeline( (vk::PipelineBindPoint)pipeline_bind_point, current_pipeline->GetPipeline());
 		}
 
 		if (dirty_flags & (int)DirtyFlags::GlobalDescriptorSet)
@@ -455,8 +458,9 @@ namespace core { namespace Device {
 		command_buffer.drawIndexed(index_count, 1, first_index, vertex_offset, 0);
 	}
 
-	void VulkanRenderState::BeginRecording()
+	void VulkanRenderState::BeginRecording(PipelineBindPoint bind_point)
 	{
+		pipeline_bind_point = bind_point;
 		auto begin_info = vk::CommandBufferBeginInfo();
 		auto command_buffer = GetCurrentCommandBuffer()->GetCommandBuffer();
 		command_buffer.begin(begin_info);
@@ -465,6 +469,7 @@ namespace core { namespace Device {
 	VulkanCommandBuffer* VulkanRenderState::BeginRendering(const VulkanRenderTarget& render_target, const VulkanRenderPass& render_pass)
 	{
 		dirty_flags = (uint32_t)DirtyFlags::All;
+		pipeline_bind_point = PipelineBindPoint::Graphics;
 		current_render_pass = nullptr;
 		current_render_mode = RenderMode();
 		current_vertex_layout = nullptr;
@@ -498,19 +503,22 @@ namespace core { namespace Device {
 
 	void VulkanRenderState::RecordCompute(const ShaderProgram& program, ShaderBindings& bindings, uvec3 group_size)
 	{
-		/*SetShader(program);
+		render_pass_started = true;
+
 		VulkanPipelineInitializer compute_pipeline_initializer(&program);
 		current_pipeline = GetPipeline(compute_pipeline_initializer);
-		SetBindings(bindings);
-		UpdateFrameDescriptorSets();
+		auto descriptor_cache = Engine::GetVulkanContext()->GetDescriptorCache();
 
 		auto command_buffer = GetCurrentCommandBuffer()->GetCommandBuffer();
 		command_buffer.bindPipeline( vk::PipelineBindPoint::eCompute, current_pipeline->GetPipeline());
-		BindFrameDescriptorSets(command_buffer, vk::PipelineBindPoint::eCompute);
+		auto descriptor_set = descriptor_cache->GetDescriptorSet(bindings, *program.GetDescriptorSet(0));
+
+		if (!program.GetDescriptorSet(0)->Empty())
+			command_buffer.bindDescriptorSets(vk::PipelineBindPoint::eCompute, current_pipeline->GetPipelineLayout(), 0, 1u, &descriptor_set, 0, nullptr);
 
 		vkCmdDispatch(command_buffer, group_size.x, group_size.y, group_size.z);
 
-		dirty_flags = (uint32_t)DirtyFlags::All; */
+		dirty_flags = (uint32_t)DirtyFlags::All;
 	}
 
 	VulkanPipeline* VulkanRenderState::GetPipeline(const VulkanPipelineInitializer& initializer)
