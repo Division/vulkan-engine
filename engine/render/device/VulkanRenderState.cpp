@@ -188,14 +188,12 @@ namespace core { namespace Device {
 			if (binding.type == ShaderProgram::BindingType::Sampler)
 			{
 				auto& global_binding = global_bindings.GetTextureBindings()[index];
-				// TODO: remove set
-				common_bindings.AddTextureBinding(DescriptorSet::Global, global_binding.index, global_binding.texture);
+				common_bindings.AddTextureBinding(global_binding.index, global_binding.texture);
 			}
 			else
 			{
 				auto& global_binding = global_bindings.GetBufferBindings()[index];
-				// TODO: remove set
-				common_bindings.AddBufferBinding(DescriptorSet::Global, global_binding.index, global_binding.offset, global_binding.size, global_binding.buffer, global_binding.dynamic_offset);
+				common_bindings.AddBufferBinding(global_binding.index, global_binding.offset, global_binding.size, global_binding.buffer, global_binding.dynamic_offset);
 			}
 		}
 

@@ -63,10 +63,10 @@ namespace core::render::effects
 				mode.SetPrimitiveTopology(PrimitiveTopology::TriangleList);
 
 				ShaderBindings bindings;
-				bindings.AddTextureBindingSafe(src_texture_address, node.resource->GetAttachment()->GetTexture().get());
+				bindings.AddTextureBindingSafe(src_texture_address.binding, node.resource->GetAttachment()->GetTexture().get());
 
 				auto* buffer = hdr_buffer.GetBuffer();
-				bindings.AddBufferBindingSafe(hdr_buffer_address, 0, buffer->Size(), buffer->Buffer());
+				bindings.AddBufferBindingSafe(hdr_buffer_address.binding, 0, buffer->Size(), buffer->Buffer());
 				auto* descriptor_cache = Engine::GetVulkanContext()->GetDescriptorCache();
 				auto vk_descriptor_set = descriptor_cache->GetDescriptorSet(bindings, *shader->GetDescriptorSet(0));
 				auto command_buffer = state.GetCurrentCommandBuffer()->GetCommandBuffer();

@@ -5,30 +5,30 @@
 
 namespace core { namespace Device {
 
-	void ShaderBindings::AddTextureBindingSafe(ShaderProgram::BindingAddress address, const Texture* texture)
+	void ShaderBindings::AddTextureBindingSafe(unsigned index, const Texture* texture)
 	{
-		if (address.set == -1 || address.binding == -1)
+		if (index == -1)
 			return;
 
-		AddTextureBinding(address.set, address.binding, texture);
+		AddTextureBinding(index, texture);
 	}
 
-	void ShaderBindings::AddBufferBindingSafe(ShaderProgram::BindingAddress address, size_t offset, size_t size, vk::Buffer buffer)
+	void ShaderBindings::AddBufferBindingSafe(unsigned index, size_t offset, size_t size, vk::Buffer buffer)
 	{
-		if (address.set == -1 || address.binding == -1)
+		if (index == -1)
 			return;
 
-		AddBufferBinding(address.set, address.binding, offset, size, buffer);
+		AddBufferBinding(index, offset, size, buffer);
 	}
 
-	void ShaderBindings::AddTextureBinding(unsigned set, unsigned index, const Texture* texture)
+	void ShaderBindings::AddTextureBinding(unsigned index, const Texture* texture)
 	{
-		texture_bindings.push_back(TextureBinding{ (unsigned char)set, (unsigned char)index, texture });
+		texture_bindings.push_back(TextureBinding{ (unsigned char)index, texture });
 	}
 
-	void ShaderBindings::AddBufferBinding(unsigned set, unsigned index, size_t offset, size_t size, vk::Buffer buffer, size_t dynamic_offset)
+	void ShaderBindings::AddBufferBinding(unsigned index, size_t offset, size_t size, vk::Buffer buffer, size_t dynamic_offset)
 	{
-		buffer_bindings.push_back(BufferBinding{ (unsigned char)set, (unsigned char)index, (unsigned)offset, (unsigned)dynamic_offset, (unsigned)size, buffer });
+		buffer_bindings.push_back(BufferBinding{ (unsigned char)index, (unsigned)offset, (unsigned)dynamic_offset, (unsigned)size, buffer });
 		UpdateBindings();
 	}
 

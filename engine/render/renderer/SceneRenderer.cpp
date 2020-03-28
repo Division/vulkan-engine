@@ -84,7 +84,7 @@ namespace core { namespace render {
 		compute_program = shader_cache->GetShaderProgram(0, 0, ShaderCache::GetShaderPathHash(L"shaders/test.comp"));
 		auto* buffer_binding = compute_program->GetBindingByName("buf");
 		compute_bindings = std::make_unique<ShaderBindings>();
-		compute_bindings->AddBufferBinding(buffer_binding->address.set, buffer_binding->address.binding, 0, compute_buffer->GetSize(), compute_buffer->GetBuffer()->Buffer());
+		compute_bindings->AddBufferBinding(buffer_binding->address.binding, 0, compute_buffer->GetSize(), compute_buffer->GetBuffer()->Buffer());
 
 		//environment_cubemap = loader::LoadTexture("resources/environment/skybox_unorm.ktx"); // TODO: assign via setter
 		environment_cubemap = loader::LoadTexture("resources/environment/skybox2.ktx");
@@ -456,7 +456,7 @@ namespace core { namespace render {
 			switch (binding.type)
 			{
 			case ShaderProgram::BindingType::Sampler:
-				bindings.AddTextureBinding(address.set, address.binding, GetTexture((ShaderTextureName)binding.id, material));
+				bindings.AddTextureBinding(address.binding, GetTexture((ShaderTextureName)binding.id, material));
 				break;
 
 			case ShaderProgram::BindingType::UniformBuffer:
@@ -469,7 +469,7 @@ namespace core { namespace render {
 				std::tie(buffer, size) = buffer_data;
 				uint32_t dynamic_offset = SHADER_DYNAMIC_OFFSET_BUFFERS.find((ShaderBufferName)binding.id) == SHADER_DYNAMIC_OFFSET_BUFFERS.end() ? -1 : 0;
 
-				bindings.AddBufferBinding(address.set, address.binding, 0, size, buffer, dynamic_offset);
+				bindings.AddBufferBinding(address.binding, 0, size, buffer, dynamic_offset);
 				break;
 			}
 
