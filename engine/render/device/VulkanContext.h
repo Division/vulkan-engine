@@ -82,14 +82,21 @@ namespace core { namespace Device {
 		void RecreateSwapChain();
 		void WaitForRenderFence();
 		void Present();
+
+		void BeginDebugMarker(VulkanCommandBuffer& command_buffer, const char* string);
+		void InsertDebugMarker(VulkanCommandBuffer& command_buffer, const char* string);
+		void EndDebugMarker(VulkanCommandBuffer& command_buffer);
+		void AssignDebugName(uint64_t id, vk::DebugReportObjectTypeEXT type, const char* name);
 	private:
 		static VKAPI_ATTR VkBool32 VKAPI_CALL DebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData);
 
 		void CreateInstance();
-		void SetupDebugMessenger();
 		void PickPhysicalDevice();
 		void CreateLogicalDevice();
 		void CreateSyncObjects();
+		void SetupDebugMessenger();
+		void SetupDebugMarker();
+		void SetupDebugName();
 
 	private:
 		GLFWwindow* window;
@@ -99,7 +106,6 @@ namespace core { namespace Device {
 		std::unique_ptr<VulkanDescriptorCache> descriptor_cache;
 
 		VkInstance instance;
-		VkDebugUtilsMessengerEXT debugMessenger;
 		VkSurfaceKHR surface;
 
 		VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
@@ -125,6 +131,13 @@ namespace core { namespace Device {
 		bool framebuffer_resized = false;
 		size_t currentFrame = 0;
 		VmaAllocator allocator;
+
+		// Debug
+		VkDebugUtilsMessengerEXT debug_messenger;
+		PFN_vkDebugMarkerSetObjectNameEXT debug_object_name_callback = nullptr;
+		PFN_vkCmdDebugMarkerBeginEXT debug_marker_begin_callback = nullptr;
+		PFN_vkCmdDebugMarkerEndEXT debug_marker_end_callback = nullptr;
+		PFN_vkCmdDebugMarkerInsertEXT debug_marker_insert_callback = nullptr;
 	};
 
 } }

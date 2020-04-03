@@ -27,10 +27,8 @@ namespace core { namespace Device { namespace VulkanUtils {
 	};
 
 	extern const std::vector<const char*> VALIDATION_LAYERS;
-	extern const std::vector<const char*> DEVICE_EXTENSIONS;
 
-	std::vector<char> ReadFile(const std::string& filename);
-
+	const std::vector<const char*> GetDeviceExtensions(bool validation_layers);
 	bool CheckValidationLayerSupport();
 	std::vector<const char*> GetRequiredExtensions(bool enable_validation_layers);
 	void PopulateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo, PFN_vkDebugUtilsMessengerCallbackEXT callback);

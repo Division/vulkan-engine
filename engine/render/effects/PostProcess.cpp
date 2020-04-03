@@ -87,8 +87,8 @@ namespace core::render::effects
 
 	void PostProcess::OnRecreateSwapchain(int32_t width, int32_t height)
 	{
-		attachments[0] = std::make_unique<VulkanRenderTargetAttachment>(VulkanRenderTargetAttachment::Type::Color, width, height, Format::R16G16B16A16_float);
-		attachments[1] = std::make_unique<VulkanRenderTargetAttachment>(VulkanRenderTargetAttachment::Type::Color, width, height, Format::R16G16B16A16_float);
+		attachments[0] = std::make_unique<VulkanRenderTargetAttachment>("PostProcess 0", VulkanRenderTargetAttachment::Type::Color, width, height, Format::R16G16B16A16_float);
+		attachments[1] = std::make_unique<VulkanRenderTargetAttachment>("PostProcess 1", VulkanRenderTargetAttachment::Type::Color, width, height, Format::R16G16B16A16_float);
 	}
 
 }

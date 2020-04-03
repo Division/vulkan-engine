@@ -17,7 +17,13 @@ namespace core { namespace Device {
 	VulkanContext::VulkanContext(GLFWwindow* window) : window(window)
 	{
 		CreateInstance();
-		SetupDebugMessenger();
+
+		if (ENABLE_VALIDATION_LAYERS)
+		{
+			SetupDebugMessenger();
+			SetupDebugMarker();
+			SetupDebugName();
+		}
 
 		if (glfwCreateWindowSurface(instance, window, nullptr, &surface) != VK_SUCCESS) {
 			throw std::runtime_error("failed to create window surface!");
@@ -61,6 +67,43 @@ namespace core { namespace Device {
 
 		current_render_state += 1;
 		return result;
+	}
+
+	void VulkanContext::BeginDebugMarker(VulkanCommandBuffer& command_buffer, const char* string)
+	{
+		if (ENABLE_VALIDATION_LAYERS)
+		{
+			vk::DebugMarkerMarkerInfoEXT info;
+			info.setPMarkerName(string);
+			debug_marker_begin_callback(command_buffer.GetCommandBuffer(), (VkDebugMarkerMarkerInfoEXT*)&info);
+		}
+	}
+
+	void VulkanContext::InsertDebugMarker(VulkanCommandBuffer& command_buffer, const char* string)
+	{
+		if (ENABLE_VALIDATION_LAYERS)
+		{
+			vk::DebugMarkerMarkerInfoEXT info;
+			info.setPMarkerName(string);
+			debug_marker_insert_callback(command_buffer.GetCommandBuffer(), (VkDebugMarkerMarkerInfoEXT*)&info);
+		}
+	}
+
+	void VulkanContext::EndDebugMarker(VulkanCommandBuffer& command_buffer)
+	{
+		if (ENABLE_VALIDATION_LAYERS)
+		{
+			debug_marker_end_callback(command_buffer.GetCommandBuffer());
+		}
+	}
+
+	void VulkanContext::AssignDebugName(uint64_t id, vk::DebugReportObjectTypeEXT type, const char* name)
+	{
+		if (debug_object_name_callback)
+		{
+			vk::DebugMarkerObjectNameInfoEXT name_info(type, id, name);
+			debug_object_name_callback(device, (VkDebugMarkerObjectNameInfoEXT*)&name_info);
+		}
 	}
 
 	uint32_t VulkanContext::GetSwapchainImageCount() const 
@@ -152,14 +195,24 @@ namespace core { namespace Device {
 
 	void VulkanContext::SetupDebugMessenger() 
 	{
-		if (!ENABLE_VALIDATION_LAYERS) return;
-
 		VkDebugUtilsMessengerCreateInfoEXT createInfo;
 		VulkanUtils::PopulateDebugMessengerCreateInfo(createInfo, VulkanContext::DebugCallback);
 
-		if (VulkanUtils::CreateDebugUtilsMessengerEXT(instance, &createInfo, nullptr, &debugMessenger) != VK_SUCCESS) {
+		if (VulkanUtils::CreateDebugUtilsMessengerEXT(instance, &createInfo, nullptr, &debug_messenger) != VK_SUCCESS) {
 			throw std::runtime_error("failed to set up debug messenger!");
 		}
+	}
+
+	void VulkanContext::SetupDebugMarker()
+	{
+		debug_marker_begin_callback = (PFN_vkCmdDebugMarkerBeginEXT)vkGetInstanceProcAddr(instance, "vkCmdDebugMarkerBeginEXT");
+		debug_marker_end_callback = (PFN_vkCmdDebugMarkerEndEXT)vkGetInstanceProcAddr(instance, "vkCmdDebugMarkerEndEXT");
+		debug_marker_insert_callback = (PFN_vkCmdDebugMarkerInsertEXT)vkGetInstanceProcAddr(instance, "vkCmdDebugMarkerInsertEXT");
+	}
+
+	void VulkanContext::SetupDebugName()
+	{
+		debug_object_name_callback = (PFN_vkDebugMarkerSetObjectNameEXT)vkGetInstanceProcAddr(instance, "vkDebugMarkerSetObjectNameEXT");
 	}
 
 	void VulkanContext::PickPhysicalDevice() 
@@ -215,8 +268,9 @@ namespace core { namespace Device {
 
 		createInfo.pEnabledFeatures = &deviceFeatures;
 
-		createInfo.enabledExtensionCount = static_cast<uint32_t>(VulkanUtils::DEVICE_EXTENSIONS.size());
-		createInfo.ppEnabledExtensionNames = VulkanUtils::DEVICE_EXTENSIONS.data();
+		auto device_extensions = VulkanUtils::GetDeviceExtensions(ENABLE_VALIDATION_LAYERS);
+		createInfo.enabledExtensionCount = static_cast<uint32_t>(device_extensions.size());
+		createInfo.ppEnabledExtensionNames = device_extensions.data();
 
 		if (ENABLE_VALIDATION_LAYERS) {
 			createInfo.enabledLayerCount = static_cast<uint32_t>(VulkanUtils::VALIDATION_LAYERS.size());
@@ -236,6 +290,10 @@ namespace core { namespace Device {
 		present_queue = GetDevice().getQueue(present_queue_index, 0);
 		compute_queue_index = indices.compute_family.value();
 		compute_queue = GetDevice().getQueue(compute_queue_index, 0);
+
+		AssignDebugName((uint64_t)(VkQueue)graphics_queue, vk::DebugReportObjectTypeEXT::eQueue, "Graphics Queue");
+		AssignDebugName((uint64_t)(VkQueue)compute_queue, vk::DebugReportObjectTypeEXT::eQueue, "Compute Queue");
+		AssignDebugName((uint64_t)(VkQueue)present_queue, vk::DebugReportObjectTypeEXT::eQueue, "Present Queue");
 	}
 
     void VulkanContext::CreateSyncObjects() 
@@ -360,7 +418,9 @@ namespace core { namespace Device {
 		vk::PresentInfoKHR presentInfo(1, &render_finished_semaphore, 1, swapChains, &imageIndex);
 		auto present_result = GetPresentQueue().presentKHR(&presentInfo);
 
+		///////
 		//vkDeviceWaitIdle(device); ///// Uncomment to sync every frame
+		///////
 
 		if (present_result == vk::Result::eErrorOutOfDateKHR || present_result == vk::Result::eSuboptimalKHR || framebuffer_resized) {
 			framebuffer_resized = false;

@@ -102,6 +102,7 @@ namespace core { namespace Device {
 		uint32_t num_dimensions = 2;
 		bool is_array = false;
 		bool is_cube = false;
+		std::string name;
 	};
 
 	class Texture {

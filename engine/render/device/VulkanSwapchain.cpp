@@ -131,6 +131,7 @@ namespace core { namespace Device {
 		);
 
 		swapchain = device.createSwapchainKHRUnique(create_info);
+		Engine::Get()->GetContext()->AssignDebugName((uint64_t)(VkSwapchainKHR)swapchain.get(), vk::DebugReportObjectTypeEXT::eSwapchainKHR, "Swapchain");
 		width = extent.width;
 		height = extent.height;
 
@@ -138,6 +139,9 @@ namespace core { namespace Device {
 		assert(images.size() == 2); // TODO: handle swapchain images properly
 		color_attachments[0] = std::make_unique<VulkanRenderTargetAttachment>(this, 0);
 		color_attachments[1] = std::make_unique<VulkanRenderTargetAttachment>(this, 1);
+
+		for (int i = 0; i < images.size(); i++)
+			Engine::Get()->GetContext()->AssignDebugName((uint64_t)(VkImage)images[i], vk::DebugReportObjectTypeEXT::eSwapchainKHR, ("Swapchain Image " + std::to_string(i + 1)).c_str());
 	}
 
 } }

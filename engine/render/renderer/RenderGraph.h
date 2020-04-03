@@ -143,7 +143,7 @@ namespace core { namespace render { namespace graph {
 		int order = -1;
 		uint32_t index = -1;
 
-		const char* name;
+		std::string name;
 
 		bool is_compute = false;
 		uint32_t queue_family_index = -1;

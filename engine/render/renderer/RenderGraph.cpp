@@ -424,7 +424,7 @@ namespace core { namespace render { namespace graph {
 
 	void RenderGraph::RecordGraphicsPass(Pass* pass)
 	{
-		OPTICK_EVENT(pass->name);
+		OPTICK_EVENT(pass->name.c_str());
 		bool is_graphics = !pass->is_compute;
 		core::Device::PipelineBindPoint binding_point = is_graphics ? core::Device::PipelineBindPoint::Graphics : core::Device::PipelineBindPoint::Compute;
 
@@ -433,6 +433,8 @@ namespace core { namespace render { namespace graph {
 		state->BeginRecording(binding_point);
 		ApplyPreBarriers(*pass, *state);
 		auto* command_buffer = state->GetCurrentCommandBuffer();
+
+		context->BeginDebugMarker(*command_buffer, pass->name.c_str());
 
 		if (is_graphics)
 		{
@@ -460,6 +462,8 @@ namespace core { namespace render { namespace graph {
 			state->EndRendering();
 
 		ApplyPostBarriers(*pass, *state);
+		
+		context->EndDebugMarker(*command_buffer);
 		state->EndRecording();
 
 

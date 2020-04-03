@@ -159,6 +159,12 @@ namespace core { namespace Device {
 			);
 			uploader->AddImageToUpload(std::move(upload_staging_buffer), image, mip_levels, array_layers, initializer.copies.empty() ? GetCopies() : initializer.copies);
 		}
+
+		if (!initializer.name.empty())
+		{
+			Engine::GetVulkanContext()->AssignDebugName((uint64_t)(VkImage)image, vk::DebugReportObjectTypeEXT::eImage, ("[Image] " + initializer.name).c_str());
+			Engine::GetVulkanContext()->AssignDebugName((uint64_t)(VkImageView)image_view.get(), vk::DebugReportObjectTypeEXT::eImage, ("[ImageView] " + initializer.name).c_str());
+		}
 	}
 
 	void* Texture::Map()

@@ -17,10 +17,11 @@ namespace core { namespace Device {
 		return type == Type::Color ? frame.image : depth_texture->GetImage(); 
 	}
 
-	VulkanRenderTargetAttachment::VulkanRenderTargetAttachment(Type type, uint32_t width, uint32_t height, Format format, uint32_t sample_count)
+	VulkanRenderTargetAttachment::VulkanRenderTargetAttachment(const std::string& name, Type type, uint32_t width, uint32_t height, Format format, uint32_t sample_count)
 		: type(type), format(format), width(width), height(height)
 	{
 		TextureInitializer texture_init(width, height, 1, 1, format);
+		texture_init.name = name;
 
 		switch (type)
 		{

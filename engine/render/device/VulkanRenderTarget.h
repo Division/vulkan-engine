@@ -32,7 +32,7 @@ namespace core { namespace Device {
 		vk::ImageView GetImageView() const;
 		vk::Image GetImage() const;
 		std::shared_ptr<Texture>& GetTexture() { return type == Type::Depth ? depth_texture : frame.color_texture; }
-		VulkanRenderTargetAttachment(Type type, uint32_t width, uint32_t height, Format format, uint32_t sample_count = 1);
+		VulkanRenderTargetAttachment(const std::string& name, Type type, uint32_t width, uint32_t height, Format format, uint32_t sample_count = 1);
 		VulkanRenderTargetAttachment(VulkanSwapchain* swapchain, uint32_t image_index);
 		bool IsSwapchain() const { return (bool)swapchain; }
 

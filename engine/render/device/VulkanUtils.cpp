@@ -12,25 +12,6 @@ namespace core { namespace Device { namespace VulkanUtils {
 		VK_KHR_SWAPCHAIN_EXTENSION_NAME
 	};
 
-	std::vector<char> ReadFile(const std::string& filename) 
-	{
-		std::ifstream file(filename, std::ios::ate | std::ios::binary);
-
-		if (!file.is_open()) {
-			throw std::runtime_error("failed to open file!");
-		}
-
-		size_t fileSize = (size_t)file.tellg();
-		std::vector<char> buffer(fileSize);
-
-		file.seekg(0);
-		file.read(buffer.data(), fileSize);
-
-		file.close();
-
-		return buffer;
-	}
-
 	bool CheckValidationLayerSupport() 
 	{
 		uint32_t layerCount;
@@ -67,9 +48,22 @@ namespace core { namespace Device { namespace VulkanUtils {
 
 		if (enable_validation_layers) {
 			extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+			extensions.push_back(VK_EXT_DEBUG_REPORT_EXTENSION_NAME);
 		}
 
 		return extensions;
+	}
+
+	const std::vector<const char*> GetDeviceExtensions(bool enable_validation_layers)
+	{
+		auto result = DEVICE_EXTENSIONS;
+
+		if (enable_validation_layers)
+		{
+			result.push_back(VK_EXT_DEBUG_MARKER_EXTENSION_NAME);
+		}
+
+		return result;
 	}
 
 	void PopulateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo, PFN_vkDebugUtilsMessengerCallbackEXT callback)
@@ -137,14 +131,15 @@ namespace core { namespace Device { namespace VulkanUtils {
 		return indices;
 	}
 
-	bool CheckDeviceExtensionSupport(VkPhysicalDevice device) {
+	bool CheckDeviceExtensionSupport(VkPhysicalDevice device, bool validation_layers) {
 		uint32_t extensionCount;
 		vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, nullptr);
 
 		std::vector<VkExtensionProperties> availableExtensions(extensionCount);
 		vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, availableExtensions.data());
 
-		std::set<std::string> requiredExtensions(DEVICE_EXTENSIONS.begin(), DEVICE_EXTENSIONS.end());
+		auto device_extensions = GetDeviceExtensions(validation_layers);
+		std::set<std::string> requiredExtensions(device_extensions.begin(), device_extensions.end());
 
 		for (const auto& extension : availableExtensions) {
 			requiredExtensions.erase(extension.extensionName);
@@ -180,7 +175,7 @@ namespace core { namespace Device { namespace VulkanUtils {
 	bool IsDeviceSuitable(VkPhysicalDevice device, VkSurfaceKHR surface) {
 		QueueFamilyIndices indices = FindQueueFamilies(device, surface);
 
-		bool extensionsSupported = CheckDeviceExtensionSupport(device);
+		bool extensionsSupported = CheckDeviceExtensionSupport(device, false);
 
 		bool swapChainAdequate = false;
 		if (extensionsSupported) 
