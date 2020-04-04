@@ -129,6 +129,8 @@ set(ENGINE_SOURCES
 	render/debug/DebugDraw.cpp
 	render/debug/DebugUI.h
 	render/debug/DebugUI.cpp
+	render/debug/Profiler.h
+	render/debug/Profiler.cpp
 	render/debug/widgets/EngineStats.h
 	render/debug/widgets/EngineStats.cpp
 	render/debug/widgets/MainWidget.cpp

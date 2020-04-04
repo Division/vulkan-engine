@@ -27,6 +27,7 @@ namespace core { namespace render {
 		void NewFrame();
 		void Update(float dt);
 		void Render(core::Device::VulkanRenderState& state);
+		void SwitchEngineStats();
 
 		bool WantCaptureMouse();
 		bool WantCaptureKeyboard();

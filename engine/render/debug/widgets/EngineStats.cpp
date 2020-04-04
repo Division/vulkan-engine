@@ -1,9 +1,14 @@
 #include "imgui/imgui.h"
 #include "memory/Profiler.h"
+#include "render/debug/Profiler.h"
+#include "Engine.h"
+#include "render/device/VulkanContext.h"
 #include <string>
 #include <sstream>
 
 namespace core { namespace render { namespace DebugUI {
+
+    using namespace profiler;
 
     std::array<std::pair<size_t, std::string>, 4> size_const = { std::make_pair(1, "b"), std::make_pair(1024, "kb"), std::make_pair(1024 * 1024, "mb"), std::make_pair(1024 * 1024 * 1024, "gb") };
 
@@ -24,6 +29,13 @@ namespace core { namespace render { namespace DebugUI {
             stream.precision(2);
             stream.setf(std::ios::fixed);
             stream << float_size << " " << size_pair.second;
+        }
+
+        void AppendDurationMS(double ms, std::stringstream& stream)
+        {
+            stream.precision(3);
+            stream.setf(std::ios::fixed);
+            stream << ms << " ms";
         }
 
         void AppendAllocations(size_t allocations, std::stringstream& stream)
@@ -75,5 +87,47 @@ namespace core { namespace render { namespace DebugUI {
         }
         ImGui::End();
 	}
+
+    void EngineStatsProfiler()
+    {
+        const float DISTANCE = 10.0f;
+        static int corner = 0;
+        ImGuiIO& io = ImGui::GetIO();
+        if (corner != -1)
+        {
+            ImVec2 window_pos = ImVec2((corner & 1) ? io.DisplaySize.x - DISTANCE : DISTANCE, (corner & 2) ? io.DisplaySize.y - DISTANCE : DISTANCE);
+            ImVec2 window_pos_pivot = ImVec2((corner & 1) ? 1.0f : 0.0f, (corner & 2) ? 1.0f : 0.0f);
+            ImGui::SetNextWindowPos(window_pos, ImGuiCond_Always, window_pos_pivot);
+        }
+        ImGui::SetNextWindowBgAlpha(0.35f); // Transparent background
+        bool open = true;
+
+        auto& profiler_data = Engine::Get()->GetVulkanContext()->GetProfilerTimings();
+
+        if (ImGui::Begin("Profiler info", &open, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoInputs))
+        {
+            ImGui::Text("GPU Profiler");
+            ImGui::Separator();
+
+            std::stringstream stream;
+
+            for (int i = 0; i < (uint32_t)ProfilerName::PassCount; i++)
+            {
+                stream.clear();
+                stream.str("");
+                stream << profiler::GetProfilerDisplayName(ProfilerName(i)) << ": ";
+                AppendDurationMS(profiler_data[i] * 1000.0, stream);
+
+                ImGui::Text(stream.str().c_str());
+            }
+
+            ImGui::Separator();
+            stream.clear();
+            stream.str("");
+
+            ImGui::Text(stream.str().c_str());
+        }
+        ImGui::End();
+    }
 
 } } }

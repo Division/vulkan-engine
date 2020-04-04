@@ -21,6 +21,8 @@ namespace core::render::effects
 {
 	using namespace core::render::graph;
 	using namespace core::ECS;
+	using namespace profiler;
+
 	PostProcess::PostProcess(ShaderCache& shader_cache, EnvironmentSettings& environment_settings)
 		: environment_settings(environment_settings)
 	{
@@ -48,7 +50,7 @@ namespace core::render::effects
 			graph::DependencyNode* color_output = nullptr;
 		};
 
-		auto post_process_info = graph.AddPass<PassInfo>("postprocess", [&](graph::IRenderPassBuilder& builder)
+		auto post_process_info = graph.AddPass<PassInfo>("Post Process", ProfilerName::PassPostProcess, [&](graph::IRenderPassBuilder& builder)
 			{
 				PassInfo result;
 				builder.AddInput(node);

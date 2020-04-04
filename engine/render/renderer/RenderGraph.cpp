@@ -7,6 +7,7 @@
 #include "render/device/VulkanRenderState.h"
 #include "render/device/VulkanContext.h"
 #include "render/device/VkObjects.h"
+#include "render/debug/Profiler.h"
 #include "render/texture/Texture.h"
 #include "lib/optick/src/optick.h"
 
@@ -422,7 +423,7 @@ namespace core { namespace render { namespace graph {
 	}
 
 
-	void RenderGraph::RecordGraphicsPass(Pass* pass)
+	void RenderGraph::RecordPass(Pass* pass)
 	{
 		OPTICK_EVENT(pass->name.c_str());
 		bool is_graphics = !pass->is_compute;
@@ -435,6 +436,7 @@ namespace core { namespace render { namespace graph {
 		auto* command_buffer = state->GetCurrentCommandBuffer();
 
 		context->BeginDebugMarker(*command_buffer, pass->name.c_str());
+		profiler::StartMeasurement(*command_buffer, pass->index, pass->profiler_name);
 
 		if (is_graphics)
 		{
@@ -463,9 +465,9 @@ namespace core { namespace render { namespace graph {
 
 		ApplyPostBarriers(*pass, *state);
 		
+		profiler::FinishMeasurement(*command_buffer, pass->index, pass->profiler_name);
 		context->EndDebugMarker(*command_buffer);
 		state->EndRecording();
-
 
 		core::Device::FrameCommandBufferData data(
 			command_buffer->GetCommandBuffer(),
@@ -484,7 +486,7 @@ namespace core { namespace render { namespace graph {
 		OPTICK_EVENT();
 		for (auto& pass : render_passes)
 		{
-			RecordGraphicsPass(pass.get());
+			RecordPass(pass.get());
 		}
 	}
 

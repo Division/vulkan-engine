@@ -39,7 +39,7 @@ namespace core { namespace render {
 			EnvironmentSettings* environment_settings = nullptr;
 
 			typedef void (*engine_stats_callback)(void);
-			std::array<engine_stats_callback, 1> engine_stats_functions;
+			std::array<engine_stats_callback, 2> engine_stats_functions;
 		}
 
 		void DrawMainWidget();
@@ -102,7 +102,9 @@ namespace core { namespace render {
 			vertex_layout.AddAttrib(VertexAttrib::TexCoord0, Format::R32G32_float, sizeof(vec2));
 			vertex_layout.AddAttrib(VertexAttrib::VertexColor, Format::R8G8B8A8_unorm, sizeof(uint32_t));
 
-			engine_stats_functions[0] = EngineStatsMemory;
+			uint32_t current_index = 0;
+			engine_stats_functions[current_index++] = EngineStatsMemory;
+			engine_stats_functions[current_index++] = EngineStatsProfiler;
 		}
 
 		void NewFrame()
@@ -167,6 +169,11 @@ namespace core { namespace render {
 
 			ImGui::Render();
 			UpdateBuffers();
+		}
+
+		void SwitchEngineStats()
+		{
+			engine_stats_index = (engine_stats_index + 1) % engine_stats_functions.size();
 		}
 
 		void SetupRenderState(ImDrawData* draw_data, VulkanRenderState& state)

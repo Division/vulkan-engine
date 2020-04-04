@@ -2,6 +2,7 @@
 
 #include "CommonIncludes.h"
 #include "Types.h"
+#include "render/debug/Profiler.h"
 
 namespace core { namespace Device {
 
@@ -57,6 +58,11 @@ namespace core { namespace Device {
 		VkSurfaceKHR GetSurface() const { return surface; }
 		VulkanUploader* GetUploader() const { return uploader.get(); }
 
+		const auto& GetDeviceProps() const { return device_props; }
+		const auto& GetMemoryProps() const { return memory_props; }
+
+		const auto& GetProfilerTimings() const { return profiler_timings; };
+
 		vk::Queue GetGraphicsQueue() const { return graphics_queue; }
 		vk::Queue GetPresentQueue() const { return present_queue; }
 		vk::Queue GetComputeQueue() const { return compute_queue; }
@@ -110,6 +116,8 @@ namespace core { namespace Device {
 
 		VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
 		VkDevice device;
+		vk::PhysicalDeviceProperties device_props;
+		vk::PhysicalDeviceMemoryProperties memory_props;
 
 		vk::Queue graphics_queue;
 		vk::Queue present_queue;
@@ -138,6 +146,7 @@ namespace core { namespace Device {
 		PFN_vkCmdDebugMarkerBeginEXT debug_marker_begin_callback = nullptr;
 		PFN_vkCmdDebugMarkerEndEXT debug_marker_end_callback = nullptr;
 		PFN_vkCmdDebugMarkerInsertEXT debug_marker_insert_callback = nullptr;
+		core::render::profiler::ProfilerTimings profiler_timings;
 	};
 
 } }

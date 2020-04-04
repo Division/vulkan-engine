@@ -5,6 +5,7 @@
 #include "render/shader/ShaderBindings.h"
 #include "Synchronization.h"
 #include <mutex>
+#include "render/debug/Profiler.h"
 
 namespace core
 {
@@ -135,8 +136,8 @@ namespace core { namespace render { namespace graph {
 		Pass() = default;
 		Pass(Pass&&) = default;
 		Pass& operator=(Pass&&) = default;
-		Pass(const char* name, Pass::RecordCallback record_callback)
-			: name(name), record_callback(record_callback) {}
+		Pass(const char* name, profiler::ProfilerName profiler_name, Pass::RecordCallback record_callback)
+			: name(name), profiler_name(profiler_name), record_callback(record_callback) {}
 
 		RecordCallback record_callback;
 
@@ -144,6 +145,7 @@ namespace core { namespace render { namespace graph {
 		uint32_t index = -1;
 
 		std::string name;
+		profiler::ProfilerName profiler_name = profiler::ProfilerName::PassUnknown;
 
 		bool is_compute = false;
 		uint32_t queue_family_index = -1;
@@ -174,9 +176,9 @@ namespace core { namespace render { namespace graph {
 		ResourceWrapper* RegisterBuffer(VulkanBuffer& buffer);
 
 		template<typename T>
-		T AddPass(char* name, std::function<T(IRenderPassBuilder& builder)> init_callback, Pass::RecordCallback record_callback)
+		T AddPass(char* name, profiler::ProfilerName profiler_name, std::function<T(IRenderPassBuilder& builder)> init_callback, Pass::RecordCallback record_callback)
 		{
-			render_passes.push_back(std::make_unique<Pass>(name, record_callback));
+			render_passes.push_back(std::make_unique<Pass>(name, profiler_name, record_callback));
 			current_render_pass = render_passes.back().get();
 			return init_callback(*this);
 		}
@@ -193,7 +195,7 @@ namespace core { namespace render { namespace graph {
 		DependencyNode* AddOutput(ResourceWrapper& render_target) override;
 	private:
 		bool ResourceRegistered(void* resource);
-		void RecordGraphicsPass(Pass* pass);
+		void RecordPass(Pass* pass);
 		VulkanRenderPass* GetRenderPass(const VulkanRenderPassInitializer& initializer);
 		VulkanRenderTarget* GetRenderTarget(const VulkanRenderTargetInitializer& initializer);
 		void ApplyPreBarriers(Pass& pass, VulkanRenderState& state);

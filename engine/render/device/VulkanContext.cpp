@@ -12,6 +12,8 @@
 
 namespace core { namespace Device {
 
+	using namespace core::render;
+
 	const bool ENABLE_VALIDATION_LAYERS = true;
 
 	VulkanContext::VulkanContext(GLFWwindow* window) : window(window)
@@ -44,10 +46,12 @@ namespace core { namespace Device {
 	{
 		uploader = std::make_unique<VulkanUploader>();
 		CreateSyncObjects();
+		profiler::Initialize();
 	}
 
 	VulkanContext::~VulkanContext()
 	{
+		profiler::Deinitialize();
 		vmaDestroyAllocator(allocator);
 	}
 
@@ -234,8 +238,15 @@ namespace core { namespace Device {
 			}
 		}
 
+
 		if (physicalDevice == VK_NULL_HANDLE) {
 			throw std::runtime_error("failed to find a suitable GPU!");
+		}
+		else
+		{
+			vk::PhysicalDevice physical_device(physicalDevice);
+			device_props = physical_device.getProperties();
+			memory_props = physical_device.getMemoryProperties();
 		}
 	}
 
@@ -373,6 +384,8 @@ namespace core { namespace Device {
 			throw std::runtime_error("failed to acquire swap chain image!");
 		}
 
+		profiler::GetProfilerTimings(profiler_timings);
+
 		GetUploader()->ProcessUpload();
 		vk::PipelineStageFlags color_wait_mask = vk::PipelineStageFlagBits::eColorAttachmentOutput;
 		SemaphoreList wait_semaphores;
@@ -434,6 +447,8 @@ namespace core { namespace Device {
 		frame_command_buffers.clear();
 		currentFrame = (currentFrame + 1) % caps::MAX_FRAMES_IN_FLIGHT;
 		current_render_state = 0;
+
+		profiler::Update();
 	}
 
 	void VulkanContext::AddRecreateSwapchainCallback(RecreateSwapchainCallback callback)

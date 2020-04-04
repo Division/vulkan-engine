@@ -51,6 +51,7 @@ using namespace core::Device;
 namespace core { namespace render {
 
 	using namespace ECS;
+	using namespace profiler;
 
 	static const int32_t shadow_atlas_size = 4096;
 
@@ -219,7 +220,7 @@ namespace core { namespace render {
 		auto* compute_buffer_resource = render_graph->RegisterBuffer(*compute_buffer->GetBuffer());
 		post_process->PrepareRendering(*render_graph);
 
-		auto compute_pass_info = render_graph->AddPass<PassInfo>("compute pass", [&](graph::IRenderPassBuilder& builder)
+		auto compute_pass_info = render_graph->AddPass<PassInfo>("compute pass", ProfilerName::PassCompute, [&](graph::IRenderPassBuilder& builder)
 		{
 			builder.SetCompute();
 
@@ -231,7 +232,7 @@ namespace core { namespace render {
 			state.RecordCompute(*compute_program, *compute_bindings, uvec3(128, 128, 1));
 		});
 
-		auto depth_pre_pass_info = render_graph->AddPass<PassInfo>("depth pre pass", [&](graph::IRenderPassBuilder& builder)
+		auto depth_pre_pass_info = render_graph->AddPass<PassInfo>("depth pre pass", ProfilerName::PassDepthPrepass, [&](graph::IRenderPassBuilder& builder)
 		{
 			PassInfo result;
 			result.depth_output = builder.AddOutput(*main_depth)->Clear(1.0f);
@@ -254,7 +255,7 @@ namespace core { namespace render {
 			}
 		});
 
-		auto shadow_map_info = render_graph->AddPass<PassInfo>("shadow map", [&](graph::IRenderPassBuilder& builder)
+		auto shadow_map_info = render_graph->AddPass<PassInfo>("shadow map", ProfilerName::PassShadowmap, [&](graph::IRenderPassBuilder& builder)
 		{
 			PassInfo result;
 			result.depth_output = builder.AddOutput(*shadow_map)->Clear(1.0f);
@@ -289,7 +290,7 @@ namespace core { namespace render {
 		auto& debug_draw_calls_points = debug_draw->GetPointDrawCalls();
 
 
-		auto main_pass_info = render_graph->AddPass<PassInfo>("main", [&](graph::IRenderPassBuilder& builder)
+		auto main_pass_info = render_graph->AddPass<PassInfo>("main", ProfilerName::PassMain, [&](graph::IRenderPassBuilder& builder)
 		{
 			PassInfo result;
 			builder.AddInput(*depth_pre_pass_info.depth_output, graph::InputUsage::DepthAttachment);
@@ -341,7 +342,7 @@ namespace core { namespace render {
 
 		auto post_process_result = post_process->AddPostProcess(*render_graph, *main_pass_info.color_output, *main_color, *compute_buffer_resource);
 
-		auto ui_pass_info = render_graph->AddPass<PassInfo>("Debug UI", [&](graph::IRenderPassBuilder& builder)
+		auto ui_pass_info = render_graph->AddPass<PassInfo>("Debug UI", ProfilerName::PassDebugUI, [&](graph::IRenderPassBuilder& builder)
 			{
 				PassInfo result;
 				builder.AddInput(*compute_pass_info.compute_output);
