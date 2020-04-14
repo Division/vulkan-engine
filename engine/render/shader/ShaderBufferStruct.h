@@ -12,7 +12,8 @@ namespace core { namespace Device { namespace ShaderBufferStruct {
 		vec2 uvScale = vec2(1, 1);
 		vec2 uvOffset = vec2(0, 0);
 		unsigned int layer = 1u << 0;
-		vec3 padding;
+		float roughness = 0.0f;
+		vec2 padding;
 	};
 
 	struct SkinningMatrices 

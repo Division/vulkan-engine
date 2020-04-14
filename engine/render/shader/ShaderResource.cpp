@@ -10,6 +10,8 @@ const std::map<std::string, ShaderTextureName> SHADER_SAMPLER_NAMES =
 	{ "shadow_map", ShaderTextureName::ShadowMap },
 	{ "projector_texture", ShaderTextureName::ProjectorTexture },
 	{ "environment_cubemap", ShaderTextureName::EnvironmentCubemap },
+	{ "radiance_cubemap", ShaderTextureName::RadianceCubemap },
+	{ "irradiance_cubemap", ShaderTextureName::IrradianceCubemap },
 };
 
 const std::map<std::string, ShaderBufferName> SHADER_BUFFER_NAMES = 

@@ -32,7 +32,7 @@ public:
 	void cleanup();
 
 private:
-	core::ECS::EntityID CreateCubeEntity(vec3 position, core::ECS::EntityID parent, Mesh* mesh);
+	core::ECS::EntityID CreateMeshEntity(vec3 position, core::ECS::EntityID parent, Mesh* mesh);
 
 private:
 	std::unique_ptr<ViewerCamera> camera;
@@ -46,6 +46,8 @@ private:
 	std::shared_ptr<Material> material_no_light;
 	std::shared_ptr<Material> material_default;
 	std::shared_ptr<Mesh> plane_mesh;
+	std::shared_ptr<Mesh> sphere_mesh;
+	std::shared_ptr<ModelBundle> sphere_bundle;
 	std::shared_ptr<core::Device::Texture> lama_tex;
 	std::shared_ptr<core::Device::Texture> environment;
 

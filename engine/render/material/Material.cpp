@@ -77,15 +77,16 @@ void Material::_updateCaps() const {
 
 uint32_t Material::GetHash() const
 {
-	auto tuple = std::make_tuple(
+	uint32_t hashes[] = {
 		vertex_hash,
 		fragment_hash,
 		_shaderCaps.getBitmask(),
 		_texture0 ? _texture0->GetHash() : 0,
 		_normalMap ? _normalMap->GetHash() : 0,
 		_lightingEnabled,
-		_vertexColorEnabled
-	);
+		_vertexColorEnabled,
+		FastHash(&roughness, sizeof(roughness))
+	};
 
-	return FastHash(&tuple, sizeof(tuple));
+	return FastHash(hashes, sizeof(hashes));
 }

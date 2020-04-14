@@ -4,6 +4,7 @@
 #include "ecs/components/CullingData.h"
 #include "Engine.h"
 #include "render/material/MaterialManager.h"
+#include "render/material/Material.h"
 
 namespace core { namespace ECS { namespace systems {
 
@@ -22,14 +23,17 @@ namespace core { namespace ECS { namespace systems {
 		ComponentFetcher<MeshRenderer> mesh_renderer_fetcher(*chunk);
 		ComponentFetcher<Transform> transform_fetcher(*chunk);
 		ComponentFetcher<CullingData> culling_data_fetcher(*chunk);
+		auto* material_manager = Engine::Get()->GetMaterialManager();
 
 		for (int i = 0; i < chunk->GetEntityCount(); i++)
 		{
 			auto* mesh_renderer = mesh_renderer_fetcher.GetComponent(i);
 			auto* transform = transform_fetcher.GetComponent(i);
+			auto* material = material_manager->GetMaterial(mesh_renderer->material_id);
 			mesh_renderer->object_params.transform = transform->local_to_world;
 			mesh_renderer->object_params.uvOffset = vec2(0, 0);
 			mesh_renderer->object_params.uvScale = vec2(1, 1);
+			mesh_renderer->object_params.roughness = material->GetRoughness();
 
 			if (culling_data_fetcher.HasData())
 			{

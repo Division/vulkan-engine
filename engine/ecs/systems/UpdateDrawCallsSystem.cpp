@@ -21,7 +21,7 @@ namespace core { namespace ECS { namespace systems {
 		for (int i = 0; i < chunk->GetEntityCount(); i++)
 		{
 			auto* mesh_renderer = mesh_renderer_fetcher.GetComponent(i);
-			if (mesh_renderer->draw_call_id)
+			if (mesh_renderer->draw_call_id) // TODO: replace with component
 				continue;
 
 			auto* transform = transform_fetcher.GetComponent(i);

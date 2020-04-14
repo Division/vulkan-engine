@@ -89,6 +89,8 @@ namespace core { namespace render {
 
 		//environment_cubemap = loader::LoadTexture("resources/environment/skybox_unorm.ktx"); // TODO: assign via setter
 		environment_cubemap = loader::LoadTexture("resources/environment/skybox2.ktx");
+		radiance_cubemap = loader::LoadTexture("resources/environment/grace_probe_radiance_rgba.ktx");
+		irradiance_cubemap = loader::LoadTexture("resources/environment/grace_probe_irradiance_rgba.ktx");
 		//environment_cubemap = loader::LoadTexture("resources/lama.ktx"); // TODO: assign via setter
 		skybox = std::make_unique<effects::Skybox>(*shader_cache);
 		skybox->SetTexture(environment_cubemap.get());
@@ -440,7 +442,12 @@ namespace core { namespace render {
 
 		case ShaderTextureName::EnvironmentCubemap:
 			return environment_cubemap.get();
-
+		
+		case ShaderTextureName::RadianceCubemap:
+			return radiance_cubemap.get();
+		
+		case ShaderTextureName::IrradianceCubemap:
+			return irradiance_cubemap.get();
 
 		default:
 			throw std::runtime_error("unknown texture");
@@ -482,6 +489,7 @@ namespace core { namespace render {
 
 	void SceneRenderer::UpdateGlobalBindings()
 	{
+		OPTICK_EVENT();
 		global_shader_bindings = std::make_unique<ShaderBindings>();
 		Material material;
 		material.lightingEnabled(true); // For now it's enough to get all the global bindings

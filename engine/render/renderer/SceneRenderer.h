@@ -93,6 +93,8 @@ namespace core { namespace render {
 		std::unique_ptr<core::ECS::systems::CreateDrawCallsSystem> create_draw_calls_system;
 		std::unique_ptr<core::ECS::systems::UploadDrawCallsSystem> upload_draw_calls_system;
 		std::unique_ptr<core::Device::Texture> environment_cubemap;
+		std::unique_ptr<core::Device::Texture> radiance_cubemap;
+		std::unique_ptr<core::Device::Texture> irradiance_cubemap;
 
 		core::Device::ShaderCache* shader_cache;
 		std::unique_ptr<SceneBuffers> scene_buffers;

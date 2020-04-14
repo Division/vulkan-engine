@@ -368,6 +368,8 @@ namespace core { namespace Device {
 
 	void VulkanContext::Present()
 	{
+		OPTICK_EVENT();
+
 		auto vk_swapchain = GetSwapchain();
 		VkFence current_fence = GetInFlightFence();
 		vk::Semaphore image_available_semaphone = GetImageAvailableSemaphore();

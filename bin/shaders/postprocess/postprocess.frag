@@ -23,11 +23,12 @@ layout(std140, binding = 1) buffer hdr_data
 vec4 ToneMap(vec4 src_color, float exposure)
 {
 	//return vec4(src_color.rgb / (src_color.rgb + vec3(1.0)), 1.0);
-	return vec4(vec3(1.0) - exp(-src_color.rgb * exposure), 1.0);
+	//return vec4(vec3(1.0) - exp(-src_color.rgb * exposure), 1.0);
+	return src_color;
 }
 
 void main()
 {
 	vec4 src_sample = texture(src_texture, frag_texcoord);
-	out_color = ToneMap(src_sample, push_constants.exposure) * image_data[0].value;
+	out_color = ToneMap(src_sample, push_constants.exposure)/* * image_data[0].value*/;
 }

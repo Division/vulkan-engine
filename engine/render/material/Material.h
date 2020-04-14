@@ -33,6 +33,9 @@ public:
 	void vertexColorEnabled(bool vertexColorEnabled);
 	bool vertexColorEnabled() const { return _vertexColorEnabled; }
 	
+	float GetRoughness() const { return roughness; }
+	void SetRoughness(float value) { roughness = value; }
+
 	const ShaderCapsSet& shaderCaps() const { if (_capsDirty) _updateCaps(); return _shaderCaps; }
 	const ShaderCapsSet &shaderCapsSkinning() const { if (_capsDirty) _updateCaps(); return _shaderCapsSkinning; }
 
@@ -50,6 +53,7 @@ protected:
 	std::wstring shader_path = L"shaders/material_main";
 	mutable ShaderCapsSet _shaderCaps;
 	mutable ShaderCapsSet _shaderCapsSkinning;
+	float roughness = 0;
 
 	uint32_t vertex_hash_depth_only = 0;
 	uint32_t vertex_hash = 0;

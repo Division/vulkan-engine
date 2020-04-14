@@ -425,7 +425,7 @@ namespace core { namespace render { namespace graph {
 
 	void RenderGraph::RecordPass(Pass* pass)
 	{
-		OPTICK_EVENT(pass->name.c_str());
+		OPTICK_EVENT_DYNAMIC(pass->name.c_str());
 		bool is_graphics = !pass->is_compute;
 		core::Device::PipelineBindPoint binding_point = is_graphics ? core::Device::PipelineBindPoint::Graphics : core::Device::PipelineBindPoint::Compute;
 

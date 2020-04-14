@@ -22,7 +22,7 @@ using namespace core::system;
 using namespace core::ECS;
 using namespace core::ECS::systems;
 
-EntityID ModelViewer::CreateCubeEntity(vec3 position, EntityID parent, Mesh* mesh)
+EntityID ModelViewer::CreateMeshEntity(vec3 position, EntityID parent, Mesh* mesh)
 {
 	auto entity = manager->CreateEntity();
 	if (parent)
@@ -49,7 +49,16 @@ void ModelViewer::init()
 
 	auto light = CreateGameObject<LightObject>();
 	light->castShadows(false);
-	light->color(vec3(0, 0, 0));
+	light->color(vec3(1, 1, 1));
+	light->transform()->position(vec3(-5, 0, -10));
+	light->radius(100);
+
+	/*light = CreateGameObject<LightObject>();
+	light->castShadows(false);
+	light->color(vec3(1, 1, 1));
+	light->transform()->position(vec3(50, 0, 0));
+	light->radius(100);*/
+
 	//lama_tex = loader::LoadTexture("resources/lama.jpg");
 	environment = loader::LoadTexture("resources/environment/skybox.ktx");
 	lama_tex = loader::LoadTexture("resources/lama.ktx");
@@ -61,6 +70,15 @@ void ModelViewer::init()
 	plane_mesh->calculateNormals();
 	plane_mesh->createBuffer();
 
+
+	sphere_bundle = loader::loadModel("resources/models/sphere.mdl");
+	sphere_mesh = sphere_bundle->getMesh("sphere-lib");
+
+	//sphere_mesh = std::make_shared<Mesh>();
+	//MeshGeneration::generateSphere(sphere_mesh.get(), 50, 50, 1);
+	//sphere_mesh->calculateNormals();
+	//sphere_mesh->createBuffer();
+
 	material_light_only = std::make_shared<Material>();;
 	material_light_only->lightingEnabled(true);
 	material_no_light = std::make_shared<Material>();
@@ -70,11 +88,29 @@ void ModelViewer::init()
 	material_default->texture0(lama_tex);
 	auto* material_manager = core::Engine::Get()->GetMaterialManager();
 
-	plane = CreateCubeEntity(vec3(0, -5, 0), 0, plane_mesh.get());
+	/*plane = CreateMeshEntity(vec3(0, -5, 0), 0, plane_mesh.get());
 	auto mesh_renderer = manager->GetComponent<components::MeshRenderer>(plane);
 	manager->GetComponent<components::Transform>(plane)->rotation = glm::angleAxis((float)M_PI / 2, vec3(1, 0, 0));
 	mesh_renderer->material_id = material_manager->GetMaterialID(*material_light_only);
-	mesh_renderer->mesh = plane_mesh.get();
+	mesh_renderer->mesh = plane_mesh.get(); */
+
+	uint32_t sphere_count = 10;
+	uint32_t sphere_offset = 3;
+	float start_pos = sphere_offset * (sphere_count - 1) / 2.0f;
+	for (int i = 0; i < sphere_count; i++)
+	{
+		auto sphere = CreateMeshEntity(vec3(0, -5, 0), 0, sphere_mesh.get());
+		auto mesh_renderer = manager->GetComponent<components::MeshRenderer>(sphere);
+		manager->GetComponent<components::Transform>(sphere)->position = vec3(i * sphere_offset, 0, -10);
+		manager->GetComponent<components::Transform>(sphere)->scale = vec3(1, 1, 1);
+
+		Material material;
+		material.lightingEnabled(true);
+		material.SetRoughness(0.05 + (i / (sphere_count - 1.0f) * 0.95));
+		mesh_renderer->material_id = material_manager->GetMaterialID(material);
+		mesh_renderer->mesh = sphere_mesh.get();
+	}
+
 }
 
 void ModelViewer::update(float dt)

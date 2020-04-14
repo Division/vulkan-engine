@@ -13,7 +13,13 @@ layout(location = 1) out vec3 texcoord;
 
 void main()
 {
-    texcoord = position.xyz;
+    vec3 localPos = aPos;
+    texcoord = aPos;
+    mat4 rotView = mat4(mat3(camera.cameraViewMatrix)); // remove translation from the view matrix
+    vec4 clipPos = camera.cameraProjectionMatrix * rotView * vec4(localPos, 1.0);
+
+    gl_Position = clipPos.xyww;
+    /*texcoord = position.xyz;
     vec3 position_cameraspace = mat3(camera.cameraViewMatrix) * position;
-    gl_Position = normalize(camera.cameraProjectionMatrix * vec4(position_cameraspace, 1));
+    gl_Position = normalize(camera.cameraProjectionMatrix * vec4(position_cameraspace, 1));*/
 }

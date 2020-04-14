@@ -1,5 +1,8 @@
 #version 450
 #extension GL_ARB_separate_shader_objects : enable
+#extension GL_GOOGLE_include_directive : enable
+
+#define PI 3.1415926535
 
 layout(std140, set = 0, binding = 0) uniform Camera {
     vec3 cameraPosition;
@@ -7,6 +10,15 @@ layout(std140, set = 0, binding = 0) uniform Camera {
     mat4 cameraViewMatrix;
     mat4 cameraProjectionMatrix;
 } camera;
+
+layout(std140, set = 1, binding = 1) uniform ObjectParams {
+    mat4 objectModelMatrix;
+    mat4 objectNormalMatrix;
+    vec2 uvScale;
+    vec2 uvOffset;
+    uint layer;
+    float roughness;
+} object_params;
 
 #if defined(TEXTURE0)
 layout(set = 1, binding = 2) uniform sampler2D texture0;
@@ -24,6 +36,8 @@ layout(location = 0) out vec4 out_color;
 #if defined (LIGHTING)
 layout(set = 0, binding = 3) uniform sampler2D shadow_map;
 layout(set = 0, binding = 10) uniform samplerCube environment_cubemap;
+layout(set = 0, binding = 11) uniform samplerCube radiance_cubemap;
+layout(set = 0, binding = 12) uniform samplerCube irradiance_cubemap;
 /*Texture2D shadowMap : register(t7);
 
 SamplerState shadowMapSampler : register(s7);
@@ -84,7 +98,6 @@ readonly layout(std430, set = 0, binding = 8) buffer LightIndices
     uint light_indices[];
 };
 
-
 vec3 calculateFragmentDiffuse(float normalizedDistanceToLight, float attenuation, vec3 normal, vec3 lightDir, vec3 eyeDir, vec3 lightColor, float materialSpecular) {
   float lightValue = clamp(dot(-lightDir, normal), 0.0, 1.0);
   float attenuationValue = pow(max(1.0 - normalizedDistanceToLight, 0.0), attenuation);
@@ -116,6 +129,8 @@ float calculateFragmentShadow(vec2 uv, float fragmentDepth) {
   return shadow;
 }
 
+#include "includes/pbr_t.inc"
+
 #endif
 
 void main() {
@@ -146,6 +161,18 @@ void main() {
     uint decalCount = gridItem.projectorsCount >> 16;
     vec3 eyeDir_worldspace = normalize(camera.cameraPosition - position_worldspace.xyz); // vector to camera
     
+    //out_color = vec4((normalize(normal_worldspace.xyz) + 1.0f) / 2.0f, 1); return;
+
+    /*pointLightCount = 0;
+    vec3 lightPosition = vec3(-10, 0, -10);
+    vec3 lightDir = position_worldspace.xyz - lightPosition;
+    float distanceToLight = length(lightDir);
+    lightDir /= distanceToLight; // normalize
+    float materialSpecular = 0;
+    //vec3 lightValue = calculateFragmentDiffuse(normalizedDistanceToLight, lights[lightIndex].attenuation, normal_worldspace.xyz, lightDir, eyeDir_worldspace, lights[lightIndex].color, materialSpecular);
+    vec3 lightValue = CalculateLighting(normalize(normal_worldspace.xyz), -lightDir, eyeDir_worldspace, object_params.roughness);
+    light_color += vec4(lightValue, 0.0);*/
+
 	uint i;
 	//[[loop]]
     for (i = 0; i < pointLightCount; i++) {
@@ -160,7 +187,9 @@ void main() {
             lightDir /= distanceToLight; // normalize
             float normalizedDistanceToLight = distanceToLight / lights[lightIndex].radius;
             float materialSpecular = 0;
-            vec3 lightValue = calculateFragmentDiffuse(normalizedDistanceToLight, lights[lightIndex].attenuation, normal_worldspace.xyz, lightDir, eyeDir_worldspace, lights[lightIndex].color, materialSpecular);
+            //vec3 lightValue = calculateFragmentDiffuse(normalizedDistanceToLight, lights[lightIndex].attenuation, normal_worldspace.xyz, lightDir, eyeDir_worldspace, lights[lightIndex].color, materialSpecular);
+            vec3 radiance = lights[lightIndex].color.rgb;
+            vec3 lightValue = CalculateLighting(out_color.xyz, radiance, normalize(normal_worldspace.xyz), eyeDir_worldspace, -lightDir, object_params.roughness, 0.0f);
             
             vec3 coneDirection = lights[lightIndex].direction;
             float coneAngle = lights[lightIndex].coneAngle;
@@ -184,7 +213,7 @@ void main() {
         }
     }
 
-#if 1
+#if 0
     vec3 I = -eyeDir_worldspace;
     vec3 R = reflect(I, normalize(normal_worldspace));
     light_color = mix(vec4(texture(environment_cubemap, R.xyz).rgb, 1.0), light_color, 0.8);
@@ -198,5 +227,5 @@ void main() {
 #endif
 
 	out_color *= light_color;
-
+    //if (out_color.r > 1.000001) out_color.gb = vec2(0, 0);
 }

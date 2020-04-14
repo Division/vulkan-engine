@@ -20,7 +20,8 @@ namespace core { namespace Device {
 		TextureInitializer(uint32_t width, uint32_t height, uint32_t channel_count, void* data, bool sRGB) // simple RGBA
 			: width(width), height(height), data(data), sRGB(sRGB) 
 		{
-			format = channel_count == 4 ? Format::R8G8B8A8_unorm : Format::R8G8B8_unorm;
+			assert(channel_count == 4);
+			format = sRGB ? Format::R8G8B8A8_srgb : Format::R8G8B8A8_unorm;
 			data_size = width * height * depth * (uint32_t)format_sizes.at(format) / 8;
 		}
 

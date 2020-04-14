@@ -30,6 +30,8 @@ LightGrid::LightGrid(unsigned int cellSize) : _cellSize(cellSize)
 	context->AddRecreateSwapchainCallback(std::bind(&LightGrid::OnRecreateSwapchain, this, std::placeholders::_1, std::placeholders::_2));
     projectors[0] = std::make_unique<DynamicBuffer<ShaderBufferStruct::Projector>>(sizeof(ShaderBufferStruct::Projector), BufferType::Uniform, true);
     lights[0] = std::make_unique<DynamicBuffer<ShaderBufferStruct::Light>>(sizeof(ShaderBufferStruct::Light), BufferType::Uniform, true);
+    light_index[0] = std::make_unique<DynamicBuffer<char>>(1, BufferType::Uniform, true);
+    light_grid[0] = std::make_unique<DynamicBuffer<char>>(1, BufferType::Uniform, true);
 }
 
 void LightGrid::Update(unsigned int screenWidth, unsigned int screenHeight) {
@@ -109,6 +111,7 @@ void LightGrid::_appendItem(ICameraParamsProvider* camera, const std::vector<vec
 
 void LightGrid::appendLights(const std::vector<LightObjectPtr> &light_list,
                              ICameraParamsProvider* camera) {
+  OPTICK_EVENT();
   _lightCount = light_list.size();
   if (!_lightCount)
       return;
@@ -152,6 +155,8 @@ void LightGrid::appendLights(const std::vector<LightObjectPtr> &light_list,
 
 void LightGrid::appendProjectors(const std::vector<std::shared_ptr<Projector>> &projectors_list, ICameraParamsProvider* camera) {
 
+  OPTICK_EVENT();
+
   _projectorCount = projectors_list.size();
   if (!_projectorCount)
       return;
@@ -186,6 +191,7 @@ void LightGrid::appendProjectors(const std::vector<std::shared_ptr<Projector>> &
 // Upload grid data into the GPU buffers
 void LightGrid::upload() 
 {
+    OPTICK_EVENT();
     auto light_grid_size = _cells.size() * sizeof(LightGridStruct);
     if (!light_grid_size)
         return;
