@@ -48,6 +48,8 @@ namespace core { namespace ECS {
 		ComponentHash hash;
 		uint32_t offset;
 		uint32_t size;
+		void(*destructor)(const void*);
+		void(*move_constructor)(void* x, void* other);
 	};
 
 	class ComponentLayout
@@ -77,7 +79,12 @@ namespace core { namespace ECS {
 			if (existing_component)
 				return false;
 
-			components[component_count] = ComponentData{ hash, 0, sizeof(T) };
+			components[component_count] = ComponentData{ 
+				hash, 0, sizeof(T), 
+				[](const void* x){ static_cast<const T*>(x)->~T(); },
+				[](void* x, void* other) { new (x) T(std::move(*(T*)other)); }
+			};
+
 			component_count += 1;
 			assert(component_count <= MAX_COMPONENTS);
 			std::sort(components.begin(), components.begin() + component_count);
@@ -246,25 +253,12 @@ namespace core { namespace ECS {
 					{
 						auto* new_pointer = new_address.chunk->GetComponentPointer(new_address.index, data);
 						auto previous_pointer = previous_chunk->GetComponentPointer(previous_address->index, previous_data);
-						memcpy(new_pointer, previous_pointer, data->size);
+						data->move_constructor(new_pointer, previous_pointer);
 					}
 				}
 			}
 
-			auto* entity = (EntityData*)new_address.chunk->GetComponentPointer(new_address.index, GetComponentHash<EntityData>());
-			// Entity is new, need to setup EntityData component
-			if (!previous_address)
-			{
-				entity->address = new_address;
-				entity->id = id;
-			}
-
-			assert(entity->id == id);
-
-			// Every time entity is moved to a different chunk the layout is updated
-			entity->layout = &layout;
-
-			entity_address_callback(entity->id, new_address); // Notify address changed
+			entity_address_callback(id, new_address); // Notify address changed
 
 			return new_address;
 		}
@@ -276,17 +270,21 @@ namespace core { namespace ECS {
 			auto last_entity_index = entity_count - 1;
 			
 			// Swap deleted component data with the last one
+			for (int i = 0; i < layout.GetComponentCount(); i++)
+			{
+				auto& component_data = layout.GetComponents()[i];
+				auto* remove_pointer = GetComponentPointer(index, &component_data);
+				component_data.destructor(remove_pointer);
+				
+				if (index < last_entity_index)
+				{
+					auto* last_pointer = GetComponentPointer(last_entity_index, &component_data);
+					component_data.move_constructor(remove_pointer, last_pointer);
+				}
+			}
+
 			if (index < last_entity_index)
 			{
-				for (int i = 0; i < layout.GetComponentCount(); i++)
-				{
-					auto& component_data = layout.GetComponents()[i];
-
-					auto* remove_pointer = GetComponentPointer(index, &component_data);
-					auto* last_pointer = GetComponentPointer(last_entity_index, &component_data);
-					memcpy(remove_pointer, last_pointer, component_data.size);
-				}
-
 				// entity address index changes as well
 				auto* entity = (EntityData*)GetComponentPointer(index, GetComponentHash<EntityData>());
 				entity_address_callback(entity->id, EntityAddress{ this, index });

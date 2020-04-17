@@ -17,9 +17,9 @@ namespace core { namespace ECS {
 		};
 
 		TransformGraph(EntityManager& manager)
-			: manager(manager) 
+			: manager(manager)
 		{
-			manager.AddEntityDestroyCallback(std::bind(&TransformGraph::OnEntityDestroyed, this, std::placeholders::_1));
+			callback_handle = manager.AddEntityDestroyCallback(std::bind(&TransformGraph::OnEntityDestroyed, this, std::placeholders::_1));
 		}
 
 		void AddChild(EntityID parent, EntityID child)
@@ -130,6 +130,7 @@ namespace core { namespace ECS {
 		}
 
 	private:
+		EntityManager::CallbackHandle callback_handle;
 		EntityManager& manager;
 		std::unordered_map<EntityID, ChildTransforms> transforms;
 	};
