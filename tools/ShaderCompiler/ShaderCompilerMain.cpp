@@ -1,5 +1,6 @@
-#include <cstdlib>
 #include "CommonIncludes.h"
+#include <cxxopts/cxxopts.hpp>
+#include <cstdlib>
 #include <string>
 #include "render/shader/Shader.h"
 #include "render/shader/ShaderDefines.h"
@@ -31,8 +32,16 @@ const std::map<std::wstring, ShaderProgram::Stage> extension_to_stage = {
 	{ cs_extension, ShaderProgram::Stage::Compute },
 };
 
-void CompileShader(const std::filesystem::path& shader_path, const ShaderCapsSet& set, bool is_material, std::vector<std::string> additional_macro = {})
+struct CompilerSettings
 {
+	std::filesystem::path input_path;
+	std::filesystem::path output_path;
+};
+
+void CompileShader(const CompilerSettings& settings, const std::filesystem::path& shader_path, const ShaderCapsSet& set, bool is_material, std::vector<std::string> additional_macro = {})
+{
+	auto hash_src_path = std::filesystem::proximate(std::filesystem::relative(std::filesystem::canonical(shader_path), std::filesystem::canonical(settings.input_path.parent_path()))).wstring();
+	utils::ReplaceAll(hash_src_path, L"\\", L"/" );
 	auto relative_shader_path = std::filesystem::relative(std::filesystem::canonical(shader_path));
 
 	std::vector<std::string> macro;
@@ -44,13 +53,12 @@ void CompileShader(const std::filesystem::path& shader_path, const ShaderCapsSet
 		macro.push_back(m);
 
 	auto relative_shader_path_string = relative_shader_path.wstring();
-	utils::ReplaceAll(relative_shader_path_string, L"\\", L"/" );
 
 	auto hash_path = is_material 
-		? ShaderCache::GetMaterialShaderCachePath(relative_shader_path_string, set, additional_macro) 
-		: ShaderCache::GetShaderCachePath(ShaderCache::GetShaderPathHash(relative_shader_path_string, additional_macro));
+		? ShaderCache::GetMaterialShaderCachePath(hash_src_path, set, additional_macro) 
+		: ShaderCache::GetShaderCachePath(ShaderCache::GetShaderPathHash(hash_src_path, additional_macro));
 
-	auto absolute_output_path = std::filesystem::current_path() / hash_path;
+	auto absolute_output_path = settings.output_path / hash_path;
 	std::filesystem::path absolute_input_path = std::filesystem::current_path() / relative_shader_path;
 	std::stringstream stream;
 	stream << compiler_path;
@@ -62,7 +70,7 @@ void CompileShader(const std::filesystem::path& shader_path, const ShaderCapsSet
 
 	//std::cout << stream.str().c_str() << std::endl;
 
-	std::wcout << shader_path << "\n         => " << hash_path << std::endl;
+	std::wcout << "    [HASHED NAME]: " << hash_src_path << "  (is_material: " << is_material << ", bitmask: " << set.getBitmask() <<  ") :\n      => " << hash_path << std::endl;
 
 	if (std::system(stream.str().c_str()) != 0)
 		throw std::runtime_error("error exporting shader");
@@ -83,24 +91,60 @@ void ForEachCapsPermutation(std::function<void(ShaderCapsSet)> callback)
 
 int main(int argc, char* argv[]) 
 {
-	auto working_dir = std::filesystem::current_path();
-	std::cout << "working directory: " << working_dir << std::endl;
+	cxxopts::Options options("Shader compiler", "compiles glsl to SPIR-V");
+	options.add_options()
+		("output-path", "Shader output folder", cxxopts::value<std::string>())
+		("input-path", "Shader input folder", cxxopts::value<std::string>());
 
-	auto shaders_dir = working_dir / shaders_path;
-	std::filesystem::recursive_directory_iterator iter(shaders_dir);
-	std::filesystem::recursive_directory_iterator end;
 	
-	std::vector<ShaderData> shaders;
+	auto working_dir = std::filesystem::current_path();
 
-	for (auto& path : iter)
+	CompilerSettings settings;
+	try {
+		cxxopts::ParseResult parsed_options = options.parse(argc, argv);
+		settings.output_path = parsed_options["output-path"].count() ? parsed_options["output-path"].as<std::string>() : working_dir;
+		settings.input_path = parsed_options["input-path"].count() ? parsed_options["input-path"].as<std::string>() : settings.output_path / compiler_shaders_path;
+	}
+	catch (cxxopts::OptionParseException e)
 	{
-		auto ext = path.path().extension();
-		auto ext_iterator = extension_to_stage.find(ext);
-		if (ext_iterator != extension_to_stage.end())
+		std::cerr << "Invalid arguments. " << e.what() << std::endl;
+		return 1;
+	}
+
+	try
+	{
+		std::cout << "[Shader Compiler]\nWorking directory: " << working_dir << std::endl;
+		std::cout << "Input path: " << std::filesystem::absolute(settings.input_path) << std::endl;
+		std::error_code ec;
+		std::cout << "Output path: " << std::filesystem::absolute(settings.output_path, ec) << std::endl;
+	}
+	catch (std::runtime_error e)
+	{
+		std::cerr << "Invalid input. " << e.what() << std::endl;
+		return 1;
+	}
+
+	std::filesystem::create_directories(settings.output_path);
+	std::vector<ShaderData> shaders;
+	
+	try
+	{
+		std::filesystem::recursive_directory_iterator iter(settings.input_path);
+		for (auto& path : iter)
 		{
-			auto file_path = path.path();
-			shaders.push_back({ ext_iterator->second, file_path, file_path.replace_extension("") });
+			auto ext = path.path().extension();
+			auto ext_iterator = extension_to_stage.find(ext);
+			if (ext_iterator != extension_to_stage.end())
+			{
+				auto file_path = path.path();
+				shaders.push_back({ ext_iterator->second, file_path, file_path.replace_extension("") });
+			}
 		}
+	}
+	catch (std::runtime_error e)
+	{
+		std::cerr << "Error getting input shader list. " << e.what() << std::endl;
+		return 1;
 	}
 
 	for (auto& shader : shaders)
@@ -108,19 +152,19 @@ int main(int argc, char* argv[])
 		if (shader.path.wstring().find(material_shader_name) != std::string::npos)
 		{
 			ForEachCapsPermutation([&](ShaderCapsSet set) {
-				CompileShader(shader.path, set, true);
+				CompileShader(settings, shader.path, set, true);
 			});
 
 			if (shader.stage == ShaderProgram::Stage::Vertex)
 			{
 				ShaderCapsSet depth_caps;
-				CompileShader(shader.path, depth_caps, true, { "DEPTH_ONLY" });
+				CompileShader(settings, shader.path, depth_caps, true, { "DEPTH_ONLY" });
 				depth_caps.addCap(ShaderCaps::Skinning);
-				CompileShader(shader.path, depth_caps, true, { "DEPTH_ONLY" });
+				CompileShader(settings, shader.path, depth_caps, true, { "DEPTH_ONLY" });
 			}
 		}
 		else {
-			CompileShader(shader.path, ShaderCapsSet(), false);
+			CompileShader(settings, shader.path, ShaderCapsSet(), false);
 		}
 
 	}

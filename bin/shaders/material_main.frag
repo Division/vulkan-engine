@@ -98,6 +98,13 @@ readonly layout(std430, set = 0, binding = 8) buffer LightIndices
     uint light_indices[];
 };
 
+float GetAttenuation(float distance, float radius)
+{
+    float lightInnerR = radius * 0.01;
+    float d = max(distance, lightInnerR);
+    return clamp(1.0 - pow(d / radius, 4.0), 0.0, 1.0) / (d * d + 1.0);
+}
+
 vec3 calculateFragmentDiffuse(float normalizedDistanceToLight, float attenuation, vec3 normal, vec3 lightDir, vec3 eyeDir, vec3 lightColor, float materialSpecular) {
   float lightValue = clamp(dot(-lightDir, normal), 0.0, 1.0);
   float attenuationValue = pow(max(1.0 - normalizedDistanceToLight, 0.0), attenuation);
@@ -185,10 +192,9 @@ void main() {
             vec3 lightDir = position_worldspace.xyz - lightPosition;
             float distanceToLight = length(lightDir);
             lightDir /= distanceToLight; // normalize
-            float normalizedDistanceToLight = distanceToLight / lights[lightIndex].radius;
-            float materialSpecular = 0;
+            float attenuation = GetAttenuation(distanceToLight, lights[lightIndex].radius);
             //vec3 lightValue = calculateFragmentDiffuse(normalizedDistanceToLight, lights[lightIndex].attenuation, normal_worldspace.xyz, lightDir, eyeDir_worldspace, lights[lightIndex].color, materialSpecular);
-            vec3 radiance = lights[lightIndex].color.rgb;
+            vec3 radiance = lights[lightIndex].color.rgb * attenuation;
             vec3 lightValue = CalculateLighting(out_color.xyz, radiance, normalize(normal_worldspace.xyz), eyeDir_worldspace, -lightDir, object_params.roughness, 0.0f);
             
             vec3 coneDirection = lights[lightIndex].direction;
