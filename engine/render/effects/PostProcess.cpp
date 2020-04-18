@@ -26,7 +26,10 @@ namespace core::render::effects
 	PostProcess::PostProcess(ShaderCache& shader_cache, EnvironmentSettings& environment_settings)
 		: environment_settings(environment_settings)
 	{
-		shader = shader_cache.GetShaderProgram(L"shaders/postprocess/postprocess.vert", L"shaders/postprocess/postprocess.frag");
+		auto shader_info = ShaderProgramInfo()
+			.AddShader(ShaderProgram::Stage::Vertex, L"shaders/postprocess/postprocess.vert")
+			.AddShader(ShaderProgram::Stage::Fragment, L"shaders/postprocess/postprocess.frag");
+		shader = shader_cache.GetShaderProgram(shader_info);
 		full_screen_quad_mesh = std::make_unique<Mesh>(false);
 		MeshGeneration::generateFullScreenQuad(full_screen_quad_mesh.get());
 		full_screen_quad_mesh->createBuffer();

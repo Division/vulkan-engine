@@ -16,7 +16,12 @@ namespace core { namespace render { namespace effects {
 		cube_mesh = std::make_unique<Mesh>(false);
 		MeshGeneration::generateBox(cube_mesh.get(), 1, 1, 1);
 		cube_mesh->createBuffer();
-		shader = shader_cache.GetShaderProgram(L"shaders/skybox.vert", L"shaders/skybox.frag");
+
+		auto shader_info = ShaderProgramInfo()
+			.AddShader(ShaderProgram::Stage::Vertex, L"shaders/skybox.vert")
+			.AddShader(ShaderProgram::Stage::Fragment, L"shaders/skybox.frag");
+
+		shader = shader_cache.GetShaderProgram(shader_info);
 	}
 
 	void Skybox::SetTexture(core::Device::Texture* texture)

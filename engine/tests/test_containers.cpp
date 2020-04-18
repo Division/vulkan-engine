@@ -1,5 +1,6 @@
 #include "lib/catch/catch.hpp"
 #include "utils/DataStructures.h"
+#include <iostream>
 
 using namespace core::utils;
 
@@ -105,17 +106,39 @@ TEST_CASE("Small Vector")
 	}
 	REQUIRE(counter == 0);
 
-	/*SmallVector<int, 1, false> fixed_capacity;
-	bool exception = false;
-	try
+	struct TestStruct
 	{
-		fixed_capacity.push_back(1);
-		fixed_capacity.push_back(2);
-	}
-	catch (std::runtime_error& e)
+		std::wstring data1;
+		std::string data2;
+		int num;
+	};
+
 	{
-		exception = true;
+		SmallVector<TestStruct, 2> test_vec;
+		//std::vector<TestStruct> test_vec;
+
+		auto print_vec = [&test_vec]() {
+			for (auto& v : test_vec)
+				std::wcout << v.data1 << ", ";
+			std::cout << std::endl;
+		};
+
+		test_vec.push_back({ std::wstring{L"data1_3"}, std::string{"data2_3"}, 123 });
+		test_vec.push_back({ std::wstring{L"data1"}, std::string{"data2"}, 123 });
+		test_vec.push_back({ std::wstring{L"data1_2"}, std::string{"data2_2"}, 123 });
+		REQUIRE(test_vec[0].data1 == L"data1_3");
+		REQUIRE(test_vec[1].data1 == L"data1");
+		REQUIRE(test_vec[0].data2 == "data2_3");
+		REQUIRE(test_vec[1].data2 == "data2");
+
+		print_vec();
+		std::sort(test_vec.begin(), test_vec.end(), [](TestStruct& a, TestStruct& b) { return a.data1 < b.data1; });
+		print_vec();
+
+		REQUIRE(test_vec[0].data1 == L"data1");
+		REQUIRE(test_vec[1].data1 == L"data1_2");
+		REQUIRE(test_vec[2].data1 == L"data1_3");
+
 	}
 
-	REQUIRE(exception); */
 }

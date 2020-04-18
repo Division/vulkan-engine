@@ -35,6 +35,8 @@ namespace core { namespace Device {
 	{
 		static thread_local DescriptorSetData set_data;
 
+		assert(descriptor_set.layout);
+
 		memset(set_data.texture_bindings.data(), 0, sizeof(set_data.texture_bindings));
 		memset(set_data.buffer_bindings.data(), 0, sizeof(set_data.buffer_bindings));
 

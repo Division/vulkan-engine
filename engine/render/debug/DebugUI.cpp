@@ -70,7 +70,10 @@ namespace core { namespace render {
 		void Initialize(GLFWwindow* window, ShaderCache* shader_cache, EnvironmentSettings& _environment_settings)
 		{
 			environment_settings = &_environment_settings;
-			shader = shader_cache->GetShaderProgram(L"shaders/imgui.vert", L"shaders/imgui.frag");
+			auto shader_info = ShaderProgramInfo()
+				.AddShader(ShaderProgram::Stage::Vertex, L"shaders/imgui.vert")
+				.AddShader(ShaderProgram::Stage::Fragment, L"shaders/imgui.frag");
+			shader = shader_cache->GetShaderProgram(shader_info);
 
 			ImGui::CreateContext();
 			ImGui_ImplGlfw_InitForVulkan(window, true);
