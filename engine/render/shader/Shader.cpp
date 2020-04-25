@@ -59,10 +59,12 @@ namespace core { namespace Device {
 
 	std::unordered_map<ShaderProgram::BindingType, vk::DescriptorType> binding_type_map =
 	{
-		{ ShaderProgram::BindingType::Sampler, vk::DescriptorType::eCombinedImageSampler },
+		{ ShaderProgram::BindingType::CombinedImageSampler, vk::DescriptorType::eCombinedImageSampler },
 		{ ShaderProgram::BindingType::UniformBuffer, vk::DescriptorType::eUniformBuffer },
 		{ ShaderProgram::BindingType::UniformBufferDynamic, vk::DescriptorType::eUniformBufferDynamic },
 		{ ShaderProgram::BindingType::StorageBuffer, vk::DescriptorType::eStorageBuffer },
+		{ ShaderProgram::BindingType::SampledImage, vk::DescriptorType::eSampledImage },
+		{ ShaderProgram::BindingType::Sampler, vk::DescriptorType::eSampler },
 	};
 
 	vk::ShaderStageFlags GetShaderStageFlags(unsigned stage_flags)
@@ -111,9 +113,9 @@ namespace core { namespace Device {
 
 		};
 
-		for (auto& sampler : reflection->Samplers())
+		for (auto& sampler : reflection->CombinedImageSamplers())
 		{
-			append_binding_internal(BindingType::Sampler, (uint32_t)sampler.shader_texture, sampler.name, sampler.set, sampler.binding);
+			append_binding_internal(BindingType::CombinedImageSampler, (uint32_t)sampler.shader_texture, sampler.name, sampler.set, sampler.binding);
 		}
 
 		for (auto& ubo : reflection->UniformBuffers())
@@ -125,9 +127,19 @@ namespace core { namespace Device {
 			append_binding_internal(binding_type, (uint32_t)ubo.shader_buffer, ubo.name, ubo.set, ubo.binding);
 		}
 
-		for (auto& ubo : reflection->StorageBuffers())
+		for (auto& storage_buffer : reflection->StorageBuffers())
 		{
-			append_binding_internal(BindingType::StorageBuffer, (uint32_t)ubo.storage_buffer_name, ubo.name, ubo.set, ubo.binding);
+			append_binding_internal(BindingType::StorageBuffer, (uint32_t)storage_buffer.storage_buffer_name, storage_buffer.name, storage_buffer.set, storage_buffer.binding);
+		}
+
+		for (auto& image : reflection->SeparateImages())
+		{
+			append_binding_internal(BindingType::SampledImage, (uint32_t)image.shader_texture, image.name, image.set, image.binding);
+		}
+
+		for (auto& sampler : reflection->Samplers())
+		{
+			append_binding_internal(BindingType::Sampler, (uint32_t)sampler.sampler_name, sampler.name, sampler.set, sampler.binding);
 		}
 	}
 
@@ -237,6 +249,17 @@ namespace core { namespace Device {
 	{
 		std::array<uint32_t, 3> combined = { vertex_hash, fragment_hash, compute_hash };
 		return FastHash(combined.data(), sizeof(combined));
+	}
+
+	const char* ShaderProgram::GetEntryPoint(Stage stage) const
+	{
+		switch (stage)
+		{
+			case Stage::Vertex: return vertex_module ? vertex_module->GetReflectionInfo()->EntryPoints()[0].name.c_str() : 0;
+			case Stage::Fragment: return fragment_module ? fragment_module->GetReflectionInfo()->EntryPoints()[0].name.c_str() : 0;
+			case Stage::Compute: return compute_module ? compute_module->GetReflectionInfo()->EntryPoints()[0].name.c_str() : 0;
+			default: return 0;
+		}
 	}
 
 	uint32_t ShaderProgram::GetHash() const

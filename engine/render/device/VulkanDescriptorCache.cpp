@@ -40,7 +40,7 @@ namespace core { namespace Device {
 		memset(set_data.texture_bindings.data(), 0, sizeof(set_data.texture_bindings));
 		memset(set_data.buffer_bindings.data(), 0, sizeof(set_data.buffer_bindings));
 
-		assert(descriptor_set.bindings.size() == bindings.GetBufferBindings().size() + bindings.GetTextureBindings().size());
+		//assert(descriptor_set.bindings.size() == bindings.GetBufferBindings().size() + bindings.GetTextureBindings().size());
 
 		// Getting hash for descriptor sets
 		for (auto& binding : bindings.GetTextureBindings())
@@ -97,15 +97,28 @@ namespace core { namespace Device {
 
 			switch (binding.type)
 			{
+			case ShaderProgram::BindingType::CombinedImageSampler:
+			case ShaderProgram::BindingType::SampledImage:
 			case ShaderProgram::BindingType::Sampler:
 			{
-				assert(data.texture_bindings[binding_index].imageView);
+				assert(binding.type == ShaderProgram::BindingType::Sampler || data.texture_bindings[binding_index].imageView);
 				data.texture_bindings[binding_index].imageLayout = vk::ImageLayout::eShaderReadOnlyOptimal;
-				data.texture_bindings[binding_index].sampler = GetSampler(SamplerMode());
+				bool is_combined = binding.type == ShaderProgram::BindingType::CombinedImageSampler;
+				bool is_sampler = binding.type == ShaderProgram::BindingType::Sampler;
+				ShaderSamplerName sampler_name = is_sampler ? (ShaderSamplerName)binding.id : ShaderSamplerName::LinearWrap;
+
+				if (is_combined || is_sampler)
+					data.texture_bindings[binding_index].sampler = GetSampler({sampler_name});
+
+				vk::DescriptorType type = vk::DescriptorType::eSampledImage;
+				if (is_combined)
+					type = vk::DescriptorType::eCombinedImageSampler;
+				else if (is_sampler)
+					type = vk::DescriptorType::eSampler;
 
 				writes.push_back(vk::WriteDescriptorSet(
 					result,
-					binding_index, 0, 1, vk::DescriptorType::eCombinedImageSampler,
+					binding_index, 0, 1, type,
 					&data.texture_bindings[binding_index]
 				));
 				break;
@@ -152,29 +165,56 @@ namespace core { namespace Device {
 		return result;
 	}
 
+
 	vk::Sampler VulkanDescriptorCache::GetSampler(const SamplerMode& sampler_mode)
 	{
 		auto hash = sampler_mode.GetHash();
 		
 		{
-			std::lock_guard<std::mutex> lock(mutex_sampler);
+			std::scoped_lock lock(mutex_sampler);
 			auto iter = sampler_cache.find(hash);
 			if (iter != sampler_cache.end())
 				return iter->second.get();
 		}
 
-		// TODO: proper sampler creation
-		vk::SamplerCreateInfo sampler_info(
-			{}, vk::Filter::eLinear, vk::Filter::eLinear, vk::SamplerMipmapMode::eNearest,
-			vk::SamplerAddressMode::eRepeat, vk::SamplerAddressMode::eRepeat, vk::SamplerAddressMode::eRepeat,
-			0.0f, true, 16, false);
+		vk::SamplerCreateInfo sampler_info;
+
+		switch (sampler_mode.name)
+		{
+		case ShaderSamplerName::PointWrap:
+			sampler_info = vk::SamplerCreateInfo(
+				{}, vk::Filter::eNearest, vk::Filter::eNearest, vk::SamplerMipmapMode::eNearest,
+				vk::SamplerAddressMode::eRepeat, vk::SamplerAddressMode::eRepeat, vk::SamplerAddressMode::eRepeat,
+				0.0f, false, 0, false);
+			break;
+		case ShaderSamplerName::PointClamp:
+			sampler_info = vk::SamplerCreateInfo(
+				{}, vk::Filter::eNearest, vk::Filter::eNearest, vk::SamplerMipmapMode::eNearest,
+				vk::SamplerAddressMode::eClampToEdge, vk::SamplerAddressMode::eClampToEdge, vk::SamplerAddressMode::eClampToEdge,
+				0.0f, false, 0, false);
+			break;
+		case ShaderSamplerName::LinearWrap:
+			sampler_info = vk::SamplerCreateInfo(
+				{}, vk::Filter::eLinear, vk::Filter::eLinear, vk::SamplerMipmapMode::eLinear,
+				vk::SamplerAddressMode::eRepeat, vk::SamplerAddressMode::eRepeat, vk::SamplerAddressMode::eRepeat,
+				0.0f, true, 8, false);
+			break;
+		case ShaderSamplerName::LinearClamp:
+			sampler_info = vk::SamplerCreateInfo(
+				{}, vk::Filter::eLinear, vk::Filter::eLinear, vk::SamplerMipmapMode::eLinear,
+				vk::SamplerAddressMode::eClampToEdge, vk::SamplerAddressMode::eClampToEdge, vk::SamplerAddressMode::eClampToEdge,
+				0.0f, true, 8, false);
+			break;
+		default:
+			throw std::runtime_error("unsupported sampler");
+		}
 
 		auto device = Engine::GetVulkanDevice();
 		auto sampler = device.createSamplerUnique(sampler_info);
 		auto result = sampler.get();
 		
 		{
-			std::lock_guard<std::mutex> lock(mutex_sampler);
+			std::scoped_lock lock(mutex_sampler);
 			sampler_cache[hash] = std::move(sampler);
 		}
 

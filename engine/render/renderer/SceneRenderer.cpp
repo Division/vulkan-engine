@@ -467,7 +467,8 @@ namespace core { namespace render {
 			auto& address = binding.address;
 			switch (binding.type)
 			{
-			case ShaderProgram::BindingType::Sampler:
+			case ShaderProgram::BindingType::CombinedImageSampler:
+			case ShaderProgram::BindingType::SampledImage:
 				bindings.AddTextureBinding(address.binding, GetTexture((ShaderTextureName)binding.id, material));
 				break;
 

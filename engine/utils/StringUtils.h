@@ -4,15 +4,20 @@
 namespace utils
 {
 	
-	void ReplaceAll(std::wstring& src, const std::wstring& search, const std::wstring& replacement)
+	void ReplaceAll(std::wstring& src, const std::wstring& search, const std::wstring& replacement);
+
+	template <typename T>
+	void Lowercase(std::basic_string<T>& src)
 	{
-		std::wstring::size_type position = 0;
-		
-		while ((position = src.find(search, position)) != std::wstring::npos)
-		{
-			src.replace(position, search.length(), replacement);
-			position += replacement.length();
-		}
+		std::transform(src.begin(), src.end(), src.begin(),
+			[](auto c){ return std::tolower(c); });
+	}
+
+	template <typename T>
+	void Uppercase(std::basic_string<T>& src)
+	{
+		std::transform(src.begin(), src.end(), src.begin(),
+			[](auto c){ return std::toupper(c); });
 	}
 
 }

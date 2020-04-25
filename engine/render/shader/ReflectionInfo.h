@@ -10,6 +10,20 @@ namespace core { namespace Device {
 	class ReflectionInfo
 	{
 	public:
+		struct EntryPoint
+		{
+			std::string name;
+		};
+
+		struct SamplerData
+		{
+			uint32_t id;
+			std::string name;
+			ShaderSamplerName sampler_name;
+			unsigned set;
+			unsigned binding;
+		};
+
 		struct UniformBufferData
 		{
 			uint32_t id;
@@ -28,7 +42,16 @@ namespace core { namespace Device {
 			VertexAttrib vertex_attrib;
 		};
 
-		struct SamplerData
+		struct CombinedImageSamplerData
+		{
+			uint32_t id;
+			std::string name;
+			unsigned set;
+			unsigned binding;
+			ShaderTextureName shader_texture = ShaderTextureName::Unknown;
+		};
+
+		struct SeparateImageData
 		{
 			uint32_t id;
 			std::string name;
@@ -59,17 +82,22 @@ namespace core { namespace Device {
 		const std::vector<UniformBufferData>& UniformBuffers() const { return uniform_buffers; }
 		const std::vector<StorageBufferData>& StorageBuffers() const { return storage_buffers; }
 		const std::vector<VertexAttribData>& VertexAttribs() const { return vertex_attribs; }
-		const std::vector<SamplerData>& Samplers() const { return samplers; }
+		const std::vector<CombinedImageSamplerData>& CombinedImageSamplers() const { return combined_image_samplers; }
 		const std::vector<PushConstantsData>& PushConstants() const { return push_constants; }
+		const std::vector<EntryPoint>& EntryPoints() const { return entry_points; }
+		const std::vector<SamplerData>& Samplers() const { return samplers; }
+		const std::vector<SeparateImageData>& SeparateImages() const { return separate_images; }
 
 	private:
 		spirv_cross::CompilerGLSL compiler;
 		std::vector<UniformBufferData> uniform_buffers;
 		std::vector<VertexAttribData> vertex_attribs;
 		std::vector<StorageBufferData> storage_buffers;
+		std::vector<CombinedImageSamplerData> combined_image_samplers;
 		std::vector<SamplerData> samplers;
+		std::vector<SeparateImageData> separate_images;
 		std::vector<PushConstantsData> push_constants;
-
+		std::vector<EntryPoint> entry_points;
 	};
 
 } }

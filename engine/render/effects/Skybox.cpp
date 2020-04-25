@@ -18,8 +18,8 @@ namespace core { namespace render { namespace effects {
 		cube_mesh->createBuffer();
 
 		auto shader_info = ShaderProgramInfo()
-			.AddShader(ShaderProgram::Stage::Vertex, L"shaders/skybox.vert")
-			.AddShader(ShaderProgram::Stage::Fragment, L"shaders/skybox.frag");
+			.AddShader(ShaderProgram::Stage::Vertex, L"shaders/skybox.hlsl", "vs_main")
+			.AddShader(ShaderProgram::Stage::Fragment, L"shaders/skybox.hlsl", "ps_main");
 
 		shader = shader_cache.GetShaderProgram(shader_info);
 	}

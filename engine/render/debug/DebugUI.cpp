@@ -95,7 +95,7 @@ namespace core { namespace render {
 			auto* descriptor_set = shader->GetDescriptorSet(0);
 			assert(descriptor_set);
 			auto& binding = descriptor_set->bindings[0];
-			assert(binding.type == ShaderProgram::BindingType::Sampler);
+			assert(binding.type == ShaderProgram::BindingType::CombinedImageSampler);
 			bindings.AddTextureBinding(binding.address.binding, font_texture.get());
 			auto descriptor_cache = Engine::GetVulkanContext()->GetDescriptorCache();
 			vk_descriptor_set = descriptor_cache->GetDescriptorSet(bindings, *descriptor_set);

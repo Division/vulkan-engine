@@ -1,7 +1,7 @@
 ﻿#include "ShaderResource.h"
 #include <map>
 
-const std::map<std::string, ShaderTextureName> SHADER_SAMPLER_NAMES = 
+const std::map<std::string, ShaderTextureName> SHADER_TEXTURE_NAMES = 
 {
 	{ "texture0", ShaderTextureName::Texture0 },
 	{ "texture1", ShaderTextureName::Texture1 },
@@ -23,6 +23,14 @@ const std::map<std::string, ShaderBufferName> SHADER_BUFFER_NAMES =
 	{ "Projectors", ShaderBufferName::Projector },
 	{ "LightGrid", ShaderBufferName::LightGrid },
 	{ "LightIndices", ShaderBufferName::LightIndices }
+};
+
+const std::map<std::string, ShaderSamplerName> SHADER_SAMPLER_NAMES = 
+{
+	{ "SamplerLinearWrap", ShaderSamplerName::LinearWrap},
+	{ "SamplerLinearClamp", ShaderSamplerName::LinearClamp},
+	{ "SamplerPointWrap", ShaderSamplerName::PointWrap},
+	{ "SamplerPointClamp", ShaderSamplerName::PointClamp},
 };
 
 const std::set<ShaderBufferName> SHADER_DYNAMIC_OFFSET_BUFFERS =
