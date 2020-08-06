@@ -75,13 +75,17 @@ namespace render {
 		light_grid = std::make_unique<LightGrid>();
 		shadow_map = std::make_unique<ShadowMap>(ShadowAtlasSize(), ShadowAtlasSize());
 		render_graph = std::make_unique<graph::RenderGraph>();
-		depth_only_fragment_shader_hash = ShaderCache::GetShaderPathHash(L"shaders/noop.frag");
+		depth_only_fragment_shader_hash = ShaderCache::GetShaderDataHash(ShaderProgramInfo::ShaderData(ShaderProgram::Stage::Fragment, L"shaders/noop.frag"));
 		auto* context = Engine::GetVulkanContext();
 		context->AddRecreateSwapchainCallback(std::bind(&SceneRenderer::OnRecreateSwapchain, this, std::placeholders::_1, std::placeholders::_2));
 		shadowmap_atlas_attachment = std::make_unique<VulkanRenderTargetAttachment>("Shadowmap Atlas", VulkanRenderTargetAttachment::Type::Depth, ShadowAtlasSize(), ShadowAtlasSize(), Format::D24_unorm_S8_uint);
 
 		compute_buffer = std::make_unique<DynamicBuffer<unsigned char>>(128 * 128 * sizeof(vec4), BufferType::Storage);
-		compute_program = shader_cache->GetShaderProgram(0, 0, ShaderCache::GetShaderPathHash(L"shaders/test.comp"));
+
+		auto compute_shader_info = ShaderProgramInfo()
+			.AddShader(ShaderProgram::Stage::Compute, L"shaders/test.comp");
+		compute_program = shader_cache->GetShaderProgram(compute_shader_info);
+
 		auto* buffer_binding = compute_program->GetBindingByName("buf");
 		compute_bindings = std::make_unique<ShaderBindings>();
 		compute_bindings->AddBufferBinding(buffer_binding->address.binding, 0, compute_buffer->GetSize(), compute_buffer->GetBuffer()->Buffer());
@@ -434,7 +438,7 @@ namespace render {
 		switch (texture_name)
 		{
 		case ShaderTextureName::Texture0:
-			return material.texture0().get();
+			return material.Texture0().get();
 
 		case ShaderTextureName::ShadowMap:
 			return shadowmap_atlas_attachment->GetTexture().get();
@@ -462,7 +466,8 @@ namespace render {
 			auto& address = binding.address;
 			switch (binding.type)
 			{
-			case ShaderProgram::BindingType::Sampler:
+			case ShaderProgram::BindingType::CombinedImageSampler:
+			case ShaderProgram::BindingType::SampledImage:
 				bindings.AddTextureBinding(address.binding, GetTexture((ShaderTextureName)binding.id, material));
 				break;
 
@@ -491,10 +496,9 @@ namespace render {
 		OPTICK_EVENT();
 		global_shader_bindings = std::make_unique<ShaderBindings>();
 		Material material;
-		material.lightingEnabled(true); // For now it's enough to get all the global bindings
-		auto vertex_name_hash = material.GetVertexShaderNameHash();
-		auto vertex_hash =  ShaderCache::GetCombinedHash(vertex_name_hash, material.shaderCaps());
-		auto fragment_hash = ShaderCache::GetCombinedHash(material.GetFragmentShaderNameHash(), material.shaderCaps());
+		material.LightingEnabled(true); // For now it's enough to get all the global bindings
+		auto vertex_hash =  material.GetVertexShaderHash();
+		auto fragment_hash = material.GetFragmentShaderHash();
 
 		auto* shader = shader_cache->GetShaderProgram(vertex_hash, fragment_hash);
 		auto* descriptor_set = shader->GetDescriptorSet(DescriptorSet::Global);

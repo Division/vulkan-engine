@@ -215,6 +215,7 @@ set(ENGINE_SOURCES
 	utils/Math.h
 	utils/DataStructures.h
 	utils/StringUtils.h
+	utils/StringUtils.cpp
 	utils/Math.cpp
 	utils/MeshGeneration.h
 	utils/MeshGeneration.cpp

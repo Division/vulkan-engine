@@ -32,6 +32,16 @@ enum class ShaderBufferName : uint32_t
 	Count
 };
 
-extern const std::map<std::string, ShaderTextureName> SHADER_SAMPLER_NAMES;
+enum class ShaderSamplerName : uint32_t
+{
+	LinearWrap,
+	LinearClamp,
+	PointWrap,
+	PointClamp,
+	Count
+};
+
+extern const std::map<std::string, ShaderTextureName> SHADER_TEXTURE_NAMES;
 extern const std::map<std::string, ShaderBufferName> SHADER_BUFFER_NAMES;
+extern const std::map<std::string, ShaderSamplerName> SHADER_SAMPLER_NAMES;
 extern const std::set<ShaderBufferName> SHADER_DYNAMIC_OFFSET_BUFFERS;

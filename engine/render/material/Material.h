@@ -16,52 +16,55 @@ public:
 	Material(const Material&) = default;
 	Material();
 
-	void texture0(std::shared_ptr<Device::Texture> texture);
-	const std::shared_ptr<Device::Texture>& texture0() const { return _texture0; };
+
+	void Texture0(std::shared_ptr<Device::Texture> texture);
+	const std::shared_ptr<Device::Texture>& Texture0() const { return texture0; };
 	
-	void normalMap(std::shared_ptr<Device::Texture> normalMap);
-	std::shared_ptr<Device::Texture> normalMap() const { return _normalMap; };
+	void NormalMap(std::shared_ptr<Device::Texture> normal_map_);
+	std::shared_ptr<Device::Texture> NormalMap() const { return normal_map; };
 
-	void lightingEnabled(bool lightingEnabled);
-	bool lightingEnabled() const { return _lightingEnabled; }
+	void LightingEnabled(bool lighting_enabled_);
+	bool LightingEnabled() const { return lighting_enabled; }
 
-	void vertexColorEnabled(bool vertexColorEnabled);
-	bool vertexColorEnabled() const { return _vertexColorEnabled; }
+	void VertexColorEnabled(bool vertex_color_enabled_);
+	bool VertexColorEnabled() const { return vertex_color_enabled; }
 	
 	float GetRoughness() const { return roughness; }
 	void SetRoughness(float value) { roughness = value; }
 
-	const ShaderCapsSet& shaderCaps() const { if (_capsDirty) _updateCaps(); return _shaderCaps; }
-	const ShaderCapsSet &shaderCapsSkinning() const { if (_capsDirty) _updateCaps(); return _shaderCapsSkinning; }
+	const ShaderCapsSet& ShaderCaps() const { if (caps_dirty) UpdateCaps(); return shader_caps; }
+	const ShaderCapsSet &ShaderCapsSkinning() const { if (caps_dirty) UpdateCaps(); return shader_caps_skinning; }
 
-	uint32_t GetVertexShaderNameHash() const { return vertex_hash; }
-	uint32_t GetVertexShaderDepthOnlyNameHash() const { return vertex_hash_depth_only; }
-	uint32_t GetFragmentShaderNameHash() const { return fragment_hash; }
+	uint32_t GetVertexShaderHash() const { UpdateShaderHash(); return vertex_hash; }
+	uint32_t GetVertexShaderDepthOnlyHash() const { UpdateShaderHash(); return vertex_hash_depth_only; }
+	uint32_t GetFragmentShaderHash() const { UpdateShaderHash(); return fragment_hash; }
 
 	uint32_t GetHash() const;
 
 protected:
-	void _updateCaps() const;
+	void UpdateCaps() const;
+	void UpdateShaderHash() const;
+	void SetDirty();
 
 protected:
-	mutable bool _capsDirty = true;
+	mutable bool caps_dirty = true;
+	mutable bool shader_hash_dirty = true;
 	std::wstring shader_path = L"shaders/material_main";
-	mutable ShaderCapsSet _shaderCaps;
-	mutable ShaderCapsSet _shaderCapsSkinning;
+	mutable ShaderCapsSet shader_caps;
+	mutable ShaderCapsSet shader_caps_skinning;
 	float roughness = 0;
 
-	uint32_t vertex_hash_depth_only = 0;
-	uint32_t vertex_hash = 0;
-	uint32_t fragment_hash = 0;
+	mutable uint32_t vertex_hash_depth_only = 0;
+	mutable uint32_t vertex_hash = 0;
+	mutable uint32_t fragment_hash = 0;
 
-	bool _hasObjectParams = true;
+	bool has_texture0 = false;
+	std::shared_ptr<Device::Texture> texture0;
 
-	bool _hasTexture0 = false;
-	std::shared_ptr<Device::Texture> _texture0;
 
-	bool _hasNormalMap = false;
-	std::shared_ptr<Device::Texture> _normalMap;
+	bool has_normal_map = false;
+	std::shared_ptr<Device::Texture> normal_map;
 
-	bool _lightingEnabled = true;
-	bool _vertexColorEnabled = false;
+	bool lighting_enabled = true;
+	bool vertex_color_enabled = false;
 };

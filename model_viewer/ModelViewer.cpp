@@ -81,7 +81,7 @@ void ModelViewer::init()
 	//sphere_mesh->calculateNormals();
 	//sphere_mesh->createBuffer();
 
-	material_light_only = std::make_shared<Material>();;
+	material_light_only = std::make_shared<Material>();
 	material_light_only->lightingEnabled(true);
 	material_no_light = std::make_shared<Material>();
 	material_no_light->lightingEnabled(false);

@@ -50,8 +50,8 @@ namespace Device {
 			vk::PipelineShaderStageCreateInfo vertex_shader_stage_info(
 				{}, 
 				vk::ShaderStageFlagBits::eVertex, 
-				shader_program->VertexModule()->GetModule(), 
-				"main"
+				shader_program->VertexModule()->GetModule(),
+				shader_program->GetEntryPoint(ShaderProgram::Stage::Vertex)
 			);
 			shader_stages[shader_stage_count++] = vertex_shader_stage_info;
 		}
@@ -63,7 +63,7 @@ namespace Device {
 				{},
 				vk::ShaderStageFlagBits::eFragment,
 				shader_program->FragmentModule()->GetModule(),
-				"main"
+				shader_program->GetEntryPoint(ShaderProgram::Stage::Fragment)
 			);
 			shader_stages[shader_stage_count++] = fragment_shader_stage_info;
 		}
@@ -75,7 +75,7 @@ namespace Device {
 				{},
 				vk::ShaderStageFlagBits::eCompute,
 				shader_program->ComputeModule()->GetModule(),
-				"main"
+				shader_program->GetEntryPoint(ShaderProgram::Stage::Compute)
 			);
 			shader_stages[shader_stage_count++] = compute_shader_stage_info;
 		}

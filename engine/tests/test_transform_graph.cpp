@@ -9,6 +9,7 @@ using namespace ECS::components;
 TEST_CASE("ECS transform graph")
 {
 	EntityManager manager;
+	
 	TransformGraph graph(manager);
 
 	auto parent = manager.CreateEntity();

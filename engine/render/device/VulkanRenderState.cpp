@@ -149,7 +149,7 @@ namespace Device {
 			vk::DescriptorPoolSize(vk::DescriptorType::eUniformTexelBuffer, (int)ShaderTextureName::Count * max_count),
 			vk::DescriptorPoolSize(vk::DescriptorType::eUniformBuffer, SamplerSlotCount * max_count),
 			vk::DescriptorPoolSize(vk::DescriptorType::eSampler, SamplerSlotCount * max_count),
-			vk::DescriptorPoolSize(vk::DescriptorType::eSampledImage, (int)ShaderTextureName::Count * max_count),
+			vk::DescriptorPoolSize(vk::DescriptorType::eSampledImage, (int)ShaderSamplerName::Count * max_count),
 			vk::DescriptorPoolSize(vk::DescriptorType::eCombinedImageSampler, (int)ShaderTextureName::Count * max_count),
 			vk::DescriptorPoolSize(vk::DescriptorType::eStorageBufferDynamic, (int)ShaderBufferName::Count * max_count)
 		};
@@ -181,11 +181,15 @@ namespace Device {
 
 		for (auto& binding : global_descriptor_set_data->bindings)
 		{
+			// Samplers are handled automatically
+			if (binding.type == ShaderProgram::BindingType::Sampler)
+				continue;
+
 			auto index = global_bindings.GetBindingIndex(binding.address.binding, binding.type);
 			if (index == -1)
 				throw std::runtime_error("Shader requires global binding that doesn't exist");
 
-			if (binding.type == ShaderProgram::BindingType::Sampler)
+			if (binding.type == ShaderProgram::BindingType::CombinedImageSampler || binding.type == ShaderProgram::BindingType::SampledImage)
 			{
 				auto& global_binding = global_bindings.GetTextureBindings()[index];
 				common_bindings.AddTextureBinding(global_binding.index, global_binding.texture);

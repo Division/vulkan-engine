@@ -51,7 +51,8 @@ namespace Device {
 
 		switch (type)
 		{
-		case ShaderProgram::BindingType::Sampler:
+		case ShaderProgram::BindingType::CombinedImageSampler:
+		case ShaderProgram::BindingType::SampledImage:
 			{
 				auto it = std::find_if(texture_bindings.begin(), texture_bindings.end(), predicate);
 				return it != texture_bindings.end() ? it - texture_bindings.begin() : -1;
@@ -64,12 +65,14 @@ namespace Device {
 				auto it = std::find_if(buffer_bindings.begin(), buffer_bindings.end(), predicate);
 				return it != buffer_bindings.end() ? it - buffer_bindings.begin() : -1;
 			}
-		
+
+		case ShaderProgram::BindingType::Sampler: 
+			return -1;
+
 		default:
 			assert(false);
+			return -1;
 		}
-
-		return -1;
 	}
 
 	void ShaderBindings::Clear()

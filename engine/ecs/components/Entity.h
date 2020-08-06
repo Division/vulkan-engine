@@ -15,9 +15,9 @@ namespace ECS {
 
 	struct EntityData
 	{
-		EntityAddress address;
+		//EntityAddress address;
 		EntityID id = 0;
-		const ComponentLayout* layout;
+		//const ComponentLayout* layout;
 	};
 
 }

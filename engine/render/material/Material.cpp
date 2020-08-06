@@ -3,88 +3,108 @@
 #include "render/shader/ShaderCache.h"
 #include "utils/Math.h"
 
+using namespace Device;
+
 Material::Material()
 {
-	vertex_hash = Device::ShaderCache::GetShaderPathHash(shader_path + L".vert");
-	vertex_hash_depth_only = Device::ShaderCache::GetShaderPathHash(shader_path + L".vert", { "DEPTH_ONLY" });
-	fragment_hash = Device::ShaderCache::GetShaderPathHash(shader_path + L".frag");
 }
 
-void Material::texture0(std::shared_ptr<Device::Texture> texture) {
-	_texture0 = texture;
+void Material::SetDirty()
+{
+	shader_hash_dirty = true;
+	caps_dirty = true;
+}
+
+void Material::Texture0(std::shared_ptr<Texture> texture) {
+	texture0 = texture;
 	
-	if ((bool)texture != _hasTexture0) {
-		_hasTexture0 = (bool)texture;
-		_capsDirty = true;
+	if ((bool)texture != has_texture0) {
+		has_texture0 = (bool)texture;
+		SetDirty();
 	}
 }
 
-void Material::normalMap(std::shared_ptr<Device::Texture> normalMap) {
-	_normalMap = normalMap;
+void Material::NormalMap(std::shared_ptr<Texture> normal_map) {
+	normal_map = normal_map;
 
-	if ((bool)normalMap != _hasNormalMap) {
-		_hasNormalMap = (bool)normalMap;
-		_capsDirty = true;
+	if ((bool)normal_map != has_normal_map) {
+		has_normal_map = (bool)normal_map;
+		SetDirty();
 	}
 }
 
-void Material::lightingEnabled(bool lightingEnabled) {
-	if (lightingEnabled != _lightingEnabled) {
-		_lightingEnabled = lightingEnabled;
-		_capsDirty = true;
+void Material::LightingEnabled(bool lighting_enabled_) {
+	if (lighting_enabled_ != lighting_enabled) {
+		lighting_enabled = lighting_enabled_;
+		SetDirty();
 	}
 }
 
-void Material::vertexColorEnabled(bool vertexColorEnabled) {
-	if (vertexColorEnabled != _vertexColorEnabled) {
-		_vertexColorEnabled = vertexColorEnabled;
-		_capsDirty = true;
+void Material::VertexColorEnabled(bool vertex_color_enabled_) {
+	if (vertex_color_enabled_ != vertex_color_enabled) {
+		vertex_color_enabled = vertex_color_enabled_;
+		SetDirty();
 	}
 }
 
-void Material::_updateCaps() const {
-	if (!_capsDirty) { return; }
+void Material::UpdateCaps() const {
+	if (!caps_dirty) return;
 
-	if (_hasTexture0) {
-		_shaderCaps.addCap(ShaderCaps::Texture0);
+	if (has_texture0) {
+		shader_caps.addCap(ShaderCaps::Texture0);
 	} else {
-		_shaderCaps.removeCap(ShaderCaps::Texture0);
+		shader_caps.removeCap(ShaderCaps::Texture0);
 	}
 
-	if (_hasNormalMap) {
-		_shaderCaps.addCap(ShaderCaps::NormalMap);
+	if (has_normal_map) {
+		shader_caps.addCap(ShaderCaps::NormalMap);
 	} else {
-		_shaderCaps.removeCap(ShaderCaps::NormalMap);
+		shader_caps.removeCap(ShaderCaps::NormalMap);
 	}
 
-	if (_lightingEnabled) {
-		_shaderCaps.addCap(ShaderCaps::Lighting);
+	if (lighting_enabled) {
+		shader_caps.addCap(ShaderCaps::Lighting);
 	} else {
-		_shaderCaps.removeCap(ShaderCaps::Lighting);
+		shader_caps.removeCap(ShaderCaps::Lighting);
 	}
 
-	if (_vertexColorEnabled) {
-		_shaderCaps.addCap(ShaderCaps::VertexColor);
+	if (vertex_color_enabled) {
+		shader_caps.addCap(ShaderCaps::VertexColor);
 	} else {
-		_shaderCaps.removeCap(ShaderCaps::VertexColor);
+		shader_caps.removeCap(ShaderCaps::VertexColor);
 	}
 
-	_shaderCapsSkinning = _shaderCaps;
-	_shaderCapsSkinning.addCap(ShaderCaps::Skinning);
+	shader_caps_skinning = shader_caps;
+	shader_caps_skinning.addCap(ShaderCaps::Skinning);
 
-	_capsDirty = false;
+	caps_dirty = false;
+}
+
+void Material::UpdateShaderHash() const
+{
+	if (!shader_hash_dirty) return;
+	UpdateCaps();
+	std::vector<ShaderProgramInfo::Macro> defines;
+	ShaderCache::AppendCapsDefines(shader_caps, defines);
+
+	vertex_hash = ShaderCache::GetShaderDataHash(ShaderProgramInfo::ShaderData(ShaderProgram::Stage::Vertex, shader_path + L".vert", "main", defines));
+	vertex_hash_depth_only = ShaderCache::GetShaderDataHash(ShaderProgramInfo::ShaderData(ShaderProgram::Stage::Vertex, shader_path + L".vert", "main", { {"DEPTH_ONLY", "1" } }));
+	fragment_hash = ShaderCache::GetShaderDataHash(ShaderProgramInfo::ShaderData(ShaderProgram::Stage::Fragment, shader_path + L".frag", "main", defines));
+	shader_hash_dirty = false;
 }
 
 uint32_t Material::GetHash() const
 {
+	UpdateCaps();
+	UpdateShaderHash();
 	uint32_t hashes[] = {
 		vertex_hash,
 		fragment_hash,
-		_shaderCaps.getBitmask(),
-		_texture0 ? _texture0->GetHash() : 0,
-		_normalMap ? _normalMap->GetHash() : 0,
-		_lightingEnabled,
-		_vertexColorEnabled,
+		shader_caps.getBitmask(),
+		texture0 ? texture0->GetHash() : 0,
+		normal_map ? normal_map->GetHash() : 0,
+		lighting_enabled,
+		vertex_color_enabled,
 		FastHash(&roughness, sizeof(roughness))
 	};
 

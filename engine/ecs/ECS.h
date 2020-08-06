@@ -14,10 +14,62 @@ namespace ECS {
 	{
 	public:
 		typedef std::function<void(EntityID)> EntityCallback;
-
-		void AddEntityDestroyCallback(EntityCallback callback)
+		
+		struct CallbackHandle
 		{
-			entity_destroy_callbacks.push_back(callback);
+			CallbackHandle() : manager(nullptr), id(0) {}
+			CallbackHandle(EntityManager* manager, uint64_t id)
+				: manager(manager), id(id) {}
+			CallbackHandle(CallbackHandle&&) = default;
+			CallbackHandle& operator=(CallbackHandle&& other)
+			{
+				if (id)
+					manager->RemoveEntityDestroyCallback(id);
+				id = std::move(other.id);
+				manager = other.manager;
+				other.id = 0;
+				other.manager = nullptr;
+				return *this;
+			}
+			CallbackHandle& operator=(const CallbackHandle&) = delete;
+
+			~CallbackHandle()
+			{
+				if (id)
+					manager->RemoveEntityDestroyCallback(id);
+			}
+
+			EntityManager* manager;
+			uint64_t id;
+		};
+
+		struct EntityCallbackData
+		{
+			EntityCallback callback;
+			uint64_t id;
+			bool operator==(uint64_t compare_id) { return id == compare_id; }
+		};
+
+		~EntityManager()
+		{
+			while (!entity_address.empty())
+				DestroyEntity((*entity_address.begin()).first);
+		}
+
+		CallbackHandle AddEntityDestroyCallback(EntityCallback callback)
+		{
+			entity_destroy_callbacks.push_back({ callback, ++callback_id });
+
+			return CallbackHandle(this, callback_id);
+		}
+
+		void RemoveEntityDestroyCallback(uint64_t id)
+		{
+			auto found = std::find(entity_destroy_callbacks.begin(), entity_destroy_callbacks.end(), id);
+			if (found != entity_destroy_callbacks.end())
+			{
+				entity_destroy_callbacks.erase(found);
+			}
 		}
 
 		EntityID CreateEntity(ComponentSetHash set_hash = 0)
@@ -32,8 +84,8 @@ namespace ECS {
 
 			entity_address[entity_id] = address;
 
-			AddComponent<EntityData>(entity_id); // EntityData component exists for all entities
-
+			auto* entity = AddComponent<EntityData>(entity_id); // EntityData component exists for all entities
+			entity->id = entity_id;
 			return entity_id;
 		}
 
@@ -48,8 +100,8 @@ namespace ECS {
 			entity_address.erase(address_it);
 		}
 
-		template<typename T>
-		T* AddComponent(EntityID entity)
+		template<typename T, typename ...Args>
+		T* AddComponent(EntityID entity, Args&& ...args)
 		{
 			auto entity_address_it = entity_address.find(entity);
 			assert(entity_address_it != entity_address.end());
@@ -69,11 +121,13 @@ namespace ECS {
 			auto* chunk = chunk_list->GetFirstChunk();
 			auto new_address = chunk->AddEntity(entity, old_address.chunk ? &old_address : nullptr);
 
-
 			if (old_address.chunk)
 				old_address.chunk->RemoveEntity(old_address.index);
 
-			return (T*)new_address.chunk->GetComponentPointer(new_address.index, GetComponentHash<T>());
+			auto* pointer = (T*)new_address.chunk->GetComponentPointer(new_address.index, GetComponentHash<T>());
+			new (pointer) T(std::forward<Args>(args)...); // Apply constructor
+
+			return pointer;
 		}
 
 		template<typename T>
@@ -85,10 +139,16 @@ namespace ECS {
 			auto old_address = entity_address_it->second;
 			assert(old_address.chunk);
 			auto layout = old_address.chunk->GetComponentLayout();
+			auto* component_data = layout.GetComponentData(GetComponentHash<T>());
 
-			if (!layout.RemoveComponent<T>())
+			if (!component_data)
 				throw std::runtime_error("Component doesn't exist");
 			
+			auto* component_pointer = old_address.chunk->GetComponentPointer(old_address.index, component_data);
+			component_data->destructor(component_pointer);
+
+			layout.RemoveComponent<T>();
+
 			auto* chunk_list = GetOrCreateChunkList(layout);
 			auto* chunk = chunk_list->GetFirstChunk();
 			auto new_address = chunk->AddEntity(entity, &old_address);
@@ -118,9 +178,6 @@ namespace ECS {
 		{
 			auto& address = entity_address.at(entity_id);
 			address = new_address;
-
-			auto* entity = (EntityData*)address.chunk->GetComponentPointer(address.index, GetComponentHash<EntityData>());
-			entity->address = address;
 		}
 
 		const auto& GetChunkMap() const { return chunks; }
@@ -187,14 +244,15 @@ namespace ECS {
 		void TriggerDestroyCallbacks(EntityID id)
 		{
 			for (auto& callback : entity_destroy_callbacks)
-				callback(id);
+				callback.callback(id);
 		}
 
 	private:
+		uint64_t callback_id = 0;
 		EntityID id_counter = 0;
 		std::unordered_map<ComponentSetHash, std::unique_ptr<ChunkList>> chunks;
 		std::unordered_map<EntityID, EntityAddress> entity_address;
-		std::vector<EntityCallback> entity_destroy_callbacks;
+		std::vector<EntityCallbackData> entity_destroy_callbacks;
 	};
 
 }

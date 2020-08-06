@@ -70,7 +70,10 @@ namespace render {
 		void Initialize(GLFWwindow* window, ShaderCache* shader_cache, EnvironmentSettings& _environment_settings)
 		{
 			environment_settings = &_environment_settings;
-			shader = shader_cache->GetShaderProgram(L"shaders/imgui.vert", L"shaders/imgui.frag");
+			auto shader_info = ShaderProgramInfo()
+				.AddShader(ShaderProgram::Stage::Vertex, L"shaders/imgui.vert")
+				.AddShader(ShaderProgram::Stage::Fragment, L"shaders/imgui.frag");
+			shader = shader_cache->GetShaderProgram(shader_info);
 
 			ImGui::CreateContext();
 			ImGui_ImplGlfw_InitForVulkan(window, true);
@@ -92,7 +95,7 @@ namespace render {
 			auto* descriptor_set = shader->GetDescriptorSet(0);
 			assert(descriptor_set);
 			auto& binding = descriptor_set->bindings[0];
-			assert(binding.type == ShaderProgram::BindingType::Sampler);
+			assert(binding.type == ShaderProgram::BindingType::CombinedImageSampler);
 			bindings.AddTextureBinding(binding.address.binding, font_texture.get());
 			auto descriptor_cache = Engine::GetVulkanContext()->GetDescriptorCache();
 			vk_descriptor_set = descriptor_cache->GetDescriptorSet(bindings, *descriptor_set);

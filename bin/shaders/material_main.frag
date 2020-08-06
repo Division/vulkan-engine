@@ -100,10 +100,9 @@ readonly layout(std430, set = 0, binding = 8) buffer LightIndices
 
 float GetAttenuation(float distance, float radius)
 {
-    float lightInnerR = radius * 0.1;
-    float invLightOuterR = 1.0f / radius;
+    float lightInnerR = radius * 0.01;
     float d = max(distance, lightInnerR);
-    return clamp((1.0 - pow(d * invLightOuterR, 4.0)) / (d * d + 1.0), 0.0, 1.0);
+    return clamp(1.0 - pow(d / radius, 4.0), 0.0, 1.0) / (d * d + 1.0);
 }
 
 vec3 calculateFragmentDiffuse(float normalizedDistanceToLight, float attenuation, vec3 normal, vec3 lightDir, vec3 eyeDir, vec3 lightColor, float materialSpecular) {

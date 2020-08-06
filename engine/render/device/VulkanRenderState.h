@@ -104,11 +104,10 @@ namespace Device {
 		FrontAndBack
 	};
 
-	class SamplerMode
+	struct SamplerMode
 	{
-		// todo: implement
-	public:
-		uint32_t GetHash() const { return 123; }
+		ShaderSamplerName name;
+		uint32_t GetHash() const { return (uint32_t)name; }
 	};
 
 	class RenderMode

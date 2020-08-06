@@ -1,3 +1,4 @@
+#include <functional>
 #include "lib/catch/catch.hpp"
 #include "ecs/ECS.h"
 
@@ -30,7 +31,6 @@ TEST_CASE("ECS entity spawn/destroy")
 	REQUIRE(address_map.size() == 1);
 	REQUIRE(entity_address_it != address_map.end());
 	REQUIRE(chunk_map.size() == 1);
-	REQUIRE(entity_address_it->second.chunk == entity_component->address.chunk);
 
 	// Check EntityData component exists
 	auto address = entity_address_it->second;
@@ -88,12 +88,6 @@ TEST_CASE("ECS multiple entities and components")
 
 	auto entity = manager.CreateEntity();
 	manager.AddComponent<TestAABBComponent>(entity);
-	auto data1 = manager.GetComponent<EntityData>(entity);
-	auto data2 = manager.GetComponent<EntityData>(entities[0]);
-	REQUIRE(data1->address.chunk->GetComponentLayout().GetHash() == data2->address.chunk->GetComponentLayout().GetHash());
-	REQUIRE(&data1->address.chunk->GetComponentLayout() == data1->layout);
-	REQUIRE(&data2->address.chunk->GetComponentLayout() == data2->layout);
-	REQUIRE(data1->layout->GetHash() == data2->layout->GetHash()); // Removing odd component and add component should result in the same hash
 
 	address0 = address_map.at(entities[0]);
 	auto& layout = address0.chunk->GetComponentLayout();
@@ -112,8 +106,8 @@ TEST_CASE("ECS allocation of multiple chunks with the same layout")
 	{
 		auto entity = manager.CreateEntity();
 		auto* entity_data = manager.GetComponent<EntityData>(entity);
-		auto& layout = *entity_data->layout;
-		auto* initial_chunk = entity_data->address.chunk;
+		auto* initial_chunk = manager.GetEntityAddressMap().at(entity).chunk;
+		auto& layout = initial_chunk->GetComponentLayout();
 
 		REQUIRE(initial_chunk->GetNextChunk() == nullptr);
 
@@ -151,8 +145,8 @@ TEST_CASE("ECS allocation of multiple chunks with the same layout")
 
 		auto entity = create_entity();
 		auto* entity_data = manager.GetComponent<EntityData>(entity);
-		auto& layout = *entity_data->layout;
-		auto* initial_chunk = entity_data->address.chunk;
+		auto* initial_chunk = manager.GetEntityAddressMap().at(entity).chunk;
+		auto& layout = initial_chunk->GetComponentLayout();
 
 		REQUIRE(initial_chunk->GetNextChunk() == nullptr);
 		
@@ -178,4 +172,105 @@ TEST_CASE("ECS allocation of multiple chunks with the same layout")
 		REQUIRE(initial_chunk->GetNextChunk()->GetNextChunk() != nullptr); // Now in the 2nd
 	}
 
+}
+
+TEST_CASE("ECS component constructor/destructor/move") 
+{
+	bool destroyed = false;
+
+	struct TestComponent
+	{
+		TestComponent() = default;
+		~TestComponent()
+		{
+			if (destroy_callback)
+				destroy_callback();
+		}
+
+		TestComponent(TestComponent&& other)
+		{
+			destroy_callback = std::move(other.destroy_callback);
+			move_callback = std::move(other.move_callback);
+			startup_value = std::move(other.startup_value);
+			if (move_callback)
+				move_callback();
+		}
+
+		void SetDestroyCallback(std::function<void()> destroy_callback) { this->destroy_callback = destroy_callback; };
+		void SetMoveCallback(std::function<void()> move_callback) { this->move_callback = move_callback; };
+
+		int startup_value = 123;
+		std::function<void()> destroy_callback;
+		std::function<void()> move_callback;
+	};
+
+	EntityManager manager;
+	auto& address_map = manager.GetEntityAddressMap();
+	auto& chunk_map = manager.GetChunkMap();
+
+	auto entity = manager.CreateEntity();
+	auto* component = manager.AddComponent<TestComponent>(entity);
+	component->SetDestroyCallback([&]{ destroyed = true; });
+
+	// Destroying entity
+	manager.DestroyEntity(entity);
+	REQUIRE(component->startup_value == 123);
+	REQUIRE(destroyed == true);
+
+	destroyed = false;
+	entity = manager.CreateEntity();
+	component = manager.AddComponent<TestComponent>(entity);
+	component->SetDestroyCallback([&]{ destroyed = true; });
+	manager.RemoveComponent<TestComponent>(entity);
+	REQUIRE(destroyed == true);
+
+	destroyed = false;
+	{
+		EntityManager temp_manager;
+		entity = temp_manager.CreateEntity();
+		component = temp_manager.AddComponent<TestComponent>(entity);
+		component->SetDestroyCallback([&]{ destroyed = true; });
+	}
+	REQUIRE(destroyed == true);
+
+	// Move constructor
+	bool moved = false;
+	auto move_callback = [&] { moved = true; };
+
+	{
+		EntityManager temp_manager;
+		entity = temp_manager.CreateEntity();
+		component = temp_manager.AddComponent<TestComponent>(entity);
+		component->SetMoveCallback(move_callback);
+		temp_manager.AddComponent<TestPositionComponent>(entity);
+		REQUIRE(moved == true);
+
+		auto entity2 = temp_manager.CreateEntity();
+		temp_manager.AddComponent<TestPositionComponent>(entity2);
+		
+		component = temp_manager.AddComponent<TestComponent>(entity2);
+		component->SetMoveCallback(move_callback);
+		
+		moved = false;
+		temp_manager.DestroyEntity(entity);
+		REQUIRE(moved == true);
+	}
+
+	struct ParamsComponent
+	{
+		ParamsComponent(int a, const std::string& b)
+			: a(a), b(b)
+		{}
+
+		int a;
+		std::string b;
+	};
+
+	{
+		EntityManager temp_manager;
+		entity = temp_manager.CreateEntity();
+		auto component = temp_manager.AddComponent<ParamsComponent>(entity, 321, "test");
+		REQUIRE(component->a == 321);
+		REQUIRE(component->b == "test");
+	}
 }

@@ -14,7 +14,12 @@ namespace render {
 
     DebugDraw::DebugDraw(Device::ShaderCache& shader_cache) 
     {
-        shader = shader_cache.GetShaderProgram(L"shaders/debug_draw.vert", L"shaders/debug_draw.frag");
+        auto shader_info = Device::ShaderProgramInfo()
+            .AddShader(Device::ShaderProgram::Stage::Vertex, L"shaders/debug_draw.vert")
+            .AddShader(Device::ShaderProgram::Stage::Fragment, L"shaders/debug_draw.frag");
+        std::wstring path = shader_info.shaders[0].path;
+        shader = shader_cache.GetShaderProgram(shader_info);
+
 
         line_meshes[0] = std::make_unique<Mesh>(true, 2, false);
         line_meshes[1] = std::make_unique<Mesh>(true, 2, false);

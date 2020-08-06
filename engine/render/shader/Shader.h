@@ -41,7 +41,9 @@ namespace Device {
 
 		enum class BindingType : unsigned
 		{
-			Sampler = 0,
+			CombinedImageSampler = 0,
+			SampledImage,
+			Sampler,
 			UniformBuffer,
 			UniformBufferDynamic,
 			StorageBuffer,
@@ -101,6 +103,7 @@ namespace Device {
 		const BindingData* GetBinding(unsigned set, unsigned binding) const;
 		const BindingData* GetBindingByName(const std::string& name) const;
 		const utils::SmallVectorBase<PushConstants>* GetPushConstants() const { return &push_constants; }
+		const char* GetEntryPoint(Stage stage) const;
 
 		uint32_t GetHash() const;
 
