@@ -54,13 +54,13 @@ void CompileShader(const std::filesystem::path& shader_path, const ShaderCapsSet
 	std::filesystem::path absolute_input_path = std::filesystem::current_path() / relative_shader_path;
 	std::stringstream stream;
 	stream << compiler_path;
-	stream << " -V";
+	stream << " -V -l";
 	for (auto& m : macro)
 		stream << " -D" << m;
 	stream << " -o " << absolute_output_path;
 	stream << " " << absolute_input_path;
 
-	//std::cout << stream.str().c_str() << std::endl;
+	std::cout << stream.str().c_str() << std::endl;
 
 	std::wcout << shader_path << "\n         => " << hash_path << std::endl;
 

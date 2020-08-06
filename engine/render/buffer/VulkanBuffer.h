@@ -1,5 +1,6 @@
 #pragma once
 #include "CommonIncludes.h"
+#include "render/device/Resource.h"
 
 namespace core { namespace Device {
 
@@ -69,15 +70,24 @@ namespace core { namespace Device {
 		void* data = nullptr;
 	};
 
-	class VulkanBuffer {
+	class VulkanBuffer : public ::Device::Resource {
 	public:
 		VulkanBuffer(VulkanBufferInitializer initializer);
 		~VulkanBuffer();
 
+		using Handle = ::Device::Handle<VulkanBuffer>;
+
+		static ::Device::Handle<VulkanBuffer> Create(const VulkanBufferInitializer& initializer) 
+		{ 
+			return Handle(std::make_unique<VulkanBuffer>(initializer)); 
+		}
+
+		static Handle Create(const VulkanBufferInitializer&& initializer) { return Handle(std::make_unique<VulkanBuffer>(initializer)); }
+
 		uint32_t Size() const { return size; }
 		VkBuffer Buffer() const { return buffer; }
 		
-		void *Map();
+		void* Map();
 		void Unmap();
 
 	protected:

@@ -33,13 +33,13 @@ namespace core { namespace Device {
 			else {
 
 				// Create temporary staging buffer
-				auto staging_buffer = std::make_unique<VulkanBuffer>(
+				auto staging_buffer = VulkanBuffer::Create(
 					VulkanBufferInitializer(size).SetStaging().Data(initializer.data)
 				);
 
 				// Upload from staging to current buffer
 				auto* uploader = Engine::GetVulkanContext()->GetUploader();
-				uploader->AddToUpload(std::move(staging_buffer), this, size);
+				uploader->AddToUpload(staging_buffer.get(), this, size);
 			}
 
 		}

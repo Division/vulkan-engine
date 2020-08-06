@@ -4,6 +4,7 @@
 #include "HierarchyData.h"
 #include <system/Logging.h>
 #include "SkinningData.h"
+#include "ResourceCache.h"
 
 class Mesh;
 
@@ -71,10 +72,9 @@ typedef std::shared_ptr<LightData> LightDataPtr;
 
 class ModelBundle {
 public:
-  explicit ModelBundle(const std::string &url) : _url(url), _hierarchy(std::make_shared<HierarchyData>()) {}
+  explicit ModelBundle(std::istream& stream);
   virtual ~ModelBundle() { ENGLog("ModelBundle destroy"); }
 
-  const std::string &url() const { return _url; }
   std::shared_ptr<Mesh> getMesh(const std::string &name) const;
   const HierarchyDataPtr hierarchy() const { return _hierarchy; }
   const HierarchyDataPtr getHierarchyByName(const std::string &name) const { return _nameToHierarchy.count(name) ? _nameToHierarchy.at(name) : nullptr;}
@@ -95,7 +95,6 @@ public:
   void appendAnimationBundle(ModelBundlePtr modelBundle, std::string name);
 
 private:
-  std::string _url; // unique name of the resource
   std::unordered_map<std::string, std::shared_ptr<Mesh>> _meshes; // map of meshes
   std::unordered_map<std::string, SkinningDataPtr> _skinning; // map of skin data
   std::unordered_map<std::string, AnimationDataPtr> _animations; // map of meshes
@@ -104,3 +103,5 @@ private:
   std::unordered_map<std::string, HierarchyDataPtr> _idToHierarchy; // map scene nodes by id
   std::shared_ptr<HierarchyData> _hierarchy; // root hierarchy object
 };
+
+typedef Resources::Handle<ModelBundle> ModelBundleHandle;

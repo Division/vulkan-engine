@@ -6,6 +6,7 @@
 #include "system/Logging.h"
 #include "loader/ModelLoaderUtils.h"
 #include "render/mesh/Mesh.h"
+#include "loader/ModelLoader.h"
 
 using namespace nlohmann;
 
@@ -107,10 +108,16 @@ std::shared_ptr<Mesh> ModelBundle::getMesh(const std::string &name) const {
     result = _meshes.at(name);
   } else {
     result = std::make_shared<Mesh>();
-    ENGLog("Can't find bundle '%s' in url %s", name.c_str(), _url.c_str());
+    ENGLog("Can't find bundle '%s'", name.c_str());
   }
 
   return result;
+}
+
+ModelBundle::ModelBundle(std::istream &stream) 
+    : _hierarchy(std::make_shared<HierarchyData>())
+{
+    loader::loadModel(stream, *this);
 }
 
 void ModelBundle::loadLights(const json &lightsData) {

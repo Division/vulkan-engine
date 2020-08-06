@@ -7,30 +7,35 @@ namespace core { namespace Memory {
 	namespace Profiler
 	{
 
-		std::array<std::string, Tag::Count> tag_names = { "Render", "JobSystem", "Texture", "ECS", "Unknown" };
-		std::array<AllocationsData, Tag::Count> snapshot;
+		std::array<std::string, Tag::Count> tag_names = { "Render", "JobSystem", "Texture", "ECS", "UnknownResource", "Unknown" };
+		Snapshot snapshot;
 
 		struct ProfilerData
 		{
 			std::array<AllocationsData, Tag::Count> allocations;
-			std::mutex mutex;
-			size_t total_frame_allocations;
-			size_t total_frame_allocations_size;
-
-			ProfilerData()
-			{
-				for (auto& alloc : allocations)
-					alloc = { 0, 0, 0 };
-
-				total_frame_allocations = 0;
-				total_frame_allocations_size = 0;
-			}
+			std::atomic_uint32_t total_frame_allocations = 0;
+			std::atomic_uint64_t total_frame_allocations_size = 0;
 		};
 
 		inline ProfilerData& GetProfilerData()
 		{
 			static ProfilerData data;
 			return data;
+		}
+
+		Snapshot GetSnapshot()
+		{
+			auto& data = GetProfilerData();
+			Snapshot snapshot;
+
+			for (int i = 0; i < Tag::Count; i++)
+			{
+				snapshot[i].allocated_size = data.allocations[i].allocated_size;
+				snapshot[i].num_allocations = data.allocations[i].num_allocations;
+				snapshot[i].num_allocations_current_frame = data.allocations[i].num_allocations_current_frame;
+			}
+
+			return snapshot;
 		}
 
 		size_t GetFrameAllocations()
@@ -64,7 +69,6 @@ namespace core { namespace Memory {
 
 		void OnAllocation(size_t size, Tag tag)
 		{
-			std::scoped_lock<std::mutex> lock(GetProfilerData().mutex);
 			GetProfilerData().allocations[tag].allocated_size += size;
 			GetProfilerData().allocations[tag].num_allocations += 1;
 			GetProfilerData().allocations[tag].num_allocations_current_frame += 1;
@@ -74,23 +78,25 @@ namespace core { namespace Memory {
 
 		void OnDeallocation(size_t size, Tag tag)
 		{
-			std::scoped_lock<std::mutex> lock(GetProfilerData().mutex);
 			GetProfilerData().allocations[tag].allocated_size -= size;
 			GetProfilerData().allocations[tag].num_allocations -= 1;
 		}
 
 		void MakeSnapshot()
 		{
-			snapshot = GetProfilerData().allocations;
+			snapshot = GetSnapshot();
 		}
 
 		void ValidateSnapshot()
 		{
-			auto last_snapshot = GetProfilerData().allocations;
+			auto last_snapshot = GetSnapshot();
 
 			for (int i = 0; i < Tag::Count; i++)
 				if (snapshot[i].allocated_size != last_snapshot[i].allocated_size)
 				{
+					if (i == Tag::Unknown)
+						continue;
+
 					std::cout << "Memory leak at tag: " << tag_names[i] << "\n";
 					throw std::runtime_error("Memory leak at tag: " + tag_names[i]);
 				}

@@ -82,6 +82,8 @@ set(ENGINE_SOURCES
 	memory/PoolAllocator.h
 	memory/PoolAllocator.cpp
 	memory/Containers.h
+	render/device/Resource.h
+	render/device/Resource.cpp
 	render/device/VkObjects.h
 	render/device/VkObjects.cpp
 	render/device/VulkanContext.h
@@ -185,6 +187,8 @@ set(ENGINE_SOURCES
 	objects/SkinnedMeshObject.cpp
 	resources/ModelBundle.h
 	resources/ModelBundle.cpp
+	resources/ResourceCache.h
+	resources/ResourceCache.cpp
 	resources/HierarchyData.h
 	resources/HierarchyData.cpp
 	resources/SkinningData.h

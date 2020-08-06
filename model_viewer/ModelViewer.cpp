@@ -43,6 +43,11 @@ EntityID ModelViewer::CreateMeshEntity(vec3 position, EntityID parent, Mesh* mes
 
 void ModelViewer::init()
 {
+	//ModelBundleHandle model(L"resources/models/sphere.mdl");
+	//auto& model_bundle = *model;
+
+	sphere_bundle = ModelBundleHandle(L"resources/models/sphere.mdl");
+
 	auto* engine = core::Engine::Get();
 	manager = engine->GetEntityManager();
 	graph = engine->GetTransformGraph();
@@ -70,8 +75,6 @@ void ModelViewer::init()
 	plane_mesh->calculateNormals();
 	plane_mesh->createBuffer();
 
-
-	sphere_bundle = loader::loadModel("resources/models/sphere.mdl");
 	sphere_mesh = sphere_bundle->getMesh("sphere-lib");
 
 	//sphere_mesh = std::make_shared<Mesh>();
@@ -115,10 +118,10 @@ void ModelViewer::init()
 
 void ModelViewer::update(float dt)
 {
+	Resources::Cache::Get().GCCollect();
 	camera->Update(dt);
 }
 
 void ModelViewer::cleanup()
 {
-	
 }

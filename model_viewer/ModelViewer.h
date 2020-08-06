@@ -5,6 +5,7 @@
 #include "ecs/TransformGraph.h"
 #include "ecs/systems/TransformSystem.h"
 #include "ecs/systems/RendererSystem.h"
+#include "resources/ResourceCache.h"
 
 class Mesh;
 class FollowCamera;
@@ -47,7 +48,7 @@ private:
 	std::shared_ptr<Material> material_default;
 	std::shared_ptr<Mesh> plane_mesh;
 	std::shared_ptr<Mesh> sphere_mesh;
-	std::shared_ptr<ModelBundle> sphere_bundle;
+	Resources::Handle<ModelBundle> sphere_bundle;
 	std::shared_ptr<core::Device::Texture> lama_tex;
 	std::shared_ptr<core::Device::Texture> environment;
 

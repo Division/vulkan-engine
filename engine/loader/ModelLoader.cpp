@@ -26,60 +26,64 @@ const std::map<std::string, int> ATTRIB_COUNT = {
   { ATTRIB_WEIGHT, 6 }
 };
 
-void loadGeometry(std::istream &stream, json geometryJson, ModelBundlePtr bundle);
-void loadAnimation(std::istream &stream, json animationJson, ModelBundlePtr bundle);
+void loadGeometry(std::istream &stream, json geometryJson, ModelBundle* bundle);
+void loadAnimation(std::istream &stream, json animationJson, ModelBundle* bundle);
 void flipVertices(std::vector<float> &vertices);
 void flipIndices(std::vector<uint16_t> &indices);
 template <typename T> void loadArray(std::istream &stream, std::vector<T> &data, int count);
 
-ModelBundlePtr loader::loadModel(const std::string &filename) {
+/*ModelBundleHandle loader::loadModel(const std::string &filename) {
   std::ifstream stream;
   stream.exceptions(std::ifstream::failbit | std::ifstream::badbit);
   stream.open(filename, std::ios::in | std::ios::binary);
   return loadModel(stream, filename);
 }
 
-ModelBundlePtr loader::loadModel(std::istream &stream, const std::string &url) {
-  ModelBundlePtr bundle = std::make_shared<ModelBundle>(url);
+ModelBundlePtr loader::loadModel(std::istream &stream, const std::string &url) 
+{
+    ModelBundlePtr bundle = std::make_shared<ModelBundle>(url);
+    loadModel(stream, *bundle);
+    return bundle;
+}
+*/
 
-  unsigned int headerSize = 0;
-  stream.read((char *)&headerSize, sizeof(headerSize));
+void loader::loadModel(std::istream &stream, ModelBundle& bundle) {
+    unsigned int headerSize = 0;
+    stream.read((char *)&headerSize, sizeof(headerSize));
 
-  headerSize = swap_endian<unsigned int>(headerSize);
-//  std::vector<char> headerChars;
-//  headerChars.resize(headerSize + 1);
-//  headerChars[headerSize] = 0;
-//  stream.read(&headerChars[0], headerSize);
-//  std::string headerString(&headerChars[0]);
+    headerSize = swap_endian<unsigned int>(headerSize);
+    //  std::vector<char> headerChars;
+    //  headerChars.resize(headerSize + 1);
+    //  headerChars[headerSize] = 0;
+    //  stream.read(&headerChars[0], headerSize);
+    //  std::string headerString(&headerChars[0]);
 
-  std::string headerString;
-  headerString.resize(headerSize);
-  stream.read(&headerString[0], headerSize);
+    std::string headerString;
+    headerString.resize(headerSize);
+    stream.read(&headerString[0], headerSize);
 
-//  ENGLog("JSON: \n%i\n %s", headerString.length(), headerString.c_str());
-  json header = json::parse(headerString);
-//  ENGLog("JSON:\n%s", header.dump(2).c_str());
+    //  ENGLog("JSON: \n%i\n %s", headerString.length(), headerString.c_str());
+    json header = json::parse(headerString);
+    //  ENGLog("JSON:\n%s", header.dump(2).c_str());
 
-  if (header.find("lights") != header.end()) {
-    bundle->loadLights(header["lights"]);
-  }
+    if (header.find("lights") != header.end()) {
+        bundle.loadLights(header["lights"]);
+    }
 
-  if (header.find("hierarchy") != header.end()) {
-    bundle->loadHiererchy(header["hierarchy"]);
-  }
+    if (header.find("hierarchy") != header.end()) {
+        bundle.loadHiererchy(header["hierarchy"]);
+    }
 
-  if (header.find("geometry") != header.end()) {
-    loadGeometry(stream, header["geometry"], bundle);
-  }
+    if (header.find("geometry") != header.end()) {
+        loadGeometry(stream, header["geometry"], &bundle);
+    }
 
-  if (header.find("animation") != header.end()) {
-    loadAnimation(stream, header["animation"], bundle);
-  }
-
-  return bundle;
+    if (header.find("animation") != header.end()) {
+        loadAnimation(stream, header["animation"], &bundle);
+    }
 }
 
-void loadGeometry(std::istream &stream, json geometryJson, ModelBundlePtr bundle) {
+void loadGeometry(std::istream &stream, json geometryJson, ModelBundle* bundle) {
   std::vector<float> attribData;
   std::vector<unsigned short> indices;
   for (auto &geom : geometryJson) {
@@ -134,7 +138,7 @@ void loadGeometry(std::istream &stream, json geometryJson, ModelBundlePtr bundle
   }
 }
 
-void loadAnimation(std::istream &stream, json animationJson, ModelBundlePtr bundle) {
+void loadAnimation(std::istream &stream, json animationJson, ModelBundle* bundle) {
   if (animationJson.find("skinning") != animationJson.end()) {
     bundle->loadSkinning(animationJson["skinning"]);
   }

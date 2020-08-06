@@ -9,9 +9,9 @@
 #include <fstream>
 #include <resources/ModelBundle.h>
 
-namespace loader {
-  ModelBundlePtr loadModel(const std::string &filename);
-  ModelBundlePtr loadModel(std::istream &stream, const std::string &url);
+namespace loader 
+{
+	void loadModel(std::istream& stream, ModelBundle& bundle);
 }
 
 

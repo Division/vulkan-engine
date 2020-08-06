@@ -14,7 +14,7 @@ namespace core { namespace Device {
 
 	using namespace core::render;
 
-	const bool ENABLE_VALIDATION_LAYERS = true;
+	const bool ENABLE_VALIDATION_LAYERS = false;
 
 	VulkanContext::VulkanContext(GLFWwindow* window) : window(window)
 	{

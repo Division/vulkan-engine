@@ -11,6 +11,8 @@
 #include "render/debug/DebugUI.h"
 #include "memory/Profiler.h"
 #include "memory/Containers.h"
+#include "resources/ResourceCache.h"
+#include "render/device/Resource.h"
 
 namespace core
 {
@@ -82,12 +84,16 @@ namespace core
 
 		game->cleanup();
 		game = nullptr;
+
+		Resources::Cache::Get().Destroy();
+
 		input = nullptr;
 		scene = nullptr;
 		material_manager = nullptr;
 		scene_renderer = nullptr;
 		shader_cache = nullptr;
 		debug_draw = nullptr;
+		::Device::ResourceReleaser::Get().Clear();
 		vulkan_context->Cleanup();
 		vulkan_context = nullptr;
 
@@ -95,6 +101,8 @@ namespace core
 			glfwDestroyWindow(window);
 
 		glfwTerminate();
+
+		OPTICK_SHUTDOWN();
 	}
 
 	void Engine::SizeCallback(GLFWwindow* window, int32_t width, int32_t height)
@@ -146,6 +154,8 @@ namespace core
 			scene_renderer->RenderScene();
 			context->Present();
 			glfwSwapBuffers(window);
+
+			::Device::ResourceReleaser::Get().Swap();
 
 			last_time = current_time;
 		}

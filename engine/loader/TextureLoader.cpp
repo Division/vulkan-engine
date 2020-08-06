@@ -80,11 +80,16 @@ std::unique_ptr<Texture> loader::LoadTexture(const std::string &name, bool sRGB)
 
             }
 
-            return std::make_unique<Texture>(initializer);
+            auto result_texture = std::make_unique<Texture>(initializer);
+            
+            ktxTexture_Destroy(texture);
 
+            return result_texture;
         }
         else
         {
+            ktxTexture_Destroy(texture);
+
             throw std::runtime_error("Error loading texture");
         }
 

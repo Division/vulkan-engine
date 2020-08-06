@@ -154,10 +154,10 @@ namespace core { namespace Device {
 		if (initializer.data)
 		{
 			auto* uploader = Engine::GetVulkanContext()->GetUploader();
-			auto upload_staging_buffer = std::make_unique<VulkanBuffer>(
+			auto upload_staging_buffer = VulkanBuffer::Create(
 				VulkanBufferInitializer(size).SetStaging().Data(initializer.data)
 			);
-			uploader->AddImageToUpload(std::move(upload_staging_buffer), image, mip_levels, array_layers, initializer.copies.empty() ? GetCopies() : initializer.copies);
+			uploader->AddImageToUpload(upload_staging_buffer.get(), image, mip_levels, array_layers, initializer.copies.empty() ? GetCopies() : initializer.copies);
 		}
 
 		if (!initializer.name.empty())

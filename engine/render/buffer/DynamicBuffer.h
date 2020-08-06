@@ -38,11 +38,11 @@ namespace core { namespace Device {
 				break;
 			}
 
-			buffer = std::make_unique<VulkanBuffer>(main_initializer);
+			buffer = VulkanBuffer::Create(main_initializer);
 
 			auto staging_initializer = VulkanBufferInitializer(size).SetStaging();
 			for (int i = 0; i < staging_buffers.size(); i++)
-				staging_buffers[i] = std::make_unique<VulkanBuffer>(staging_initializer);
+				staging_buffers[i] = VulkanBuffer::Create(staging_initializer);
 		}
 
 		BufferType GetType() const { return type; }
@@ -102,8 +102,8 @@ namespace core { namespace Device {
 		size_t size = 0;
 		size_t alignment;
 		unsigned current_staging_buffer = 0;
-		std::unique_ptr<VulkanBuffer> buffer;
-		std::array<std::unique_ptr<VulkanBuffer>, caps::MAX_FRAMES_IN_FLIGHT> staging_buffers;
+		VulkanBuffer::Handle buffer;
+		std::array<VulkanBuffer::Handle, caps::MAX_FRAMES_IN_FLIGHT> staging_buffers;
 		BufferType type;
 	};
 
