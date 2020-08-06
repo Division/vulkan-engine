@@ -82,12 +82,12 @@ void ModelViewer::init()
 	//sphere_mesh->createBuffer();
 
 	material_light_only = std::make_shared<Material>();
-	material_light_only->lightingEnabled(true);
+	material_light_only->LightingEnabled(true);
 	material_no_light = std::make_shared<Material>();
-	material_no_light->lightingEnabled(false);
+	material_no_light->LightingEnabled(false);
 	material_default = std::make_shared<Material>();
-	material_default->lightingEnabled(true);
-	material_default->texture0(lama_tex);
+	material_default->LightingEnabled(true);
+	material_default->Texture0(lama_tex);
 	auto* material_manager = Engine::Get()->GetMaterialManager();
 
 	/*plane = CreateMeshEntity(vec3(0, -5, 0), 0, plane_mesh.get());
@@ -107,7 +107,7 @@ void ModelViewer::init()
 		manager->GetComponent<components::Transform>(sphere)->scale = vec3(1, 1, 1);
 
 		Material material;
-		material.lightingEnabled(true);
+		material.LightingEnabled(true);
 		material.SetRoughness(0.05 + (i / (sphere_count - 1.0f) * 0.95));
 		mesh_renderer->material_id = material_manager->GetMaterialID(material);
 		mesh_renderer->mesh = sphere_mesh.get();
