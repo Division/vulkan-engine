@@ -1,6 +1,6 @@
 #include "JobSystem.h"
 
-namespace core { namespace JobSystem {
+namespace JobSystem {
 
 	const size_t JOB_POOL_ITEM_SIZE = 256;
 	const size_t JOB_POOL_ITEM_COUNT = 1000;
@@ -60,4 +60,4 @@ namespace core { namespace JobSystem {
 		// TODO: Wait for jobs to complete
 	}
 
-} }
+}

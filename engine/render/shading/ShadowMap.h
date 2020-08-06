@@ -7,29 +7,26 @@
 class Renderer;
 class IShadowCaster;
 
-namespace core
+namespace Device
 {
-	namespace Device
-	{
-		class VulkanRenderState;
-	}
+	class VulkanRenderState;
+}
 
-	namespace ECS
+namespace ECS
+{
+	namespace systems
 	{
-		namespace systems
-		{
-			class CullingSystem;
-		}
+		class CullingSystem;
 	}
 }
 
-namespace core { namespace render {
+namespace render {
 	
 	class ShadowMap {
 	public:
 		ShadowMap(unsigned int resolutionX, unsigned int resolutionY);
 
-		void SetupShadowCasters(std::vector<std::pair<IShadowCaster*, core::ECS::systems::CullingSystem>>& shadow_casters);
+		void SetupShadowCasters(std::vector<std::pair<IShadowCaster*, ECS::systems::CullingSystem>>& shadow_casters);
 	
 	private:
 		uvec2 _resolution;
@@ -44,4 +41,4 @@ namespace core { namespace render {
 		Rect getCellRect(unsigned int index);
 	};
 
-} }
+}

@@ -12,7 +12,7 @@ class ModelBundle;
 class MeshObject;
 class PlayerController;
 
-class Game : public core::IGame {
+class Game : public IGame {
 public:
 	Game();
 	~Game();

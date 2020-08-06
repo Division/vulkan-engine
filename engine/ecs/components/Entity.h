@@ -1,6 +1,6 @@
 #pragma once
 
-namespace core { namespace ECS {
+namespace ECS {
 
 	class Chunk;
 	class ComponentLayout;
@@ -20,4 +20,4 @@ namespace core { namespace ECS {
 		const ComponentLayout* layout;
 	};
 
-} }
+}

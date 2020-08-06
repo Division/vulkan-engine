@@ -16,15 +16,10 @@ enum class LightObjectType : int {
   Spot
 };
 
-namespace core
+namespace Device
 {
-	namespace Device
-	{
-		class Texture;
-	}
+	class Texture;
 }
-
-using namespace core::Device;
 
 class LightObject : public GameObject, public IShadowCaster {
 public:
@@ -48,7 +43,7 @@ public:
   float coneAngle() const { return _coneAngle; }
   void coneAngle(float value) { _coneAngle = value; }
 
-  void setFlare(const std::shared_ptr<Texture>& texture, float size);
+  void setFlare(const std::shared_ptr<Device::Texture>& texture, float size);
 
   float getSpotRadius(float height);
 
@@ -62,7 +57,7 @@ public:
   void enableDebug();
   //bool debugEnabled() { return _debugMesh && _debugMaterial; }
 
-  ShaderBufferStruct::Light getLightStruct() const;
+  Device::ShaderBufferStruct::Light getLightStruct() const;
 
   void postUpdate() override;
 
@@ -98,7 +93,7 @@ private:
   // Flare
   //MeshPtr _flareMesh; // Right now the mesh is not shared. Will be improved after particle render implemented.
   float _flareSize = 0;
-  std::shared_ptr<Texture> _flareTexture;
+  std::shared_ptr<Device::Texture> _flareTexture;
   //std::shared_ptr<MaterialBillboard> _flareMaterial;
 
   // Shadows

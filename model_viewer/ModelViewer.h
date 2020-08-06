@@ -16,15 +16,12 @@ class Material;
 class LightObject;
 class ViewerCamera;
 
-namespace core
+namespace Device
 {
-	namespace Device
-	{
-		class Texture;
-	}
+	class Texture;
 }
 
-class ModelViewer : public core::IGame {
+class ModelViewer : public IGame {
 public:
 	ModelViewer();
 	~ModelViewer();
@@ -33,15 +30,15 @@ public:
 	void cleanup();
 
 private:
-	core::ECS::EntityID CreateMeshEntity(vec3 position, core::ECS::EntityID parent, Mesh* mesh);
+	ECS::EntityID CreateMeshEntity(vec3 position, ECS::EntityID parent, Mesh* mesh);
 
 private:
 	std::unique_ptr<ViewerCamera> camera;
 	std::shared_ptr<ModelBundle> player_model;
 
-	core::ECS::EntityID entity1;
-	core::ECS::EntityID entity2;
-	core::ECS::EntityID plane;
+	ECS::EntityID entity1;
+	ECS::EntityID entity2;
+	ECS::EntityID plane;
 
 	std::shared_ptr<Material> material_light_only;
 	std::shared_ptr<Material> material_no_light;
@@ -49,11 +46,11 @@ private:
 	std::shared_ptr<Mesh> plane_mesh;
 	std::shared_ptr<Mesh> sphere_mesh;
 	Resources::Handle<ModelBundle> sphere_bundle;
-	std::shared_ptr<core::Device::Texture> lama_tex;
-	std::shared_ptr<core::Device::Texture> environment;
+	std::shared_ptr<Device::Texture> lama_tex;
+	std::shared_ptr<Device::Texture> environment;
 
-	core::ECS::EntityManager* manager;
-	core::ECS::TransformGraph* graph;
+	ECS::EntityManager* manager;
+	ECS::TransformGraph* graph;
 
 	bool camera_control = false;
 };

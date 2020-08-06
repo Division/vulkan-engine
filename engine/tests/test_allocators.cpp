@@ -3,7 +3,7 @@
 #include <vector>
 #include <string>
 
-using namespace core::Memory;
+using namespace Memory;
 
 struct TestStruct
 {

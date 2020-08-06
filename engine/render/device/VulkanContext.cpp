@@ -10,9 +10,9 @@
 #include "VulkanDescriptorCache.h"
 #include <mutex>
 
-namespace core { namespace Device {
+namespace Device {
 
-	using namespace core::render;
+	using namespace render;
 
 	const bool ENABLE_VALIDATION_LAYERS = false;
 
@@ -458,4 +458,4 @@ namespace core { namespace Device {
 		recreate_swapchain_callbacks.push_back(callback);
 	}
 
-} }
+}

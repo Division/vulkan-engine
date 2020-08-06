@@ -4,29 +4,26 @@
 
 struct GLFWwindow;
 
-namespace core
+namespace Device
 {
-	namespace Device
-	{
-		class VulkanRenderState;
-		class ShaderCache;
-	}
-
-	namespace render
-	{
-		struct EnvironmentSettings;
-	}
+	class VulkanRenderState;
+	class ShaderCache;
 }
 
-namespace core { namespace render { 
+namespace render
+{
+	struct EnvironmentSettings;
+}
+
+namespace render { 
 
 	namespace DebugUI 
 	{
-		void Initialize(GLFWwindow* window, core::Device::ShaderCache* shader_cache, EnvironmentSettings& environment_settings);
+		void Initialize(GLFWwindow* window, Device::ShaderCache* shader_cache, EnvironmentSettings& environment_settings);
 		void Deinitialize();
 		void NewFrame();
 		void Update(float dt);
-		void Render(core::Device::VulkanRenderState& state);
+		void Render(Device::VulkanRenderState& state);
 		void SwitchEngineStats();
 
 		bool WantCaptureMouse();
@@ -37,4 +34,4 @@ namespace core { namespace render {
 
 	} 
 
-} }
+}

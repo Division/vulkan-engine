@@ -17,10 +17,9 @@
 ModelViewer::ModelViewer() = default;
 ModelViewer::~ModelViewer() = default;
 
-using namespace core;
-using namespace core::system;
-using namespace core::ECS;
-using namespace core::ECS::systems;
+using namespace System;
+using namespace ECS;
+using namespace ECS::systems;
 
 EntityID ModelViewer::CreateMeshEntity(vec3 position, EntityID parent, Mesh* mesh)
 {
@@ -36,7 +35,7 @@ EntityID ModelViewer::CreateMeshEntity(vec3 position, EntityID parent, Mesh* mes
 	*mesh_renderer = components::MeshRenderer();
 	mesh_renderer->render_queue = RenderQueue::Opaque;
 	mesh_renderer->mesh = mesh;
-	mesh_renderer->material_id = core::Engine::Get()->GetMaterialManager()->GetMaterialID(*material_default);
+	mesh_renderer->material_id = Engine::Get()->GetMaterialManager()->GetMaterialID(*material_default);
 
 	return entity;
 }
@@ -48,7 +47,7 @@ void ModelViewer::init()
 
 	sphere_bundle = ModelBundleHandle(L"resources/models/sphere.mdl");
 
-	auto* engine = core::Engine::Get();
+	auto* engine = Engine::Get();
 	manager = engine->GetEntityManager();
 	graph = engine->GetTransformGraph();
 
@@ -89,7 +88,7 @@ void ModelViewer::init()
 	material_default = std::make_shared<Material>();
 	material_default->lightingEnabled(true);
 	material_default->texture0(lama_tex);
-	auto* material_manager = core::Engine::Get()->GetMaterialManager();
+	auto* material_manager = Engine::Get()->GetMaterialManager();
 
 	/*plane = CreateMeshEntity(vec3(0, -5, 0), 0, plane_mesh.get());
 	auto mesh_renderer = manager->GetComponent<components::MeshRenderer>(plane);

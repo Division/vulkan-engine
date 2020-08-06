@@ -4,7 +4,7 @@
 #include <deque>
 #include "Allocator.h"
 
-namespace core { namespace Memory {
+namespace Memory {
 
 	template <typename T, Tag tag>
 	using Vector = std::vector<T, TaggedAllocator<T, tag>>;
@@ -61,4 +61,4 @@ namespace core { namespace Memory {
 		std::unique_ptr<T, void(*)(T*)> pointer;
 	};
 
-}}
+}

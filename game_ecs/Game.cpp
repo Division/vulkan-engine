@@ -17,10 +17,9 @@
 Game::Game() = default;
 Game::~Game() = default;
 
-using namespace core;
-using namespace core::system;
-using namespace core::ECS;
-using namespace core::ECS::systems;
+using namespace system;
+using namespace ECS;
+using namespace ECS::systems;
 
 EntityID Game::CreateCubeEntity(vec3 position, EntityID parent)
 {
@@ -36,14 +35,14 @@ EntityID Game::CreateCubeEntity(vec3 position, EntityID parent)
 	*mesh_renderer = components::MeshRenderer();
 	mesh_renderer->render_queue = RenderQueue::Opaque;
 	mesh_renderer->mesh = box_mesh.get();
-	mesh_renderer->material_id = core::Engine::Get()->GetMaterialManager()->GetMaterialID(*material_default);
+	mesh_renderer->material_id = Engine::Get()->GetMaterialManager()->GetMaterialID(*material_default);
 
 	return entity;
 }
 
 void Game::init()
 {
-	auto* engine = core::Engine::Get();
+	auto* engine = Engine::Get();
 	manager = engine->GetEntityManager();
 	graph = engine->GetTransformGraph();
 
@@ -72,7 +71,7 @@ void Game::init()
 	material_default = std::make_shared<Material>();
 	material_default->lightingEnabled(true);
 	material_default->texture0(lama_tex);
-	auto* material_manager = core::Engine::Get()->GetMaterialManager();
+	auto* material_manager = Engine::Get()->GetMaterialManager();
 
 	entity1 = CreateCubeEntity(vec3(0, 3, 0), 0);
 	entity2 = CreateCubeEntity(vec3(2, 0, 0), entity1);
@@ -107,7 +106,7 @@ void Game::update(float dt)
 	auto* transform1 = manager->GetComponent<components::Transform>(entity1);
 	transform1->Rotate(vec3(0, 0, 1), M_PI * dt);
 	
-	auto* debug_draw = core::Engine::Get()->GetDebugDraw();
+	auto* debug_draw = Engine::Get()->GetDebugDraw();
 	debug_draw->DrawAABB(AABB(vec3(0, 0, 0), vec3(4, 4, 4)), vec4(1, 0, 0, 1));
 	debug_draw->DrawAABB(AABB(vec3(5, 5, 0), vec3(8, 8, 8)), vec4(0.5, 1, 0, 1));
 	debug_draw->DrawLine(vec3(5, 5, 0), vec3(8, 8, 8), vec4(0.5, 0.5, 1, 1));
@@ -116,7 +115,7 @@ void Game::update(float dt)
 	debug_draw->DrawPoint(vec3(4, 4, 4), vec3(0, 0, 1), 6.0f);
 
 	auto input = Engine::Get()->GetInput();
-	if (input->keyDown(core::system::Key::Space))
+	if (input->keyDown(system::Key::Space))
 		light->transform()->setMatrix(Engine::Get()->GetScene()->GetCamera()->transform()->worldMatrix());
 }
 

@@ -6,9 +6,9 @@
 #include "render/material/MaterialManager.h"
 #include "render/material/Material.h"
 
-namespace core { namespace ECS { namespace systems {
+namespace ECS { namespace systems {
 
-	using namespace core::ECS::components;
+	using namespace ECS::components;
 
 	void UpdateRendererSystem::Process(Chunk* chunk)
 	{
@@ -45,4 +45,4 @@ namespace core { namespace ECS { namespace systems {
 		}
 	}
 
-} } }
+} }

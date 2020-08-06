@@ -3,7 +3,7 @@
 #include "ECS.h"
 #include "EntityChunks.h"
 
-namespace core { namespace ECS {
+namespace ECS {
 
 	class System
 	{
@@ -33,4 +33,4 @@ namespace core { namespace ECS {
 		EntityManager& manager;
 	};
 
-} }
+}

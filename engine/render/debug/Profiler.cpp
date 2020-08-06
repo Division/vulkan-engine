@@ -5,7 +5,7 @@
 #include "render/device/VulkanContext.h"
 #include <mutex>
 
-namespace core::render::profiler
+namespace render::profiler
 {
 	struct FrameData
 	{
@@ -30,7 +30,7 @@ namespace core::render::profiler
 					pool = device.createQueryPoolUnique(pool_info);
 		}
 
-		void StartMeasurement(core::Device::VulkanCommandBuffer& command_buffer, uint32_t pass_index, ProfilerName id)
+		void StartMeasurement(Device::VulkanCommandBuffer& command_buffer, uint32_t pass_index, ProfilerName id)
 		{
 			ProfilerQuery query(id, pass_index);
 			auto& frame = frames[current_frame];
@@ -47,7 +47,7 @@ namespace core::render::profiler
 			command_buffer.GetCommandBuffer().writeTimestamp(vk::PipelineStageFlagBits::eBottomOfPipe, query_pool, 0);
 		}
 
-		void FinishMeasurement(core::Device::VulkanCommandBuffer& command_buffer, uint32_t pass_index, ProfilerName id)
+		void FinishMeasurement(Device::VulkanCommandBuffer& command_buffer, uint32_t pass_index, ProfilerName id)
 		{
 			auto& frame = frames[current_frame];
 			auto query_pool = frame.query_pools[pass_index].get();
@@ -125,12 +125,12 @@ namespace core::render::profiler
 		profiler->Update();
 	}
 
-	void StartMeasurement(core::Device::VulkanCommandBuffer& command_buffer, uint32_t pass_index, ProfilerName id)
+	void StartMeasurement(Device::VulkanCommandBuffer& command_buffer, uint32_t pass_index, ProfilerName id)
 	{
 		profiler->StartMeasurement(command_buffer, pass_index, id);
 	}
 
-	void FinishMeasurement(core::Device::VulkanCommandBuffer& command_buffer, uint32_t pass_index, ProfilerName id)
+	void FinishMeasurement(Device::VulkanCommandBuffer& command_buffer, uint32_t pass_index, ProfilerName id)
 	{
 		profiler->FinishMeasurement(command_buffer, pass_index, id);
 	}

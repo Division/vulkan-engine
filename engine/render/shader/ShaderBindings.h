@@ -4,7 +4,7 @@
 #include "utils/DataStructures.h"
 #include "Shader.h"
 
-namespace core { namespace Device {
+namespace Device {
 
 	class VulkanBuffer;
 	class Texture;
@@ -49,4 +49,4 @@ namespace core { namespace Device {
 	};
 
 
-} }
+}

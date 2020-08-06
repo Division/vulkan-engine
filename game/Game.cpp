@@ -13,11 +13,11 @@
 Game::Game() = default;
 Game::~Game() = default;
 
-using namespace core::system;
+using namespace system;
 
 void Game::init()
 {
-	level = std::make_unique<game::Level>(core::Engine::Get()->GetScene());
+	level = std::make_unique<game::Level>(Engine::Get()->GetScene());
 	level->load("resources/level/level1.mdl");
 	camera = CreateGameObject<FollowCamera>();
 
@@ -61,7 +61,7 @@ void Game::update(float dt)
 	obj1->transform()->rotate(vec3(0, 0, 1), M_PI * dt);
 	//obj2->transform()->rotate(vec3(0, 0, 1), M_PI * dt * 2);
 
-	auto input = core::Engine::Get()->GetInput();
+	auto input = Engine::Get()->GetInput();
 	if (input->keyDown(Key::Tab)) {
 		camera_control = !camera_control;
 		camera->setFreeCamera(camera_control);

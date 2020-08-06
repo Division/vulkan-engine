@@ -16,7 +16,7 @@
 #include "render/texture/Texture.h"
 #include "ecs/components/DrawCall.h"
 
-namespace core { namespace Device {
+namespace Device {
 
 	void RenderMode::SetCullMode(CullMode cull_mode)
 	{
@@ -131,8 +131,8 @@ namespace core { namespace Device {
 		: current_render_mode()
 	{
 		auto context = Engine::Get()->GetContext();
-		command_pools[context->GetQueueFamilyIndex(PipelineBindPoint::Graphics)] = std::make_unique<core::Device::VulkanCommandPool>(context->GetQueueFamilyIndex(PipelineBindPoint::Graphics));
-		command_pools[context->GetQueueFamilyIndex(PipelineBindPoint::Compute)] = std::make_unique<core::Device::VulkanCommandPool>(context->GetQueueFamilyIndex(PipelineBindPoint::Compute));
+		command_pools[context->GetQueueFamilyIndex(PipelineBindPoint::Graphics)] = std::make_unique<VulkanCommandPool>(context->GetQueueFamilyIndex(PipelineBindPoint::Graphics));
+		command_pools[context->GetQueueFamilyIndex(PipelineBindPoint::Compute)] = std::make_unique<VulkanCommandPool>(context->GetQueueFamilyIndex(PipelineBindPoint::Compute));
 		auto& device = Engine::GetVulkanDevice();
 
 		for (auto& it : command_pools)
@@ -545,4 +545,4 @@ namespace core { namespace Device {
 		return result;
 	}
 
-} }
+}

@@ -18,7 +18,7 @@
 #define IS_LIGHT(object) (bool)(dynamic_cast<LightObject *>((object).get()))
 #define IS_PROJECTOR(object) (bool)(dynamic_cast<Projector *>((object).get()))
 
-using namespace core::ECS;
+using namespace ECS;
 
 void Scene::setAsDefault() {
   GameObject::_defaultManager = this;

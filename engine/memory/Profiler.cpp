@@ -2,7 +2,7 @@
 #include <mutex>
 #include <iostream>
 
-namespace core { namespace Memory {
+namespace Memory {
 
 	namespace Profiler
 	{
@@ -106,4 +106,4 @@ namespace core { namespace Memory {
 
 	};
 
-} }
+}

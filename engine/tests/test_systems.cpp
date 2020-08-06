@@ -4,8 +4,8 @@
 #include "ecs/System.h"
 #include <array>
 
-using namespace core::ECS;
-using namespace core::ECS::components;
+using namespace ECS;
+using namespace ECS::components;
 
 TEST_CASE("ECS systems")
 {

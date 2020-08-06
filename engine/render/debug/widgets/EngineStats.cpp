@@ -6,7 +6,7 @@
 #include <string>
 #include <sstream>
 
-namespace core { namespace render { namespace DebugUI {
+namespace render { namespace DebugUI {
 
     using namespace profiler;
 
@@ -130,4 +130,4 @@ namespace core { namespace render { namespace DebugUI {
         ImGui::End();
     }
 
-} } }
+} }

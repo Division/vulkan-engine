@@ -5,7 +5,7 @@
 #include "render/device/VulkanRenderState.h"
 #include "ecs/systems/CullingSystem.h"
 
-namespace core { namespace render {
+namespace render {
 
 	static const unsigned int CELL_COUNT = 4;
 	static const auto MAX_MAPS = CELL_COUNT * CELL_COUNT;
@@ -18,7 +18,7 @@ namespace core { namespace render {
 	  _cellSize = vec2(_cellPixelSize) / vec2(_resolution);
 	}
 
-	void ShadowMap::SetupShadowCasters(std::vector<std::pair<IShadowCaster*, core::ECS::systems::CullingSystem>>& shadow_casters) {
+	void ShadowMap::SetupShadowCasters(std::vector<std::pair<IShadowCaster*, ECS::systems::CullingSystem>>& shadow_casters) {
 		unsigned int index = 0;
 
 		for (auto& caster : shadow_casters) {
@@ -44,4 +44,4 @@ namespace core { namespace render {
 	  return Rect(origin.x, origin.y, _cellSize.x, _cellSize.y);
 	}
 
-} }
+}

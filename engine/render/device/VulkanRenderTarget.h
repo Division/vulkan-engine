@@ -6,7 +6,7 @@
 
 #include "utils/Math.h"
 
-namespace core { namespace Device {
+namespace Device {
 
 	class VulkanRenderPass;
 	class VulkanSwapchain;
@@ -136,4 +136,4 @@ namespace core { namespace Device {
 		VulkanSwapchain* swapchain = nullptr;
 	};
 
-} }
+}

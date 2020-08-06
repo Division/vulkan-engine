@@ -9,7 +9,7 @@
 #include "VulkanRenderState.h"
 #include "utils/Math.h"
 
-namespace core { namespace Device {
+namespace Device {
 
 	VulkanPipelineInitializer::VulkanPipelineInitializer(const ShaderProgram* shader_program, const VulkanRenderPass* render_pass, const VertexLayout* layout, const RenderMode* render_mode)
 		: shader_program(shader_program)
@@ -178,4 +178,4 @@ namespace core { namespace Device {
 		}
 	}
 
-} }
+}

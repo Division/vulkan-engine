@@ -5,7 +5,7 @@
 #include "ShaderResource.h"
 #include "ShaderCaps.h"
 
-namespace core { namespace Device {
+namespace Device {
 
 	enum DescriptorSet : int
 	{
@@ -16,4 +16,4 @@ namespace core { namespace Device {
 	extern const std::map<std::string, VertexAttrib> VERTEX_ATTRIB_NAMES;
 	extern const std::map<ShaderCaps, std::string> SHADER_CAPS_DEFINES;
 
-} }
+}

@@ -6,7 +6,7 @@
 #include <unordered_map>
 #include <vector>
 
-namespace core { namespace ECS {
+namespace ECS {
 
 	class TransformGraph
 	{
@@ -134,4 +134,4 @@ namespace core { namespace ECS {
 		std::unordered_map<EntityID, ChildTransforms> transforms;
 	};
 
-} }
+}

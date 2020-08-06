@@ -3,7 +3,7 @@
 #include "render/renderer/IRenderer.h"
 #include "render/shader/ShaderBufferStruct.h"
 
-namespace core { namespace ECS { namespace components {
+namespace ECS { namespace components {
 
 	struct CullingData
 	{
@@ -27,4 +27,4 @@ namespace core { namespace ECS { namespace components {
 		};
 	};
 
-} } }
+} }

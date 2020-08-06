@@ -15,7 +15,9 @@
 
 #define DEBUG_LOG false
 
-namespace core { namespace render { namespace graph {
+using namespace Device;
+
+namespace render { namespace graph {
 
 	using namespace synchronization;
 
@@ -427,7 +429,7 @@ namespace core { namespace render { namespace graph {
 	{
 		OPTICK_EVENT_DYNAMIC(pass->name.c_str());
 		bool is_graphics = !pass->is_compute;
-		core::Device::PipelineBindPoint binding_point = is_graphics ? core::Device::PipelineBindPoint::Graphics : core::Device::PipelineBindPoint::Compute;
+		PipelineBindPoint binding_point = is_graphics ? PipelineBindPoint::Graphics : PipelineBindPoint::Compute;
 
 		auto* context = Engine::GetVulkanContext();
 		auto* state = context->GetRenderState();
@@ -469,7 +471,7 @@ namespace core { namespace render { namespace graph {
 		context->EndDebugMarker(*command_buffer);
 		state->EndRecording();
 
-		core::Device::FrameCommandBufferData data(
+		FrameCommandBufferData data(
 			command_buffer->GetCommandBuffer(),
 			pass->signal_semaphore,
 			std::move(pass->wait_semaphores),
@@ -535,4 +537,4 @@ namespace core { namespace render { namespace graph {
 		in_flight_semaphores.erase(remove_pos, in_flight_semaphores.end());
 	}
 
-} } }
+} }

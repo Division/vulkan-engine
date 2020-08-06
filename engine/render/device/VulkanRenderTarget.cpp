@@ -5,7 +5,7 @@
 #include "VulkanRenderPass.h"
 #include "VulkanSwapchain.h"
 
-namespace core { namespace Device {
+namespace Device {
 
 	vk::ImageView VulkanRenderTargetAttachment::GetImageView() const 
 	{ 
@@ -102,4 +102,4 @@ namespace core { namespace Device {
 		framebuffer = device.createFramebufferUnique(framebuffer_create_info);
 	}
 
-} }
+}

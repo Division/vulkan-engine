@@ -3,7 +3,7 @@
 #include "CommonIncludes.h"
 #include "render/debug/DebugUI.h"
 
-namespace core { namespace system {
+namespace System {
 
 	enum class Key : int {
 		Down = 0,
@@ -57,6 +57,4 @@ namespace core { namespace system {
 		vec2 _mouseDelta;
 	};
 
-} }
-
-
+}

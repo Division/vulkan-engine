@@ -16,8 +16,7 @@ const vec3 DIRECTION_RIGHT = -DIRECTION_LEFT;
 const vec3 DIRECTION_TOP = vec3(1, 0, 1);
 const vec3 DIRECTION_BOTTOM = -DIRECTION_TOP;
 
-using namespace core;
-using namespace core::system;
+using namespace system;
 
 void PlayerController::start() {
   diffuse = loader::LoadTexture("resources/models/dwarf/dwarf_texture_diffuse.jpg");

@@ -19,15 +19,12 @@ class PlayerController;
 class Material;
 class LightObject;
 
-namespace core
+namespace Device
 {
-	namespace Device
-	{
-		class Texture;
-	}
+	class Texture;
 }
 
-class Game : public core::IGame {
+class Game : public IGame {
 public:
 	Game();
 	~Game();
@@ -36,26 +33,26 @@ public:
 	void cleanup();
 
 private:
-	core::ECS::EntityID CreateCubeEntity(vec3 position, core::ECS::EntityID parent);
+	ECS::EntityID CreateCubeEntity(vec3 position, ECS::EntityID parent);
 
 private:
 	std::shared_ptr<FollowCamera> camera;
 	std::shared_ptr<ModelBundle> player_model;
 
-	core::ECS::EntityID entity1;
-	core::ECS::EntityID entity2;
-	core::ECS::EntityID plane;
+	ECS::EntityID entity1;
+	ECS::EntityID entity2;
+	ECS::EntityID plane;
 
 	std::shared_ptr<Material> material_light_only;
 	std::shared_ptr<Material> material_no_light;
 	std::shared_ptr<Material> material_default;
 	std::shared_ptr<Mesh> box_mesh;
 	std::shared_ptr<Mesh> plane_mesh;
-	std::shared_ptr<core::Device::Texture> lama_tex;
-	std::shared_ptr<core::Device::Texture> environment;
+	std::shared_ptr<Device::Texture> lama_tex;
+	std::shared_ptr<Device::Texture> environment;
 
-	core::ECS::EntityManager* manager;
-	core::ECS::TransformGraph* graph;
+	ECS::EntityManager* manager;
+	ECS::TransformGraph* graph;
 
 	std::shared_ptr<LightObject> light;
 

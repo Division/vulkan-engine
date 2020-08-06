@@ -50,11 +50,11 @@ namespace Resources
 		void* resource_memory;
 	};
 
-	template <typename T, core::Memory::Tag Tag = core::Memory::Tag::UnknownResource>
+	template <typename T, Memory::Tag Tag = Memory::Tag::UnknownResource>
 	class Resource : public ResourceBase
 	{
 	private:
-		using Allocator = core::Memory::TaggedAllocator<T, Tag>;
+		using Allocator = Memory::TaggedAllocator<T, Tag>;
 
 	public:
 
@@ -92,8 +92,6 @@ namespace Resources
 	class Handle
 	{
 	public:
-//		static_assert(std::is_base_of<Resource, T>::value, "T must derive from Resources::Resource");
-
 		Handle() : resource(nullptr) {}
 
 		explicit Handle(const std::wstring& filename)

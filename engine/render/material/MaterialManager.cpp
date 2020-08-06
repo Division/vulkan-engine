@@ -1,7 +1,7 @@
 #include "MaterialManager.h"
 #include "Material.h"
 
-namespace core { namespace render {
+namespace render {
 
 	MaterialManager::~MaterialManager() = default;
 	MaterialManager::MaterialManager() = default;
@@ -27,4 +27,4 @@ namespace core { namespace render {
 		return it != material_map.end() ? it->second.get() : nullptr;
 	}
 	
-} }
+}

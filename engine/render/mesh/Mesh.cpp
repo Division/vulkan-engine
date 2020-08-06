@@ -14,25 +14,25 @@ const int JOINT_PER_VERTEX_MAX = Mesh::JOINT_PER_VERTEX_MAX;
 const int JOINTS_MAX = Mesh::JOINTS_MAX;
 
 const int VERTEX_SIZE = 3;
-const core::Device::Format VERTEX_FORMAT = core::Device::Format::R32G32B32_float;
+const Device::Format VERTEX_FORMAT = Device::Format::R32G32B32_float;
 
 const int NORMAL_SIZE = 3;
-const core::Device::Format NORMAL_FORMAT = core::Device::Format::R32G32B32_float;
+const Device::Format NORMAL_FORMAT = Device::Format::R32G32B32_float;
 
 const int TEXCOORD_SIZE = 2;
-const core::Device::Format TEXCOORD_FORMAT = core::Device::Format::R32G32_float;
+const Device::Format TEXCOORD_FORMAT = Device::Format::R32G32_float;
 
 const int CORNER_SIZE = 2;
-const core::Device::Format CORNER_FORMAT = core::Device::Format::R32G32_float;
+const Device::Format CORNER_FORMAT = Device::Format::R32G32_float;
 
 const int JOINT_INDEX_SIZE = JOINT_PER_VERTEX_MAX;
-const core::Device::Format JOINT_INDEX_FORMAT = core::Device::Format::R32G32B32_float;
+const Device::Format JOINT_INDEX_FORMAT = Device::Format::R32G32B32_float;
 
 const int WEIGHT_SIZE = JOINT_PER_VERTEX_MAX;
-const core::Device::Format WEIGHTS_FORMAT = core::Device::Format::R32G32B32_float;
+const Device::Format WEIGHTS_FORMAT = Device::Format::R32G32B32_float;
 
 const int COLOR_SIZE = 4;
-const core::Device::Format COLOR_FORMAT = core::Device::Format::R32G32B32A32_float;
+const Device::Format COLOR_FORMAT = Device::Format::R32G32B32A32_float;
 
 #define BUFFER_OFFSET(i) ((char *)NULL + (i))
 
@@ -334,19 +334,19 @@ void Mesh::createBuffer() {
       last_frame_index_buffer = std::move(_indexBuffer);
   }
 
-  auto vertex_initializer = core::Device::VulkanBufferInitializer(data_buffer.size())
+  auto vertex_initializer = Device::VulkanBufferInitializer(data_buffer.size())
 	  .SetVertex()
 	  .MemoryUsage(VMA_MEMORY_USAGE_GPU_ONLY)
 	  .Data(data_buffer.data());
-  _vertexBuffer = std::make_unique<core::Device::VulkanBuffer>(vertex_initializer);
+  _vertexBuffer = std::make_unique<Device::VulkanBuffer>(vertex_initializer);
 
   if (_hasIndices) {
     unsigned int indexSize = (unsigned int)_indices.size() * (unsigned int)sizeof(uint16_t);
-	auto index_initializer = core::Device::VulkanBufferInitializer(indexSize)
+	auto index_initializer = Device::VulkanBufferInitializer(indexSize)
 		.SetIndex()
 		.MemoryUsage(VMA_MEMORY_USAGE_GPU_ONLY)
 		.Data(_indices.data());
-	_indexBuffer = std::make_unique<core::Device::VulkanBuffer>(index_initializer);
+	_indexBuffer = std::make_unique<Device::VulkanBuffer>(index_initializer);
   }
 
   _calculateAABB();

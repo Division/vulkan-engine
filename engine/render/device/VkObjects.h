@@ -3,7 +3,7 @@
 #include "CommonIncludes.h"
 #include "VulkanCaps.h"
 
-namespace core { namespace Device {
+namespace Device {
 	
 	class VulkanCommandPool;
 
@@ -53,4 +53,4 @@ namespace core { namespace Device {
 
 	};
 
-} }
+}

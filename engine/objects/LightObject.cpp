@@ -10,6 +10,8 @@
 #include "utils/Math.h"
 #include "utils/MeshGeneration.h"
 
+using namespace Device;
+
 LightObject::LightObject() : GameObject() {
   _cullingData.type = CullingData::Type::Sphere;
   _layer = ~0u;
@@ -30,8 +32,8 @@ ShaderBufferStruct::Light LightObject::getLightStruct() const {
   result.direction = glm::normalize(transform()->forward());
 
   if (castShadows()) {
-    result.shadowmapScale = vec2(_viewport.z, _viewport.w) / (float)core::render::SceneRenderer::ShadowAtlasSize();
-    result.shadowmapOffset= vec2(_viewport.x, _viewport.y) / (float)core::render::SceneRenderer::ShadowAtlasSize();
+    result.shadowmapScale = vec2(_viewport.z, _viewport.w) / (float)render::SceneRenderer::ShadowAtlasSize();
+    result.shadowmapOffset= vec2(_viewport.x, _viewport.y) / (float)render::SceneRenderer::ShadowAtlasSize();
     result.projectionMatrix = cameraViewProjectionMatrix();
   } else {
     result.shadowmapScale = vec2(0, 0);
@@ -88,7 +90,7 @@ void LightObject::postUpdate() {
 
   if (_type == LightObjectType::Spot || castShadows())
   {
-      auto debug_draw = core::Engine::Get()->GetDebugDraw();
+      auto debug_draw = Engine::Get()->GetDebugDraw();
       debug_draw->DrawFrustum(_projectionMatrix * _viewMatrix, glm::vec4(1,1,1,1));
   }
 }

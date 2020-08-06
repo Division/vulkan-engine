@@ -8,21 +8,18 @@
 
 class Mesh;
 
-namespace core
+namespace ECS
 {
-	namespace ECS
+	namespace components
 	{
-		namespace components
-		{
-			struct DrawCall;
-		}
+		struct DrawCall;
 	}
-
-	class VertexLayout;
 }
 
+class VertexLayout;
 
-namespace core { namespace Device {
+
+namespace Device {
 
 	class ShaderProgram;
 	class VulkanPipeline;
@@ -257,4 +254,4 @@ namespace core { namespace Device {
 		std::unordered_map<uint32_t, std::array<VulkanCommandBuffer*, caps::MAX_FRAMES_IN_FLIGHT>> command_buffers;
 	};
 
-} }
+}

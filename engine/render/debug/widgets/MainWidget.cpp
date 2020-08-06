@@ -2,7 +2,7 @@
 #include "imgui/imgui.h"
 #include "render/debug/DebugUI.h"
 
-namespace core { namespace render {
+namespace render {
 
 	namespace DebugUI
 	{
@@ -28,4 +28,4 @@ namespace core { namespace render {
 	}
 
 
-} }
+}

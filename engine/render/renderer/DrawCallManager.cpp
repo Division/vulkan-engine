@@ -10,7 +10,7 @@
 #include "utils/Pool.h"
 #include "render/material/Material.h"
 
-namespace core { namespace render {
+namespace render {
 
 	using namespace ECS;
 	using namespace Device;
@@ -102,4 +102,4 @@ namespace core { namespace render {
 		obtained_draw_call_lists.clear();
 	}
 
-} }
+}

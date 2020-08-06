@@ -4,9 +4,7 @@
 #include "render/buffer/DynamicBuffer.h"
 #include "render/shader/ShaderBufferStruct.h"
 
-namespace core { namespace render {
-
-	using namespace Device;
+namespace render {
 
 	class SceneBuffers
 	{
@@ -18,10 +16,10 @@ namespace core { namespace render {
 		auto* GetSkinningMatricesBuffer() const { return skinning_matrices.get(); };
 
 	private:
-		std::unique_ptr<DynamicBuffer<ShaderBufferStruct::Camera>> camera_buffer;
-		std::unique_ptr<DynamicBuffer<ShaderBufferStruct::ObjectParams>> object_params;
-		std::unique_ptr<DynamicBuffer<ShaderBufferStruct::SkinningMatrices>> skinning_matrices;
+		std::unique_ptr<Device::DynamicBuffer<Device::ShaderBufferStruct::Camera>> camera_buffer;
+		std::unique_ptr<Device::DynamicBuffer<Device::ShaderBufferStruct::ObjectParams>> object_params;
+		std::unique_ptr<Device::DynamicBuffer<Device::ShaderBufferStruct::SkinningMatrices>> skinning_matrices;
 
 	};
 
-} }
+}

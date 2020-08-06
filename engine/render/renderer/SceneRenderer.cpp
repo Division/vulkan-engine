@@ -45,10 +45,9 @@
 
 #include <functional>
 
-using namespace core;
-using namespace core::Device;
+using namespace Device;
 
-namespace core { namespace render {
+namespace render {
 
 	using namespace ECS;
 	using namespace profiler;
@@ -514,4 +513,4 @@ namespace core { namespace render {
 		assert(global_shader_binding_camera_index != -1);
 	}
 
-} }
+}

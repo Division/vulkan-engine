@@ -30,7 +30,7 @@ protected:
 protected:
   GameObjectPtr _rootJoint = nullptr;
   SkinningDataPtr _skinningData;
-  ShaderBufferStruct::SkinningMatrices _skinningMatrices;
+  Device::ShaderBufferStruct::SkinningMatrices _skinningMatrices;
   std::unordered_map<std::string, GameObjectPtr> _jointMap;
   std::vector<GameObjectPtr> _jointList;
 };

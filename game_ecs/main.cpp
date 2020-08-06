@@ -4,12 +4,12 @@
 
 int main(int argc, char* argv[]) {
 
-	core::Memory::Profiler::MakeSnapshot();
+	Memory::Profiler::MakeSnapshot();
 	{
-		core::Engine engine(std::make_unique<Game>());
+		Engine engine(std::make_unique<Game>());
 		engine.MainLoop();
 	}
-	core::Memory::Profiler::ValidateSnapshot();
+	Memory::Profiler::ValidateSnapshot();
 
 	return 0;
 }

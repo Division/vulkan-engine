@@ -5,7 +5,7 @@
 
 class Material;
 
-namespace core { namespace render {
+namespace render {
 
 	class MaterialManager
 	{
@@ -20,4 +20,4 @@ namespace core { namespace render {
 		mutable std::mutex mutex;
 	};
 
-} }
+}

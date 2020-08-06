@@ -8,7 +8,7 @@
 #include "EntityChunks.h"
 #include "components/Entity.h"
 
-namespace core { namespace ECS {
+namespace ECS {
 
 	class EntityManager
 	{
@@ -197,4 +197,4 @@ namespace core { namespace ECS {
 		std::vector<EntityCallback> entity_destroy_callbacks;
 	};
 
-} }
+}

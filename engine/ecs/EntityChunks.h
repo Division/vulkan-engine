@@ -16,7 +16,7 @@
 #include "memory/Allocator.h"
 #include "memory/Containers.h"
 
-namespace core { namespace ECS {
+namespace ECS {
 
 	const uint32_t MAX_COMPONENTS = 16;
 	const uint32_t CHUNK_SIZE = 16 * 1024;
@@ -361,4 +361,4 @@ namespace core { namespace ECS {
 		void* memory;
 	};
 
-} }
+}

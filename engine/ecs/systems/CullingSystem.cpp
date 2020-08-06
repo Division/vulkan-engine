@@ -2,7 +2,7 @@
 #include "ecs/components/DrawCall.h"
 #include "render/renderer/ICameraParamsProvider.h"
 
-namespace core { namespace ECS { namespace systems {
+namespace ECS { namespace systems {
 
 	void CullingSystem::Process(Chunk* chunk)
 	{
@@ -22,4 +22,4 @@ namespace core { namespace ECS { namespace systems {
 		}
 	}
 
-} } }
+} }

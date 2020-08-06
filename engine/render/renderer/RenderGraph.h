@@ -7,26 +7,22 @@
 #include <mutex>
 #include "render/debug/Profiler.h"
 
-namespace core
+namespace Device
 {
-	namespace Device
-	{
-		class Texture;
-		class VulkanBuffer;
-		class VulkanRenderTarget;
-		class VulkanRenderPass;
-		class VulkanSwapchain;
-		class VulkanRenderTargetAttachment;
-		class VulkanRenderState;
-		struct VulkanRenderPassInitializer;
-		struct VulkanRenderTargetInitializer;
-	}
+	class Texture;
+	class VulkanBuffer;
+	class VulkanRenderTarget;
+	class VulkanRenderPass;
+	class VulkanSwapchain;
+	class VulkanRenderTargetAttachment;
+	class VulkanRenderState;
+	struct VulkanRenderPassInitializer;
+	struct VulkanRenderTargetInitializer;
 }
 
 
-namespace core { namespace render { namespace graph {
 
-	using namespace core::Device;
+namespace render { namespace graph {
 
 	enum class ResourceType : int
 	{
@@ -71,16 +67,16 @@ namespace core { namespace render { namespace graph {
 		ResourceWrapper(ResourceType type, void* pointer) : type(type), resource_pointer(pointer) {}
 
 
-		VulkanBuffer* GetBuffer() const
+		Device::VulkanBuffer* GetBuffer() const
 		{
 			if (type != ResourceType::Buffer) return nullptr;
-			return reinterpret_cast<VulkanBuffer*>(resource_pointer);
+			return reinterpret_cast<Device::VulkanBuffer*>(resource_pointer);
 		}
 
-		VulkanRenderTargetAttachment* GetAttachment() const
+		Device::VulkanRenderTargetAttachment* GetAttachment() const
 		{
 			if (type != ResourceType::Attachment) return nullptr;
-			return reinterpret_cast<VulkanRenderTargetAttachment*>(resource_pointer);
+			return reinterpret_cast<Device::VulkanRenderTargetAttachment*>(resource_pointer);
 		}
 
 		std::vector <ResourceOperation> operations;
@@ -131,7 +127,7 @@ namespace core { namespace render { namespace graph {
 
 	struct Pass
 	{
-		typedef std::function<void(VulkanRenderState& state)> RecordCallback;
+		typedef std::function<void(Device::VulkanRenderState& state)> RecordCallback;
 
 		Pass() = default;
 		Pass(Pass&&) = default;
@@ -156,7 +152,7 @@ namespace core { namespace render { namespace graph {
 
 		vk::Semaphore signal_semaphore;
 		vk::PipelineStageFlags signal_stages;
-		SemaphoreList wait_semaphores;
+		Device::SemaphoreList wait_semaphores;
 	};
 
 	class IRenderPassBuilder
@@ -172,8 +168,8 @@ namespace core { namespace render { namespace graph {
 	class RenderGraph : public IRenderPassBuilder
 	{
 	public:
-		ResourceWrapper* RegisterAttachment(VulkanRenderTargetAttachment& attachment);
-		ResourceWrapper* RegisterBuffer(VulkanBuffer& buffer);
+		ResourceWrapper* RegisterAttachment(Device::VulkanRenderTargetAttachment& attachment);
+		ResourceWrapper* RegisterBuffer(Device::VulkanBuffer& buffer);
 
 		template<typename T>
 		T AddPass(char* name, profiler::ProfilerName profiler_name, std::function<T(IRenderPassBuilder& builder)> init_callback, Pass::RecordCallback record_callback)
@@ -196,10 +192,10 @@ namespace core { namespace render { namespace graph {
 	private:
 		bool ResourceRegistered(void* resource);
 		void RecordPass(Pass* pass);
-		VulkanRenderPass* GetRenderPass(const VulkanRenderPassInitializer& initializer);
-		VulkanRenderTarget* GetRenderTarget(const VulkanRenderTargetInitializer& initializer);
-		void ApplyPreBarriers(Pass& pass, VulkanRenderState& state);
-		void ApplyPostBarriers(Pass& pass, VulkanRenderState& state);
+		Device::VulkanRenderPass* GetRenderPass(const Device::VulkanRenderPassInitializer& initializer);
+		Device::VulkanRenderTarget* GetRenderTarget(const Device::VulkanRenderTargetInitializer& initializer);
+		void ApplyPreBarriers(Pass& pass, Device::VulkanRenderState& state);
+		void ApplyPostBarriers(Pass& pass, Device::VulkanRenderState& state);
 		void RecordCommandBuffers();
 
 	private:
@@ -214,9 +210,9 @@ namespace core { namespace render { namespace graph {
 		std::vector<vk::UniqueSemaphore> semaphores;
 		std::vector<vk::Semaphore> available_semaphores;
 		std::vector<std::pair<int, vk::Semaphore>> in_flight_semaphores;
-		std::unordered_map<uint32_t, std::unique_ptr<VulkanRenderPass>> render_pass_cache;
-		std::unordered_map<uint32_t, std::unique_ptr<VulkanRenderTarget>> render_target_cache;
+		std::unordered_map<uint32_t, std::unique_ptr<Device::VulkanRenderPass>> render_pass_cache;
+		std::unordered_map<uint32_t, std::unique_ptr<Device::VulkanRenderTarget>> render_target_cache;
 		std::mutex semaphore_mutex;
 	};
 
-} } }
+} }

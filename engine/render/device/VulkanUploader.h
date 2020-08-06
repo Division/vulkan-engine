@@ -4,7 +4,7 @@
 #include "VulkanCaps.h"
 #include "render/buffer/VulkanBuffer.h"
 
-namespace core { namespace Device {
+namespace Device {
 
 	class VulkanBuffer;
 	class VulkanCommandBuffer;
@@ -65,4 +65,4 @@ namespace core { namespace Device {
 		unsigned current_frame = 0;
 	};
 
-} }
+}

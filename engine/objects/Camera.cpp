@@ -10,7 +10,7 @@
 //#include "system/Window.h"
 
 void Camera::_updateProjection() {
-  auto* swapchain = core::Engine::Get()->GetVulkanContext()->GetSwapchain();
+  auto* swapchain = Engine::Get()->GetVulkanContext()->GetSwapchain();
   float width = swapchain->GetWidth();
   float height = swapchain->GetHeight();
   float aspect = width / height;
@@ -38,7 +38,7 @@ void Camera::_updateView() {
 }
 
 void Camera::_updateViewport() {
-	auto* swapchain = core::Engine::Get()->GetVulkanContext()->GetSwapchain();
+	auto* swapchain = Engine::Get()->GetVulkanContext()->GetSwapchain();
 	_viewport = vec4(0, 0, swapchain->GetWidth(), swapchain->GetHeight());
 }
 

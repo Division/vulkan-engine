@@ -2,12 +2,10 @@
 
 #include "CommonIncludes.h"
 
-namespace core
-{
-	class VertexLayout;
-}
+class VertexLayout;
 
-namespace core { namespace Device {
+
+namespace Device {
 
 	class ShaderProgram;
 	class VulkanRenderPass;
@@ -44,4 +42,4 @@ namespace core { namespace Device {
 		vk::UniquePipeline pipeline;
 	};
 
-} }
+}

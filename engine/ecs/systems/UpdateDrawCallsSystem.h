@@ -6,15 +6,12 @@
 #include "ecs/components/DrawCall.h"
 #include "render/renderer/DrawCallManager.h"
 
-namespace core
+namespace render
 {
-	namespace render
-	{
-		class SceneBuffers;
-	}
+	class SceneBuffers;
 }
 
-namespace core { namespace ECS { namespace systems {
+namespace ECS { namespace systems {
 
 	// Generates list of rops + render queue from the MeshRenderer components
 	class CreateDrawCallsSystem : public System
@@ -48,4 +45,4 @@ namespace core { namespace ECS { namespace systems {
 		render::SceneBuffers& scene_buffers;
 	};
 
-} } }
+} }

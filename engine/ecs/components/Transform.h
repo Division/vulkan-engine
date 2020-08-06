@@ -3,7 +3,7 @@
 #include "CommonIncludes.h"
 #include "Entity.h"
 
-namespace core { namespace ECS { namespace components {
+namespace ECS { namespace components {
 
 	struct Transform
 	{
@@ -47,4 +47,4 @@ namespace core { namespace ECS { namespace components {
 		EntityID parent_id;
 	};
 
-} } }
+} }

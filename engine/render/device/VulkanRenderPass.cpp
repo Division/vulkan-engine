@@ -3,7 +3,7 @@
 #include "VulkanContext.h"
 #include "VulkanRenderTarget.h"
 
-namespace core { namespace Device {
+namespace Device {
 
 	VulkanRenderPassInitializer& VulkanRenderPassInitializer::AddAttachment(const VulkanRenderTargetAttachment& attachment)
 	{
@@ -56,4 +56,4 @@ namespace core { namespace Device {
 
 	std::atomic_int VulkanRenderPass::counter = 0;
 
-} }
+}

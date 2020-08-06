@@ -5,12 +5,12 @@
 
 Material::Material()
 {
-	vertex_hash = ShaderCache::GetShaderPathHash(shader_path + L".vert");
-	vertex_hash_depth_only = ShaderCache::GetShaderPathHash(shader_path + L".vert", { "DEPTH_ONLY" });
-	fragment_hash = ShaderCache::GetShaderPathHash(shader_path + L".frag");
+	vertex_hash = Device::ShaderCache::GetShaderPathHash(shader_path + L".vert");
+	vertex_hash_depth_only = Device::ShaderCache::GetShaderPathHash(shader_path + L".vert", { "DEPTH_ONLY" });
+	fragment_hash = Device::ShaderCache::GetShaderPathHash(shader_path + L".frag");
 }
 
-void Material::texture0(std::shared_ptr<Texture> texture) {
+void Material::texture0(std::shared_ptr<Device::Texture> texture) {
 	_texture0 = texture;
 	
 	if ((bool)texture != _hasTexture0) {
@@ -19,7 +19,7 @@ void Material::texture0(std::shared_ptr<Texture> texture) {
 	}
 }
 
-void Material::normalMap(std::shared_ptr<Texture> normalMap) {
+void Material::normalMap(std::shared_ptr<Device::Texture> normalMap) {
 	_normalMap = normalMap;
 
 	if ((bool)normalMap != _hasNormalMap) {

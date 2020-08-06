@@ -1,6 +1,6 @@
 #include "Input.h"
 
-namespace core { namespace system {
+namespace System {
 
 	const std::unordered_map<int, int> INPUT_CONVERSION = {
 		{ (int)Key::Left, GLFW_KEY_LEFT },
@@ -49,4 +49,4 @@ namespace core { namespace system {
 		_mouseDelta = _mousePos - _prevMousePos;
 	}
 
-} }
+}

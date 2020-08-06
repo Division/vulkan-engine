@@ -5,7 +5,7 @@
 #include "render/device/VkObjects.h"
 #include "render/device/VulkanUtils.h"
 
-namespace core { namespace Device {
+namespace Device {
 
 	VulkanBuffer::VulkanBuffer(VulkanBufferInitializer initializer)
 	{
@@ -66,4 +66,4 @@ namespace core { namespace Device {
 		vmaUnmapMemory(allocator, allocation);
 	}
 
-} }
+}

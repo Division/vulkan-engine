@@ -1,6 +1,6 @@
 #include "PoolAllocator.h"
 
-namespace core { namespace Memory {
+namespace Memory {
 
 	PoolAllocatorBase::PoolAllocatorBase(size_t element_size, size_t count, void* memory)
 		: element_size(element_size)
@@ -54,4 +54,4 @@ namespace core { namespace Memory {
 		}
 	}
 
-} }
+}

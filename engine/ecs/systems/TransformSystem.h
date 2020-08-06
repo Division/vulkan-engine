@@ -3,7 +3,7 @@
 #include "ecs/System.h"
 #include "ecs/TransformGraph.h"
 
-namespace core { namespace ECS { namespace systems {
+namespace ECS { namespace systems {
 
 	class TransformSystem : public System
 	{
@@ -33,4 +33,4 @@ namespace core { namespace ECS { namespace systems {
 		void Process(Chunk* chunk) override;
 	};
 
-} } }
+} }

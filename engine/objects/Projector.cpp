@@ -7,6 +7,8 @@
 #include "render/shader/ShaderBufferStruct.h"
 #include "render/renderer/SceneRenderer.h"
 
+using namespace Device;
+
 void Projector::postUpdate() {
   _viewMatrix = glm::inverse(transform()->worldMatrix());
   _viewProjection = _getProjection() * _viewMatrix;
@@ -54,8 +56,8 @@ ShaderBufferStruct::Projector Projector::getProjectorStruct() const {
   result.mask = cameraVisibilityMask();
 
   if (castShadows()) {
-	  result.shadowmapScale = vec2(_viewport.z, _viewport.w) / (float)core::render::SceneRenderer::ShadowAtlasSize();
-	  result.shadowmapOffset= vec2(_viewport.x, _viewport.y) / (float)core::render::SceneRenderer::ShadowAtlasSize();
+	  result.shadowmapScale = vec2(_viewport.z, _viewport.w) / (float)render::SceneRenderer::ShadowAtlasSize();
+	  result.shadowmapOffset= vec2(_viewport.x, _viewport.y) / (float)render::SceneRenderer::ShadowAtlasSize();
   } else {
 	  result.shadowmapScale = vec2(0, 0);
   }

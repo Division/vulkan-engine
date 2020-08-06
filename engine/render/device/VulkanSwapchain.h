@@ -3,7 +3,7 @@
 #include "CommonIncludes.h"
 #include "Types.h"
 
-namespace core { namespace Device {
+namespace Device {
 
 	class VulkanRenderPass;
 	class VulkanRenderTarget;
@@ -33,4 +33,4 @@ namespace core { namespace Device {
 		std::array<std::unique_ptr<VulkanRenderTargetAttachment>, 2> color_attachments;
 	};
 
-} }
+}

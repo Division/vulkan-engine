@@ -7,17 +7,14 @@
 
 #include <memory>
 
-namespace core
-{
-	class IGame {
-	public:
-	  virtual ~IGame() = default;
-	  virtual void init() = 0;
-	  virtual void update(float dt) = 0;
-	  virtual void cleanup() = 0;
-	};
+class IGame {
+public:
+	virtual ~IGame() = default;
+	virtual void init() = 0;
+	virtual void update(float dt) = 0;
+	virtual void cleanup() = 0;
+};
 
-}
 
 
 #endif //CPPWRAPPER_IGAME_H

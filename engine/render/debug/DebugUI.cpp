@@ -17,7 +17,7 @@
 #include "widgets/EngineStats.h"
 #include "render/renderer/EnvironmentSettings.h"
 
-namespace core { namespace render { 
+namespace render { 
 	
 	namespace DebugUI
 	{
@@ -298,4 +298,4 @@ namespace core { namespace render {
 
 	}
 
-} }
+}

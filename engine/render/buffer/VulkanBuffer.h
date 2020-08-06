@@ -2,7 +2,7 @@
 #include "CommonIncludes.h"
 #include "render/device/Resource.h"
 
-namespace core { namespace Device {
+namespace Device {
 
 	enum BufferType : int
 	{
@@ -98,4 +98,4 @@ namespace core { namespace Device {
 		VmaAllocation allocation;
 	};
 
-} }
+}

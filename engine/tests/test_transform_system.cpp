@@ -5,9 +5,9 @@
 #include "ecs/systems/TransformSystem.h"
 #include <array>
 
-using namespace core::ECS;
-using namespace core::ECS::components;
-using namespace core::ECS::systems;
+using namespace ECS;
+using namespace ECS::components;
+using namespace ECS::systems;
 
 TEST_CASE("ECS transform system")
 {

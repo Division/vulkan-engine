@@ -9,9 +9,7 @@ class ICameraParamsProvider;
 class LightObject;
 class Projector;
 
-namespace core { namespace render {
-
-	using namespace core::Device;
+namespace render {
 
 	struct LightGridCell {
 		int offset;
@@ -30,18 +28,18 @@ namespace core { namespace render {
 		void appendLights(const std::vector<std::shared_ptr<LightObject>> &lights, ICameraParamsProvider* camera);
 		void appendProjectors(const std::vector<std::shared_ptr<Projector>> &projectors, ICameraParamsProvider* camera);
 		void upload();
-		DynamicBuffer<ShaderBufferStruct::Light>* GetLightsBuffer() const { return lights[0].get(); };
-		DynamicBuffer<ShaderBufferStruct::Projector>* GetProjectorBuffer() const { return projectors[0].get(); };
-		DynamicBuffer<char>* GetLightIndexBuffer() const { return light_index[0].get(); };
-		DynamicBuffer<char>* GetLightGridBuffer() const { return light_grid[0].get(); };
+		Device::DynamicBuffer<Device::ShaderBufferStruct::Light>* GetLightsBuffer() const { return lights[0].get(); };
+		Device::DynamicBuffer<Device::ShaderBufferStruct::Projector>* GetProjectorBuffer() const { return projectors[0].get(); };
+		Device::DynamicBuffer<char>* GetLightIndexBuffer() const { return light_index[0].get(); };
+		Device::DynamicBuffer<char>* GetLightGridBuffer() const { return light_grid[0].get(); };
 
 		void OnRecreateSwapchain(int32_t width, int32_t height);
 
 	private:
-		std::unique_ptr<DynamicBuffer<ShaderBufferStruct::Light>> lights[2];
-		std::unique_ptr<DynamicBuffer<ShaderBufferStruct::Projector>> projectors[2];
-		std::unique_ptr<DynamicBuffer<char>> light_index[2];
-		std::unique_ptr<DynamicBuffer<char>> light_grid[2];
+		std::unique_ptr<Device::DynamicBuffer<Device::ShaderBufferStruct::Light>> lights[2];
+		std::unique_ptr<Device::DynamicBuffer<Device::ShaderBufferStruct::Projector>> projectors[2];
+		std::unique_ptr<Device::DynamicBuffer<char>> light_index[2];
+		std::unique_ptr<Device::DynamicBuffer<char>> light_grid[2];
 
 		uint32_t _lightCount;
 		uint32_t _projectorCount;
@@ -65,4 +63,4 @@ namespace core { namespace render {
 		std::vector<char> temp_data;
 	};
 
-} }
+}

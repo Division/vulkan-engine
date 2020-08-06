@@ -2,17 +2,14 @@
 
 #include "render/renderer/ICameraParamsProvider.h"
 
-namespace core
+namespace render
 {
-	namespace render
-	{
-		class ShadowMap;
-	}
+	class ShadowMap;
 }
 
 class IShadowCaster : public ICameraParamsProvider {
 public:
-  friend class core::render::ShadowMap;
+  friend class render::ShadowMap;
 
   ~IShadowCaster() override = default;
   virtual bool castShadows() const = 0;

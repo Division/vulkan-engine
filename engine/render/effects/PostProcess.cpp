@@ -16,11 +16,12 @@
 #include "ecs/components/DrawCall.h"
 #include "Engine.h"
 
-namespace core::render::effects 
+namespace render::effects 
 
 {
-	using namespace core::render::graph;
-	using namespace core::ECS;
+	using namespace Device;
+	using namespace render::graph;
+	using namespace ECS;
 	using namespace profiler;
 
 	PostProcess::PostProcess(ShaderCache& shader_cache, EnvironmentSettings& environment_settings)

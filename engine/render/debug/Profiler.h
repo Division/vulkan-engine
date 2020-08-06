@@ -3,12 +3,12 @@
 #include <stdint.h>
 #include <array>
 
-namespace core::Device
+namespace Device
 {
 	class VulkanCommandBuffer;
 }
 
-namespace core::render::profiler
+namespace render::profiler
 {
 	enum class ProfilerName : uint32_t
 	{
@@ -37,7 +37,7 @@ namespace core::render::profiler
 	void Initialize();
 	void Deinitialize();
 	void Update();
-	void StartMeasurement(core::Device::VulkanCommandBuffer& command_buffer, uint32_t pass_index, ProfilerName id);
-	void FinishMeasurement(core::Device::VulkanCommandBuffer& command_buffer, uint32_t pass_index, ProfilerName id);
+	void StartMeasurement(Device::VulkanCommandBuffer& command_buffer, uint32_t pass_index, ProfilerName id);
+	void FinishMeasurement(Device::VulkanCommandBuffer& command_buffer, uint32_t pass_index, ProfilerName id);
 	void GetProfilerTimings(ProfilerTimings& out_timings);
 }

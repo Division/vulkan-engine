@@ -4,7 +4,7 @@
 #include "ecs/System.h"
 #include "render/renderer/IRenderer.h"
 
-namespace core { namespace ECS { namespace systems {
+namespace ECS { namespace systems {
 
 	// Updates MeshRenderer component with proper data
 	class UpdateRendererSystem : public System
@@ -19,4 +19,4 @@ namespace core { namespace ECS { namespace systems {
 
 	};
 
-} } }
+} }

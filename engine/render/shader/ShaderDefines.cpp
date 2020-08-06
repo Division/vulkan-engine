@@ -1,6 +1,6 @@
 ﻿#include "ShaderDefines.h"
 
-namespace core { namespace Device {
+namespace Device {
 
 	const std::map<std::string, VertexAttrib> VERTEX_ATTRIB_NAMES =
 	{
@@ -28,4 +28,4 @@ namespace core { namespace Device {
 		{ ShaderCaps::Skinning, "SKINNING" }
 	};
 
-} }
+}

@@ -5,7 +5,7 @@
 #include "render/mesh/VertexAttrib.h"
 #include "ShaderResource.h"
 
-namespace core { namespace Device {
+namespace Device {
 
 	class ReflectionInfo
 	{
@@ -72,4 +72,4 @@ namespace core { namespace Device {
 
 	};
 
-} }
+}

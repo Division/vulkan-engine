@@ -5,7 +5,7 @@
 
 class ICameraParamsProvider;
 
-namespace core { namespace ECS { namespace systems {
+namespace ECS { namespace systems {
 
 	// Uploads draw call data to the GPU buffers
 	class CullingSystem : public System
@@ -28,4 +28,4 @@ namespace core { namespace ECS { namespace systems {
 		render::DrawCallList* draw_call_list;
 	};
 
-} } }
+} }

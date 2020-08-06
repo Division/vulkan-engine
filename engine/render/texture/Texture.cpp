@@ -7,7 +7,7 @@
 #include "render/buffer/VulkanBuffer.h"
 #include "utils/Math.h"
 
-namespace core { namespace Device {
+namespace Device {
 
 	Texture::Texture(const TextureInitializer& initializer)
 	{
@@ -191,10 +191,15 @@ namespace core { namespace Device {
 		return FastHash(&image_view, sizeof(image_view));
 	}
 
+	Texture::Handle Texture::Create(const TextureInitializer& initializer)
+	{
+		return Texture::Handle(std::make_unique<Texture>(initializer));
+	}
+
 	Texture::~Texture() 
 	{
 		auto allocator = Engine::GetVulkanContext()->GetAllocator();
 		vmaDestroyImage(allocator, image, allocation);
 	}
 
-} }
+}

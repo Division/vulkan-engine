@@ -2,7 +2,7 @@
 #include "ShaderDefines.h"
 #include "ShaderResource.h"
 
-namespace core { namespace Device {
+namespace Device {
 
 	ReflectionInfo::ReflectionInfo(uint32_t* spirv_data, size_t count)
 		: compiler(spirv_data, count)
@@ -83,4 +83,4 @@ namespace core { namespace Device {
 		}
 	}
 
-} }
+}

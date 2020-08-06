@@ -8,7 +8,7 @@
 #include "Engine.h"
 #include "render/shader/ShaderCache.h"
 
-namespace core { namespace render {
+namespace render {
 
     using namespace ECS;
 
@@ -164,4 +164,4 @@ namespace core { namespace render {
         point_colors.clear();
     }
 
-} }
+}

@@ -5,7 +5,7 @@
 #include "VulkanRenderPass.h"
 #include "VulkanRenderTarget.h"
 
-namespace core { namespace Device {
+namespace Device {
 
 	struct SwapChainSupportDetails
 	{
@@ -144,4 +144,4 @@ namespace core { namespace Device {
 			Engine::Get()->GetContext()->AssignDebugName((uint64_t)(VkImage)images[i], vk::DebugReportObjectTypeEXT::eSwapchainKHR, ("Swapchain Image " + std::to_string(i + 1)).c_str());
 	}
 
-} }
+}

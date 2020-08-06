@@ -1,17 +1,12 @@
 #pragma once
 
-namespace core
+class NonCopyable
 {
-
-	class NonCopyable
-	{
-	public:
-		NonCopyable(const NonCopyable&) = delete;
-		NonCopyable& operator=(const NonCopyable&) = delete;
+public:
+	NonCopyable(const NonCopyable&) = delete;
+	NonCopyable& operator=(const NonCopyable&) = delete;
 	
-	protected:
-		NonCopyable() = default;
-		virtual ~NonCopyable() = default;
-	};
-
-}
+protected:
+	NonCopyable() = default;
+	virtual ~NonCopyable() = default;
+};

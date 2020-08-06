@@ -3,7 +3,7 @@
 #include "CommonIncludes.h"
 #include "ShaderCaps.h"
 
-namespace core { namespace Device {
+namespace Device {
 
 	class ShaderModule;
 	class ShaderProgram;
@@ -34,4 +34,4 @@ namespace core { namespace Device {
 
 	};
 
-} }
+}

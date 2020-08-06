@@ -3,7 +3,7 @@
 
 #include "ShaderBindings.h"
 
-namespace core { namespace Device {
+namespace Device {
 
 	void ShaderBindings::AddTextureBindingSafe(unsigned index, const Texture* texture)
 	{
@@ -79,4 +79,4 @@ namespace core { namespace Device {
 		dynamic_offsets.clear();
 	}
 
-} }
+}

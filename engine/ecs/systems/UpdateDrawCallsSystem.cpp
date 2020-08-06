@@ -6,9 +6,9 @@
 #include "render/renderer/SceneBuffers.h"
 #include "Engine.h"
 
-namespace core { namespace ECS { namespace systems {
+namespace ECS { namespace systems {
 
-	using namespace core::ECS::components;
+	using namespace ECS::components;
 
 	void CreateDrawCallsSystem::Process(Chunk* chunk)
 	{
@@ -57,4 +57,4 @@ namespace core { namespace ECS { namespace systems {
 		}
 	}
 
-} } }
+} }

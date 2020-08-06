@@ -4,7 +4,7 @@
 #include "Types.h"
 #include "utils/Math.h"
 
-namespace core { namespace Device {
+namespace Device {
 
 	class VulkanRenderTargetAttachment;
 
@@ -101,4 +101,4 @@ namespace core { namespace Device {
 		vk::Format depth_format = vk::Format::eD24UnormS8Uint;
 	};
 
-} }
+}

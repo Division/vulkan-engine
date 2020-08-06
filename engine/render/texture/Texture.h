@@ -3,8 +3,9 @@
 #include "CommonIncludes.h"
 #include "render/device/VulkanCaps.h"
 #include "render/device/Types.h"
+#include "render/device/Resource.h"
 
-namespace core { namespace Device {
+namespace Device {
 	
 	class VulkanBuffer;
 
@@ -106,8 +107,12 @@ namespace core { namespace Device {
 		std::string name;
 	};
 
-	class Texture {
+	class Texture : public Resource {
 	public:
+		using Handle = Handle<Texture>;
+
+		static Texture::Handle Create(const TextureInitializer& initializer);
+
 		Texture(const TextureInitializer& initializer);
 		~Texture();
 
@@ -141,4 +146,4 @@ namespace core { namespace Device {
 		void* mapped_pointer = nullptr;
 	};
 
-} }
+}

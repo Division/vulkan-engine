@@ -5,7 +5,7 @@
 #include "ShaderBindings.h"
 #include "ShaderDefines.h"
 
-namespace core { namespace Device {
+namespace Device {
 	
 	uint32_t ShaderProgram::DescriptorSet::GetBindingIndexByName(std::string name)
 	{
@@ -262,4 +262,4 @@ namespace core { namespace Device {
 		return GetBinding(address.set, address.binding);
 	}
 
-} }
+}

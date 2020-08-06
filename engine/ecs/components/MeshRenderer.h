@@ -6,7 +6,7 @@
 class Mesh;
 class Material;
 
-namespace core { namespace ECS { namespace components {
+namespace ECS { namespace components {
 
 #pragma pack(push)
 #pragma pack(1)
@@ -20,4 +20,4 @@ namespace core { namespace ECS { namespace components {
 	};
 #pragma pack(pop)
 
-} } }
+} }

@@ -2,7 +2,7 @@
 
 #include "CommonIncludes.h"
 
-namespace core { namespace Device {
+namespace Device {
 
 	enum class Format : int
 	{
@@ -107,4 +107,4 @@ namespace core { namespace Device {
 
 	extern const std::unordered_map<Format, size_t> format_sizes;
 
-} }
+}

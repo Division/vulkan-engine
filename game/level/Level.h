@@ -9,15 +9,13 @@
 class GameObject;
 class MeshObject;
 
-namespace core { namespace Device {
+namespace Device {
 
 	class Texture;
 
-} }
+}
 
 namespace game {
-
-	using namespace core::Device;
 
 	class Level {
 	public:

@@ -3,7 +3,7 @@
 #include "CommonIncludes.h"
 #include "render/mesh/Mesh.h"
 
-namespace core { namespace Device { namespace ShaderBufferStruct {
+namespace Device { namespace ShaderBufferStruct {
 
 	struct ObjectParams 
 	{
@@ -61,4 +61,4 @@ namespace core { namespace Device { namespace ShaderBufferStruct {
 		mat4 projectionMatrix;
 	};
 
-} } }
+} }

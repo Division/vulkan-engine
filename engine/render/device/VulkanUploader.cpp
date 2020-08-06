@@ -6,7 +6,7 @@
 #include "VulkanContext.h"
 #include "VkObjects.h"
 
-namespace core { namespace Device {
+namespace Device {
 
 	std::mutex uploader_mutex;
 
@@ -158,8 +158,5 @@ namespace core { namespace Device {
 
 		current_frame = (current_frame + 1) % caps::MAX_FRAMES_IN_FLIGHT;
 	}
-
-}
-
 
 }

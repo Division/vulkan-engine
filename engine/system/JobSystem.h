@@ -7,7 +7,7 @@
 #include "memory/Containers.h"
 #include "memory/PoolAllocator.h"
 
-namespace core { namespace JobSystem {
+namespace JobSystem {
 
 	typedef Memory::PoolAllocator<Memory::Tag::JobSystem> JobSystemAllocator;
 
@@ -82,4 +82,4 @@ namespace core { namespace JobSystem {
 		JobSystemAllocator pool_allocator;
 	};
 
-} }
+}

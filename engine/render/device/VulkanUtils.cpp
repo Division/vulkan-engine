@@ -2,7 +2,7 @@
 #include "VulkanContext.h"
 #include "VkObjects.h"
 
-namespace core { namespace Device { namespace VulkanUtils {
+namespace Device { namespace VulkanUtils {
 
 	const std::vector<const char*> VALIDATION_LAYERS = {
 		"VK_LAYER_KHRONOS_validation"
@@ -190,4 +190,4 @@ namespace core { namespace Device { namespace VulkanUtils {
 		return indices.IsComplete() && extensionsSupported && swapChainAdequate && supportedFeatures.samplerAnisotropy;
 	}
 
-} } }
+} }

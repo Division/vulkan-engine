@@ -2,7 +2,7 @@
 #include "TransformSystem.h"
 #include "ecs/components/Transform.h"
 
-namespace core { namespace ECS { namespace systems {
+namespace ECS { namespace systems {
 
 	using namespace components;
 
@@ -46,4 +46,4 @@ namespace core { namespace ECS { namespace systems {
 		}
 	}
 
-} } }
+} }

@@ -11,9 +11,9 @@ public:
   void controlsEnabled(bool enabled) { _controlsEnabled = enabled; }
 
 private:
-  std::shared_ptr<core::Device::Texture> diffuse;
-  std::shared_ptr<core::Device::Texture> normal;
-  std::shared_ptr<core::Device::Texture> specular;
+  std::shared_ptr<Device::Texture> diffuse;
+  std::shared_ptr<Device::Texture> normal;
+  std::shared_ptr<Device::Texture> specular;
 
   bool _controlsEnabled = true;
   AnimationPlaybackPtr _runPlayback;

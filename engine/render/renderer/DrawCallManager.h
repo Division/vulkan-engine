@@ -5,35 +5,33 @@
 #include <mutex>
 #include "IRenderer.h"
 
-namespace core 
-{ 
 
-	namespace ECS 
+namespace ECS 
+{
+	namespace components
 	{
-		namespace components
-		{
-			struct DrawCall;
-		}
-
-		class EntityManager;
+		struct DrawCall;
 	}
 
-	namespace Device
-	{
-		class ShaderProgram;
-		class ShaderCache;
-	}
-
-	namespace utils
-	{
-		template<typename T> class Pool;
-	}
+	class EntityManager;
 }
+
+namespace Device
+{
+	class ShaderProgram;
+	class ShaderCache;
+}
+
+namespace utils
+{
+	template<typename T> class Pool;
+}
+
 
 class Material;
 class Mesh;
 
-namespace core { namespace render {
+namespace render {
 
 	class SceneRenderer;
 
@@ -66,7 +64,7 @@ namespace core { namespace render {
 
 	private:
 		std::mutex mutex;
-		::core::Device::ShaderCache* shader_cache;
+		::Device::ShaderCache* shader_cache;
 		std::unique_ptr<ECS::EntityManager> manager;
 		SceneRenderer& scene_renderer;
 		uint32_t depth_only_fragment_shader_hash;
@@ -75,4 +73,4 @@ namespace core { namespace render {
 		std::vector<std::unique_ptr<DrawCallList>> obtained_draw_call_lists;
 	};
 
-} }
+}

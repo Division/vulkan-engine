@@ -16,8 +16,6 @@ const auto compiler_shaders_path = L"shaders_compiled";
 const auto material_shader_name = L"material_main";
 const auto compiler_path = "glslangValidator.exe";
 
-using namespace core::Device;
-
 struct ShaderData
 {
 	ShaderProgram::Stage stage;

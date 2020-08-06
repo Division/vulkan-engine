@@ -3,15 +3,10 @@
 #include "CommonIncludes.h"
 #include "render/shader/ShaderCaps.h"
 
-namespace core 
-{ 
-	namespace Device 
-	{
-		class Texture;
-	}
+namespace Device 
+{
+	class Texture;
 }
-
-using namespace core::Device;
 
 class Material {
 public:
@@ -21,11 +16,11 @@ public:
 	Material(const Material&) = default;
 	Material();
 
-	void texture0(std::shared_ptr<Texture> texture);
-	const std::shared_ptr<Texture>& texture0() const { return _texture0; };
+	void texture0(std::shared_ptr<Device::Texture> texture);
+	const std::shared_ptr<Device::Texture>& texture0() const { return _texture0; };
 	
-	void normalMap(std::shared_ptr<Texture> normalMap);
-	std::shared_ptr<Texture> normalMap() const { return _normalMap; };
+	void normalMap(std::shared_ptr<Device::Texture> normalMap);
+	std::shared_ptr<Device::Texture> normalMap() const { return _normalMap; };
 
 	void lightingEnabled(bool lightingEnabled);
 	bool lightingEnabled() const { return _lightingEnabled; }
@@ -62,10 +57,10 @@ protected:
 	bool _hasObjectParams = true;
 
 	bool _hasTexture0 = false;
-	std::shared_ptr<Texture> _texture0;
+	std::shared_ptr<Device::Texture> _texture0;
 
 	bool _hasNormalMap = false;
-	std::shared_ptr<Texture> _normalMap;
+	std::shared_ptr<Device::Texture> _normalMap;
 
 	bool _lightingEnabled = true;
 	bool _vertexColorEnabled = false;

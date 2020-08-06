@@ -8,23 +8,21 @@ class Projector;
 class LightObject;
 class Camera;
 
-namespace core
+namespace ECS
 {
-	namespace ECS
-	{
-		class EntityManager;
-        class TransformGraph;
+	class EntityManager;
+    class TransformGraph;
 
-        typedef uint64_t EntityID;
+    typedef uint64_t EntityID;
 
-        namespace systems
-        {
-            class NoChildTransformSystem;
-            class RootTransformSystem;
-            class UpdateRendererSystem;
-        }
-	}
+    namespace systems
+    {
+        class NoChildTransformSystem;
+        class RootTransformSystem;
+        class UpdateRendererSystem;
+    }
 }
+
 
 class Scene : public IGameObjectManager {
 public:
@@ -59,8 +57,8 @@ public:
 
   Camera* GetCamera() const { return camera.get(); }
 
-  core::ECS::EntityManager* GetEntityManager() const { return entity_manager.get(); }
-  core::ECS::TransformGraph* GetTransformGraph() const { return transform_graph.get(); }
+  ECS::EntityManager* GetEntityManager() const { return entity_manager.get(); }
+  ECS::TransformGraph* GetTransformGraph() const { return transform_graph.get(); }
 
 private:
   Scene::Visibility &_getVisibilityForCamera(const ICameraParamsProvider *camera) const;
@@ -106,13 +104,13 @@ private:
   void _processRemovedObject(GameObjectPtr object);
 
   // ECS
-  void OnEntityDestroyed(core::ECS::EntityID entity);
+  void OnEntityDestroyed(ECS::EntityID entity);
 
-  std::unique_ptr<core::ECS::EntityManager> entity_manager;
-  std::unique_ptr<core::ECS::TransformGraph> transform_graph;
+  std::unique_ptr<ECS::EntityManager> entity_manager;
+  std::unique_ptr<ECS::TransformGraph> transform_graph;
 
-  std::unique_ptr<core::ECS::systems::NoChildTransformSystem> no_child_system;
-  std::unique_ptr<core::ECS::systems::RootTransformSystem> root_transform_system;
-  std::unique_ptr<core::ECS::systems::UpdateRendererSystem> update_renderer_system;
+  std::unique_ptr<ECS::systems::NoChildTransformSystem> no_child_system;
+  std::unique_ptr<ECS::systems::RootTransformSystem> root_transform_system;
+  std::unique_ptr<ECS::systems::UpdateRendererSystem> update_renderer_system;
 
 };

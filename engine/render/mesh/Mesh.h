@@ -4,11 +4,11 @@
 #include "VertexAttrib.h"
 #include "utils/Math.h"
 
-namespace core { namespace Device{
+namespace Device{
 	
 	class VulkanBuffer;
 
-} }
+}
 
 extern const int JOINT_PER_VERTEX_MAX;
 
@@ -20,9 +20,9 @@ public:
   static const int JOINTS_MAX = 70;
   static const int JOINT_PER_VERTEX_MAX = 3;
 
-  core::Device::VulkanBuffer* vertexBuffer() const { return _vertexBuffer.get(); }
-  core::Device::VulkanBuffer* indexBuffer() const { return _indexBuffer.get(); }
-  const core::VertexLayout& GetVertexLayout() const { return layout; }
+  Device::VulkanBuffer* vertexBuffer() const { return _vertexBuffer.get(); }
+  Device::VulkanBuffer* indexBuffer() const { return _indexBuffer.get(); }
+  const VertexLayout& GetVertexLayout() const { return layout; }
 
   void setVertices(const vec3 *vertices, int vertexCount);
   void setVertices(const float *vertexComponents, int vertexCount);
@@ -102,13 +102,13 @@ private:
 
 private:
   AABB _aabb;
-  core::VertexLayout layout;
+  VertexLayout layout;
 
-  std::unique_ptr<core::Device::VulkanBuffer> _vertexBuffer;
-  std::unique_ptr<core::Device::VulkanBuffer> _indexBuffer;
+  std::unique_ptr<Device::VulkanBuffer> _vertexBuffer;
+  std::unique_ptr<Device::VulkanBuffer> _indexBuffer;
 
-  std::unique_ptr<core::Device::VulkanBuffer> last_frame_vertex_buffer;
-  std::unique_ptr<core::Device::VulkanBuffer> last_frame_index_buffer;
+  std::unique_ptr<Device::VulkanBuffer> last_frame_vertex_buffer;
+  std::unique_ptr<Device::VulkanBuffer> last_frame_index_buffer;
 
   bool _isStatic;
   bool _keepData;

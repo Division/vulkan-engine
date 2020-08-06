@@ -1,6 +1,6 @@
 #include "Types.h"
 
-namespace core { namespace Device {
+namespace Device {
 
 	const std::unordered_map<Format, size_t> format_sizes = {
 		{ Format::Undefined, 0 },
@@ -62,4 +62,4 @@ namespace core { namespace Device {
 		{ Format::D16_unorm_S8_uint, 24 },
 		{ Format::D24_unorm_S8_uint, 32 }
 	};
-} }
+}

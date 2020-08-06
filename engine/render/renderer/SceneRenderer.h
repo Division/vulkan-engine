@@ -10,40 +10,37 @@
 class Scene;
 class IShadowCaster;
 
-namespace core
+namespace Device
 {
-	namespace Device
-	{
-		class VulkanRenderTargetAttachment;
-		class VulkanRenderPass;
-		class ShaderProgram;
-		class ShaderBindings;
-		class ShaderCache;
-		class Texture;
-		template<typename T> class DynamicBuffer;
-	}
-
-	namespace ECS
-	{
-		namespace systems
-		{
-			class UploadDrawCallsSystem;
-			class CreateDrawCallsSystem;
-		}
-
-		class EntityManager;
-	}
-	
+	class VulkanRenderTargetAttachment;
+	class VulkanRenderPass;
+	class ShaderProgram;
+	class ShaderBindings;
+	class ShaderCache;
+	class Texture;
+	template<typename T> class DynamicBuffer;
 }
 
-namespace core::render
+namespace ECS
+{
+	namespace systems
+	{
+		class UploadDrawCallsSystem;
+		class CreateDrawCallsSystem;
+	}
+
+	class EntityManager;
+}
+	
+
+namespace render
 {
 	struct EnvironmentSettings;
 };
 
 class Scene;
 
-namespace core { namespace render {
+namespace render {
 
 	class SceneBuffers;
 	class LightGrid;
@@ -67,15 +64,15 @@ namespace core { namespace render {
 	public:
 		static int32_t ShadowAtlasSize();
 
-		SceneRenderer(Scene& scene, core::Device::ShaderCache* shader_cache);
+		SceneRenderer(Scene& scene, Device::ShaderCache* shader_cache);
 		~SceneRenderer();
 
 		void RenderScene();
 		SceneBuffers* GetSceneBuffers() const { return scene_buffers.get(); }
 		std::tuple<vk::Buffer, size_t> SceneRenderer::GetBufferData(ShaderBufferName buffer_name);
-		core::Device::Texture* SceneRenderer::GetTexture(ShaderTextureName texture_name, const Material& material);
-		core::Device::ShaderCache* GetShaderCache() const { return shader_cache; }
-		void SetupShaderBindings(const Material& material, const core::Device::ShaderProgram::DescriptorSet& descriptor_set, core::Device::ShaderBindings& bindings);
+		Device::Texture* SceneRenderer::GetTexture(ShaderTextureName texture_name, const Material& material);
+		Device::ShaderCache* GetShaderCache() const { return shader_cache; }
+		void SetupShaderBindings(const Material& material, const Device::ShaderProgram::DescriptorSet& descriptor_set, Device::ShaderBindings& bindings);
 		auto* GetEnvironmentSettings() const { return environment_settings.get(); }
 
 	private:
@@ -85,40 +82,40 @@ namespace core { namespace render {
 		void OnRecreateSwapchain(int32_t width, int32_t height);
 
 	private:
-		std::unique_ptr<core::Device::VulkanRenderPass> temp_pass;
+		std::unique_ptr<Device::VulkanRenderPass> temp_pass;
 
 		Scene& scene;
 
 		std::unique_ptr<DrawCallManager> draw_call_manager;
-		std::unique_ptr<core::ECS::systems::CreateDrawCallsSystem> create_draw_calls_system;
-		std::unique_ptr<core::ECS::systems::UploadDrawCallsSystem> upload_draw_calls_system;
-		std::unique_ptr<core::Device::Texture> environment_cubemap;
-		std::unique_ptr<core::Device::Texture> radiance_cubemap;
-		std::unique_ptr<core::Device::Texture> irradiance_cubemap;
+		std::unique_ptr<ECS::systems::CreateDrawCallsSystem> create_draw_calls_system;
+		std::unique_ptr<ECS::systems::UploadDrawCallsSystem> upload_draw_calls_system;
+		std::unique_ptr<Device::Texture> environment_cubemap;
+		std::unique_ptr<Device::Texture> radiance_cubemap;
+		std::unique_ptr<Device::Texture> irradiance_cubemap;
 
-		core::Device::ShaderCache* shader_cache;
+		Device::ShaderCache* shader_cache;
 		std::unique_ptr<SceneBuffers> scene_buffers;
 		std::unique_ptr<LightGrid> light_grid;
 		std::unique_ptr<ShadowMap> shadow_map;
-		std::unique_ptr<core::Device::ShaderBindings> global_shader_bindings;
+		std::unique_ptr<Device::ShaderBindings> global_shader_bindings;
 		uint32_t global_shader_binding_camera_index;
 
 		std::unique_ptr<graph::RenderGraph> render_graph;
 		
-		core::Device::ShaderProgram* compute_program;
-		std::unique_ptr<core::Device::ShaderBindings> compute_bindings;
-		std::unique_ptr<core::Device::DynamicBuffer<unsigned char>> compute_buffer;
+		Device::ShaderProgram* compute_program;
+		std::unique_ptr<Device::ShaderBindings> compute_bindings;
+		std::unique_ptr<Device::DynamicBuffer<unsigned char>> compute_buffer;
 
-		std::unique_ptr<core::Device::VulkanRenderTargetAttachment> main_depth_attachment;
-		std::unique_ptr<core::Device::VulkanRenderTargetAttachment> shadowmap_atlas_attachment;
-		std::unique_ptr<core::Device::VulkanRenderTargetAttachment> main_color_attachment;
+		std::unique_ptr<Device::VulkanRenderTargetAttachment> main_depth_attachment;
+		std::unique_ptr<Device::VulkanRenderTargetAttachment> shadowmap_atlas_attachment;
+		std::unique_ptr<Device::VulkanRenderTargetAttachment> main_color_attachment;
 
 		uint32_t depth_only_fragment_shader_hash;
-		std::vector<std::pair<IShadowCaster*, core::ECS::systems::CullingSystem>> shadow_casters;
+		std::vector<std::pair<IShadowCaster*, ECS::systems::CullingSystem>> shadow_casters;
 
 		std::unique_ptr<EnvironmentSettings> environment_settings;
 		std::unique_ptr<effects::Skybox> skybox;
 		std::unique_ptr<effects::PostProcess> post_process;
 	};
 
-} }
+}

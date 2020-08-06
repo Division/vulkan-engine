@@ -3,7 +3,7 @@
 #include "VulkanUtils.h"
 #include "VulkanContext.h"
 
-namespace core { namespace Device {
+namespace Device {
 	
 	VulkanCommandBuffer::VulkanCommandBuffer(VulkanCommandPool* command_pool)
 	{
@@ -69,4 +69,4 @@ namespace core { namespace Device {
 		current_frame_allocated_buffers = 0;
 	}
 
-} }
+}

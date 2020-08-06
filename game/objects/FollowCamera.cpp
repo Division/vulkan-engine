@@ -4,8 +4,7 @@
 #include "system/Input.h"
 #include "scene/Scene.h"
 
-using namespace core;
-using namespace core::system;
+using namespace system;
 
 void FollowCamera::start() {
   auto container = CreateGameObject<GameObject>();

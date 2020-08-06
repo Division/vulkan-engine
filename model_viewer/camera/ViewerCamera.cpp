@@ -3,8 +3,7 @@
 #include "system/Input.h"
 #include "scene/Scene.h"
 
-using namespace core;
-using namespace core::system;
+using namespace System;
 
 ViewerCamera::ViewerCamera() 
 {

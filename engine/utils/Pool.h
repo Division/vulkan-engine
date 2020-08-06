@@ -2,7 +2,7 @@
 
 #include "CommonIncludes.h"
 
-namespace core { namespace utils {
+namespace utils {
 
 	template<typename T>
 	class Pool
@@ -29,4 +29,4 @@ namespace core { namespace utils {
 		std::vector<std::unique_ptr<T>> available_items;
 	};
 
-} }
+}

@@ -3,7 +3,7 @@
 #include <stdint.h>
 #include "render/device/Types.h"
 
-namespace core::render::synchronization {
+namespace render::synchronization {
 
 	enum OperationBits : int
 	{

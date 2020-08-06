@@ -10,7 +10,9 @@
 #include "render/shader/ShaderResource.h"
 #include "render/buffer/DynamicBuffer.h"
 
-namespace core { namespace render {
+using namespace Device;
+
+namespace render {
 
 const uint32_t MAX_LIGHTS = 100;
 const uint32_t LIGHTS_SIZE = ((uint32_t)ceilf(MAX_LIGHTS * sizeof(ShaderBufferStruct::Light) / 256.0f)) * 256;
@@ -266,4 +268,4 @@ void LightGrid::OnRecreateSwapchain(int32_t width, int32_t height)
 {
 }
 
-} }
+}

@@ -7,7 +7,7 @@
 #include "render/device/VulkanContext.h"
 #include "Engine.h"
 
-namespace core { namespace Device {
+namespace Device {
 
 	template<typename T>
 	class DynamicBuffer
@@ -107,4 +107,4 @@ namespace core { namespace Device {
 		BufferType type;
 	};
 
-} }
+}

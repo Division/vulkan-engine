@@ -5,7 +5,7 @@
 #include "VulkanCaps.h"
 #include "render/shader/Shader.h"
 
-namespace core { namespace Device {
+namespace Device {
 	
 	class ShaderBindings;
 	class ShaderCache;
@@ -37,4 +37,4 @@ namespace core { namespace Device {
 		std::mutex mutex_sampler;
 	};
 
-} }
+}

@@ -4,7 +4,7 @@
 #include <array>
 #include <atomic>
 
-namespace core { namespace Memory {
+namespace Memory {
 
 	enum Tag : int
 	{
@@ -51,4 +51,4 @@ namespace core { namespace Memory {
 		void ValidateSnapshot();
 	};
 
-} }
+}

@@ -5,15 +5,12 @@
 #include "render/renderer/IRenderer.h"
 #include "render/shader/ShaderBufferStruct.h"
 
-namespace core
+namespace Device
 {
-	namespace Device
-	{
-		class ShaderProgram;
-	}
+	class ShaderProgram;
 }
 
-namespace core { namespace ECS { namespace components {
+namespace ECS { namespace components {
 
 #pragma pack(push)
 #pragma pack(1)
@@ -41,4 +38,4 @@ namespace core { namespace ECS { namespace components {
 	};
 #pragma pack(pop)
 
-} } }
+} }

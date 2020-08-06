@@ -5,7 +5,7 @@
 #include <lib/ktx/ktxvulkan.h>
 #include <lib/ktx/ktxint.h>
 
-using namespace core::Device;
+using namespace Device;
 
 std::unique_ptr<Texture> loader::LoadTexture(const std::string &name, bool sRGB) {
 

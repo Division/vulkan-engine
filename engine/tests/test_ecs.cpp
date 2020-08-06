@@ -1,7 +1,7 @@
 #include "lib/catch/catch.hpp"
 #include "ecs/ECS.h"
 
-using namespace core::ECS;
+using namespace ECS;
 
 struct TestPositionComponent
 {

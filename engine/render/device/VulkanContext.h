@@ -4,7 +4,7 @@
 #include "Types.h"
 #include "render/debug/Profiler.h"
 
-namespace core { namespace Device {
+namespace Device {
 
 	class VulkanCommandBuffer;
 	class VulkanUploader;
@@ -146,7 +146,7 @@ namespace core { namespace Device {
 		PFN_vkCmdDebugMarkerBeginEXT debug_marker_begin_callback = nullptr;
 		PFN_vkCmdDebugMarkerEndEXT debug_marker_end_callback = nullptr;
 		PFN_vkCmdDebugMarkerInsertEXT debug_marker_insert_callback = nullptr;
-		core::render::profiler::ProfilerTimings profiler_timings;
+		render::profiler::ProfilerTimings profiler_timings;
 	};
 
-} }
+}

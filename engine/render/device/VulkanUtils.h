@@ -2,13 +2,13 @@
 
 #include "CommonIncludes.h"
 
-namespace core { namespace Device {
+namespace Device {
 
 	class VulkanContext;
 
-} }
+}
 
-namespace core { namespace Device { namespace VulkanUtils {
+namespace Device { namespace VulkanUtils {
 
 	struct QueueFamilyIndices {
 		std::optional<uint32_t> graphicsFamily;
@@ -37,4 +37,4 @@ namespace core { namespace Device { namespace VulkanUtils {
 	QueueFamilyIndices FindQueueFamilies(VkPhysicalDevice device, VkSurfaceKHR surface);
 	SwapChainSupportDetails QuerySwapChainSupport(VkPhysicalDevice device, VkSurfaceKHR surface);
 
-} } }
+} }

@@ -4,10 +4,10 @@
 #include "render/device/VulkanRenderState.h"
 #include "ecs/components/DrawCall.h"
 
-using namespace core::Device;
-using namespace core::ECS;
+using namespace Device;
+using namespace ECS;
 
-namespace core { namespace render { namespace effects {
+namespace render { namespace effects {
 
 	Skybox::~Skybox() = default;
 	
@@ -19,7 +19,7 @@ namespace core { namespace render { namespace effects {
 		shader = shader_cache.GetShaderProgram(L"shaders/skybox.vert", L"shaders/skybox.frag");
 	}
 
-	void Skybox::SetTexture(core::Device::Texture* texture)
+	void Skybox::SetTexture(Device::Texture* texture)
 	{
 		cubemap_texture = texture;
 	}
@@ -39,4 +39,4 @@ namespace core { namespace render { namespace effects {
 		state.RenderDrawCall(&draw_call, false);
 	}
 
-} } }
+} }

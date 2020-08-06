@@ -4,7 +4,7 @@
 #include <vector>
 #include <array>
 
-namespace core { namespace utils {
+namespace utils {
 
 	class Graph
 	{
@@ -204,4 +204,4 @@ namespace core { namespace utils {
 		char buffer[sizeof(T) * N];
 	};
 
-} }
+}

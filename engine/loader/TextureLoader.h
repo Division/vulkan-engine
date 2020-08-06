@@ -5,7 +5,7 @@
 
 namespace loader {
 
-  std::unique_ptr<core::Device::Texture> LoadTexture(const std::string &name, bool sRGB = true);
+  std::unique_ptr<Device::Texture> LoadTexture(const std::string &name, bool sRGB = true);
 
 };
 

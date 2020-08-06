@@ -4,6 +4,7 @@
 #include "scene/GameObject.h"
 #include "utils/MeshGeneration.h"
 #include "render/shading/IShadowCaster.h"
+#include "render/shader/ShaderBufferStruct.h"
 
 enum class ProjectorType : int {
   Projector = 0, // Calculates as a light which color is based on the texture
@@ -64,7 +65,7 @@ public:
 
   void setDebugEnabled(bool enabled) { _debugEnabled = enabled; }
 
-  core::Device::ShaderBufferStruct::Projector getProjectorStruct() const;
+  Device::ShaderBufferStruct::Projector getProjectorStruct() const;
 
   void postUpdate() override;
 

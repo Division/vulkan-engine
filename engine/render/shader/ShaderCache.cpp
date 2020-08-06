@@ -3,7 +3,7 @@
 #include "loader/FileLoader.h"
 #include "Shader.h"
 
-namespace core { namespace Device {
+namespace Device {
 
 	const wchar_t* ShaderCache::shader_cache_dir = L"shaders_compiled";
 
@@ -121,4 +121,4 @@ namespace core { namespace Device {
 	}
 
 
-} }
+}

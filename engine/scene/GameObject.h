@@ -31,8 +31,6 @@ public:
   virtual void destroyGameObject(GameObjectPtr addGameObject) = 0;
 };
 
-using namespace core::Device;
-
 class GameObject {
 protected:
   GameObject();
@@ -85,7 +83,7 @@ protected:
 
   AnimationControllerPtr _animation;
 
-  ShaderBufferStruct::ObjectParams _objectParamsStruct;
+  Device::ShaderBufferStruct::ObjectParams _objectParamsStruct;
 
   CullingData _cullingData;
   bool _isRenderable = false;

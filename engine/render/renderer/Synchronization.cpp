@@ -2,15 +2,15 @@
 #include "Engine.h"
 #include "render/device/VulkanContext.h"
 
-namespace core::render::synchronization {
+namespace render::synchronization {
 
 	ImageAccess GetImageAccessSrc(ResourceOperationType operation_type)
 	{
 		ImageAccess result;
 
 		auto* context = Engine::Get()->GetContext();
-		auto compute_index = context->GetQueueFamilyIndex(core::Device::PipelineBindPoint::Compute);
-		auto graphics_index = context->GetQueueFamilyIndex(core::Device::PipelineBindPoint::Graphics);
+		auto compute_index = context->GetQueueFamilyIndex(Device::PipelineBindPoint::Compute);
+		auto graphics_index = context->GetQueueFamilyIndex(Device::PipelineBindPoint::Graphics);
 
 		switch (operation_type)
 		{
@@ -86,8 +86,8 @@ namespace core::render::synchronization {
 		ImageAccess result;
 
 		auto* context = Engine::Get()->GetContext();
-		auto compute_index = context->GetQueueFamilyIndex(core::Device::PipelineBindPoint::Compute);
-		auto graphics_index = context->GetQueueFamilyIndex(core::Device::PipelineBindPoint::Graphics);
+		auto compute_index = context->GetQueueFamilyIndex(Device::PipelineBindPoint::Compute);
+		auto graphics_index = context->GetQueueFamilyIndex(Device::PipelineBindPoint::Graphics);
 
 		switch (operation_type)
 		{

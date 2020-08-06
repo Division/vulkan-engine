@@ -3,7 +3,7 @@
 #include "Allocator.h"
 #include <mutex>
 
-namespace core { namespace Memory {
+namespace Memory {
 
 	class PoolAllocatorBase
 	{
@@ -56,4 +56,4 @@ namespace core { namespace Memory {
 
 	};
 
-} }
+}

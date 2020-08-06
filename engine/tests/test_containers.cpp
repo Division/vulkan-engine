@@ -1,7 +1,7 @@
 #include "lib/catch/catch.hpp"
 #include "utils/DataStructures.h"
 
-using namespace core::utils;
+using namespace utils;
 
 TEST_CASE("Small Vector")
 {

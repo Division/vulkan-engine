@@ -5,7 +5,7 @@
 #include "ReflectionInfo.h"
 #include "utils/DataStructures.h"
 
-namespace core { namespace Device {
+namespace Device {
 	
 	class ReflectionInfo;
 	class ShaderBindings;
@@ -120,4 +120,4 @@ namespace core { namespace Device {
 		utils::SmallVector<PushConstants, 1> push_constants;
 	};
 
-} }
+}

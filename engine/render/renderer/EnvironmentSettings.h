@@ -1,6 +1,6 @@
 #pragma once
 
-namespace core::render
+namespace render
 {
 
 	struct EnvironmentSettings

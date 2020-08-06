@@ -5,7 +5,7 @@
 #include <vector>
 #include <memory>
 
-namespace core { namespace Memory {
+namespace Memory {
 
 	template <typename T, Tag tag>
 	class TaggedAllocator : std::allocator<T>
@@ -26,4 +26,4 @@ namespace core { namespace Memory {
 		}
 	};
 
-} }
+}

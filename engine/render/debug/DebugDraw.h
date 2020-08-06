@@ -6,20 +6,17 @@
 
 class Mesh;
 
-namespace core
+namespace Device
 {
-    namespace Device
-    {
-        class ShaderCache;
-        class ShaderProgram;
-    }
+    class ShaderCache;
+    class ShaderProgram;
 }
 
-namespace core { namespace render {
+namespace render {
 
     class DebugDraw {
     public:
-        DebugDraw(core::Device::ShaderCache& shader_cache);
+        DebugDraw(Device::ShaderCache& shader_cache);
 
         void DrawLine(const vec3 &p1, const vec3 &p2, const vec4 &color);
         void DrawPoint(const vec3 &p, const vec3 &color, float size = 5.0f);
@@ -33,7 +30,7 @@ namespace core { namespace render {
 
         void Update();
         
-        core::Device::ShaderProgram* GetShader() const { return shader; }
+        Device::ShaderProgram* GetShader() const { return shader; }
 
     private:
         int current_mesh_index = 0;
@@ -46,7 +43,7 @@ namespace core { namespace render {
         std::unique_ptr<Mesh> point_meshes[2];
         std::vector<ECS::components::DrawCall> line_draw_calls;
         std::vector<ECS::components::DrawCall> point_draw_calls;
-        core::Device::ShaderProgram* shader;
+        Device::ShaderProgram* shader;
     };
 
-} }
+}

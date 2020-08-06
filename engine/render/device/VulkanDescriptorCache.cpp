@@ -6,7 +6,7 @@
 #include "Engine.h"
 #include "utils/Math.h"
 
-namespace core { namespace Device {
+namespace Device {
 
 	VulkanDescriptorCache::VulkanDescriptorCache(vk::Device device)
 	{
@@ -179,4 +179,4 @@ namespace core { namespace Device {
 		return result;
 	}
 
-} }
+}
