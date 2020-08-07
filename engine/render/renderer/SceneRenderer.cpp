@@ -42,10 +42,12 @@
 #include "objects/Camera.h"
 #include "render/effects/Skybox.h"
 #include "render/effects/PostProcess.h"
+#include "resources/TextureResource.h"
 
 #include <functional>
 
 using namespace Device;
+using namespace Resources;
 
 namespace render {
 
@@ -91,12 +93,12 @@ namespace render {
 		compute_bindings->AddBufferBinding(buffer_binding->address.binding, 0, compute_buffer->GetSize(), compute_buffer->GetBuffer()->Buffer());
 
 		//environment_cubemap = loader::LoadTexture("resources/environment/skybox_unorm.ktx"); // TODO: assign via setter
-		environment_cubemap = loader::LoadTexture("resources/environment/skybox2.ktx");
-		radiance_cubemap = loader::LoadTexture("resources/environment/grace_probe_radiance_rgba.ktx");
-		irradiance_cubemap = loader::LoadTexture("resources/environment/grace_probe_irradiance_rgba.ktx");
+		environment_cubemap = TextureResource::Handle(L"resources/environment/skybox2.ktx");
+		radiance_cubemap = TextureResource::Handle(L"resources/environment/grace_probe_radiance_rgba.ktx");
+		irradiance_cubemap = TextureResource::Handle(L"resources/environment/grace_probe_irradiance_rgba.ktx");
 		//environment_cubemap = loader::LoadTexture("resources/lama.ktx"); // TODO: assign via setter
 		skybox = std::make_unique<effects::Skybox>(*shader_cache);
-		skybox->SetTexture(environment_cubemap.get());
+		skybox->SetTexture(environment_cubemap->Get().get());
 
 		post_process = std::make_unique<effects::PostProcess>(*shader_cache, *environment_settings);
 	}
@@ -444,13 +446,13 @@ namespace render {
 			return shadowmap_atlas_attachment->GetTexture().get();
 
 		case ShaderTextureName::EnvironmentCubemap:
-			return environment_cubemap.get();
+			return environment_cubemap->Get().get();
 		
 		case ShaderTextureName::RadianceCubemap:
-			return radiance_cubemap.get();
+			return radiance_cubemap->Get().get();
 		
 		case ShaderTextureName::IrradianceCubemap:
-			return irradiance_cubemap.get();
+			return irradiance_cubemap->Get().get();
 
 		default:
 			throw std::runtime_error("unknown texture");

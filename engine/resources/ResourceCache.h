@@ -38,12 +38,6 @@ namespace Resources
 			reference_counter -= 1;
 		}
 
-		std::ifstream GetStream()
-		{
-			std::ifstream stream(filename, std::ios::binary);
-			return stream;
-		}
-
 		std::wstring filename;
 		std::atomic_bool loaded;
 		std::atomic_uint32_t reference_counter;
@@ -62,8 +56,7 @@ namespace Resources
 		{
 			Allocator allocator;
 			resource_memory = allocator.allocate(1);
-			auto stream = GetStream();
-			new (resource_memory) T(stream);
+			new (resource_memory) T(path);
 		}
 
 		~Resource()
@@ -113,12 +106,12 @@ namespace Resources
 				resource->RemoveRef();
 		}
 
-		T& operator*()
+		const T& operator*()
 		{
 			return resource->operator*();
 		}
 
-		T* operator->()
+		const T* operator->()
 		{
 			return resource->operator->();
 		}

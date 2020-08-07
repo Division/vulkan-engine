@@ -12,7 +12,7 @@
 #include "render/material/MaterialManager.h"
 #include "render/debug/DebugDraw.h"
 #include "render/texture/Texture.h"
-#include "loader/TextureLoader.h"
+#include "resources/TextureResource.h"
 
 ModelViewer::ModelViewer() = default;
 ModelViewer::~ModelViewer() = default;
@@ -63,9 +63,8 @@ void ModelViewer::init()
 	light->transform()->position(vec3(50, 0, 0));
 	light->radius(100);*/
 
-	//lama_tex = loader::LoadTexture("resources/lama.jpg");
-	environment = loader::LoadTexture("resources/environment/skybox.ktx");
-	lama_tex = loader::LoadTexture("resources/lama.ktx");
+	environment = Resources::TextureResource::Handle(L"resources/environment/skybox.ktx");
+	lama_tex = Resources::TextureResource::Handle(L"resources/lama.ktx");
 
 	camera = std::make_unique<ViewerCamera>();
 	
@@ -87,7 +86,7 @@ void ModelViewer::init()
 	material_no_light->LightingEnabled(false);
 	material_default = std::make_shared<Material>();
 	material_default->LightingEnabled(true);
-	material_default->Texture0(lama_tex);
+	material_default->Texture0(lama_tex->Get());
 	auto* material_manager = Engine::Get()->GetMaterialManager();
 
 	/*plane = CreateMeshEntity(vec3(0, -5, 0), 0, plane_mesh.get());

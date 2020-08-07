@@ -59,6 +59,8 @@ public:
 	T* get() const { return resource.get(); }
 	T& operator*() { return *resource; }
 	T* operator->() { return resource.get(); }
+	const T& operator*() const { return *resource; }
+	const T* operator->() const { return resource.get(); }
 
 
 private:

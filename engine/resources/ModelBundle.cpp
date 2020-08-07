@@ -114,9 +114,10 @@ Common::Handle<Mesh> ModelBundle::getMesh(const std::string &name) const {
   return result;
 }
 
-ModelBundle::ModelBundle(std::istream &stream) 
+ModelBundle::ModelBundle(const std::wstring& filename) 
     : _hierarchy(std::make_shared<HierarchyData>())
 {
+    std::ifstream stream(filename, std::ios::binary);
     loader::loadModel(stream, *this);
 }
 

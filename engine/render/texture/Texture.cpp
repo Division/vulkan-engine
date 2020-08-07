@@ -147,7 +147,7 @@ namespace Device {
 			auto staging_initializer = VulkanBufferInitializer(size).SetStaging();
 			for (int i = 0; i < caps::MAX_FRAMES_IN_FLIGHT; i++)
 			{
-				staging_buffers[i] = std::make_unique<VulkanBuffer>(staging_initializer);
+				staging_buffers[i] = VulkanBuffer::Create(staging_initializer);
 			}
 		}
 

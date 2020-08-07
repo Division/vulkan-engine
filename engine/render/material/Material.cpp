@@ -1,5 +1,4 @@
 ﻿#include "Material.h"
-#include "render/texture/Texture.h"
 #include "render/shader/ShaderCache.h"
 #include "utils/Math.h"
 
@@ -9,13 +8,18 @@ Material::Material()
 {
 }
 
+Material::~Material()
+{
+
+}
+
 void Material::SetDirty()
 {
 	shader_hash_dirty = true;
 	caps_dirty = true;
 }
 
-void Material::Texture0(std::shared_ptr<Texture> texture) {
+void Material::Texture0(Device::Handle<Device::Texture> texture) {
 	texture0 = texture;
 	
 	if ((bool)texture != has_texture0) {
@@ -24,7 +28,7 @@ void Material::Texture0(std::shared_ptr<Texture> texture) {
 	}
 }
 
-void Material::NormalMap(std::shared_ptr<Texture> normal_map) {
+void Material::NormalMap(Device::Handle<Device::Texture> normal_map) {
 	normal_map = normal_map;
 
 	if ((bool)normal_map != has_normal_map) {

@@ -4,19 +4,26 @@
 #include <lib/ktx/ktx.h>
 #include <lib/ktx/ktxvulkan.h>
 #include <lib/ktx/ktxint.h>
+#include "FileLoader.h"
 
 using namespace Device;
 
-std::unique_ptr<Texture> loader::LoadTexture(const std::string &name, bool sRGB) {
+std::unique_ptr<Texture> loader::LoadTexture(const std::wstring &name, bool sRGB) {
 
     auto path = std::filesystem::path(name);
     auto extension = path.extension();
+    auto file_data = loader::LoadFile(name);
+    if (file_data.size() == 0)
+    {
+        ENGLog("Loading texture failed ", name.c_str());
+        return nullptr;
+    }
 
     ENGLog("Loading texture %s", name.c_str());
     if (extension == ".ktx")
     {
         ktxTexture* texture;
-        KTX_error_code result = ktxTexture_CreateFromNamedFile(name.c_str(), KTX_TEXTURE_CREATE_LOAD_IMAGE_DATA_BIT, &texture);
+        KTX_error_code result = ktxTexture_CreateFromMemory(reinterpret_cast<ktx_uint8_t*>(file_data.data()), file_data.size(), KTX_TEXTURE_CREATE_LOAD_IMAGE_DATA_BIT, &texture);
         
         if (result == KTX_error_code::KTX_SUCCESS)
         {
@@ -97,8 +104,7 @@ std::unique_ptr<Texture> loader::LoadTexture(const std::string &name, bool sRGB)
     else
     {
         int32_t w, h, channels;
-        auto data = stbi_load(name.c_str(), &w, &h, &channels, 4);
-
+        auto data = stbi_load_from_memory(reinterpret_cast<stbi_uc*>(file_data.data()), file_data.size(), &w, &h, &channels, 4);
 
         TextureInitializer initializer(w, h, 4, data, sRGB);
         auto texture = std::make_unique<Texture>(initializer);

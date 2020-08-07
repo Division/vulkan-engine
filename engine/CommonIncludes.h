@@ -39,6 +39,7 @@
 #include "utils/NonCopyable.h"
 #include "render/device/Resource.h"
 #include "Handle.h"
+#include "resources/ResourceCache.h"
 
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>

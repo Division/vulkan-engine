@@ -195,6 +195,8 @@ set(ENGINE_SOURCES
 	resources/HierarchyData.cpp
 	resources/SkinningData.h
 	resources/SkinningData.cpp
+	resources/TextureResource.h
+	resources/TextureResource.cpp
 	loader/TextureLoader.h
 	loader/TextureLoader.cpp
 	loader/FileLoader.h

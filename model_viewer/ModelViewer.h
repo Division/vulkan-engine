@@ -16,9 +16,9 @@ class Material;
 class LightObject;
 class ViewerCamera;
 
-namespace Device
+namespace Resources
 {
-	class Texture;
+	class TextureResource;
 }
 
 class ModelViewer : public IGame {
@@ -46,8 +46,8 @@ private:
 	Common::Handle<Mesh> plane_mesh;
 	Common::Handle<Mesh> sphere_mesh;
 	Resources::Handle<ModelBundle> sphere_bundle;
-	std::shared_ptr<Device::Texture> lama_tex;
-	std::shared_ptr<Device::Texture> environment;
+	Resources::Handle<Resources::TextureResource> lama_tex;
+	Resources::Handle<Resources::TextureResource> environment;
 
 	ECS::EntityManager* manager;
 	ECS::TransformGraph* graph;

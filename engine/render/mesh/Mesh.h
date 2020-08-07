@@ -4,10 +4,9 @@
 #include "VertexAttrib.h"
 #include "utils/Math.h"
 
-namespace Device{
-	
+namespace Device
+{
 	class VulkanBuffer;
-
 }
 
 extern const int JOINT_PER_VERTEX_MAX;

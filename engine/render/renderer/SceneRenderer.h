@@ -10,6 +10,11 @@
 class Scene;
 class IShadowCaster;
 
+namespace Resources
+{
+	class TextureResource;
+}
+
 namespace Device
 {
 	class VulkanRenderTargetAttachment;
@@ -89,9 +94,9 @@ namespace render {
 		std::unique_ptr<DrawCallManager> draw_call_manager;
 		std::unique_ptr<ECS::systems::CreateDrawCallsSystem> create_draw_calls_system;
 		std::unique_ptr<ECS::systems::UploadDrawCallsSystem> upload_draw_calls_system;
-		std::unique_ptr<Device::Texture> environment_cubemap;
-		std::unique_ptr<Device::Texture> radiance_cubemap;
-		std::unique_ptr<Device::Texture> irradiance_cubemap;
+		Resources::Handle<Resources::TextureResource> environment_cubemap;
+		Resources::Handle<Resources::TextureResource> radiance_cubemap;
+		Resources::Handle<Resources::TextureResource> irradiance_cubemap;
 
 		Device::ShaderCache* shader_cache;
 		std::unique_ptr<SceneBuffers> scene_buffers;

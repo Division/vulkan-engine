@@ -2,6 +2,8 @@
 
 #include "CommonIncludes.h"
 #include "render/shader/ShaderCaps.h"
+#include "render/device/Resource.h"
+#include "render/texture/Texture.h"
 
 namespace Device 
 {
@@ -15,13 +17,14 @@ public:
 
 	Material(const Material&) = default;
 	Material();
+	~Material();
 
 
-	void Texture0(std::shared_ptr<Device::Texture> texture);
-	const std::shared_ptr<Device::Texture>& Texture0() const { return texture0; };
+	void Texture0(Device::Handle<Device::Texture> texture);
+	const Device::Handle<Device::Texture>& Texture0() const { return texture0; };
 	
-	void NormalMap(std::shared_ptr<Device::Texture> normal_map_);
-	std::shared_ptr<Device::Texture> NormalMap() const { return normal_map; };
+	void NormalMap(Device::Handle<Device::Texture> normal_map_);
+	Device::Handle<Device::Texture> NormalMap() const { return normal_map; };
 
 	void LightingEnabled(bool lighting_enabled_);
 	bool LightingEnabled() const { return lighting_enabled; }
@@ -59,11 +62,11 @@ protected:
 	mutable uint32_t fragment_hash = 0;
 
 	bool has_texture0 = false;
-	std::shared_ptr<Device::Texture> texture0;
+	Device::Handle<Device::Texture> texture0;
 
 
 	bool has_normal_map = false;
-	std::shared_ptr<Device::Texture> normal_map;
+	Device::Handle<Device::Texture> normal_map;
 
 	bool lighting_enabled = true;
 	bool vertex_color_enabled = false;

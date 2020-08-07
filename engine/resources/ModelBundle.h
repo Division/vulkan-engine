@@ -72,7 +72,7 @@ typedef std::shared_ptr<LightData> LightDataPtr;
 
 class ModelBundle {
 public:
-  explicit ModelBundle(std::istream& stream);
+  explicit ModelBundle(const std::wstring& filename);
   virtual ~ModelBundle() { ENGLog("ModelBundle destroy"); }
 
   Common::Handle<Mesh> getMesh(const std::string &name) const;

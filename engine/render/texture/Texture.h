@@ -141,7 +141,7 @@ namespace Device {
 		vk::Image image;
 		vk::UniqueImageView image_view;
 		bool dynamic;
-		std::array<std::unique_ptr<VulkanBuffer>, caps::MAX_FRAMES_IN_FLIGHT> staging_buffers;
+		std::array<Device::Handle<VulkanBuffer>, caps::MAX_FRAMES_IN_FLIGHT> staging_buffers;
 		uint32_t current_staging_buffer = 0;
 		void* mapped_pointer = nullptr;
 	};
