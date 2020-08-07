@@ -43,8 +43,8 @@ private:
 	std::shared_ptr<Material> material_light_only;
 	std::shared_ptr<Material> material_no_light;
 	std::shared_ptr<Material> material_default;
-	std::shared_ptr<Mesh> plane_mesh;
-	std::shared_ptr<Mesh> sphere_mesh;
+	Common::Handle<Mesh> plane_mesh;
+	Common::Handle<Mesh> sphere_mesh;
 	Resources::Handle<ModelBundle> sphere_bundle;
 	std::shared_ptr<Device::Texture> lama_tex;
 	std::shared_ptr<Device::Texture> environment;

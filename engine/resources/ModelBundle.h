@@ -75,7 +75,7 @@ public:
   explicit ModelBundle(std::istream& stream);
   virtual ~ModelBundle() { ENGLog("ModelBundle destroy"); }
 
-  std::shared_ptr<Mesh> getMesh(const std::string &name) const;
+  Common::Handle<Mesh> getMesh(const std::string &name) const;
   const HierarchyDataPtr hierarchy() const { return _hierarchy; }
   const HierarchyDataPtr getHierarchyByName(const std::string &name) const { return _nameToHierarchy.count(name) ? _nameToHierarchy.at(name) : nullptr;}
   const HierarchyDataPtr getHierarchyByID(const std::string &id) const { return _idToHierarchy.count(id) ? _idToHierarchy.at(id) : nullptr; }
@@ -85,7 +85,7 @@ public:
 
   const LightDataPtr getLight(const std::string &name) const { return _lights.at(name); }
 
-  void addMesh(std::string name, std::shared_ptr<Mesh> mesh);
+  void addMesh(std::string name, Common::Handle<Mesh> mesh);
   void addAnimationData(AnimationDataPtr animationData);
   AnimationDataPtr getAnimationData(const std::string &name) { return _animations.count(name) ? _animations.at(name) : nullptr; }
 
@@ -95,7 +95,7 @@ public:
   void appendAnimationBundle(ModelBundlePtr modelBundle, std::string name);
 
 private:
-  std::unordered_map<std::string, std::shared_ptr<Mesh>> _meshes; // map of meshes
+  std::unordered_map<std::string, Common::Handle<Mesh>> _meshes; // map of meshes
   std::unordered_map<std::string, SkinningDataPtr> _skinning; // map of skin data
   std::unordered_map<std::string, AnimationDataPtr> _animations; // map of meshes
   std::unordered_map<std::string, LightDataPtr> _lights; // map of lights

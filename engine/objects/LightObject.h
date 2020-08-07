@@ -107,9 +107,6 @@ private:
 
   LightObjectType _type = LightObjectType::Point;
 
-  //MeshPtr _debugMesh;
-  //MaterialSingleColorPtr _debugMaterial;
-
 protected:
   // To be used by ShadowMap class
   void viewport(vec4 value) override { _viewport = value; };

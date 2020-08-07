@@ -5,7 +5,7 @@
 #include <array>
 #include <vector>
 
-namespace Device
+namespace Common
 {
 	class Resource
 	{
@@ -17,7 +17,7 @@ namespace Device
 	class ResourceReleaser
 	{
 	public:
-		static constexpr uint32_t bucket_count = 4;
+		static constexpr uint32_t bucket_count = 2;
 
 		void Add(std::shared_ptr<Resource> resource);
 		void Swap();

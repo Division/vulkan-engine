@@ -55,6 +55,8 @@ set(ENGINE_SOURCES
 	lib/ktx/vk_funcs.c
 	Engine.h
 	Engine.cpp
+	Handle.h
+	Handle.cpp
 	IGame.h
 	lib.cpp
 	CommonIncludes.h

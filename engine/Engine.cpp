@@ -13,6 +13,7 @@
 #include "memory/Containers.h"
 #include "resources/ResourceCache.h"
 #include "render/device/Resource.h"
+#include "Handle.h"
 
 Engine* Engine::instance;
 
@@ -83,15 +84,16 @@ Engine::~Engine()
 	game->cleanup();
 	game = nullptr;
 
-	Resources::Cache::Get().Destroy();
-
 	input = nullptr;
 	scene = nullptr;
 	material_manager = nullptr;
 	scene_renderer = nullptr;
 	shader_cache = nullptr;
 	debug_draw = nullptr;
-	::Device::ResourceReleaser::Get().Clear();
+
+	Resources::Cache::Get().Destroy();
+	Common::GetReleaser().Clear();
+	::Device::GetReleaser().Clear();
 	vulkan_context->Cleanup();
 	vulkan_context = nullptr;
 
@@ -153,7 +155,8 @@ void Engine::MainLoop()
 		context->Present();
 		glfwSwapBuffers(window);
 
-		::Device::ResourceReleaser::Get().Swap();
+		::Device::GetReleaser().Swap();
+		Common::GetReleaser().Swap();
 
 		last_time = current_time;
 	}

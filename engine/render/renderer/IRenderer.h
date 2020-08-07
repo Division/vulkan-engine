@@ -15,5 +15,4 @@ enum class RenderQueue : int {
 class IRenderer {
 public:
   virtual ~IRenderer() = default;
-  //virtual void RenderMesh(MeshPtr mesh) = 0;
 };

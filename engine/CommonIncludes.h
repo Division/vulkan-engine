@@ -37,6 +37,8 @@
 #include <VulkanMemoryAllocator/vk_mem_alloc.h>
 
 #include "utils/NonCopyable.h"
+#include "render/device/Resource.h"
+#include "Handle.h"
 
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>

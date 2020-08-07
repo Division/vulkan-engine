@@ -14,14 +14,14 @@ public:
   std::shared_ptr<Material> material() { return _material; }
   void material(std::shared_ptr<Material> material) { _material = material; }
 
-  MeshPtr mesh() const { return _mesh; }
-  void mesh(MeshPtr mesh) { _mesh = mesh; }
+  Mesh::Handle mesh() const { return _mesh; }
+  void mesh(Mesh::Handle mesh) { _mesh = mesh; }
 
   void start() override;
 protected:
-  MeshPtr _mesh;
-  std::shared_ptr<Material> _material;
-  RenderQueue _renderQueue = RenderQueue::Opaque;
+    Mesh::Handle _mesh;
+    std::shared_ptr<Material> _material;
+    RenderQueue _renderQueue = RenderQueue::Opaque;
 
 };
 

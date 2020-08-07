@@ -1,6 +1,6 @@
-#include "Resource.h"
+#include "Handle.h"
 
-namespace Device
+namespace Common
 {
 	ResourceReleaser& GetReleaser()
 	{

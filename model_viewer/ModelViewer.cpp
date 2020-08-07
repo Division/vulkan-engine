@@ -69,7 +69,7 @@ void ModelViewer::init()
 
 	camera = std::make_unique<ViewerCamera>();
 	
-	plane_mesh = std::make_shared<Mesh>();
+	plane_mesh = Mesh::Create();
 	MeshGeneration::generateQuad(plane_mesh.get(), vec2(50, 50));
 	plane_mesh->calculateNormals();
 	plane_mesh->createBuffer();

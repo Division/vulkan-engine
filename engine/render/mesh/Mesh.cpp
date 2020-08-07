@@ -36,6 +36,11 @@ const Device::Format COLOR_FORMAT = Device::Format::R32G32B32A32_float;
 
 #define BUFFER_OFFSET(i) ((char *)NULL + (i))
 
+Mesh::Handle Mesh::Create(bool keepData, int componentCount, bool isStatic)
+{
+    return Mesh::Handle(std::make_unique<Mesh>(keepData, componentCount, isStatic));
+}
+
 Mesh::Mesh(bool keepData, int componentCount, bool isStatic) :
     _keepData(keepData),
     _componentCount(componentCount),
@@ -338,7 +343,7 @@ void Mesh::createBuffer() {
 	  .SetVertex()
 	  .MemoryUsage(VMA_MEMORY_USAGE_GPU_ONLY)
 	  .Data(data_buffer.data());
-  _vertexBuffer = std::make_unique<Device::VulkanBuffer>(vertex_initializer);
+  _vertexBuffer = Device::VulkanBuffer::Create(vertex_initializer);
 
   if (_hasIndices) {
     unsigned int indexSize = (unsigned int)_indices.size() * (unsigned int)sizeof(uint16_t);
@@ -346,7 +351,7 @@ void Mesh::createBuffer() {
 		.SetIndex()
 		.MemoryUsage(VMA_MEMORY_USAGE_GPU_ONLY)
 		.Data(_indices.data());
-	_indexBuffer = std::make_unique<Device::VulkanBuffer>(index_initializer);
+	_indexBuffer = Device::VulkanBuffer::Create(index_initializer);
   }
 
   _calculateAABB();

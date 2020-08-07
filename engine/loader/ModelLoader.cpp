@@ -87,7 +87,7 @@ void loadGeometry(std::istream &stream, json geometryJson, ModelBundle* bundle) 
   std::vector<float> attribData;
   std::vector<unsigned short> indices;
   for (auto &geom : geometryJson) {
-    MeshPtr mesh = std::make_shared<Mesh>(true);
+    Mesh::Handle mesh = Mesh::Create(true);
     int indexCount = geom["indexCount"];
     int vertexCount = geom["vertexCount"];
     auto attributes = geom["attributes"];

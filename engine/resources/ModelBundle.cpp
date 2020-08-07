@@ -101,15 +101,15 @@ void AnimationData::appendAnimationData(std::shared_ptr<AnimationData> animation
   }
 }
 
-std::shared_ptr<Mesh> ModelBundle::getMesh(const std::string &name) const {
-	std::shared_ptr<Mesh> result;
+Common::Handle<Mesh> ModelBundle::getMesh(const std::string &name) const {
+    Common::Handle<Mesh> result;
 
-  if (_meshes.find(name) != _meshes.end()) {
-    result = _meshes.at(name);
-  } else {
-    result = std::make_shared<Mesh>();
-    ENGLog("Can't find bundle '%s'", name.c_str());
-  }
+    auto it = _meshes.find(name);
+    if (it != _meshes.end()) {
+        result = it->second;
+    } else {
+        ENGLog("Can't find bundle '%s'", name.c_str());
+    }
 
   return result;
 }
@@ -140,7 +140,7 @@ void ModelBundle::loadHiererchy(const json &hierarchyData) {
   addHierarchy(_hierarchy);
 }
 
-void ModelBundle::addMesh(std::string name, std::shared_ptr<Mesh> mesh) {
+void ModelBundle::addMesh(std::string name, Common::Handle<Mesh> mesh) {
   _meshes[name] = mesh;
 }
 

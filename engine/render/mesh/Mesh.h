@@ -12,13 +12,17 @@ namespace Device{
 
 extern const int JOINT_PER_VERTEX_MAX;
 
-class Mesh {
+class Mesh : public Common::Resource {
 public:
+  static const int JOINTS_MAX = 70;
+  static const int JOINT_PER_VERTEX_MAX = 3;
+
+  using Handle = Common::Handle<Mesh>;
+
   explicit Mesh(bool keepData = true, int componentCount = 3, bool isStatic = true);
   virtual ~Mesh();
 
-  static const int JOINTS_MAX = 70;
-  static const int JOINT_PER_VERTEX_MAX = 3;
+  static Handle Create(bool keepData = true, int componentCount = 3, bool isStatic = true);
 
   Device::VulkanBuffer* vertexBuffer() const { return _vertexBuffer.get(); }
   Device::VulkanBuffer* indexBuffer() const { return _indexBuffer.get(); }
@@ -104,11 +108,11 @@ private:
   AABB _aabb;
   VertexLayout layout;
 
-  std::unique_ptr<Device::VulkanBuffer> _vertexBuffer;
-  std::unique_ptr<Device::VulkanBuffer> _indexBuffer;
+  Device::Handle<Device::VulkanBuffer> _vertexBuffer;
+  Device::Handle<Device::VulkanBuffer> _indexBuffer;
 
-  std::unique_ptr<Device::VulkanBuffer> last_frame_vertex_buffer;
-  std::unique_ptr<Device::VulkanBuffer> last_frame_index_buffer;
+  Device::Handle<Device::VulkanBuffer> last_frame_vertex_buffer;
+  Device::Handle<Device::VulkanBuffer> last_frame_index_buffer;
 
   bool _isStatic;
   bool _keepData;
@@ -161,4 +165,3 @@ private:
   std::vector<float> _colors;
 };
 
-typedef std::shared_ptr<Mesh> MeshPtr;
