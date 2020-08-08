@@ -14,6 +14,7 @@
 #include "resources/ResourceCache.h"
 #include "render/device/Resource.h"
 #include "Handle.h"
+#include "system/JobSystem.h"
 
 Engine* Engine::instance;
 
@@ -29,6 +30,8 @@ struct temp
 Engine::Engine(std::unique_ptr<IGame> game) : game(std::move(game))
 {
 	instance = this;
+	Thread::Scheduler::Initialize();
+
 	ENGLogSetOutputFile("log.txt");
 
 	if (!glfwInit())
@@ -96,6 +99,8 @@ Engine::~Engine()
 	::Device::GetReleaser().Clear();
 	vulkan_context->Cleanup();
 	vulkan_context = nullptr;
+
+	Thread::Scheduler::Shutdown();
 
 	if (window)
 		glfwDestroyWindow(window);

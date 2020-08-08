@@ -12,3 +12,5 @@ Roadmap:
 - GameObject file format and editor
 - lambda API for ECS
 - Image based lighting support
+- GUI library integration
+- optimize tiled lighting or implement clustered

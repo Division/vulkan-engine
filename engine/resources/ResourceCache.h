@@ -100,6 +100,41 @@ namespace Resources
 			resource->AddRef();
 		}
 
+		explicit Handle(const Handle& other)
+		{
+			resource = other.resource;
+			if (resource)
+				resource->AddRef();
+		}
+
+		explicit Handle(Handle&& other)
+		{
+			resource = other.resource;
+			other.resource = nullptr;
+		}
+
+		Handle& operator=(const Handle& other)
+		{
+			if (resource)
+				resource->RemoveRef();
+
+			resource = other.resource;
+			if (resource)
+				resource->AddRef();
+
+			return *this;
+		}
+
+		Handle& operator=(Handle&& other)
+		{
+			if (resource)
+				resource->RemoveRef();
+
+			resource = other.resource;
+			other.resource = nullptr;
+			return *this;
+		}
+
 		~Handle()
 		{
 			if (resource)

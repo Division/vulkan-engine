@@ -13,6 +13,7 @@
 #include "render/debug/DebugDraw.h"
 #include "render/texture/Texture.h"
 #include "resources/TextureResource.h"
+#include "system/JobSystem.h"
 
 ModelViewer::ModelViewer() = default;
 ModelViewer::~ModelViewer() = default;
@@ -118,6 +119,34 @@ void ModelViewer::update(float dt)
 {
 	Resources::Cache::Get().GCCollect();
 	camera->Update(dt);
+
+	std::vector<int> results;
+	std::mutex mutex;
+
+	for (int i = 0; i < 100; i++)
+	{
+		OPTICK_EVENT("Spawning job");
+
+		Thread::Scheduler::Get().SpawnJob<Thread::FunctionJob>(Thread::Job::Priority::High, [&mutex, &results, i] {
+			OPTICK_EVENT("job...");
+			std::this_thread::sleep_for(std::chrono::microseconds(100));
+			int result = i * i;
+			std::scoped_lock lock(mutex);
+			results.push_back(result);
+		});
+	}
+
+	Thread::Scheduler::Get().Wait(Thread::Job::Priority::High);
+	{
+		OPTICK_EVENT("OUTPUT");
+		std::stringstream s;
+		for (auto i : results)
+			s << i << ",";
+		s << "\n";
+
+		std::cout << s.str();
+
+	}
 }
 
 void ModelViewer::cleanup()

@@ -26,6 +26,7 @@ namespace ECS { namespace components {
 			};
 		} culling_data;*/
 
+		// TODO: remove mesh from draw call
 		const Mesh* mesh = nullptr;
 		Device::ShaderBufferStruct::ObjectParams* object_params;
 		Device::ShaderProgram* shader;
