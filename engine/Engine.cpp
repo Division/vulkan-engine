@@ -30,6 +30,8 @@ struct temp
 Engine::Engine(std::unique_ptr<IGame> game) : game(std::move(game))
 {
 	instance = this;
+	OPTICK_START_CAPTURE();
+	OPTICK_EVENT();
 	Thread::Scheduler::Initialize();
 
 	ENGLogSetOutputFile("log.txt");
@@ -66,18 +68,26 @@ Engine::Engine(std::unique_ptr<IGame> game) : game(std::move(game))
 	vulkan_context->initialize();
 	glfwSetTime(0);
 
-	scene = std::make_unique<Scene>();
-	shader_cache = std::make_unique<Device::ShaderCache>();
-	debug_draw = std::make_unique<render::DebugDraw>(*shader_cache);
-	scene_renderer = std::make_unique<render::SceneRenderer>(*scene, shader_cache.get());
-	material_manager = std::make_unique<render::MaterialManager>();
-	input = std::make_unique<System::Input>(window);
+	{
+		OPTICK_EVENT("Creating subsystems");
+		scene = std::make_unique<Scene>();
+		shader_cache = std::make_unique<Device::ShaderCache>();
+		debug_draw = std::make_unique<render::DebugDraw>(*shader_cache);
+		scene_renderer = std::make_unique<render::SceneRenderer>(*scene, shader_cache.get());
+		material_manager = std::make_unique<render::MaterialManager>();
+		input = std::make_unique<System::Input>(window);
+	}
 
 	vulkan_context->RecreateSwapChain(); // creating swapchain after scene renderer to handle subscribtion to the recreate event
 
 	render::DebugUI::Initialize(window, shader_cache.get(), *scene_renderer->GetEnvironmentSettings());
 
 	this->game->init();
+
+	Thread::Scheduler::Get().Wait(Thread::Job::Priority::Low);
+
+	OPTICK_STOP_CAPTURE();
+	OPTICK_SAVE_CAPTURE("capture.opt");
 }
 
 Engine::~Engine()

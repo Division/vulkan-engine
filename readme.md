@@ -1,7 +1,7 @@
 Roadmap:
-- Multithreading, job system
++ Multithreading, job system
 - Handles for all engine resources
-- Async resource loading
++ Async resource loading
 - Fix release build settings in cmake
 - FBX mesh export
 - New skinning animation system

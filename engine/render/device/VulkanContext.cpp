@@ -18,6 +18,7 @@ namespace Device {
 
 	VulkanContext::VulkanContext(GLFWwindow* window) : window(window)
 	{
+		OPTICK_EVENT();
 		CreateInstance();
 
 		if (ENABLE_VALIDATION_LAYERS)
@@ -140,6 +141,7 @@ namespace Device {
 
 	void VulkanContext::RecreateSwapChain() 
 	{
+		OPTICK_EVENT();
 		int32_t width = 0;
 		int32_t height = 0;
 		glfwGetFramebufferSize(window, &width, &height);
@@ -158,6 +160,7 @@ namespace Device {
 
 	void VulkanContext::CreateInstance() 
 	{
+		OPTICK_EVENT();
 		if (ENABLE_VALIDATION_LAYERS && !VulkanUtils::CheckValidationLayerSupport())
 			throw std::runtime_error("validation layers requested, but not available!");
 

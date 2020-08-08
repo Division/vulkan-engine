@@ -150,6 +150,7 @@ namespace Thread {
 
 	void Scheduler::Initialize()
 	{
+		OPTICK_EVENT();
 		assert(!scheduler);
 		scheduler = std::make_unique<Scheduler>(std::thread::hardware_concurrency());
 	}

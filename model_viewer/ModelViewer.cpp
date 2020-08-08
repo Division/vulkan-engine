@@ -46,7 +46,11 @@ void ModelViewer::init()
 	//ModelBundleHandle model(L"resources/models/sphere.mdl");
 	//auto& model_bundle = *model;
 
+	OPTICK_EVENT();
+
 	sphere_bundle = ModelBundleHandle(L"resources/models/sphere.mdl");
+	environment = Resources::TextureResource::Handle(L"resources/environment/skybox.ktx");
+	lama_tex = Resources::TextureResource::Handle(L"resources/lama.ktx");
 
 	auto* engine = Engine::Get();
 	manager = engine->GetEntityManager();
@@ -64,8 +68,6 @@ void ModelViewer::init()
 	light->transform()->position(vec3(50, 0, 0));
 	light->radius(100);*/
 
-	environment = Resources::TextureResource::Handle(L"resources/environment/skybox.ktx");
-	lama_tex = Resources::TextureResource::Handle(L"resources/lama.ktx");
 
 	camera = std::make_unique<ViewerCamera>();
 	

@@ -57,7 +57,8 @@ namespace Thread {
 	public:
 		enum class Priority : int
 		{
-			High = 0,
+			Frame = 0,
+			High,
 			Low,
 			Count
 		};
@@ -148,7 +149,11 @@ namespace Thread {
 		T* SpawnJob(Job::Priority priority, Args&& ...args)
 		{
 			static_assert(sizeof(T) <= JOB_POOL_ITEM_SIZE);
-			void* memory = reinterpret_cast<T*>(pool_allocator.Allocate());
+			void* memory = pool_allocator.Allocate();
+
+			if (!memory)
+				throw std::runtime_error("Unable to allocate job");
+
 			T* job = new (memory) T(std::forward<Args>(args)...);
 			workload_set.Add(job, priority);
 			return job;
