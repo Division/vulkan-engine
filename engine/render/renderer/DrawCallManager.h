@@ -4,7 +4,7 @@
 #include "ecs/ECS.h"
 #include <mutex>
 #include "IRenderer.h"
-
+#include "render/shader/ShaderCache.h"
 
 namespace ECS 
 {
@@ -67,7 +67,7 @@ namespace render {
 		::Device::ShaderCache* shader_cache;
 		std::unique_ptr<ECS::EntityManager> manager;
 		SceneRenderer& scene_renderer;
-		uint32_t depth_only_fragment_shader_hash;
+		::Device::ShaderProgramInfo::ShaderData depth_only_fragment_shader_data;
 
 		std::unique_ptr<utils::Pool<DrawCallList>> draw_call_list_pool;
 		std::vector<std::unique_ptr<DrawCallList>> obtained_draw_call_lists;

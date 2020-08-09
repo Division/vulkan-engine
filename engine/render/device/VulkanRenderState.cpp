@@ -428,10 +428,13 @@ namespace Device {
 
 	void VulkanRenderState::RenderDrawCall(const ECS::components::DrawCall* draw_call, bool is_depth)
 	{
+		auto* shader = is_depth ? draw_call->depth_only_shader : draw_call->shader;
+		if (!shader->Ready())
+			return;
+
 		auto* mesh = draw_call->mesh;
 		SetVertexLayout(mesh->GetVertexLayout());
 
-		auto* shader = is_depth ? draw_call->depth_only_shader : draw_call->shader;
 		SetShader(*shader);
 		UpdateState();
 

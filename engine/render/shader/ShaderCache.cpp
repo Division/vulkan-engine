@@ -2,6 +2,7 @@
 #include "utils/Math.h"
 #include "loader/FileLoader.h"
 #include "render/shader/ShaderDefines.h"
+#include "system/JobSystem.h"
 
 namespace Device {
 
@@ -13,6 +14,26 @@ namespace Device {
 	{
 		shaders.push_back({ stage, path, std::move(entry_point), std::move(defines) });
 		return *this;
+	}
+
+	ShaderProgramInfo& ShaderProgramInfo::AddShader(ShaderData&& shader_data)
+	{
+		shaders.emplace_back(std::move(shader_data));
+		return *this;
+	}
+
+	ShaderProgramInfo::ShaderData::ShaderData(ShaderProgram::Stage stage, std::wstring path, std::string entry_point, std::vector<Macro> defines)
+		: stage(stage), path(path), entry_point(entry_point), defines(std::move(defines))
+	{
+	}
+
+	const ShaderProgramInfo::ShaderData* ShaderProgramInfo::GetShaderData(ShaderProgram::Stage stage) const
+	{
+		for (auto& data : shaders)
+			if (data.stage == stage)
+				return &data;
+
+		return nullptr;
 	}
 
 	void ShaderCache::AppendCapsDefines(const ShaderCapsSet& caps_set, std::vector<ShaderProgramInfo::Macro>& out_defines)
@@ -54,50 +75,23 @@ namespace Device {
 		auto defines_hash = GetDefinesHash(data.defines);
 		auto path_hash = FastHash(data.path.data(), data.path.length() * sizeof(wchar_t));
 		auto entry_point_hash = FastHash(data.entry_point.data(), data.entry_point.length());
-		uint32_t hashes[] = { defines_hash, path_hash, entry_point_hash };
+		auto source_hash = 0;
+
+		auto source_data = loader::LoadFile(data.path);
+		if (source_data.size())
+			source_hash = FastHash(source_data.data(), source_data.size());
+
+		uint32_t hashes[] = { defines_hash, path_hash, entry_point_hash, source_hash };
 		return FastHash(hashes, sizeof(hashes));
 	}
 
-	std::wstring ShaderCache::GetShaderCachePath(uint32_t shader_hash)
-	{
-		std::filesystem::path shader_path(shader_cache_dir);
-
-		std::wstring filename = std::to_wstring(shader_hash);
-
-		shader_path /= filename;
-		shader_path.replace_extension(".spv");
-		return shader_path.wstring();
-	}
-
-	ShaderCache::ShaderCache() = default;
-	ShaderCache::~ShaderCache() = default;
-
-	ShaderModule* ShaderCache::GetShaderModule(uint32_t hash)
-	{
-		auto iter = module_cache.find(hash);
-		if (iter != module_cache.end())
-			return iter->second.get();
-
-		std::wstring filename = ShaderCache::GetShaderCachePath(hash);
-
-		auto module_data = loader::LoadFile(filename);
-		if (!module_data.size())
-			throw std::runtime_error("Error loading shader module");
-
-		auto shader_module = std::make_unique<ShaderModule>(module_data.data(), module_data.size(), hash);
-		auto* result = shader_module.get();
-		module_cache[hash] = std::move(shader_module);
-
-		return result;
-	}
-
-	ShaderProgram* ShaderCache::GetShaderProgram(const ShaderProgramInfo& info)
+	uint32_t ShaderCache::GetShaderProgramInfoHash(const ShaderProgramInfo& program_info)
 	{
 		uint32_t vertex_hash = 0;
 		uint32_t fragment_hash = 0;
 		uint32_t compute_hash = 0;
 
-		for (auto& data : info.shaders)
+		for (auto& data : program_info.shaders)
 		{
 			uint32_t hash = GetShaderDataHash(data);
 			switch (data.stage)
@@ -116,39 +110,153 @@ namespace Device {
 			}
 		}
 
-		return GetShaderProgram(vertex_hash, fragment_hash, compute_hash);
+		return ShaderProgram::CalculateHash(fragment_hash, vertex_hash, compute_hash);
 	}
 
-	ShaderProgram* ShaderCache::GetShaderProgram(uint32_t vertex_hash, uint32_t fragment_hash, uint32_t compute_hash)
+	std::wstring ShaderCache::GetShaderCachePath(uint32_t shader_hash)
 	{
-		// TODO: async shader loading
-		auto program_hash = ShaderProgram::CalculateHash(fragment_hash, vertex_hash, compute_hash);
-		
-		auto iter = program_cache.find(program_hash);
-		if (iter != program_cache.end())
+		std::filesystem::path shader_path(shader_cache_dir);
+
+		std::wstring filename = std::to_wstring(shader_hash);
+
+		shader_path /= filename;
+		shader_path.replace_extension(".spv");
+		return shader_path.wstring();
+	}
+
+	ShaderCache::ShaderCache() = default;
+	ShaderCache::~ShaderCache() = default;
+
+	ShaderModule* ShaderCache::GetShaderModule(const ShaderProgramInfo::ShaderData& shader_data)
+	{
+		auto hash = GetShaderDataHash(shader_data);
+
+		std::scoped_lock lock(module_mutex);
+
+		auto iter = module_cache.find(hash);
+		if (iter != module_cache.end())
 			return iter->second.get();
 
-		auto program = std::make_unique<ShaderProgram>();
-		if (vertex_hash)
-		{
-			auto vertex_module = GetShaderModule(vertex_hash);
-			program->AddModule(vertex_module, ShaderProgram::Stage::Vertex);
-		}
-		if (fragment_hash)
-		{
-			auto fragment_module = GetShaderModule(fragment_hash);
-			program->AddModule(fragment_module, ShaderProgram::Stage::Fragment);
-		}
-		if (compute_hash)
-		{
-			auto compute_module = GetShaderModule(compute_hash);
-			program->AddModule(compute_module, ShaderProgram::Stage::Compute);
-		}
-		program->Prepare();
-		auto* result = program.get();
-		program_cache[program_hash] = std::move(program);
+		auto shader_module = std::make_unique<ShaderModule>(hash);
+		auto* result = shader_module.get();
+		module_cache[hash] = std::move(shader_module);
+
 		return result;
 	}
 
+	bool ShaderCache::LoadShaderModule(ShaderModule& module, const ShaderProgramInfo::ShaderData& shader_data)
+	{
+		std::wstring filename = ShaderCache::GetShaderCachePath(module.GetHash());
+
+		auto module_data = loader::LoadFile(filename);
+		if (!module_data.size())
+			throw std::runtime_error("Error loading shader module");
+
+		module.Load(module_data.data(), module_data.size());
+
+		return true;
+	}
+
+	const std::vector<uint8_t>& ShaderCache::GetShaderSource(const std::wstring& filename)
+	{
+		{
+			std::scoped_lock lock(source_mutex);
+			auto it = source_cache.find(filename);
+			if (it != source_cache.end() && it->second.size() > 0)
+				return it->second;
+		}
+
+		auto source = loader::LoadFile(filename);
+		std::scoped_lock lock(source_mutex);
+		auto it = source_cache.insert(std::make_pair(filename, source));
+		return it.first->second;
+	}
+
+	class ShaderCache::PrepareShaderJob : public Thread::Job
+	{
+	public:
+		PrepareShaderJob(ShaderCache* shader_cache, ShaderProgram* program, const ShaderProgramInfo::ShaderData* vertex_data, const ShaderProgramInfo::ShaderData* fragment_data, const ShaderProgramInfo::ShaderData* compute_data)
+			: shader_cache(shader_cache)
+			, program(program)
+			, vertex_data(vertex_data ? new ShaderProgramInfo::ShaderData(*vertex_data) : nullptr)
+			, fragment_data(fragment_data ? new ShaderProgramInfo::ShaderData(*fragment_data) : nullptr)
+			, compute_data(compute_data ? new ShaderProgramInfo::ShaderData(*compute_data) : nullptr)
+		{
+		}
+
+		virtual void Execute() override
+		{
+			if (vertex_data)
+			{
+				auto vertex_module = shader_cache->GetShaderModule(*vertex_data);
+				if (vertex_module->TransitionState(ShaderModule::State::Unloaded, ShaderModule::State::Loading))
+					shader_cache->LoadShaderModule(*vertex_module, *vertex_data);
+				else
+					vertex_module->WaitLoaded();
+
+				program->AddModule(vertex_module, ShaderProgram::Stage::Vertex);
+			}
+
+			if (fragment_data)
+			{
+				auto fragment_module = shader_cache->GetShaderModule(*fragment_data);
+				if (fragment_module->TransitionState(ShaderModule::State::Unloaded, ShaderModule::State::Loading))
+					shader_cache->LoadShaderModule(*fragment_module, *fragment_data);
+				else
+					fragment_module->WaitLoaded();
+
+				program->AddModule(fragment_module, ShaderProgram::Stage::Fragment);
+			}
+
+			if (compute_data)
+			{
+				auto compute_module = shader_cache->GetShaderModule(*compute_data);
+
+				if (compute_module->TransitionState(ShaderModule::State::Unloaded, ShaderModule::State::Loading))
+					shader_cache->LoadShaderModule(*compute_module, *compute_data);
+				else
+					compute_module->WaitLoaded();
+
+				program->AddModule(compute_module, ShaderProgram::Stage::Compute);
+			}
+
+			program->Prepare();
+			bool state_transitioned = program->TransitionState(ShaderModule::State::Loading, ShaderModule::State::Loaded);
+			assert(state_transitioned);
+		}
+
+	private:
+		ShaderCache* shader_cache;
+		ShaderProgram* program;
+		std::unique_ptr<ShaderProgramInfo::ShaderData> vertex_data;
+		std::unique_ptr<ShaderProgramInfo::ShaderData> fragment_data;
+		std::unique_ptr<ShaderProgramInfo::ShaderData> compute_data;
+	};
+
+	ShaderProgram* ShaderCache::GetShaderProgram(const ShaderProgramInfo& info)
+	{
+		ShaderProgram* program;
+
+		auto program_hash = GetShaderProgramInfoHash(info);
+		{
+			std::scoped_lock lock(program_mutex);
+			auto iter = program_cache.find(program_hash);
+			if (iter != program_cache.end())
+				return iter->second.get();
+			
+			auto inserted = program_cache.insert(std::make_pair(program_hash, std::make_unique<ShaderProgram>()));
+			program = inserted.first->second.get();
+		}
+
+		if (program->TransitionState(ShaderModule::State::Unloaded, ShaderModule::State::Loading))
+		{
+			auto* vertex_data = info.GetShaderData(ShaderProgram::Stage::Vertex);
+			auto* fragment_data = info.GetShaderData(ShaderProgram::Stage::Fragment);
+			auto* compute_data = info.GetShaderData(ShaderProgram::Stage::Compute);
+			Thread::Scheduler::Get().SpawnJob<PrepareShaderJob>(Thread::Job::Priority::Low, this, program, vertex_data, fragment_data, compute_data);
+		}
+
+		return program;
+	}
 
 }

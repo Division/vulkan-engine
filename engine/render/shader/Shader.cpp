@@ -18,6 +18,8 @@ namespace Device {
 
 	ShaderProgram::BindingAddress ShaderProgram::GetBindingAddress(const std::string& name)
 	{
+		WaitLoaded();
+
 		for (int set = 0; set < descriptor_sets.size(); set++)
 		{
 			auto index = descriptor_sets[set].GetBindingIndexByName(name);
@@ -30,16 +32,31 @@ namespace Device {
 		return { (unsigned)-1, (unsigned)-1 };
 	}
 
-	ShaderModule::ShaderModule(void* data, size_t size, uint32_t hash)
-		: hash(hash)
+	void ShaderModule::Load(void* data, size_t size)
 	{
+		assert(state.load() == State::Loading);
 		vk::ShaderModuleCreateInfo create_info(vk::ShaderModuleCreateFlags(), size, (uint32_t*)data);
 		shader_module = Engine::GetVulkanContext()->GetDevice().createShaderModuleUnique(create_info);
 		reflection_info = std::make_unique<ReflectionInfo>((uint32_t*)data, size / sizeof(uint32_t));
+		state = State::Loaded;
+	}
+
+	bool ShaderModule::TransitionState(State old_state, State new_state)
+	{
+		return state.compare_exchange_strong(old_state, new_state);
+	}
+
+	void ShaderModule::WaitLoaded()
+	{
+		OPTICK_EVENT();
+		while ((int)state.load() < (int)State::Loaded)
+			std::this_thread::yield();
 	}
 	
 	void ShaderProgram::AddModule(ShaderModule* shader_module, Stage stage)
 	{
+		assert(state == ShaderModule::State::Loading);
+
 		ShaderModule** module_var = nullptr;
 	
 		if (stage == Stage::Vertex)
@@ -190,6 +207,8 @@ namespace Device {
 
 	void ShaderProgram::Prepare()
 	{
+		assert(state == ShaderModule::State::Loading);
+
 		std::map<std::pair<unsigned, unsigned>, int> existing_bindings;
 
 		uint32_t vertex_hash = 0;
@@ -253,6 +272,8 @@ namespace Device {
 
 	const char* ShaderProgram::GetEntryPoint(Stage stage) const
 	{
+		WaitLoaded();
+
 		switch (stage)
 		{
 			case Stage::Vertex: return vertex_module ? vertex_module->GetReflectionInfo()->EntryPoints()[0].name.c_str() : 0;
@@ -269,6 +290,8 @@ namespace Device {
 
 	const ShaderProgram::BindingData* ShaderProgram::GetBinding(unsigned set, unsigned binding) const
 	{
+		WaitLoaded();
+
 		if (set >= descriptor_sets.size() || binding >= descriptor_sets[set].bindings.size())
 			throw std::runtime_error("binding doesn't exist");
 
@@ -277,6 +300,8 @@ namespace Device {
 
 	const ShaderProgram::BindingData* ShaderProgram::GetBindingByName(const std::string& name) const
 	{
+		WaitLoaded();
+
 		auto iter = name_binding_map.find(name);
 		if (iter == name_binding_map.end())
 			return nullptr;
@@ -285,4 +310,8 @@ namespace Device {
 		return GetBinding(address.set, address.binding);
 	}
 
+	bool ShaderProgram::TransitionState(ShaderModule::State old_state, ShaderModule::State new_state)
+	{
+		return state.compare_exchange_strong(old_state, new_state);
+	}
 }

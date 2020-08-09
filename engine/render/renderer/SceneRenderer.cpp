@@ -499,10 +499,9 @@ namespace render {
 		global_shader_bindings = std::make_unique<ShaderBindings>();
 		Material material;
 		material.LightingEnabled(true); // For now it's enough to get all the global bindings
-		auto vertex_hash =  material.GetVertexShaderHash();
-		auto fragment_hash = material.GetFragmentShaderHash();
+		auto& shader_info =  material.GetShaderInfo();
 
-		auto* shader = shader_cache->GetShaderProgram(vertex_hash, fragment_hash);
+		auto* shader = shader_cache->GetShaderProgram(shader_info);
 		auto* descriptor_set = shader->GetDescriptorSet(DescriptorSet::Global);
 
 		SetupShaderBindings(material, *descriptor_set, *global_shader_bindings);

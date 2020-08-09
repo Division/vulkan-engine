@@ -3,7 +3,6 @@
 #include "render/shader/ShaderDefines.h"
 #include "render/shader/ShaderBindings.h"
 #include "render/renderer/SceneRenderer.h"
-#include "render/shader/ShaderCache.h"
 #include "ecs/components/DrawCall.h"
 #include "render/device/VulkanDescriptorCache.h"
 #include "Engine.h"
@@ -22,7 +21,7 @@ namespace render {
 	{
 		manager = std::make_unique<EntityManager>();
 		shader_cache = scene_renderer.GetShaderCache();
-		depth_only_fragment_shader_hash = ShaderCache::GetShaderDataHash(ShaderProgramInfo::ShaderData(ShaderProgram::Stage::Fragment, L"shaders/noop.frag"));
+		depth_only_fragment_shader_data = ShaderProgramInfo::ShaderData(ShaderProgram::Stage::Fragment, L"shaders/noop.frag");
 		draw_call_list_pool = std::make_unique<utils::Pool<DrawCallList>>();
 	}
 
@@ -47,16 +46,11 @@ namespace render {
 		if (has_skinning)
 			depth_caps.addCap(ShaderCaps::Skinning);
 
-		auto depth_vertex_name_hash = material.GetVertexShaderDepthOnlyHash();
-		auto depth_fragment_hash = depth_only_fragment_shader_hash;
-		auto depth_vertex_hash =  depth_vertex_name_hash;
+		auto& depth_shader_info = material.GetDepthOnlyShaderInfo();
+		auto& shader_info = material.GetShaderInfo();
 
-		auto vertex_name_hash = material.GetVertexShaderHash();
-		auto fragment_hash = material.GetFragmentShaderHash();
-		auto vertex_hash = vertex_name_hash;
-
-		draw_call->shader = shader_cache->GetShaderProgram(vertex_hash, fragment_hash);
-		draw_call->depth_only_shader = shader_cache->GetShaderProgram(depth_vertex_hash, depth_fragment_hash);
+		draw_call->shader = shader_cache->GetShaderProgram(shader_info);
+		draw_call->depth_only_shader = shader_cache->GetShaderProgram(depth_shader_info);
 		
 		auto* depth_descriptor_set = draw_call->depth_only_shader->GetDescriptorSet(DescriptorSet::Object);
 		auto* descriptor_set = draw_call->shader->GetDescriptorSet(DescriptorSet::Object);

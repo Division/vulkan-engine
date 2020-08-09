@@ -14,15 +14,27 @@ namespace Device {
 	class ShaderModule
 	{
 	public:
+		enum class State : unsigned
+		{
+			Unloaded,
+			Loading,
+			Loaded,
+			Error
+		};
+
 		ShaderModule(uint32_t hash = 0) : hash(hash) {};
-		ShaderModule(void* data, size_t size, uint32_t hash = 0);
+		void Load(void* data, size_t size);
 		ShaderModule(ShaderModule&&) = default;
 		ShaderModule& operator= (ShaderModule&&) = default;
 
 		vk::ShaderModule GetModule() const { return shader_module.get(); }
 		const ReflectionInfo* GetReflectionInfo() const { return reflection_info.get(); }
 		uint32_t GetHash() const { return hash; }
+		bool TransitionState(State old_state, State new_state);
+		void WaitLoaded();
+
 	private:
+		std::atomic<State> state = State::Unloaded;
 		uint32_t hash;
 		vk::UniqueShaderModule shader_module;
 		std::unique_ptr<ReflectionInfo> reflection_info;
@@ -88,30 +100,45 @@ namespace Device {
 		static const unsigned max_descriptor_sets = 4;
 
 		static uint32_t CalculateHash(uint32_t fragment_hash, uint32_t vertex_hash, uint32_t compute_hash = 0);
-		BindingAddress GetBindingAddress(const std::string& name);
 
 		ShaderProgram();
 		void AddModule(ShaderModule* shader_module, Stage stage);
 		void Prepare();
 
-		const ShaderModule* VertexModule() const { return vertex_module; }
-		const ShaderModule* FragmentModule() const { return fragment_module; }
-		const ShaderModule* ComputeModule() const { return compute_module; }
+		BindingAddress GetBindingAddress(const std::string& name);
+		const ShaderModule* VertexModule() const { WaitLoaded(); return vertex_module; }
+		const ShaderModule* FragmentModule() const { WaitLoaded(); return fragment_module; }
+		const ShaderModule* ComputeModule() const { WaitLoaded(); return compute_module; }
 		
-		const auto& GetDescriptorSets() const { return descriptor_sets; }
-		const DescriptorSet* GetDescriptorSet(unsigned set) const { return &descriptor_sets[set]; }
+		const auto& GetDescriptorSets() const { WaitLoaded(); return descriptor_sets; }
+		const DescriptorSet* GetDescriptorSet(unsigned set) const { WaitLoaded(); return &descriptor_sets[set]; }
 		const BindingData* GetBinding(unsigned set, unsigned binding) const;
 		const BindingData* GetBindingByName(const std::string& name) const;
-		const utils::SmallVectorBase<PushConstants>* GetPushConstants() const { return &push_constants; }
+		const utils::SmallVectorBase<PushConstants>* GetPushConstants() const { WaitLoaded(); return &push_constants; }
 		const char* GetEntryPoint(Stage stage) const;
 
 		uint32_t GetHash() const;
+		bool Ready() const { return state == ShaderModule::State::Loaded; }
+		
+		void WaitLoaded() const
+		{
+			OPTICK_EVENT();
+
+			if (state == ShaderModule::State::Unloaded)
+				return;
+
+			while ((int)state.load() < (int)ShaderModule::State::Loaded)
+				std::this_thread::yield();
+		}
+
+		bool TransitionState(ShaderModule::State old_state, ShaderModule::State new_state);
 
 	private:
 		void AppendBindings(const ShaderModule& module, ShaderProgram::Stage stage, std::map<std::pair<unsigned, unsigned>, int>& existing_bindings);
 		void AppendPushConstants(const ShaderModule& module, ShaderProgram::Stage stage);
 
 	private:
+		std::atomic<ShaderModule::State> state = ShaderModule::State::Unloaded;
 		ShaderModule* vertex_module = nullptr;
 		ShaderModule* fragment_module = nullptr;
 		ShaderModule* compute_module = nullptr;

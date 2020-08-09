@@ -1,5 +1,4 @@
 ﻿#include "Material.h"
-#include "render/shader/ShaderCache.h"
 #include "utils/Math.h"
 
 using namespace Device;
@@ -91,9 +90,22 @@ void Material::UpdateShaderHash() const
 	std::vector<ShaderProgramInfo::Macro> defines;
 	ShaderCache::AppendCapsDefines(shader_caps, defines);
 
-	vertex_hash = ShaderCache::GetShaderDataHash(ShaderProgramInfo::ShaderData(ShaderProgram::Stage::Vertex, shader_path + L".vert", "main", defines));
-	vertex_hash_depth_only = ShaderCache::GetShaderDataHash(ShaderProgramInfo::ShaderData(ShaderProgram::Stage::Vertex, shader_path + L".vert", "main", { {"DEPTH_ONLY", "1" } }));
-	fragment_hash = ShaderCache::GetShaderDataHash(ShaderProgramInfo::ShaderData(ShaderProgram::Stage::Fragment, shader_path + L".frag", "main", defines));
+	auto vertex_data = ShaderProgramInfo::ShaderData(ShaderProgram::Stage::Vertex, shader_path + L".vert", "main", defines);
+	auto fragment_data = ShaderProgramInfo::ShaderData(ShaderProgram::Stage::Fragment, shader_path + L".frag", "main", defines);
+	auto vertex_depth_only_data = ShaderProgramInfo::ShaderData(ShaderProgram::Stage::Vertex, shader_path + L".vert", "main", { {"DEPTH_ONLY", "1" } });
+	auto fragment_depth_only_data = ShaderProgramInfo::ShaderData(ShaderProgram::Stage::Fragment, L"shaders/noop.frag");
+	vertex_hash = ShaderCache::GetShaderDataHash(vertex_data);
+	vertex_hash_depth_only = ShaderCache::GetShaderDataHash(vertex_depth_only_data);
+	fragment_hash = ShaderCache::GetShaderDataHash(fragment_data);
+
+	shader_info.Clear();
+	shader_info.AddShader(std::move(vertex_data));
+	shader_info.AddShader(std::move(fragment_data));
+
+	depth_only_shader_info.Clear();
+	depth_only_shader_info.AddShader(std::move(vertex_depth_only_data));
+	depth_only_shader_info.AddShader(std::move(fragment_depth_only_data));
+
 	shader_hash_dirty = false;
 }
 

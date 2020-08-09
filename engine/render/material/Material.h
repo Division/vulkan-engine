@@ -4,6 +4,7 @@
 #include "render/shader/ShaderCaps.h"
 #include "render/device/Resource.h"
 #include "render/texture/Texture.h"
+#include "render/shader/ShaderCache.h"
 
 namespace Device 
 {
@@ -38,9 +39,8 @@ public:
 	const ShaderCapsSet& ShaderCaps() const { if (caps_dirty) UpdateCaps(); return shader_caps; }
 	const ShaderCapsSet &ShaderCapsSkinning() const { if (caps_dirty) UpdateCaps(); return shader_caps_skinning; }
 
-	uint32_t GetVertexShaderHash() const { UpdateShaderHash(); return vertex_hash; }
-	uint32_t GetVertexShaderDepthOnlyHash() const { UpdateShaderHash(); return vertex_hash_depth_only; }
-	uint32_t GetFragmentShaderHash() const { UpdateShaderHash(); return fragment_hash; }
+	const Device::ShaderProgramInfo& GetShaderInfo() const { UpdateShaderHash(); return shader_info; }
+	const Device::ShaderProgramInfo& GetDepthOnlyShaderInfo() const { UpdateShaderHash(); return depth_only_shader_info; }
 
 	uint32_t GetHash() const;
 
@@ -57,13 +57,14 @@ protected:
 	mutable ShaderCapsSet shader_caps_skinning;
 	float roughness = 0;
 
+	mutable Device::ShaderProgramInfo shader_info;
+	mutable Device::ShaderProgramInfo depth_only_shader_info;
 	mutable uint32_t vertex_hash_depth_only = 0;
 	mutable uint32_t vertex_hash = 0;
 	mutable uint32_t fragment_hash = 0;
 
 	bool has_texture0 = false;
 	Device::Handle<Device::Texture> texture0;
-
 
 	bool has_normal_map = false;
 	Device::Handle<Device::Texture> normal_map;

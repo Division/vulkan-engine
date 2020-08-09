@@ -2,20 +2,20 @@
 
 namespace loader 
 {
-	std::vector<char> LoadFile(const std::wstring& filename) 
+	std::vector<uint8_t> LoadFile(const std::wstring& filename) 
 	{
 		std::ifstream file(filename, std::ios::binary | std::ios::ate);
 		file.exceptions(std::ios::failbit);
 		std::streamsize size = file.tellg();
 		file.seekg(0, std::ios::beg);
 
-		auto result = std::vector<char>(size);
+		auto result = std::vector<uint8_t>(size);
 
-		if (file.read(result.data(), size)) {
+		if (file.read((char*)result.data(), size)) {
 			return result;
 		}
 		else {
-			return std::vector<char>();
+			return std::vector<uint8_t>();
 		}
 	}
 
