@@ -154,6 +154,8 @@ set(ENGINE_SOURCES
 	render/shader/ShaderCaps.h
 	render/shader/ShaderCache.h
 	render/shader/ShaderCache.cpp
+	render/shader/ShaderCompiler.h
+	render/shader/ShaderCompiler.cpp
 	render/shading/IShadowCaster.h
 	render/shading/LightGrid.h
 	render/shading/LightGrid.cpp
@@ -255,6 +257,7 @@ target_link_libraries(vk_engine spirv-cross-glsl)
 target_link_libraries(vk_engine spirv-cross-cpp)
 target_link_libraries(vk_engine spirv-cross-reflect)
 target_link_libraries(vk_engine OptickCore)
+target_link_libraries(vk_engine ${CMAKE_CURRENT_SOURCE_DIR}/lib/static/dxc/dxcompiler.lib)
 
 # Tests
 set(TEST_SOURCES

@@ -5,7 +5,9 @@ namespace loader
 	std::vector<uint8_t> LoadFile(const std::wstring& filename) 
 	{
 		std::ifstream file(filename, std::ios::binary | std::ios::ate);
-		file.exceptions(std::ios::failbit);
+		if (!file.good())
+			return std::vector<uint8_t>();
+
 		std::streamsize size = file.tellg();
 		file.seekg(0, std::ios::beg);
 

@@ -3,6 +3,8 @@
 #include "loader/FileLoader.h"
 #include "render/shader/ShaderDefines.h"
 #include "system/JobSystem.h"
+#include "ShaderCompiler.h"
+#include "utils/StringUtils.h"
 
 namespace Device {
 
@@ -150,7 +152,21 @@ namespace Device {
 
 		auto module_data = loader::LoadFile(filename);
 		if (!module_data.size())
-			throw std::runtime_error("Error loading shader module");
+		{
+			ShaderCompiler::CompilationResult result;
+			if (ShaderCompiler::CompileShader(*this, shader_data, result))
+			{
+				module_data = std::move(result.data);
+				// Saving to file
+				std::ofstream stream(filename, std::ofstream::binary);
+				stream.write((char*)module_data.data(), module_data.size());
+			}
+			else
+			{
+				std::cout << "Error compiling " << utils::WStringToString(filename) << std::endl << result.error << std::endl;
+				throw std::runtime_error("Error compiling shader module");
+			}
+		}
 
 		module.Load(module_data.data(), module_data.size());
 

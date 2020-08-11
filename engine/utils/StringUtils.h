@@ -1,5 +1,6 @@
 #pragma once
 #include <string>
+#include <codecvt>
 
 namespace utils
 {
@@ -20,4 +21,7 @@ namespace utils
 			[](auto c){ return std::toupper(c); });
 	}
 
+	std::wstring StringToWString(const std::string& str);
+
+	std::string WStringToString(const std::wstring& wstr);
 }
