@@ -28,15 +28,15 @@ namespace render::effects
 		: environment_settings(environment_settings)
 	{
 		auto shader_info = ShaderProgramInfo()
-			.AddShader(ShaderProgram::Stage::Vertex, L"shaders/postprocess/postprocess.vert")
-			.AddShader(ShaderProgram::Stage::Fragment, L"shaders/postprocess/postprocess.frag");
+			.AddShader(ShaderProgram::Stage::Vertex, L"shaders/postprocess/postprocess.hlsl", "vs_main")
+			.AddShader(ShaderProgram::Stage::Fragment, L"shaders/postprocess/postprocess.hlsl", "ps_main");
 		shader = shader_cache.GetShaderProgram(shader_info);
 		full_screen_quad_mesh = std::make_unique<Mesh>(false);
 		MeshGeneration::generateFullScreenQuad(full_screen_quad_mesh.get());
 		full_screen_quad_mesh->createBuffer();
 
 		src_texture_address = shader->GetBindingAddress("src_texture");
-		hdr_buffer_address = shader->GetBindingAddress("hdr_data");
+		//hdr_buffer_address = shader->GetBindingAddress("hdr_data");
 	}
 
 	void PostProcess::PrepareRendering(RenderGraph& graph)
@@ -72,7 +72,7 @@ namespace render::effects
 				bindings.AddTextureBindingSafe(src_texture_address.binding, node.resource->GetAttachment()->GetTexture().get());
 
 				auto* buffer = hdr_buffer.GetBuffer();
-				bindings.AddBufferBindingSafe(hdr_buffer_address.binding, 0, buffer->Size(), buffer->Buffer());
+				//bindings.AddBufferBindingSafe(hdr_buffer_address.binding, 0, buffer->Size(), buffer->Buffer());
 				auto* descriptor_set_info = shader->GetDescriptorSet(0);
 				auto command_buffer = state.GetCurrentCommandBuffer()->GetCommandBuffer();
 

@@ -14,7 +14,7 @@ cbuffer Camera : register(b0) {
 
 struct VS_in
 {
-    float4 asd_position : POSITION;
+    float4 position : POSITION;
 };
 
 struct VS_out
@@ -26,15 +26,15 @@ struct VS_out
 VS_out vs_main(VS_in input)
 {
     VS_out result;
-    result.texcoord = input.asd_position.xyz;
-    float3 position_cameraspace = mul(camera.cameraViewMatrix, float4(input.asd_position.xyz, 0)).xyz;
+    result.texcoord = input.position.xyz;
+    float3 position_cameraspace = mul(camera.cameraViewMatrix, float4(input.position.xyz, 0)).xyz;
     result.position = normalize(mul(camera.cameraProjectionMatrix, float4(position_cameraspace, 1.0f)));
 
     return result;
 }
 
 SamplerState SamplerPointWrap;
-
+ 
 [[vk::binding(11, 0)]]
 TextureCube radiance_cubemap : register(t11);
 

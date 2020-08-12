@@ -15,8 +15,8 @@ namespace render {
     DebugDraw::DebugDraw(Device::ShaderCache& shader_cache) 
     {
         auto shader_info = Device::ShaderProgramInfo()
-            .AddShader(Device::ShaderProgram::Stage::Vertex, L"shaders/debug_draw.vert")
-            .AddShader(Device::ShaderProgram::Stage::Fragment, L"shaders/debug_draw.frag");
+            .AddShader(Device::ShaderProgram::Stage::Vertex, L"shaders/debug_draw.hlsl", "vs_main")
+            .AddShader(Device::ShaderProgram::Stage::Fragment, L"shaders/debug_draw.hlsl", "ps_main");
         std::wstring path = shader_info.shaders[0].path;
         shader = shader_cache.GetShaderProgram(shader_info);
 

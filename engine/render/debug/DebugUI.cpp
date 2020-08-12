@@ -71,8 +71,8 @@ namespace render {
 		{
 			environment_settings = &_environment_settings;
 			auto shader_info = ShaderProgramInfo()
-				.AddShader(ShaderProgram::Stage::Vertex, L"shaders/imgui.vert")
-				.AddShader(ShaderProgram::Stage::Fragment, L"shaders/imgui.frag");
+				.AddShader(ShaderProgram::Stage::Vertex, L"shaders/imgui.hlsl", "vs_main")
+				.AddShader(ShaderProgram::Stage::Fragment, L"shaders/imgui.hlsl", "ps_main");
 			shader = shader_cache->GetShaderProgram(shader_info);
 
 			ImGui::CreateContext();
@@ -95,7 +95,7 @@ namespace render {
 			auto* descriptor_set = shader->GetDescriptorSet(0);
 			assert(descriptor_set);
 			auto& binding = descriptor_set->bindings[0];
-			assert(binding.type == ShaderProgram::BindingType::CombinedImageSampler);
+			assert(binding.type == ShaderProgram::BindingType::SampledImage);
 			bindings.AddTextureBinding(binding.address.binding, font_texture.get());
 			auto descriptor_cache = Engine::GetVulkanContext()->GetDescriptorCache();
 			vk_descriptor_set = descriptor_cache->GetDescriptorSet(bindings, *descriptor_set);

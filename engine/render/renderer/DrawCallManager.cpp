@@ -21,7 +21,7 @@ namespace render {
 	{
 		manager = std::make_unique<EntityManager>();
 		shader_cache = scene_renderer.GetShaderCache();
-		depth_only_fragment_shader_data = ShaderProgramInfo::ShaderData(ShaderProgram::Stage::Fragment, L"shaders/noop.frag");
+		depth_only_fragment_shader_data = ShaderProgramInfo::ShaderData(ShaderProgram::Stage::Fragment, L"shaders/noop.hlsl");
 		draw_call_list_pool = std::make_unique<utils::Pool<DrawCallList>>();
 	}
 

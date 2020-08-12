@@ -8,11 +8,16 @@ namespace Device {
 		{ "normal", VertexAttrib::Normal },
 		{ "tangent", VertexAttrib::Tangent },
 		{ "bitangent", VertexAttrib::Bitangent },
+		{ "binormal", VertexAttrib::Bitangent },
 		{ "texcoord0", VertexAttrib::TexCoord0 },
+		{ "texcoord", VertexAttrib::TexCoord0 },
 		{ "corner", VertexAttrib::Corner },
 		{ "color", VertexAttrib::VertexColor },
 		{ "joint_weights", VertexAttrib::JointWeights },
-		{ "joint_indices", VertexAttrib::JointIndices }
+		{ "joint_indices", VertexAttrib::JointIndices },
+		{ "blendweights", VertexAttrib::JointWeights },
+		{ "blendindices", VertexAttrib::JointIndices },
+	
 	};
 
 	const std::map<ShaderCaps, std::string> SHADER_CAPS_DEFINES = {
