@@ -6,11 +6,11 @@
 #define CPPWRAPPER_CAMERA_H
 
 #include "CommonIncludes.h"
-#include "scene/GameObject.h"
 #include "render/renderer/ICameraParamsProvider.h"
 #include "utils/Frustum.h"
+#include "ecs/components/Transform.h"
 
-class Camera : public GameObject, public ICameraParamsProvider {
+class Camera : /*public GameObject,*/ public ICameraParamsProvider {
 public:
   enum class Mode : int {
     Perspective = 0,
@@ -18,63 +18,66 @@ public:
     UI
   };
 
-  const mat4 &projectionMatrix() const { return _projectionMatrix; }
-  const mat4 &viewMatrix() const { return _viewMatrix; }
-  const mat4 viewProjectionMatrix() const { return _viewProjectionMatrix; }
-  const vec4 viewport() const { return _viewport; }
-  const uvec2 screenSize() const { return uvec2(_viewport.z, _viewport.w); }
-  void postUpdate() override;
+  const mat4 &projectionMatrix() const { return projection_matrix; }
+  const mat4 &viewMatrix() const { return view_matrix; }
+  const mat4 ViewProjectionMatrix() const { return view_projection_matrix; }
+  const vec4 Viewport() const { return viewport; }
+  const uvec2 ScreenSize() const { return uvec2(viewport.z, viewport.w); }
+  void Update();
 
-  void mode(Mode value) { _mode = value; }
-  Mode mode() const { return _mode; }
+  void SetMode(Mode value) { mode = value; }
+  Mode GetMode() const { return mode; }
 
-  void orthographicSize(float orthographicSize) { _orthographicSize = orthographicSize; }
-  float orthographicSize() const { return _orthographicSize; }
+  void orthographicSize(float orthographicSize) { orthographic_size = orthographicSize; }
+  float orthographicSize() const { return orthographic_size; }
 
-  void fov(float fov) { _fov = fov; }
-  float fov() const { return _fov; }
+  void Fov(float fov) { this->fov = fov; }
+  float Fov() const { return fov; }
 
   // Visibility check
-  bool aabbVisible(const AABB &aabb) const { return _frustum.isVisible(aabb.min, aabb.max); };
-  bool obbVisible(const OBB &obb) const { return _frustum.isVisible(obb.matrix, obb.min, obb.max); };
-  bool sphereVisible(const vec3 &center, const float radius) const { return _frustum.isVisible(center, radius); };
-  void cameraVisibilityMask(unsigned int mask) { _visibilityMask = mask; };
+  bool aabbVisible(const AABB &aabb) const { return frustum.isVisible(aabb.min, aabb.max); };
+  bool obbVisible(const OBB &obb) const { return frustum.isVisible(obb.matrix, obb.min, obb.max); };
+  bool sphereVisible(const vec3 &center, const float radius) const { return frustum.isVisible(center, radius); };
+  void cameraVisibilityMask(unsigned int mask) { visibility_mask = mask; };
 
   // ICameraParamsProvider
-  uvec2 cameraViewSize() const override { return  screenSize(); }
-  vec3 cameraPosition() const override { return transform()->worldPosition(); }
-  mat4 cameraViewProjectionMatrix() const override { return viewProjectionMatrix(); }
-  vec3 cameraLeft() const override { return transform()->left(); }
-  vec3 cameraRight() const override { return transform()->right(); }
-  vec3 cameraUp() const override { return transform()->up(); }
-  vec3 cameraDown() const override { return transform()->down(); }
-  mat4 cameraViewMatrix() const override { return viewMatrix(); }
+  uvec2 cameraViewSize() const override { return  ScreenSize(); }
+  vec3 cameraPosition() const override { return transform.WorldPosition(); }
+  mat4 cameraViewProjectionMatrix() const override { return view_projection_matrix; }
+  vec3 cameraLeft() const override { return transform.Left(); }
+  vec3 cameraRight() const override { return transform.Right(); }
+  vec3 cameraUp() const override { return transform.Up(); }
+  vec3 cameraDown() const override { return transform.Down(); }
+  mat4 cameraViewMatrix() const override { return view_matrix; }
   mat4 cameraProjectionMatrix() const override { return projectionMatrix(); }
-  vec4 cameraViewport() const override { return viewport(); }
-  unsigned int cameraVisibilityMask() const override { return _visibilityMask; };
-  const Frustum &frustum() const override { return _frustum; };
-  unsigned int cameraIndex() const override { return _cameraIndex; }; // index is an offset in the corresponding UBO
-  void cameraIndex(uint32_t index) override { _cameraIndex = index; };
+  vec4 cameraViewport() const override { return viewport; }
+  unsigned int cameraVisibilityMask() const override { return visibility_mask; };
+  const Frustum &GetFrustum() const override { return frustum; };
+  unsigned int cameraIndex() const override { return camera_index; }; // index is an offset in the corresponding UBO
+  void cameraIndex(uint32_t index) override { camera_index = index; };
+
+  ECS::components::Transform& Transform() { return transform; }
 
 protected:
-  unsigned int _visibilityMask = ~0u; // all visible by default
-  mat4 _projectionMatrix;
-  mat4 _viewMatrix;
-  vec4 _viewport;
-  mat4 _viewProjectionMatrix;
-  Frustum _frustum;
+  unsigned int visibility_mask = ~0u; // all visible by default
+  mat4 projection_matrix;
+  mat4 view_matrix;
+  vec4 viewport;
+  mat4 view_projection_matrix;
+  Frustum frustum;
+  ECS::components::Transform transform;
 
-  float _fov = 45.0f;
+  float fov = 45.0f;
 
-  Mode _mode = Mode::Perspective;
-  float _orthographicSize = 0.0f;
+  Mode mode = Mode::Perspective;
+  float orthographic_size = 0.0f;
 
-  unsigned int _cameraIndex = 0;
+  unsigned int camera_index = 0;
+
 protected:
-  inline void _updateProjection();
-  inline void _updateView();
-
-  void _updateViewport();
+  void UpdateProjection();
+  void UpdateView();
+  void UpdateViewport();
 };
 
 typedef std::shared_ptr<Camera> CameraPtr;

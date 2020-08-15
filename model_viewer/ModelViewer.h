@@ -5,6 +5,7 @@
 #include "ecs/TransformGraph.h"
 #include "ecs/systems/TransformSystem.h"
 #include "ecs/systems/RendererSystem.h"
+#include "ecs/components/Light.h"
 #include "resources/ResourceCache.h"
 
 class Mesh;
@@ -31,7 +32,7 @@ public:
 
 private:
 	ECS::EntityID CreateMeshEntity(vec3 position, ECS::EntityID parent, Mesh* mesh);
-
+	ECS::EntityID CreateLightEntity(vec3 position, float radius, ECS::components::Light::Type type, vec3 color = vec3(1));
 private:
 	std::unique_ptr<ViewerCamera> camera;
 	std::shared_ptr<ModelBundle> player_model;

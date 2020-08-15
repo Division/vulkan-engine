@@ -2,6 +2,7 @@
 #include "Engine.h"
 #include "system/Input.h"
 #include "scene/Scene.h"
+#include "objects/Camera.h"
 
 using namespace System;
 
@@ -11,34 +12,33 @@ ViewerCamera::ViewerCamera()
     _angleY = (float)M_PI;
 }
 
-
 void ViewerCamera::Update(float dt) {
   auto* scene_camera = Engine::Get()->GetScene()->GetCamera();
 
     auto input = Engine::Get()->GetInput();
     vec3 posDelta = vec3(0, 0, 0);
 	if (input->keyDown(Key::E)) {
-		posDelta += scene_camera->transform()->up();
+		posDelta += scene_camera->Transform().Up();
 	}
 
 	if (input->keyDown(Key::Q)) {
-		posDelta += scene_camera->transform()->down();
+		posDelta += scene_camera->Transform().Down();
 	}
 
     if (input->keyDown(Key::A)) {
-      posDelta += scene_camera->transform()->left();
+      posDelta += scene_camera->Transform().Left();
     }
 
     if (input->keyDown(Key::D)) {
-      posDelta += scene_camera->transform()->right();
+      posDelta += scene_camera->Transform().Right();
     }
 
     if (input->keyDown(Key::W)) {
-      posDelta += scene_camera->transform()->forward();
+      posDelta += scene_camera->Transform().Forward();
     }
 
     if (input->keyDown(Key::S)) {
-      posDelta += scene_camera->transform()->backward();
+      posDelta += scene_camera->Transform().Backward();
     }
 
     if (input->keyDown(Key::MouseLeft)) {
@@ -48,9 +48,9 @@ void ViewerCamera::Update(float dt) {
 		_angleY -= input->mouseDelta().x * 0.008f;
     }
 
-	scene_camera->transform()->translate(posDelta * dt * 20.0f);
+	scene_camera->Transform().Translate(posDelta * dt * 20.0f);
 	quat rotation(vec3(_angleX, _angleY, 0));
-	scene_camera->transform()->rotation(rotation);
+	scene_camera->Transform().rotation = rotation;
 
   //auto* scene_camera = Engine::Get()->GetScene()->GetCamera();
   //scene_camera->transform()->setMatrix(transform()->worldMatrix());

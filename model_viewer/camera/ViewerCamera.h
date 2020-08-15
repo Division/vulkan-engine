@@ -1,7 +1,6 @@
 #pragma once
 
 #include "CommonIncludes.h"
-#include "objects/Camera.h"
 
 
 class ViewerCamera {

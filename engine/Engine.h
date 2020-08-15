@@ -49,6 +49,7 @@ public:
 	render::MaterialManager* GetMaterialManager() const { return material_manager.get(); }
 	System::Input* GetInput() const { return input.get(); }
 	render::DebugDraw* GetDebugDraw() const { return debug_draw.get(); }
+	render::SceneRenderer* GetSceneRenderer() const { return scene_renderer.get(); }
 
 	void MainLoop();
 

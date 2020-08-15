@@ -81,7 +81,7 @@ public:
   mat4 cameraProjectionMatrix() const override { return _getProjection(); }
   vec4 cameraViewport() const override { return viewport(); }
   unsigned int cameraVisibilityMask() const override { return _visibilityMask; };
-  const Frustum &frustum() const override { return _frustum; };
+  const Frustum &GetFrustum() const override { return _frustum; };
   unsigned int cameraIndex() const override { return _cameraIndex; }; // index is an offset in the corresponding UBO
   void cameraIndex(uint32_t index) override { _cameraIndex = index; };
   bool castShadows() const override { return this->type() == ProjectorType::Projector && _castShadows; }; // only projectors cast shadows

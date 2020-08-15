@@ -90,9 +90,9 @@ void Material::UpdateShaderHash() const
 	std::vector<ShaderProgramInfo::Macro> defines;
 	ShaderCache::AppendCapsDefines(shader_caps, defines);
 
-	auto vertex_data = ShaderProgramInfo::ShaderData(ShaderProgram::Stage::Vertex, shader_path + L".vert", "main", defines);
-	auto fragment_data = ShaderProgramInfo::ShaderData(ShaderProgram::Stage::Fragment, shader_path + L".frag", "main", defines);
-	auto vertex_depth_only_data = ShaderProgramInfo::ShaderData(ShaderProgram::Stage::Vertex, shader_path + L".vert", "main", { {"DEPTH_ONLY", "1" } });
+	auto vertex_data = ShaderProgramInfo::ShaderData(ShaderProgram::Stage::Vertex, shader_path, "vs_main", defines);
+	auto fragment_data = ShaderProgramInfo::ShaderData(ShaderProgram::Stage::Fragment, shader_path, "ps_main", defines);
+	auto vertex_depth_only_data = ShaderProgramInfo::ShaderData(ShaderProgram::Stage::Vertex, shader_path, "vs_main", { {"DEPTH_ONLY", "1" } });
 	auto fragment_depth_only_data = ShaderProgramInfo::ShaderData(ShaderProgram::Stage::Fragment, L"shaders/noop.hlsl");
 	vertex_hash = ShaderCache::GetShaderDataHash(vertex_data);
 	vertex_hash_depth_only = ShaderCache::GetShaderDataHash(vertex_depth_only_data);

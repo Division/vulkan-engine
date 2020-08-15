@@ -8,6 +8,12 @@ class ICameraParamsProvider;
 
 class LightObject;
 class Projector;
+struct SceneLightData;
+
+namespace ECS::components
+{
+	class Light;
+}
 
 namespace render {
 
@@ -25,7 +31,7 @@ namespace render {
 		~LightGrid() = default;
 
 		void Update(unsigned int screenWidth, unsigned int screenHeight);
-		void appendLights(const std::vector<std::shared_ptr<LightObject>> &lights, ICameraParamsProvider* camera);
+		void appendLights(const std::vector<SceneLightData> &lights, ICameraParamsProvider* camera);
 		void appendProjectors(const std::vector<std::shared_ptr<Projector>> &projectors, ICameraParamsProvider* camera);
 		void upload();
 		Device::DynamicBuffer<Device::ShaderBufferStruct::Light>* GetLightsBuffer() const { return lights[0].get(); };
@@ -56,6 +62,8 @@ namespace render {
 		void _clearCells();
 		void _appendItem(ICameraParamsProvider* camera, const std::vector<vec3> &edgePoints,
 						 std::function<void(LightGridCell *)> callback);
+
+		int grid_count;
 
 		// Temporary vector to pass data through the functions
 		// Placed here instead of the stack to reduce heap allocations

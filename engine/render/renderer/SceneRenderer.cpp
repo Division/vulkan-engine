@@ -148,11 +148,13 @@ namespace render {
 		auto vk_device = context->GetDevice();
 		auto vk_physical_device = context->GetPhysicalDevice();
 		auto vk_swapchain = context->GetSwapchain();
+		
+		auto &visible_lights = scene.GetVisibleLights();
 
+		/*
 		auto visible_objects = scene.visibleObjects(scene.GetCamera());
 
 		// Shadow casters
-		auto &visibleLights = scene.visibleLights(scene.GetCamera());
 		shadow_casters.clear();
 		for (auto &light : visibleLights) {
 			if (light->castShadows()) {
@@ -170,6 +172,7 @@ namespace render {
 				);
 			}
 		}
+		*/
 
 		auto* object_params_buffer = scene_buffers->GetObjectParamsBuffer();
 		auto* skinning_matrices_buffer = scene_buffers->GetSkinningMatricesBuffer();
@@ -200,8 +203,8 @@ namespace render {
 		auto window_size = scene.GetCamera()->cameraViewSize();
 		light_grid->Update(window_size.x, window_size.y);
 
-		light_grid->appendLights(visibleLights, scene.GetCamera());
-		light_grid->appendProjectors(visibleProjectors, scene.GetCamera());
+		light_grid->appendLights(visible_lights, scene.GetCamera());
+		//light_grid->appendProjectors(visibleProjectors, scene.GetCamera());
 		light_grid->upload();
 
 		UpdateGlobalBindings();
@@ -487,6 +490,8 @@ namespace render {
 				break;
 			}
 
+			case ShaderProgram::BindingType::Sampler: break; // don't accumulate samplers
+
 			default:
 				throw std::runtime_error("unknown shader binding");
 			}
@@ -507,6 +512,7 @@ namespace render {
 		SetupShaderBindings(material, *descriptor_set, *global_shader_bindings);
 
 		// Getting camera binding index since it will be modified within the shadowmap pass
+		// TODO: get by name
 		global_shader_binding_camera_index = -1;
 		for (int i = 0; i < global_shader_bindings->GetBufferBindings().size(); i++)
 			if (global_shader_bindings->GetBufferBindings()[i].buffer == vk::Buffer(scene_buffers->GetCameraBuffer()->GetBuffer()->Buffer()))

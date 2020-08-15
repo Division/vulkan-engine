@@ -3,6 +3,8 @@
 #include "CommonIncludes.h"
 #include "GameObject.h"
 #include "render/renderer/ICameraParamsProvider.h"
+#include "IGame.h"
+#include "render/shader/ShaderBufferStruct.h"
 
 class Projector;
 class LightObject;
@@ -15,6 +17,13 @@ namespace ECS
 
     typedef uint64_t EntityID;
 
+    namespace components
+    {
+        class Light;
+        class Projector;
+        class Transform;
+    }
+
     namespace systems
     {
         class NoChildTransformSystem;
@@ -23,94 +32,46 @@ namespace ECS
     }
 }
 
+struct SceneLightData
+{
+    ECS::components::Light* light;
+    ECS::components::Transform* transform;
+    Device::ShaderBufferStruct::Light data;
+    int index;
+};
 
-class Scene : public IGameObjectManager {
+class Scene 
+{
 public:
 
-  struct Visibility {
-    std::vector<GameObjectPtr> objects;
-    std::vector<std::shared_ptr<Projector>> projectors;
-    std::vector<std::shared_ptr<LightObject>> lights;
-    bool hasData = false; // when false, cache values are recalculated
-  };
+    Scene();
+    ~Scene();
 
-public:
-  void setAsDefault();
-  Scene();
+    void Update(IGame& game, float dt);
 
-  const std::unordered_map<GameObjectID, GameObjectPtr> *const gameObjectMap() const { return &_objectMap; };
-  const std::vector<GameObjectPtr> *const gameObjects() const { return &_gameObjects; }
+    Camera* GetCamera() const { return camera.get(); }
 
-  const std::vector<std::shared_ptr<Projector>> &visibleProjectors(const ICameraParamsProvider* camera) const {
-    if (!_visibilityMap[camera].hasData) { return _getVisibilityForCamera(camera).projectors; }
-    return _visibilityMap.at(camera).projectors;
-  }
-  const std::vector<GameObjectPtr> &visibleObjects(const ICameraParamsProvider* camera) const {
-    if (!_visibilityMap[camera].hasData) { return _getVisibilityForCamera(camera).objects; }
-    return _visibilityMap.at(camera).objects;
-  }
-  const std::vector<std::shared_ptr<LightObject>> &visibleLights(const ICameraParamsProvider* camera) const {
-    if (!_visibilityMap[camera].hasData) { return _getVisibilityForCamera(camera).lights; }
-    return _visibilityMap.at(camera).lights;
-  }
-  void update(float dt);
+    ECS::EntityManager* GetEntityManager() const { return entity_manager.get(); }
+    ECS::TransformGraph* GetTransformGraph() const { return transform_graph.get(); }
 
-  Camera* GetCamera() const { return camera.get(); }
-
-  ECS::EntityManager* GetEntityManager() const { return entity_manager.get(); }
-  ECS::TransformGraph* GetTransformGraph() const { return transform_graph.get(); }
+    auto& GetVisibleLights() const { return visible_lights; }
 
 private:
-  Scene::Visibility &_getVisibilityForCamera(const ICameraParamsProvider *camera) const;
-
-  // IGameObjectManager
-  void addGameObject(GameObjectPtr object) override;
-  void destroyGameObject(GameObjectPtr object) override;
-
-  // ITransformManager
-  void transformChangeParent(TransformPtr transform, TransformPtr oldParent, TransformPtr newParent) override;
-
-  // update
-  void _updateTransforms();
-
-  // Helper
-  bool _objectIsVisible(const GameObjectPtr &object, const Frustum &frustum) const {
-    if (!object->active()) { return false; }
-    auto &cullingData = object->cullingData();
-    if (cullingData.type == CullingData::Type::Sphere) {
-      return frustum.isVisible(cullingData.sphere.position, cullingData.sphere.radius);
-    } else {
-      return frustum.isVisible(object->transform()->worldMatrix(), cullingData.bounds.min, cullingData.bounds.max);
-    }
-  }
-
-  void ProcessTransformSystems();
-  void ProcessRendererSystems();
+    void ProcessTransformSystems();
+    void ProcessRendererSystems();
 
 private:
-  unsigned int _lightCount = 0;
+    std::vector<SceneLightData> visible_lights;
+    std::vector<ECS::components::Projector*> visible_projectors;
+    std::unique_ptr<Camera> camera;
 
-  std::unordered_map<GameObjectID, GameObjectPtr> _objectMap; // maps GameObject::id() to GameObject
+    // ECS
+    void OnEntityDestroyed(ECS::EntityID entity);
 
-  std::shared_ptr<Camera> camera;
-  std::vector<std::shared_ptr<Projector>> _projectors; // Array of projectors
-  std::vector<std::shared_ptr<LightObject>> _lights; // Array of scene lights
-  std::vector<GameObjectPtr> _gameObjects; // Full list of scene game objects
-  std::unordered_map<GameObjectID, TransformPtr>_rootTransformMap; // maps GameObject::id() to the top level transforms
-  mutable std::unordered_map<const ICameraParamsProvider*, Scene::Visibility> _visibilityMap; // maps camera to a visible object list
-  std::vector<GameObjectPtr> _startList;
+    std::unique_ptr<ECS::EntityManager> entity_manager;
+    std::unique_ptr<ECS::TransformGraph> transform_graph;
 
-  void _processAddedObject(GameObjectPtr object);
-  void _processRemovedObject(GameObjectPtr object);
-
-  // ECS
-  void OnEntityDestroyed(ECS::EntityID entity);
-
-  std::unique_ptr<ECS::EntityManager> entity_manager;
-  std::unique_ptr<ECS::TransformGraph> transform_graph;
-
-  std::unique_ptr<ECS::systems::NoChildTransformSystem> no_child_system;
-  std::unique_ptr<ECS::systems::RootTransformSystem> root_transform_system;
-  std::unique_ptr<ECS::systems::UpdateRendererSystem> update_renderer_system;
-
+    std::unique_ptr<ECS::systems::NoChildTransformSystem> no_child_system;
+    std::unique_ptr<ECS::systems::RootTransformSystem> root_transform_system;
+    std::unique_ptr<ECS::systems::UpdateRendererSystem> update_renderer_system;
 };

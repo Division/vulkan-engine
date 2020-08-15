@@ -9,6 +9,8 @@
 #include "render/device/VulkanContext.h"
 #include "render/shader/ShaderResource.h"
 #include "render/buffer/DynamicBuffer.h"
+#include "ecs/components/Light.h"
+#include "scene/Scene.h"
 
 using namespace Device;
 
@@ -67,7 +69,6 @@ void ResizeBuffer(std::unique_ptr<DynamicBuffer<T>> buffer[2], size_t size, bool
 {
 	if (!buffer[0] || buffer[0]->GetSize() < size)
 	{
-		buffer[1] = std::move(buffer[0]);
 		buffer[0] = std::make_unique<DynamicBuffer<T>>(std::max(size, buffer[0]->GetElementSize()) , is_storage ? BufferType::Storage : BufferType::Uniform, false);
 	}
 }
@@ -111,8 +112,8 @@ void LightGrid::_appendItem(ICameraParamsProvider* camera, const std::vector<vec
   
 }
 
-void LightGrid::appendLights(const std::vector<LightObjectPtr> &light_list,
-                             ICameraParamsProvider* camera) {
+void LightGrid::appendLights(const std::vector<SceneLightData> &light_list, ICameraParamsProvider* camera) 
+{
   OPTICK_EVENT();
   _lightCount = light_list.size();
   if (!_lightCount)
@@ -122,34 +123,11 @@ void LightGrid::appendLights(const std::vector<LightObjectPtr> &light_list,
   ResizeBuffer(lights, std::max(size, sizeof(ShaderBufferStruct::Light)), false);
   lights[0]->Map();
 
-  for (int i = 0; i < light_list.size(); i++) {
+  for (int i = 0; i < light_list.size(); i++) 
+  {
 	  auto &light = light_list[i];
-	  auto lightData = light->getLightStruct();
+	  auto lightData = light.data;
 	  lights[0]->Append(lightData);
-	  light->index(i);
-  }
-
-  _lightEdges.resize(4);
-
-  for (auto &light : light_list) {
-    vec3 position = light->transform()->worldPosition();
-    float radius = light->radius();
-
-    _lightEdges[0] = position + camera->cameraLeft() * radius;
-    _lightEdges[1] = position + camera->cameraRight() * radius;
-    _lightEdges[2] = position + camera->cameraUp() * radius;
-    _lightEdges[3] = position + camera->cameraDown() * radius;
-
-    _appendItem(camera, _lightEdges, [&](LightGridCell *cell) {
-      switch(light->type()) {
-        case LightObjectType::Spot:
-          cell->spotLights.push_back(light);
-          break;
-        case LightObjectType::Point:
-          cell->pointLights.push_back(light);
-          break;
-      }
-    });
   }
 
   lights[0]->Unmap();
@@ -204,16 +182,20 @@ void LightGrid::upload()
 	auto gridBufferPointer = (LightGridStruct *)light_grid[0]->Map();
 	uint32_t currentOffset = 0;
 
+    grid_count = 0;
+
 	for (int i = 0; i < _cells.size(); i++) {
 		auto &cell = _cells[i];
 
 		// Writing cell data
 		// Referencing memory at the offset sizeof(LightGridStruct) * i
 		gridBufferPointer[i].offset = currentOffset;
-		gridBufferPointer[i].pointLightCount = (uint16_t)cell.pointLights.size();
+        gridBufferPointer[i].pointLightCount = (uint16_t)cell.pointLights.size();
 		gridBufferPointer[i].spotLightCount = (uint16_t)cell.spotLights.size();
 		gridBufferPointer[i].projectorCount = (uint16_t)cell.projectors.size();
 		gridBufferPointer[i].decalCount = (uint16_t)cell.decals.size();
+
+        grid_count += gridBufferPointer[i].pointLightCount;
 
 		// Writing indices
 		// Count of light sources to put into the index data structure
@@ -250,6 +232,8 @@ void LightGrid::upload()
 		}
 		currentOffset += gridBufferPointer[i].decalCount;
 	}
+
+    OutputDebugStringA(("Cells with light: " + std::to_string(grid_count) + "\n").c_str());
 
     light_grid[0]->SetUploadSize(light_grid_size);
 	light_grid[0]->Unmap();

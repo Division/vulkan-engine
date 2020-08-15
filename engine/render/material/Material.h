@@ -52,7 +52,7 @@ protected:
 protected:
 	mutable bool caps_dirty = true;
 	mutable bool shader_hash_dirty = true;
-	std::wstring shader_path = L"shaders/material_main";
+	std::wstring shader_path = L"shaders/material_main.hlsl";
 	mutable ShaderCapsSet shader_caps;
 	mutable ShaderCapsSet shader_caps_skinning;
 	float roughness = 0;

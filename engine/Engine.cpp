@@ -159,8 +159,7 @@ void Engine::MainLoop()
 		render::DebugUI::NewFrame();
 
 		input->update();
-		scene->update(dt);
-		game->update(dt);
+		scene->Update(*game, dt);
 		debug_draw->Update();
 
 		render::DebugUI::Update(dt);
@@ -168,7 +167,6 @@ void Engine::MainLoop()
 		context->WaitForRenderFence();
 		scene_renderer->RenderScene();
 		context->Present();
-		glfwSwapBuffers(window);
 
 		::Device::GetReleaser().Swap();
 		Common::GetReleaser().Swap();

@@ -1,5 +1,6 @@
 #include "CullingSystem.h"
 #include "ecs/components/DrawCall.h"
+#include "ecs/components/Transform.h"
 #include "render/renderer/ICameraParamsProvider.h"
 
 namespace ECS { namespace systems {
@@ -8,10 +9,13 @@ namespace ECS { namespace systems {
 	{
 		ComponentFetcher<components::DrawCall> draw_call_fetcher(*chunk);
 
+		auto frustum = camera.GetFrustum();
+
 		for (int i = 0; i < chunk->GetEntityCount(); i++)
 		{
 			auto* draw_call = draw_call_fetcher.GetComponent(i);
-			bool visible = true; // TODO: proper check
+			auto obb = draw_call->transform->GetOBB();
+			bool visible = frustum.isVisible(obb.matrix, obb.min, obb.max);
 
 			if (!visible)
 				continue;

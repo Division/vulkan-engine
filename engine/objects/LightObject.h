@@ -73,7 +73,7 @@ public:
   mat4 cameraProjectionMatrix() const override { return _projectionMatrix; }
   vec4 cameraViewport() const override { return _viewport; }
   unsigned int cameraVisibilityMask() const override { return _visibilityMask; };
-  const Frustum &frustum() const override { return _frustum; };
+  const Frustum &GetFrustum() const override { return _frustum; };
   unsigned int cameraIndex() const override { return _cameraIndex; };
   void cameraIndex(uint32_t index) override { _cameraIndex = index; };
 

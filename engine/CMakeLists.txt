@@ -67,8 +67,9 @@ set(ENGINE_SOURCES
 	ecs/components/Transform.h
 	ecs/components/Entity.h
 	ecs/components/MeshRenderer.h
-	ecs/components/CullingData.h
 	ecs/components/DrawCall.h
+	ecs/components/Light.h
+	ecs/components/Light.cpp
 	ecs/systems/TransformSystem.h
 	ecs/systems/TransformSystem.cpp
 	ecs/systems/RendererSystem.h

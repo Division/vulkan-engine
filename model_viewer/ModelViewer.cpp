@@ -41,6 +41,21 @@ EntityID ModelViewer::CreateMeshEntity(vec3 position, EntityID parent, Mesh* mes
 	return entity;
 }
 
+EntityID ModelViewer::CreateLightEntity(vec3 position, float radius, components::Light::Type type, vec3 color)
+{
+	auto entity = manager->CreateEntity();
+
+	auto* transform = manager->AddComponent<components::Transform>(entity);
+	transform->position = position;
+
+	auto* light = manager->AddComponent<components::Light>(entity);
+	light->type = type;
+	light->color = color;
+	light->radius = radius;
+
+	return entity;
+}
+
 void ModelViewer::init()
 {
 	//ModelBundleHandle model(L"resources/models/sphere.mdl");
@@ -56,11 +71,7 @@ void ModelViewer::init()
 	manager = engine->GetEntityManager();
 	graph = engine->GetTransformGraph();
 
-	auto light = CreateGameObject<LightObject>();
-	light->castShadows(false);
-	light->color(vec3(1, 1, 1));
-	light->transform()->position(vec3(-5, 0, -10));
-	light->radius(100);
+	auto light_entity = CreateLightEntity(vec3(-5, 0, -10), 100, components::Light::Type::Point);
 
 	/*light = CreateGameObject<LightObject>();
 	light->castShadows(false);
@@ -124,7 +135,10 @@ void ModelViewer::update(float dt)
 
 	std::vector<int> results;
 	std::mutex mutex;
+	Engine::Get()->GetDebugDraw()->DrawAABB(vec3(0,0,0), vec3(10,10,10), vec4(1, 0, 0, 1));
+	Engine::Get()->GetDebugDraw()->DrawPoint(vec3(), vec4(1, 1, 1, 10));
 
+	/*
 	for (int i = 0; i < 100; i++)
 	{
 		OPTICK_EVENT("Spawning job");
@@ -148,7 +162,7 @@ void ModelViewer::update(float dt)
 
 		std::cout << s.str();
 
-	}
+	}*/
 }
 
 void ModelViewer::cleanup()

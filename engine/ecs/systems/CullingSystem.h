@@ -7,7 +7,6 @@ class ICameraParamsProvider;
 
 namespace ECS { namespace systems {
 
-	// Uploads draw call data to the GPU buffers
 	class CullingSystem : public System
 	{
 	public:

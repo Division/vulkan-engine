@@ -1,7 +1,6 @@
 #pragma once
 
 #include "CommonIncludes.h"
-#include "CullingData.h"
 #include "render/renderer/IRenderer.h"
 #include "render/shader/ShaderBufferStruct.h"
 
@@ -12,22 +11,15 @@ namespace Device
 
 namespace ECS { namespace components {
 
+	class Transform;
+
 #pragma pack(push)
 #pragma pack(1)
 	struct DrawCall
 	{
-		/*struct CullingData
-		{
-			CullingData::Type type;
-			union
-			{
-				Sphere sphere;
-				AABB bounds;
-			};
-		} culling_data;*/
-
 		// TODO: remove mesh from draw call
 		const Mesh* mesh = nullptr;
+		Transform* transform;
 		Device::ShaderBufferStruct::ObjectParams* object_params;
 		Device::ShaderProgram* shader;
 		vk::DescriptorSet descriptor_set;

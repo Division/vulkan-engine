@@ -33,4 +33,21 @@ namespace ECS {
 		EntityManager& manager;
 	};
 
+	class CallbackSystem : public System
+	{
+	public:
+		CallbackSystem(std::function<void(Chunk*)> process_callback, EntityManager& manager, bool multithreaded = true)
+			: System(manager, multithreaded), process_callback(process_callback) 
+		{}
+
+		virtual void Process(Chunk* chunk) override
+		{
+			process_callback(chunk);
+		}
+
+	private:
+		std::function<void(Chunk*)> process_callback;
+
+	};
+
 }

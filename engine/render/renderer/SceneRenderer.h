@@ -79,6 +79,7 @@ namespace render {
 		Device::ShaderCache* GetShaderCache() const { return shader_cache; }
 		void SetupShaderBindings(const Material& material, const Device::ShaderProgram::DescriptorSet& descriptor_set, Device::ShaderBindings& bindings);
 		auto* GetEnvironmentSettings() const { return environment_settings.get(); }
+		LightGrid& GetLightGrid() { return *light_grid; }
 
 	private:
 		void CreateDrawCalls();
