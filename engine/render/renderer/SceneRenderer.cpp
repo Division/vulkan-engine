@@ -86,13 +86,14 @@ namespace render {
 
 		compute_buffer = std::make_unique<DynamicBuffer<unsigned char>>(128 * 128 * sizeof(vec4), BufferType::Storage);
 
-		auto compute_shader_info = ShaderProgramInfo()
+		/*auto compute_shader_info = ShaderProgramInfo()
 			.AddShader(ShaderProgram::Stage::Compute, L"shaders/test.comp");
 		compute_program = shader_cache->GetShaderProgram(compute_shader_info);
 
 		auto* buffer_binding = compute_program->GetBindingByName("buf");
 		compute_bindings = std::make_unique<ShaderBindings>();
 		compute_bindings->AddBufferBinding(buffer_binding->address.binding, 0, compute_buffer->GetSize(), compute_buffer->GetBuffer()->Buffer());
+		*/
 
 		//environment_cubemap = loader::LoadTexture("resources/environment/skybox_unorm.ktx"); // TODO: assign via setter
 		environment_cubemap = TextureResource::Handle(L"resources/environment/skybox2.ktx");
@@ -240,7 +241,7 @@ namespace render {
 		auto* compute_buffer_resource = render_graph->RegisterBuffer(*compute_buffer->GetBuffer());
 		post_process->PrepareRendering(*render_graph);
 
-		auto compute_pass_info = render_graph->AddPass<PassInfo>("compute pass", ProfilerName::PassCompute, [&](graph::IRenderPassBuilder& builder)
+		/*auto compute_pass_info = render_graph->AddPass<PassInfo>("compute pass", ProfilerName::PassCompute, [&](graph::IRenderPassBuilder& builder)
 		{
 			builder.SetCompute();
 
@@ -250,13 +251,13 @@ namespace render {
 		}, [&](VulkanRenderState& state)
 		{
 			state.RecordCompute(*compute_program, *compute_bindings, uvec3(128, 128, 1));
-		});
+		});*/
 
 		auto depth_pre_pass_info = render_graph->AddPass<PassInfo>("depth pre pass", ProfilerName::PassDepthPrepass, [&](graph::IRenderPassBuilder& builder)
 		{
 			PassInfo result;
 			result.depth_output = builder.AddOutput(*main_depth)->Clear(1.0f);
-			builder.AddInput(*compute_pass_info.compute_output);
+			//builder.AddInput(*compute_pass_info.compute_output);
 			return result;
 		}, [&](VulkanRenderState& state)
 		{
@@ -365,7 +366,7 @@ namespace render {
 		auto ui_pass_info = render_graph->AddPass<PassInfo>("Debug UI", ProfilerName::PassDebugUI, [&](graph::IRenderPassBuilder& builder)
 			{
 				PassInfo result;
-				builder.AddInput(*compute_pass_info.compute_output);
+				//builder.AddInput(*compute_pass_info.compute_output);
 				result.color_output = builder.AddOutput(*main_color)->PresentSwapchain();
 				return result;
 			}, [&](VulkanRenderState& state)

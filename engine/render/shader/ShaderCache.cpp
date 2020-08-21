@@ -163,7 +163,7 @@ namespace Device {
 			}
 			else
 			{
-				std::cout << "Error compiling " << utils::WStringToString(filename) << std::endl << result.error << std::endl;
+				std::cout << "Error compiling " << utils::WStringToString(shader_data.path) << std::endl << result.error << std::endl;
 				throw std::runtime_error("Error compiling shader module");
 			}
 		}
