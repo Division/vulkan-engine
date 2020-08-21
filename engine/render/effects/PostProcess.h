@@ -36,7 +36,8 @@ namespace render { namespace effects {
 			render::graph::RenderGraph& graph, 
 			render::graph::DependencyNode& src_target_node, 
 			render::graph::ResourceWrapper& destination_target, 
-			render::graph::ResourceWrapper& hdr_buffer
+			render::graph::ResourceWrapper& hdr_buffer,
+			Device::ShaderBindings& global_bindings
 		);
 		void OnRecreateSwapchain(int32_t width, int32_t height);
 

@@ -121,7 +121,9 @@ uint32_t Material::GetHash() const
 		normal_map ? normal_map->GetHash() : 0,
 		lighting_enabled,
 		vertex_color_enabled,
-		FastHash(&roughness, sizeof(roughness))
+		FastHash(&roughness, sizeof(roughness)),
+		FastHash(&metalness, sizeof(metalness)),
+		FastHash(&color, sizeof(color))
 	};
 
 	return FastHash(hashes, sizeof(hashes));

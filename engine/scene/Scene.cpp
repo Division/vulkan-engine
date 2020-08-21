@@ -8,12 +8,16 @@
 #include "ecs/components/MeshRenderer.h"
 #include "ecs/components/Light.h"
 #include "render/renderer/DrawCallManager.h"
+#include "render/debug/DebugSettings.h"
+#include "render/debug/DebugDraw.h"
+#include "Engine.h"
 
 using namespace ECS;
 
 Scene::~Scene() = default;
 
-Scene::Scene() 
+Scene::Scene(render::DebugSettings* settings)
+    : debug_settings(settings)
 {
     camera = std::make_unique<Camera>();
 
@@ -27,7 +31,7 @@ Scene::Scene()
     entity_manager->AddEntityDestroyCallback(std::bind(&Scene::OnEntityDestroyed, this, std::placeholders::_1));
 }
 
-void Scene::Update(IGame& game, float dt) 
+void Scene::Update(IGame& game, float dt)
 {
     // Game update
     game.update(dt);
@@ -36,6 +40,21 @@ void Scene::Update(IGame& game, float dt)
     // ECS update
     ProcessTransformSystems();
     ProcessRendererSystems();
+
+    if (debug_settings && debug_settings->draw_bounding_boxes)
+    {
+        auto transforms = entity_manager->GetChunkListsWithComponent<components::Transform>();
+        CallbackSystem([&](Chunk* chunk) {
+            ComponentFetcher<components::Transform> transform_fetcher(*chunk);
+
+            for (int i = 0; i < chunk->GetEntityCount(); i++)
+            {
+                auto* transform = transform_fetcher.GetComponent(i);
+                Engine::Get()->GetDebugDraw()->DrawOBB(transform->GetOBB(), vec4(1,1,1,1));
+            }
+
+            }, *entity_manager, false).ProcessChunks(transforms);
+    }
 }
 
 // ECS

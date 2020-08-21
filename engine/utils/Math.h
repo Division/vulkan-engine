@@ -2,6 +2,7 @@
 
 #include "CommonIncludes.h"
 #include "murmurhash/MurmurHash3.h"
+#include <math.h>
 
 using namespace glm;
 
@@ -36,60 +37,63 @@ struct OBB {
   }
 };
 
-struct AABB {
-  vec3 min;
-  vec3 max;
+struct AABB 
+{
+    vec3 min;
+    vec3 max;
 
-  AABB() = default;
+    AABB() = default;
 
-  AABB(const vec3 &vmin, const vec3 &vmax) {
-    min = vmin;
-    max = vmax;
-  }
-
-  vec3 size() { return max - min; }
-
-  void expand(const vec3 &point) {
-    min = glm::min(point, min);
-    max = glm::max(point, max);
-  }
-
-  static AABB fromSphere(const vec3 &position, float radius) {
-    vec3 radiusVec = vec3(radius, radius, radius);
-    return AABB(position - radiusVec, position + radiusVec);
-  }
-
-  bool intersectsAABB(const AABB &other) {
-    if (other.min.x > max.x || other.max.x < min.x ||
-        other.min.y > max.y || other.max.y < min.y ||
-        other.min.z > max.z || other.max.z < min.z) {
-      return false;
+    AABB(const vec3 &vmin, const vec3 &vmax) 
+    {
+        min = vmin;
+        max = vmax;
     }
 
-    return true;
-  }
+    vec3 size() { return max - min; }
 
-  AABB project(const mat4 &modelMatrix, const mat4 &projectionMatrix, const vec4 &viewport) {
-    vec3 s = size();
-
-    const vec3 vertices[] = {
-        glm::project(min, modelMatrix, projectionMatrix, viewport),
-        glm::project(min + s * vec3(0, 0, 1), modelMatrix, projectionMatrix, viewport),
-        glm::project(min + s * vec3(1, 0, 1), modelMatrix, projectionMatrix, viewport),
-        glm::project(min + s * vec3(1, 0, 0), modelMatrix, projectionMatrix, viewport),
-        glm::project(max - s * vec3(1, 0, 1), modelMatrix, projectionMatrix, viewport),
-        glm::project(max - s * vec3(1, 0, 0), modelMatrix, projectionMatrix, viewport),
-        glm::project(max, modelMatrix, projectionMatrix, viewport),
-        glm::project(max - s * vec3(0, 0, 1), modelMatrix, projectionMatrix, viewport),
-    };
-
-    AABB result (vertices[0], vertices[0]);
-    for (int i = 1; i < 8; i++) {
-      result.expand(vertices[i]);
+    void expand(const vec3 &point) 
+    {
+        min = glm::min(point, min);
+        max = glm::max(point, max);
     }
 
-    return result;
-  }
+    static AABB fromSphere(const vec3 &position, float radius) 
+    {
+        vec3 radiusVec = vec3(radius, radius, radius);
+        return AABB(position - radiusVec, position + radiusVec);
+    }
+
+    bool intersectsAABB(const AABB &other) 
+    {
+
+        return (min.x <= other.max.x && max.x >= other.min.x) &&
+              (min.y <= other.max.y && max.y >= other.min.y) &&
+              (min.z <= other.max.z && max.z >= other.min.z);
+    }
+
+    AABB project(const mat4 &modelMatrix, const mat4 &projectionMatrix, const vec4 &viewport) 
+    {
+        vec3 s = size();
+
+        const vec3 vertices[] = {
+            glm::project(min, modelMatrix, projectionMatrix, viewport),
+            glm::project(min + s * vec3(0, 0, 1), modelMatrix, projectionMatrix, viewport),
+            glm::project(min + s * vec3(1, 0, 1), modelMatrix, projectionMatrix, viewport),
+            glm::project(min + s * vec3(1, 0, 0), modelMatrix, projectionMatrix, viewport),
+            glm::project(max - s * vec3(1, 0, 1), modelMatrix, projectionMatrix, viewport),
+            glm::project(max - s * vec3(1, 0, 0), modelMatrix, projectionMatrix, viewport),
+            glm::project(max, modelMatrix, projectionMatrix, viewport),
+            glm::project(max - s * vec3(0, 0, 1), modelMatrix, projectionMatrix, viewport),
+        };
+
+        AABB result (vertices[0], vertices[0]);
+        for (int i = 1; i < 8; i++) {
+            result.expand(vertices[i]);
+        }
+
+        return result;
+    }
 };
 
 Sphere boundingSphereForFrustum(float width, float height, float zNear, float zFar, float fov);
@@ -138,4 +142,9 @@ inline uint32_t FastHash(const std::wstring& str)
 	uint32_t result;
 	MurmurHash3_x86_32(str.data(), (int)str.length() * 2, 0xdeadbeef, &result);
 	return result;
+}
+
+inline float LogBase(float num, float base)
+{
+    return log2f(num) / log2f(base);
 }

@@ -13,13 +13,14 @@ namespace Device
 namespace render
 {
 	struct EnvironmentSettings;
+	struct DebugSettings;
 }
 
 namespace render { 
 
 	namespace DebugUI 
 	{
-		void Initialize(GLFWwindow* window, Device::ShaderCache* shader_cache, EnvironmentSettings& environment_settings);
+		void Initialize(GLFWwindow* window, Device::ShaderCache* shader_cache, EnvironmentSettings& environment_settings, DebugSettings& debug_settings);
 		void Deinitialize();
 		void NewFrame();
 		void Update(float dt);

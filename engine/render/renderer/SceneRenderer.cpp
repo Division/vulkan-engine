@@ -43,6 +43,7 @@
 #include "render/effects/Skybox.h"
 #include "render/effects/PostProcess.h"
 #include "resources/TextureResource.h"
+#include "render/debug/DebugSettings.h"
 
 #include <functional>
 
@@ -63,9 +64,10 @@ namespace render {
 
 	SceneRenderer::~SceneRenderer() = default;
 
-	SceneRenderer::SceneRenderer(Scene& scene, ShaderCache* shader_cache)
+	SceneRenderer::SceneRenderer(Scene& scene, ShaderCache* shader_cache, DebugSettings* settings)
 		: scene(scene)
 		, shader_cache(shader_cache)
+		, debug_settings(settings)
 	{
 		environment_settings = std::make_unique<EnvironmentSettings>();
 		scene_buffers = std::make_unique<SceneBuffers>();
@@ -132,6 +134,8 @@ namespace render {
 		result.position = camera->cameraPosition();
 		result.viewMatrix = camera->cameraViewMatrix();
 		result.screenSize = camera->cameraViewSize();
+		result.zMin = camera->cameraZMinMax().x;
+		result.zMax = camera->cameraZMinMax().y;
 		return result;
 	}
 
@@ -140,6 +144,13 @@ namespace render {
 		OPTICK_EVENT();
 
 		auto* entity_manager = scene.GetEntityManager();
+
+		light_grid->UpdateSlices(scene.GetCamera()->cameraProjectionMatrix());
+
+		if (debug_settings && debug_settings->draw_clusters)
+		{
+			light_grid->DrawDebugClusters(debug_settings->cluster_matrix, vec4(1, 1, 1, 1));
+		}
 
 		CreateDrawCalls();
 		draw_call_manager->ReleaseDrawCallLists();
@@ -201,7 +212,6 @@ namespace render {
 
 		// Light grid setup
 		auto window_size = scene.GetCamera()->cameraViewSize();
-		light_grid->Update(window_size.x, window_size.y);
 
 		light_grid->appendLights(visible_lights, scene.GetCamera());
 		//light_grid->appendProjectors(visibleProjectors, scene.GetCamera());
@@ -350,7 +360,7 @@ namespace render {
 
 		});
 
-		auto post_process_result = post_process->AddPostProcess(*render_graph, *main_pass_info.color_output, *main_color, *compute_buffer_resource);
+		auto post_process_result = post_process->AddPostProcess(*render_graph, *main_pass_info.color_output, *main_color, *compute_buffer_resource, *global_shader_bindings);
 
 		auto ui_pass_info = render_graph->AddPass<PassInfo>("Debug UI", ProfilerName::PassDebugUI, [&](graph::IRenderPassBuilder& builder)
 			{

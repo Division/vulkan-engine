@@ -37,12 +37,6 @@ namespace ECS
 	class EntityManager;
 }
 	
-
-namespace render
-{
-	struct EnvironmentSettings;
-};
-
 class Scene;
 
 namespace render {
@@ -51,6 +45,8 @@ namespace render {
 	class LightGrid;
 	class ShadowMap;
 	class DrawCallManager;
+	struct DebugSettings;
+	struct EnvironmentSettings;
 
 	namespace effects
 	{
@@ -69,7 +65,7 @@ namespace render {
 	public:
 		static int32_t ShadowAtlasSize();
 
-		SceneRenderer(Scene& scene, Device::ShaderCache* shader_cache);
+		SceneRenderer(Scene& scene, Device::ShaderCache* shader_cache, DebugSettings* settings);
 		~SceneRenderer();
 
 		void RenderScene();
@@ -120,6 +116,7 @@ namespace render {
 		std::vector<std::pair<IShadowCaster*, ECS::systems::CullingSystem>> shadow_casters;
 
 		std::unique_ptr<EnvironmentSettings> environment_settings;
+		DebugSettings* debug_settings;
 		std::unique_ptr<effects::Skybox> skybox;
 		std::unique_ptr<effects::PostProcess> post_process;
 	};

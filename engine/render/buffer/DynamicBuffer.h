@@ -2,7 +2,6 @@
 
 #include "CommonIncludes.h"
 #include "VulkanBuffer.h"
-#include "render/device/VulkanCaps.h"
 #include "render/device/VulkanUploader.h"
 #include "render/device/VulkanContext.h"
 #include "Engine.h"
@@ -66,7 +65,7 @@ namespace Device {
 				uploader->AddToUpload(staging_buffers[current_staging_buffer].get(), buffer.get(), upload_data_size);
 			}
 
-			current_staging_buffer = (current_staging_buffer + 1) % caps::MAX_FRAMES_IN_FLIGHT;
+			current_staging_buffer = (current_staging_buffer + 1) % staging_buffers.size();
 			upload_data_size = 0;
 			mapped_pointer = nullptr;
 		}
@@ -103,7 +102,7 @@ namespace Device {
 		size_t alignment;
 		unsigned current_staging_buffer = 0;
 		VulkanBuffer::Handle buffer;
-		std::array<VulkanBuffer::Handle, caps::MAX_FRAMES_IN_FLIGHT> staging_buffers;
+		std::array<VulkanBuffer::Handle, 3> staging_buffers;
 		BufferType type;
 	};
 

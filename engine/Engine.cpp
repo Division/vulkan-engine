@@ -13,6 +13,7 @@
 #include "memory/Containers.h"
 #include "resources/ResourceCache.h"
 #include "render/device/Resource.h"
+#include "render/debug/DebugSettings.h"
 #include "Handle.h"
 #include "system/JobSystem.h"
 
@@ -33,6 +34,8 @@ Engine::Engine(std::unique_ptr<IGame> game) : game(std::move(game))
 	OPTICK_START_CAPTURE();
 	OPTICK_EVENT();
 	Thread::Scheduler::Initialize();
+
+	debug_settings = std::make_unique<render::DebugSettings>();
 
 	ENGLogSetOutputFile("log.txt");
 
@@ -70,17 +73,17 @@ Engine::Engine(std::unique_ptr<IGame> game) : game(std::move(game))
 
 	{
 		OPTICK_EVENT("Creating subsystems");
-		scene = std::make_unique<Scene>();
+		scene = std::make_unique<Scene>(debug_settings.get());
 		shader_cache = std::make_unique<Device::ShaderCache>();
 		debug_draw = std::make_unique<render::DebugDraw>(*shader_cache);
-		scene_renderer = std::make_unique<render::SceneRenderer>(*scene, shader_cache.get());
+		scene_renderer = std::make_unique<render::SceneRenderer>(*scene, shader_cache.get(), debug_settings.get());
 		material_manager = std::make_unique<render::MaterialManager>();
 		input = std::make_unique<System::Input>(window);
 	}
 
 	vulkan_context->RecreateSwapChain(); // creating swapchain after scene renderer to handle subscribtion to the recreate event
 
-	render::DebugUI::Initialize(window, shader_cache.get(), *scene_renderer->GetEnvironmentSettings());
+	render::DebugUI::Initialize(window, shader_cache.get(), *scene_renderer->GetEnvironmentSettings(), *debug_settings);
 
 	this->game->init();
 

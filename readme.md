@@ -1,7 +1,9 @@
 Roadmap:
-+ Multithreading, job system
++- optimize tiled lighting or implement clustered
+- Fix and migrate lighting, decals, shadowmaps to ECS
+- PhysX integration 
+- Image based lighting support
 - Handles for all engine resources
-+ Async resource loading
 - Fix release build settings in cmake
 - FBX mesh export
 - New skinning animation system
@@ -11,6 +13,9 @@ Roadmap:
 - Multithreaded rendering
 - GameObject file format and editor
 - lambda API for ECS
-- Image based lighting support
 - GUI library integration
-- optimize tiled lighting or implement clustered
+
+-- Completed -----------------------------------
+
++ Multithreading, job system
++ Async resource loading

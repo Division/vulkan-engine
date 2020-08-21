@@ -34,22 +34,22 @@ float3x3 GetSampleTransform(float3 Normal) {
   return w;
 }
 
-vec3 FresnelSchlick(vec3 F0, float cosTheta) {
-    return F0 + (vec3(1.0) - F0) * pow(1.0 - clamp(cosTheta, 0.0f, 1.0f), 5.0);
+float3 FresnelSchlick(float3 F0, float cosTheta) {
+    return F0 + (float3(1.0, 1.0, 1.0) - F0) * pow(1.0 - clamp(cosTheta, 0.0f, 1.0f), 5.0);
 }
 
-vec3 CookTorrance_GGX(vec3 albedo, vec3 n, vec3 l, vec3 v, float roughness, vec3 f0, out vec3 pdf) 
+float3 CookTorrance_GGX(float3 albedo, float3 n, float3 l, float3 v, float roughness, float3 f0, out float3 pdf) 
 {
     pdf = 0.0;
     n = normalize(n);
     v = normalize(v);
     l = normalize(l);
-    vec3 h = normalize(v+l);
+    float3 h = normalize(v+l);
     //precompute dots
     float NL = dot(n, l);
-    if (NL <= 0.000001) return vec3(0.0);
+    if (NL <= 0.000001) return float3(0.0, 0.0, 0.0);
     float NV = dot(n, v);
-    if (NV <= 0.000001) return vec3(0.0);
+    if (NV <= 0.000001) return float3(0.0, 0.0, 0.0);
     float NH = dot(n, h);
     float HV = dot(h, v);
     
@@ -59,29 +59,30 @@ vec3 CookTorrance_GGX(vec3 albedo, vec3 n, vec3 l, vec3 v, float roughness, vec3
     //calc coefficients
     float G = GGX_PartialGeometry(NV, roug_sqr) * GGX_PartialGeometry(NL, roug_sqr);
     float D = GGX_Distribution(NH, roug_sqr);
-    vec3 F = FresnelSchlick(f0, HV);
+    float3 F = FresnelSchlick(f0, HV);
 
     //mix
-    vec3 specK = G*D*F*0.25/(NV+0.001);    
-    vec3 diffK = clamp(1.0-F, 0.0f, 1.0f);
-    return max(vec3(0.0), albedo*diffK*NL/PI + specK);
+    float3 specK = G*D*F*0.25/(NV+0.001);    
+    float3 diffK = clamp(1.0-F, 0.0f, 1.0f);
+    return max(float3(0.0, 0.0, 0.0), albedo*diffK*NL/PI + specK);
 }
 
-vec3 CalculateLighting(vec3 albedo, vec3 radiance, vec3 N, vec3 V, vec3 L, float roughness, float metallic)
+float3 CalculateLighting(float3 albedo, float3 radiance, float3 N, float3 V, float3 L, float roughness, float metallic)
 {
-    //return vec3(roughness, roughness, roughness);
+    //return float3(roughness, roughness, roughness);
 
-    return CookTorrance_GGX(vec3(0.86, 0.176, 0), N, L, V, roughness, vec3(0.24, 0.24, 0.24));
+    //float3 pdf;
+    //return CookTorrance_GGX(float3(0.86, 0.176, 0), N, L, V, roughness, float3(0.24, 0.24, 0.24));
 
-    vec3 H = normalize(V + L);
+    float3 H = normalize(V + L);
     float roug_sqr = roughness * roughness;
     float G = GGX_PartialGeometry(dot(N,V), roug_sqr) * GGX_PartialGeometry(dot(N,L), roug_sqr);
     float D = GGX_Distribution(dot(N,H), roughness*roughness);
 
     float NL = dot(N, L);
-    if (NL <= 0.0000001) return vec3(0.0);
+    if (NL <= 0.0000001) return float3(0.0, 0.0, 0.0);
     float NV = dot(N, V);
-    if (NV <= 0.0000001) return vec3(0.0);
-    // return vec3(D, D, D);
-    return vec3(G, G, G);
+    if (NV <= 0.0000001) return float3(0.0, 0.0, 0.0);
+    // return float3(D, D, D);
+    return float3(G, G, G);
 }

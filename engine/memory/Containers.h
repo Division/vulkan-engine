@@ -6,8 +6,8 @@
 
 namespace Memory {
 
-	template <typename T, Tag tag>
-	using Vector = std::vector<T, TaggedAllocator<T, tag>>;
+	template <typename T, Tag tag, typename Allocator = TaggedAllocator<T, tag>>
+	using Vector = std::vector<T, Allocator>;
 
 	//template <typename T, Tag tag>
 	//using Deque = std::deque<T, TaggedAllocator<T, tag>>;

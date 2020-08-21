@@ -32,6 +32,8 @@ namespace ECS { namespace systems {
 			mesh_renderer->object_params.uvOffset = vec2(0, 0);
 			mesh_renderer->object_params.uvScale = vec2(1, 1);
 			mesh_renderer->object_params.roughness = material->GetRoughness();
+			mesh_renderer->object_params.metalness = material->GetMetalness();
+			mesh_renderer->object_params.color = material->GetColor();
 		}
 	}
 

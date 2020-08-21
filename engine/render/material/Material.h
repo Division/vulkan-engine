@@ -36,6 +36,12 @@ public:
 	float GetRoughness() const { return roughness; }
 	void SetRoughness(float value) { roughness = value; }
 
+	float GetMetalness() const { return metalness; }
+	void SetMetalness(float value) { metalness = value; }
+
+	vec4 GetColor() const { return color; }
+	void SetColor(vec4 value) { color = value; }
+
 	const ShaderCapsSet& ShaderCaps() const { if (caps_dirty) UpdateCaps(); return shader_caps; }
 	const ShaderCapsSet &ShaderCapsSkinning() const { if (caps_dirty) UpdateCaps(); return shader_caps_skinning; }
 
@@ -55,7 +61,9 @@ protected:
 	std::wstring shader_path = L"shaders/material_main.hlsl";
 	mutable ShaderCapsSet shader_caps;
 	mutable ShaderCapsSet shader_caps_skinning;
-	float roughness = 0;
+	vec4 color = vec4(1,1,1,1);
+	float roughness = 0.5;
+	float metalness = 0.2;
 
 	mutable Device::ShaderProgramInfo shader_info;
 	mutable Device::ShaderProgramInfo depth_only_shader_info;
@@ -65,6 +73,7 @@ protected:
 
 	bool has_texture0 = false;
 	Device::Handle<Device::Texture> texture0;
+
 
 	bool has_normal_map = false;
 	Device::Handle<Device::Texture> normal_map;

@@ -22,6 +22,8 @@ using namespace System;
 using namespace ECS;
 using namespace ECS::systems;
 
+class TestEntity {};
+
 EntityID ModelViewer::CreateMeshEntity(vec3 position, EntityID parent, Mesh* mesh)
 {
 	auto entity = manager->CreateEntity();
@@ -33,7 +35,6 @@ EntityID ModelViewer::CreateMeshEntity(vec3 position, EntityID parent, Mesh* mes
 	transform->position = position;
 
 	auto* mesh_renderer = manager->AddComponent<components::MeshRenderer>(entity);
-	*mesh_renderer = components::MeshRenderer();
 	mesh_renderer->render_queue = RenderQueue::Opaque;
 	mesh_renderer->mesh = mesh;
 	mesh_renderer->material_id = Engine::Get()->GetMaterialManager()->GetMaterialID(*material_default);
@@ -71,7 +72,7 @@ void ModelViewer::init()
 	manager = engine->GetEntityManager();
 	graph = engine->GetTransformGraph();
 
-	auto light_entity = CreateLightEntity(vec3(-5, 0, -10), 100, components::Light::Type::Point);
+	auto light_entity = CreateLightEntity(vec3(-5, 0, -10), 100, components::Light::Type::Point, vec3(1,1,1) * 2.0f);
 
 	/*light = CreateGameObject<LightObject>();
 	light->castShadows(false);
@@ -87,12 +88,14 @@ void ModelViewer::init()
 	plane_mesh->calculateNormals();
 	plane_mesh->createBuffer();
 
-	sphere_mesh = sphere_bundle->getMesh("sphere-lib");
-
-	//sphere_mesh = std::make_shared<Mesh>();
-	//MeshGeneration::generateSphere(sphere_mesh.get(), 50, 50, 1);
-	//sphere_mesh->calculateNormals();
-	//sphere_mesh->createBuffer();
+	//sphere_mesh = sphere_bundle->getMesh("sphere-lib");
+	
+	sphere_mesh = Mesh::Create();
+	MeshGeneration::generateSphere(sphere_mesh.get(), 50, 50, 1);
+	//MeshGeneration::generateBox(sphere_mesh.get(), 1, 1, 1);
+	sphere_mesh->calculateNormals();
+	sphere_mesh->createBuffer();
+	
 
 	material_light_only = std::make_shared<Material>();
 	material_light_only->LightingEnabled(true);
@@ -100,7 +103,7 @@ void ModelViewer::init()
 	material_no_light->LightingEnabled(false);
 	material_default = std::make_shared<Material>();
 	material_default->LightingEnabled(true);
-	material_default->Texture0(lama_tex->Get());
+	//material_default->Texture0(lama_tex->Get());
 	auto* material_manager = Engine::Get()->GetMaterialManager();
 
 	/*plane = CreateMeshEntity(vec3(0, -5, 0), 0, plane_mesh.get());
@@ -115,13 +118,16 @@ void ModelViewer::init()
 	for (int i = 0; i < sphere_count; i++)
 	{
 		auto sphere = CreateMeshEntity(vec3(0, -5, 0), 0, sphere_mesh.get());
+		manager->AddComponent<TestEntity>(sphere);
 		auto mesh_renderer = manager->GetComponent<components::MeshRenderer>(sphere);
 		manager->GetComponent<components::Transform>(sphere)->position = vec3(i * sphere_offset, 0, -10);
 		manager->GetComponent<components::Transform>(sphere)->scale = vec3(1, 1, 1);
 
 		Material material;
 		material.LightingEnabled(true);
-		material.SetRoughness(0.05 + (i / (sphere_count - 1.0f) * 0.95));
+		//material.SetRoughness(0.05 + (i / (sphere_count - 1.0f) * 0.95));
+		material.SetRoughness(0.5);
+		material.SetMetalness(0.05 + (i / (sphere_count - 1.0f) * 0.95));
 		mesh_renderer->material_id = material_manager->GetMaterialID(material);
 		mesh_renderer->mesh = sphere_mesh.get();
 	}
@@ -137,6 +143,19 @@ void ModelViewer::update(float dt)
 	std::mutex mutex;
 	Engine::Get()->GetDebugDraw()->DrawAABB(vec3(0,0,0), vec3(10,10,10), vec4(1, 0, 0, 1));
 	Engine::Get()->GetDebugDraw()->DrawPoint(vec3(), vec4(1, 1, 1, 10));
+	///*
+	auto entities = manager->GetChunkListsWithComponents<TestEntity, components::Transform>();
+	ECS::CallbackSystem([dt](ECS::Chunk* chunk){
+		ECS::ComponentFetcher<components::Transform> transform_fetcher(*chunk);
+
+		for (int i = 0; i < chunk->GetEntityCount(); i++)
+		{
+			auto* transform = transform_fetcher.GetComponent(i);
+			transform->Rotate(vec3(0, 1, 0), dt * RAD(90));
+		}
+	}, *manager).ProcessChunks(entities);
+
+	//*/
 
 	/*
 	for (int i = 0; i < 100; i++)

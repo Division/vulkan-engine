@@ -19,6 +19,7 @@ namespace Device
 
 namespace render
 {
+	struct DebugSettings;
 	class SceneRenderer;
 	class MaterialManager;
 	class DebugDraw;
@@ -59,6 +60,7 @@ private:
 
 private:
 	static Engine* instance;
+	std::unique_ptr<render::DebugSettings> debug_settings;
 	std::unique_ptr<IGame> game;
 	GLFWwindow* window;
 	std::unique_ptr<Device::ShaderCache> shader_cache;

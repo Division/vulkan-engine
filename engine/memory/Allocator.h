@@ -8,7 +8,7 @@
 namespace Memory {
 
 	template <typename T, Tag tag>
-	class TaggedAllocator : std::allocator<T>
+	class TaggedAllocator : public std::allocator<T>
 	{
 	public:
 		T* allocate(size_t count)

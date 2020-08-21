@@ -32,6 +32,11 @@ namespace ECS
     }
 }
 
+namespace render
+{
+    struct DebugSettings;
+}
+
 struct SceneLightData
 {
     ECS::components::Light* light;
@@ -44,7 +49,7 @@ class Scene
 {
 public:
 
-    Scene();
+    Scene(render::DebugSettings* settings);
     ~Scene();
 
     void Update(IGame& game, float dt);
@@ -61,6 +66,7 @@ private:
     void ProcessRendererSystems();
 
 private:
+    render::DebugSettings* debug_settings;
     std::vector<SceneLightData> visible_lights;
     std::vector<ECS::components::Projector*> visible_projectors;
     std::unique_ptr<Camera> camera;

@@ -9,10 +9,12 @@ namespace Device { namespace ShaderBufferStruct {
 	{
 		mat4 transform; // offset = 0, size = 64
 		mat4 normalMatrix; // offset = 64, alignment = 16, size = 64
+		vec4 color = vec4(1, 1, 1, 1);
 		vec2 uvScale = vec2(1, 1);
 		vec2 uvOffset = vec2(0, 0);
 		unsigned int layer = 1u << 0;
 		float roughness = 0.0f;
+		float metalness = 0.0f;
 		vec2 padding;
 	};
 
@@ -54,9 +56,10 @@ namespace Device { namespace ShaderBufferStruct {
 	struct Camera 
 	{
 		vec3 position; // offset = 0, size = 12
-		float padding1 = 0;
+		float zMin;
 		uvec2 screenSize = {0,0};
-		vec2 padding23 = {0,0};
+		float zMax;
+		float padding = 0;
 		mat4 viewMatrix;
 		mat4 projectionMatrix;
 	};

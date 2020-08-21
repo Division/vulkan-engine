@@ -13,6 +13,7 @@ public:
   virtual mat4 cameraViewMatrix() const = 0;
   virtual mat4 cameraProjectionMatrix() const = 0;
   virtual vec4 cameraViewport() const = 0;
+  virtual vec2 cameraZMinMax() const = 0;
   virtual const Frustum &GetFrustum() const = 0;
   virtual unsigned int cameraIndex() const = 0; // index is an offset in the corresponding UBO
   virtual void cameraIndex(unsigned int index) = 0;

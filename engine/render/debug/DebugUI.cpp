@@ -16,6 +16,7 @@
 #include "render/shader/ShaderDefines.h"
 #include "widgets/EngineStats.h"
 #include "render/renderer/EnvironmentSettings.h"
+#include "render/debug/DebugSettings.h"
 
 namespace render { 
 	
@@ -37,12 +38,13 @@ namespace render {
 			uint32_t engine_stats_index = 0;
 
 			EnvironmentSettings* environment_settings = nullptr;
+			DebugSettings* debug_settings = nullptr;
 
 			typedef void (*engine_stats_callback)(void);
 			std::array<engine_stats_callback, 2> engine_stats_functions;
 		}
 
-		void DrawMainWidget();
+		void DrawMainWidget(DebugSettings* debug_settings);
 		void DrawEnvironmentEditorWidget(EnvironmentSettings& settings);
 
 		void SetMainWidgetVisible(bool visible)
@@ -67,9 +69,10 @@ namespace render {
 
 		//
 
-		void Initialize(GLFWwindow* window, ShaderCache* shader_cache, EnvironmentSettings& _environment_settings)
+		void Initialize(GLFWwindow* window, ShaderCache* shader_cache, EnvironmentSettings& _environment_settings, DebugSettings& _debug_settings)
 		{
 			environment_settings = &_environment_settings;
+			debug_settings = &_debug_settings;
 			auto shader_info = ShaderProgramInfo()
 				.AddShader(ShaderProgram::Stage::Vertex, L"shaders/imgui.hlsl", "vs_main")
 				.AddShader(ShaderProgram::Stage::Fragment, L"shaders/imgui.hlsl", "ps_main");
@@ -165,7 +168,7 @@ namespace render {
 			}
 
 			if (main_widget_visible)
-				DrawMainWidget();
+				DrawMainWidget(debug_settings);
 
 			if (environment_widget_visible && environment_settings)
 				DrawEnvironmentEditorWidget(*environment_settings);

@@ -15,13 +15,13 @@ void Camera::UpdateProjection()
     float aspect = width / height;
     switch (mode) {
     case Mode::Perspective:
-        projection_matrix = glm::perspective(glm::radians(fov), aspect, 0.1f, 100.0f);
+        projection_matrix = glm::perspective(glm::radians(fov), aspect, zMin, zMax);
         break;
 
     case Mode::Ortho: {
         float halfHeight = orthographic_size / 2.0f;
         float halfWidth = aspect * halfHeight;
-        projection_matrix = glm::ortho(-halfWidth, halfWidth, -halfHeight, halfHeight, 0.1f, 100.0f);
+        projection_matrix = glm::ortho(-halfWidth, halfWidth, -halfHeight, halfHeight, zMin, zMax);
         break;
     }
     case Mode::UI:

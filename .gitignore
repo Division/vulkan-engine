@@ -5,3 +5,4 @@ bin/glm_dummy.exe
 bin/*.ilk
 bin/*.pdb
 bin/spirv-cross.exe
+bin/shaders_compiled

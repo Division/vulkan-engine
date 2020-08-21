@@ -130,6 +130,7 @@ set(ENGINE_SOURCES
 	render/renderer/Synchronization.h
 	render/renderer/Synchronization.cpp
 	render/renderer/EnvironmentSettings.h
+	render/debug/DebugSettings.h
 	render/debug/DebugDraw.h
 	render/debug/DebugDraw.cpp
 	render/debug/DebugUI.h

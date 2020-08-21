@@ -51,6 +51,7 @@ public:
   mat4 cameraViewMatrix() const override { return view_matrix; }
   mat4 cameraProjectionMatrix() const override { return projectionMatrix(); }
   vec4 cameraViewport() const override { return viewport; }
+  vec2 cameraZMinMax() const override { return vec2(zMin, zMax); }
   unsigned int cameraVisibilityMask() const override { return visibility_mask; };
   const Frustum &GetFrustum() const override { return frustum; };
   unsigned int cameraIndex() const override { return camera_index; }; // index is an offset in the corresponding UBO
@@ -65,6 +66,8 @@ protected:
   vec4 viewport;
   mat4 view_projection_matrix;
   Frustum frustum;
+  float zMin = 0.1;
+  float zMax = 10000;
   ECS::components::Transform transform;
 
   float fov = 45.0f;
