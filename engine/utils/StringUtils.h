@@ -24,4 +24,11 @@ namespace utils
 	std::wstring StringToWString(const std::string& str);
 
 	std::string WStringToString(const std::wstring& wstr);
+
+	// returns of string starts with value substring
+	template <typename T>
+	bool BeginsWith(const T& string, const T& value)
+	{
+		return string.find_first_of(value) == 0;
+	}
 }

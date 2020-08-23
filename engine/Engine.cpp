@@ -174,6 +174,17 @@ void Engine::MainLoop()
 		::Device::GetReleaser().Swap();
 		Common::GetReleaser().Swap();
 
+		try
+		{
+			Thread::Scheduler::Get().RethrowExceptions();
+		}
+		catch (std::exception e)
+		{
+			ENGLog("Thread exception: %s", e.what());
+			std::cout << "Thread exception: " << e.what() << std::endl;
+			throw e;
+		}
+
 		last_time = current_time;
 	}
 

@@ -13,6 +13,7 @@
 #include "render/debug/DebugDraw.h"
 #include "render/texture/Texture.h"
 #include "resources/TextureResource.h"
+#include "resources/MeshSet.h"
 #include "system/JobSystem.h"
 
 ModelViewer::ModelViewer() = default;
@@ -67,6 +68,8 @@ void ModelViewer::init()
 	sphere_bundle = ModelBundleHandle(L"resources/models/sphere.mdl");
 	environment = Resources::TextureResource::Handle(L"resources/environment/skybox.ktx");
 	lama_tex = Resources::TextureResource::Handle(L"resources/lama.ktx");
+
+	test_mesh = Resources::MeshSet::Handle(L"assets/Models/Turret/Turret.mesh");
 
 	auto* engine = Engine::Get();
 	manager = engine->GetEntityManager();

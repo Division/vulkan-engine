@@ -113,12 +113,17 @@ namespace Thread {
 		void JobCompleted(Job* job);
 		void NotifyAll();
 		bool HasJobs(Job::Priority priority);
+		void AddException(std::exception_ptr exception);
+		void RethrowExceptions();
 
 	private:
 		JobSystemAllocator& allocator;
 		std::array<std::unique_ptr<Workload>, (size_t)Job::Priority::Count> workloads;
 		std::condition_variable condition;
 		std::mutex wait_mutex;
+
+		std::mutex exception_mutex;
+		std::list<std::exception_ptr> exceptions;
 	};
 
 	class WorkerThread
@@ -160,6 +165,7 @@ namespace Thread {
 		}
 
 		void Wait(Job::Priority priority);
+		void RethrowExceptions();
 
 		Scheduler(uint32_t thread_number);
 		~Scheduler();

@@ -71,6 +71,19 @@ namespace Thread {
 		condition.notify_one();
 	}
 
+	void WorkloadSet::AddException(std::exception_ptr exception)
+	{
+		std::scoped_lock lock(exception_mutex);
+		exceptions.push_back(exception);
+	}
+
+	void WorkloadSet::RethrowExceptions()
+	{
+		std::scoped_lock lock(exception_mutex);
+		for (auto& exception : exceptions)
+			std::rethrow_exception(exception);
+	}
+
 	Job* WorkloadSet::GetNextJob()
 	{
 		Job* job = nullptr;
@@ -103,9 +116,16 @@ namespace Thread {
 				auto* job = GetNextJob();
 				if (job)
 				{
-					// TODO: handle exceptions
-					job->Execute();
-					workload_set.JobCompleted(job);
+					try
+					{
+						job->Execute();
+						workload_set.JobCompleted(job);
+					}
+					catch (...)
+					{
+						workload_set.AddException(std::current_exception());
+						workload_set.JobCompleted(job);
+					}
 				}
 				else
 					workload_set.Wait();
@@ -165,6 +185,11 @@ namespace Thread {
 	{
 		while (workload_set.HasJobs(priority))
 			std::this_thread::yield();
+	}
+
+	void Scheduler::RethrowExceptions()
+	{
+		workload_set.RethrowExceptions();
 	}
 
 	Scheduler& Scheduler::Get()

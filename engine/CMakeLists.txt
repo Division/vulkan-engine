@@ -201,6 +201,8 @@ set(ENGINE_SOURCES
 	resources/SkinningData.cpp
 	resources/TextureResource.h
 	resources/TextureResource.cpp
+	resources/MeshSet.h
+	resources/MeshSet.cpp
 	loader/TextureLoader.h
 	loader/TextureLoader.cpp
 	loader/FileLoader.h

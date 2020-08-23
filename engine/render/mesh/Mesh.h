@@ -13,18 +13,33 @@ extern const int JOINT_PER_VERTEX_MAX;
 
 class Mesh : public Common::Resource {
 public:
+    static constexpr uint32_t MESH_FLAG_HAS_NORMALS = 1 << 0;
+    static constexpr uint32_t MESH_FLAG_HAS_TBN = 1 << 1;
+    static constexpr uint32_t MESH_FLAG_HAS_UV0 = 1 << 2;
+    static constexpr uint32_t MESH_FLAG_HAS_WEIGHTS = 1 << 3;
+
   static const int JOINTS_MAX = 70;
-  static const int JOINT_PER_VERTEX_MAX = 3;
+  static const int JOINT_PER_VERTEX_MAX = 4;
+
+  static constexpr bool IsShortIndexCount(uint32_t count)
+  {
+      return count <= (std::numeric_limits<uint16_t>::max)();
+  }
 
   using Handle = Common::Handle<Mesh>;
 
   explicit Mesh(bool keepData = true, int componentCount = 3, bool isStatic = true);
+  Mesh(uint32_t flags, uint8_t* vertices, uint32_t vertex_count, uint8_t* indices, uint32_t triangle_count, AABB aabb);
   virtual ~Mesh();
 
+  static size_t GetVertexStride(uint32_t flags);
   static Handle Create(bool keepData = true, int componentCount = 3, bool isStatic = true);
+  static Handle Create(uint32_t flags, uint8_t* vertices, uint32_t vertex_count, uint8_t* indices, uint32_t triangle_count, AABB aabb);
 
   Device::VulkanBuffer* vertexBuffer() const { return _vertexBuffer.get(); }
   Device::VulkanBuffer* indexBuffer() const { return _indexBuffer.get(); }
+  bool UsesShortIndexes() const { return uses_short_indices; }
+
   const VertexLayout& GetVertexLayout() const { return layout; }
 
   void setVertices(const vec3 *vertices, int vertexCount);
@@ -120,6 +135,8 @@ private:
   int _stride;
   int _strideBytes;
   int _vertexCount;
+
+  bool uses_short_indices;
 
   // Attrib flags
   bool _hasIndices;

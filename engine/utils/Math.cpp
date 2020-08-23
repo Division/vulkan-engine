@@ -4,7 +4,6 @@
 
 #include "Math.h"
 #include "cmath"
-#include <glm/glm.hpp>
 
 using namespace glm;
 

@@ -29,5 +29,4 @@ namespace utils
 
 		return converterX.to_bytes(wstr);
 	}
-
 }

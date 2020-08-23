@@ -1,8 +1,11 @@
 #pragma once
 
-#include "CommonIncludes.h"
 #include "murmurhash/MurmurHash3.h"
 #include <math.h>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/quaternion.hpp>
+#include <string>
 
 using namespace glm;
 
@@ -43,6 +46,8 @@ struct AABB
     vec3 max;
 
     AABB() = default;
+
+    AABB(const AABB& other) : min(other.min), max(other.max) {}
 
     AABB(const vec3 &vmin, const vec3 &vmax) 
     {

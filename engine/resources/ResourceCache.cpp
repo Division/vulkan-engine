@@ -1,5 +1,6 @@
 #include "ResourceCache.h"
 #include <vector>
+#include "utils/StringUtils.h"
 
 namespace Resources
 {
@@ -62,4 +63,15 @@ namespace Resources
 		for (auto* filename : filenames_to_free)
 			resources.erase(*filename);
 	}
+
+	Exception::Exception(const std::wstring& filename)
+	{
+		message_stream << "Resource exception [" << utils::WStringToString(filename) << "]: ";
+	}
+
+	Exception::Exception(const Exception& other)
+	{
+		message_stream << other.message_stream.str();
+	}
+
 }

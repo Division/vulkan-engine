@@ -20,6 +20,7 @@ class ViewerCamera;
 namespace Resources
 {
 	class TextureResource;
+	class MeshSet;
 }
 
 class ModelViewer : public IGame {
@@ -49,6 +50,7 @@ private:
 	Resources::Handle<ModelBundle> sphere_bundle;
 	Resources::Handle<Resources::TextureResource> lama_tex;
 	Resources::Handle<Resources::TextureResource> environment;
+	Resources::Handle<Resources::MeshSet> test_mesh;
 
 	ECS::EntityManager* manager;
 	ECS::TransformGraph* graph;

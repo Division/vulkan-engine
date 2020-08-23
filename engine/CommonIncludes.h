@@ -1,3 +1,5 @@
+#define NOMINMAX
+
 #include <vector>
 #include <algorithm>
 #include <unordered_set>

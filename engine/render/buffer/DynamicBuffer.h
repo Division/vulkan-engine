@@ -81,7 +81,7 @@ namespace Device {
 			
 			memcpy((char*)mapped_pointer + upload_data_size, &element, sizeof(T));
 			SetUploadSize(
-				std::min(((size_t)ceilf((upload_data_size + sizeof(T)) / (float)alignment) * alignment), size)
+				(std::min)(((size_t)ceilf((upload_data_size + sizeof(T)) / (float)alignment) * alignment), size)
 			);
 
 			return result;

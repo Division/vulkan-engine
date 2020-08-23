@@ -12,4 +12,5 @@ add_subdirectory(game)
 add_subdirectory(game_ecs)
 add_subdirectory(model_viewer)
 add_subdirectory(tools/ShaderCompiler) 
+add_subdirectory(tools/FBXExporter) 
 

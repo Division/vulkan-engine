@@ -3,6 +3,7 @@
 #include <atomic>
 #include <unordered_map>
 #include <memory>
+#include <sstream>
 #include "memory/Allocator.h"
 #include <fstream>
 #include "system/JobSystem.h"
@@ -255,5 +256,23 @@ namespace Resources
 		ResourceBase* GetResource(const std::wstring& filename);
 		void SetResource(const std::wstring& filename, std::unique_ptr<ResourceBase> resource);
 		std::unordered_map<std::wstring, std::unique_ptr<ResourceBase>> resources;
+	};
+
+	class Exception : public std::exception
+	{
+	public:
+		Exception() {}
+		Exception(const std::wstring& filename);
+		Exception(const Exception& other);
+		virtual ~Exception() = default;
+
+		template<typename T> 
+		Exception& operator<<(const T& item) { message_stream << item; return *this; }
+
+		virtual const char* what() const override { error = message_stream.str(); return error.c_str(); }
+
+	private:
+		mutable std::string error;
+		std::stringstream message_stream;
 	};
 }
