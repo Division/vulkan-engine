@@ -16,7 +16,7 @@ namespace ECS { namespace systems {
 	
 	private:
 		void ProcessMeshRenderer(Chunk* chunk);
-
+		void ProcessMultiMeshRenderer(Chunk* chunk);
 	};
 
 } }

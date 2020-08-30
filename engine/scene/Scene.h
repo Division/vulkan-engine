@@ -1,7 +1,6 @@
 #pragma once
 
 #include "CommonIncludes.h"
-#include "GameObject.h"
 #include "render/renderer/ICameraParamsProvider.h"
 #include "IGame.h"
 #include "render/shader/ShaderBufferStruct.h"

@@ -66,6 +66,7 @@ set(ENGINE_SOURCES
 	ecs/components/Transform.h
 	ecs/components/Entity.h
 	ecs/components/MeshRenderer.h
+	ecs/components/MultiMeshRenderer.h
 	ecs/components/DrawCall.h
 	ecs/components/Light.h
 	ecs/components/Light.cpp
@@ -114,8 +115,6 @@ set(ENGINE_SOURCES
 	render/buffer/DynamicBuffer.h
 	render/material/Material.h
 	render/material/Material.cpp
-	render/material/MaterialManager.h
-	render/material/MaterialManager.cpp
 	render/renderer/IRenderer.h
 	render/renderer/ICameraParamsProvider.h
 	render/renderer/DrawCallManager.h

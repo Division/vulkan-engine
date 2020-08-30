@@ -6,7 +6,6 @@
 #include "render/renderer/SceneRenderer.h"
 #include "system/Input.h"
 #include "render/shader/ShaderCache.h"
-#include "render/material/MaterialManager.h"
 #include "render/debug/DebugDraw.h"
 #include "render/debug/DebugUI.h"
 #include "memory/Profiler.h"
@@ -77,7 +76,6 @@ Engine::Engine(std::unique_ptr<IGame> game) : game(std::move(game))
 		shader_cache = std::make_unique<Device::ShaderCache>();
 		debug_draw = std::make_unique<render::DebugDraw>(*shader_cache);
 		scene_renderer = std::make_unique<render::SceneRenderer>(*scene, shader_cache.get(), debug_settings.get());
-		material_manager = std::make_unique<render::MaterialManager>();
 		input = std::make_unique<System::Input>(window);
 	}
 
@@ -102,11 +100,11 @@ Engine::~Engine()
 
 	input = nullptr;
 	scene = nullptr;
-	material_manager = nullptr;
 	scene_renderer = nullptr;
 	shader_cache = nullptr;
 	debug_draw = nullptr;
-
+	
+	Common::GetReleaser().Clear();
 	Resources::Cache::Get().Destroy();
 	Common::GetReleaser().Clear();
 	::Device::GetReleaser().Clear();

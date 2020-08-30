@@ -24,7 +24,7 @@ namespace Common
 		void Clear();
 
 	private:
-		std::mutex mutex;
+		std::recursive_mutex mutex;
 		uint32_t current_bucket = 0;
 		std::array<std::vector<std::shared_ptr<Resource>>, bucket_count> buckets;
 	};

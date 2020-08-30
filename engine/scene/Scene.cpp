@@ -6,6 +6,7 @@
 #include "ecs/systems/TransformSystem.h"
 #include "ecs/systems/UpdateDrawCallsSystem.h"
 #include "ecs/components/MeshRenderer.h"
+#include "ecs/components/MultiMeshRenderer.h"
 #include "ecs/components/Light.h"
 #include "render/renderer/DrawCallManager.h"
 #include "render/debug/DebugSettings.h"
@@ -27,8 +28,6 @@ Scene::Scene(render::DebugSettings* settings)
     no_child_system = std::make_unique<systems::NoChildTransformSystem>(*transform_graph, *entity_manager);
     root_transform_system = std::make_unique<systems::RootTransformSystem>(*transform_graph, *entity_manager);
     update_renderer_system = std::make_unique<systems::UpdateRendererSystem>(*entity_manager);
-
-    entity_manager->AddEntityDestroyCallback(std::bind(&Scene::OnEntityDestroyed, this, std::placeholders::_1));
 }
 
 void Scene::Update(IGame& game, float dt)
@@ -114,7 +113,17 @@ void Scene::ProcessRendererSystems()
     // TODO: add projectors
 
     // Append render data to MeshRenderer component
-    auto list = entity_manager->GetChunkListsWithComponents<components::MeshRenderer, components::Transform>();
+
+    // Must have transform and either MeshRenderer or MultiMeshRenderer
+    auto list = entity_manager->GetChunkLists([](ChunkList* chunk_list) {
+        auto hash1 = GetComponentHash<components::MeshRenderer>();
+        auto hash2 = GetComponentHash<components::MultiMeshRenderer>();
+        auto transform_hash = GetComponentHash<components::Transform>();
+        
+        return chunk_list->HasComponent(transform_hash) && (chunk_list->HasComponent(hash1) || chunk_list->HasComponent(hash2));
+    });
+
+    // Updates object_params of the MeshRenderer
     update_renderer_system->ProcessChunks(list);
 }
 

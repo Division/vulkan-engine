@@ -1,6 +1,7 @@
 #include "SceneRenderer.h"
 #include "ecs/ECS.h"
 #include "ecs/components/MeshRenderer.h"
+#include "ecs/components/MultiMeshRenderer.h"
 #include "ecs/components/Transform.h"
 #include "ecs/systems/RendererSystem.h"
 #include "ecs/systems/UpdateDrawCallsSystem.h"
@@ -117,7 +118,9 @@ namespace render {
 	void SceneRenderer::CreateDrawCalls()
 	{
 		auto* entity_manager = scene.GetEntityManager();
-		auto list = entity_manager->GetChunkListsWithComponent<components::MeshRenderer>();
+		auto list = entity_manager->GetChunkLists([=](ChunkList* chunk_list) {
+			return chunk_list->HasComponent(GetComponentHash<components::MeshRenderer>()) || chunk_list->HasComponent(GetComponentHash<components::MultiMeshRenderer>());
+		});
 		create_draw_calls_system->ProcessChunks(list);
 	}
 

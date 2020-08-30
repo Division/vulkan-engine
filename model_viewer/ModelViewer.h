@@ -18,6 +18,11 @@ class Material;
 class LightObject;
 class ViewerCamera;
 
+namespace render
+{
+	class MaterialList;
+}
+
 namespace Resources
 {
 	class TextureResource;
@@ -35,6 +40,7 @@ public:
 private:
 	ECS::EntityID CreateMeshEntity(vec3 position, ECS::EntityID parent, Mesh* mesh);
 	ECS::EntityID CreateLightEntity(vec3 position, float radius, ECS::components::Light::Type type, vec3 color = vec3(1));
+	ECS::EntityID CreateMultiMeshEntity(vec3 position, ECS::EntityID parent, const Resources::Handle<Resources::MultiMesh>& mesh, const Common::Handle<render::MaterialList>& materials);
 private:
 	std::unique_ptr<ViewerCamera> camera;
 	std::shared_ptr<ModelBundle> player_model;
@@ -43,15 +49,16 @@ private:
 	ECS::EntityID entity2;
 	ECS::EntityID plane;
 
-	std::shared_ptr<Material> material_light_only;
-	std::shared_ptr<Material> material_no_light;
-	std::shared_ptr<Material> material_default;
+	Common::Handle<Material> material_light_only;
+	Common::Handle<Material> material_no_light;
+	Common::Handle<Material> material_default;
 	Common::Handle<Mesh> plane_mesh;
 	Common::Handle<Mesh> sphere_mesh;
 	Resources::Handle<ModelBundle> sphere_bundle;
 	Resources::Handle<Resources::TextureResource> lama_tex;
 	Resources::Handle<Resources::TextureResource> environment;
 	Resources::Handle<Resources::MultiMesh> test_mesh;
+	ECS::EntityID test_mesh_entity;
 
 	ECS::EntityManager* manager;
 	ECS::TransformGraph* graph;

@@ -21,7 +21,6 @@ namespace render
 {
 	struct DebugSettings;
 	class SceneRenderer;
-	class MaterialManager;
 	class DebugDraw;
 }
 
@@ -47,7 +46,6 @@ public:
 
 	Device::VulkanContext* GetContext() const { return vulkan_context.get(); }
 	Scene* GetScene() const { return scene.get(); }
-	render::MaterialManager* GetMaterialManager() const { return material_manager.get(); }
 	System::Input* GetInput() const { return input.get(); }
 	render::DebugDraw* GetDebugDraw() const { return debug_draw.get(); }
 	render::SceneRenderer* GetSceneRenderer() const { return scene_renderer.get(); }
@@ -67,7 +65,6 @@ private:
 	std::unique_ptr<Device::VulkanContext> vulkan_context;
 	std::unique_ptr<Scene> scene;
 	std::unique_ptr<render::SceneRenderer> scene_renderer;
-	std::unique_ptr<render::MaterialManager> material_manager;
 	std::unique_ptr<render::DebugDraw> debug_draw;
 	std::unique_ptr<System::Input> input;
 

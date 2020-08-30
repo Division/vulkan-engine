@@ -5,21 +5,28 @@
 #include "render/device/Resource.h"
 #include "render/texture/Texture.h"
 #include "render/shader/ShaderCache.h"
+#include "Handle.h"
 
 namespace Device 
 {
 	class Texture;
 }
 
-class Material {
+class Material : public Common::Resource {
 public:
 	friend class SceneRenderer;
 	friend class PassRenderer;
 
+	using Handle = Common::Handle<Material>;
+
+	static Handle Create()
+	{
+		return Handle(std::make_unique<Material>());
+	}
+
 	Material(const Material&) = default;
 	Material();
 	~Material();
-
 
 	void Texture0(Device::Handle<Device::Texture> texture);
 	const Device::Handle<Device::Texture>& Texture0() const { return texture0; };
@@ -81,3 +88,17 @@ protected:
 	bool lighting_enabled = true;
 	bool vertex_color_enabled = false;
 };
+
+namespace render
+{
+	class MaterialList : public std::vector<Material::Handle>, public Common::Resource
+	{
+	public:
+		using Handle = Common::Handle<MaterialList>;
+
+		static Handle Create()
+		{
+			return Handle(std::make_unique<MaterialList>());
+		}
+	};
+}

@@ -7,9 +7,9 @@
 #include "system/Input.h"
 #include "utils/MeshGeneration.h"
 #include "ecs/components/MeshRenderer.h"
+#include "ecs/components/MultiMeshRenderer.h"
 #include "scene/Scene.h"
 #include "objects/LightObject.h"
-#include "render/material/MaterialManager.h"
 #include "render/debug/DebugDraw.h"
 #include "render/texture/Texture.h"
 #include "resources/TextureResource.h"
@@ -39,7 +39,25 @@ EntityID ModelViewer::CreateMeshEntity(vec3 position, EntityID parent, Mesh* mes
 	auto* mesh_renderer = manager->AddComponent<components::MeshRenderer>(entity);
 	mesh_renderer->render_queue = RenderQueue::Opaque;
 	mesh_renderer->mesh = mesh;
-	mesh_renderer->material_id = Engine::Get()->GetMaterialManager()->GetMaterialID(*material_default);
+	mesh_renderer->material = material_default;
+
+	return entity;
+}
+
+EntityID ModelViewer::CreateMultiMeshEntity(vec3 position, EntityID parent, const Resources::Handle<Resources::MultiMesh>& mesh, const Common::Handle<render::MaterialList>& materials)
+{
+	auto entity = manager->CreateEntity();
+	if (parent)
+		graph->AddChild(parent, entity);
+
+	auto* transform = manager->AddComponent<components::Transform>(entity);
+	*transform = components::Transform();
+	transform->position = position;
+
+	auto* mesh_renderer = manager->AddComponent<components::MultiMeshRenderer>(entity);
+	mesh_renderer->render_queue = RenderQueue::Opaque;
+	mesh_renderer->multi_mesh = mesh;
+	mesh_renderer->materials = materials;
 
 	return entity;
 }
@@ -101,14 +119,13 @@ void ModelViewer::init()
 	sphere_mesh->createBuffer();
 	
 
-	material_light_only = std::make_shared<Material>();
+	material_light_only = Material::Create();
 	material_light_only->LightingEnabled(true);
-	material_no_light = std::make_shared<Material>();
+	material_no_light = Material::Create();
 	material_no_light->LightingEnabled(false);
-	material_default = std::make_shared<Material>();
+	material_default = Material::Create();
 	material_default->LightingEnabled(true);
 	//material_default->Texture0(lama_tex->Get());
-	auto* material_manager = Engine::Get()->GetMaterialManager();
 
 	/*plane = CreateMeshEntity(vec3(0, -5, 0), 0, plane_mesh.get());
 	auto mesh_renderer = manager->GetComponent<components::MeshRenderer>(plane);
@@ -127,16 +144,21 @@ void ModelViewer::init()
 		manager->GetComponent<components::Transform>(sphere)->position = vec3(i * sphere_offset, 0, -10);
 		manager->GetComponent<components::Transform>(sphere)->scale = vec3(1, 1, 1);
 
-		Material material;
-		material.LightingEnabled(true);
+		auto material = Material::Create();
+		material->LightingEnabled(true);
 		//material.SetRoughness(0.05 + (i / (sphere_count - 1.0f) * 0.95));
-		material.SetRoughness(0.5);
-		material.SetMetalness(0.05 + (i / (sphere_count - 1.0f) * 0.95));
-		mesh_renderer->material_id = material_manager->GetMaterialID(material);
+		material->SetRoughness(0.5);
+		material->SetMetalness(0.05 + (i / (sphere_count - 1.0f) * 0.95));
+		mesh_renderer->material = material;
 		mesh_renderer->mesh = sphere_mesh.get();
 		temp_entities.push_back(sphere);
 	}
 
+	auto materials = render::MaterialList::Create();
+	auto material = Material::Create();
+	material->LightingEnabled(true);
+	materials->push_back(material);
+	test_mesh_entity = CreateMultiMeshEntity(vec3(3, 10, 0), 0, test_mesh, materials);
 }
 
 void ModelViewer::update(float dt)
