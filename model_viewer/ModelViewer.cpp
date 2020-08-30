@@ -13,8 +13,9 @@
 #include "render/debug/DebugDraw.h"
 #include "render/texture/Texture.h"
 #include "resources/TextureResource.h"
-#include "resources/MeshSet.h"
+#include "resources/MultiMesh.h"
 #include "system/JobSystem.h"
+#include "system/Input.h"
 
 ModelViewer::ModelViewer() = default;
 ModelViewer::~ModelViewer() = default;
@@ -69,7 +70,7 @@ void ModelViewer::init()
 	environment = Resources::TextureResource::Handle(L"resources/environment/skybox.ktx");
 	lama_tex = Resources::TextureResource::Handle(L"resources/lama.ktx");
 
-	test_mesh = Resources::MeshSet::Handle(L"assets/Models/Turret/Turret.mesh");
+	test_mesh = Resources::MultiMesh::Handle(L"assets/Models/Turret/Turret.mesh");
 
 	auto* engine = Engine::Get();
 	manager = engine->GetEntityManager();
@@ -133,6 +134,7 @@ void ModelViewer::init()
 		material.SetMetalness(0.05 + (i / (sphere_count - 1.0f) * 0.95));
 		mesh_renderer->material_id = material_manager->GetMaterialID(material);
 		mesh_renderer->mesh = sphere_mesh.get();
+		temp_entities.push_back(sphere);
 	}
 
 }
@@ -157,6 +159,17 @@ void ModelViewer::update(float dt)
 			transform->Rotate(vec3(0, 1, 0), dt * RAD(90));
 		}
 	}, *manager).ProcessChunks(entities);
+
+	auto input = Engine::Get()->GetInput();
+	if (input->keyDown(Key::Space))
+	{
+		if (temp_entities.size())
+		{
+			manager->DestroyEntity(temp_entities.back());
+			temp_entities.pop_back();
+		}
+		std::this_thread::sleep_for(std::chrono::milliseconds(100));
+	}
 
 	//*/
 

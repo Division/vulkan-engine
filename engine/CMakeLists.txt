@@ -7,8 +7,6 @@ set(CMAKE_CXX_STANDARD 17)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "cmake")
 #SET(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} -M)
-set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /Zi")
-set(CMAKE_SHARED_LINKER_FLAGS_RELEASE "${CMAKE_SHARED_LINKER_FLAGS_RELEASE} /DEBUG /OPT:REF /OPT:ICF")
 
 set(ENGINE_SOURCES 
 	lib/VulkanMemoryAllocator/vk_mem_alloc.h
@@ -64,6 +62,7 @@ set(ENGINE_SOURCES
 	ecs/ECS.h
 	ecs/EntityChunks.h
 	ecs/TransformGraph.h
+	ecs/CommandBuffer.h
 	ecs/components/Transform.h
 	ecs/components/Entity.h
 	ecs/components/MeshRenderer.h
@@ -201,8 +200,8 @@ set(ENGINE_SOURCES
 	resources/SkinningData.cpp
 	resources/TextureResource.h
 	resources/TextureResource.cpp
-	resources/MeshSet.h
-	resources/MeshSet.cpp
+	resources/MultiMesh.h
+	resources/MultiMesh.cpp
 	loader/TextureLoader.h
 	loader/TextureLoader.cpp
 	loader/FileLoader.h

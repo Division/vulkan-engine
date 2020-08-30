@@ -14,7 +14,7 @@ namespace Device {
 
 	using namespace render;
 
-	const bool ENABLE_VALIDATION_LAYERS = false;
+	const bool ENABLE_VALIDATION_LAYERS = true;
 
 	VulkanContext::VulkanContext(GLFWwindow* window) : window(window)
 	{

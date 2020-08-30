@@ -1,5 +1,6 @@
 ﻿#pragma once
 
+#include <vector>
 #include "Engine.h"
 #include "ecs/ECS.h"
 #include "ecs/TransformGraph.h"
@@ -20,7 +21,7 @@ class ViewerCamera;
 namespace Resources
 {
 	class TextureResource;
-	class MeshSet;
+	class MultiMesh;
 }
 
 class ModelViewer : public IGame {
@@ -50,10 +51,12 @@ private:
 	Resources::Handle<ModelBundle> sphere_bundle;
 	Resources::Handle<Resources::TextureResource> lama_tex;
 	Resources::Handle<Resources::TextureResource> environment;
-	Resources::Handle<Resources::MeshSet> test_mesh;
+	Resources::Handle<Resources::MultiMesh> test_mesh;
 
 	ECS::EntityManager* manager;
 	ECS::TransformGraph* graph;
+
+	std::vector<ECS::EntityID> temp_entities;
 
 	bool camera_control = false;
 };

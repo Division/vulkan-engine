@@ -1,6 +1,7 @@
 #include <functional>
 #include "lib/catch/catch.hpp"
 #include "ecs/ECS.h"
+#include "ecs/CommandBuffer.h"
 
 using namespace ECS;
 
@@ -273,4 +274,73 @@ TEST_CASE("ECS component constructor/destructor/move")
 		REQUIRE(component->a == 321);
 		REQUIRE(component->b == "test");
 	}
+}
+
+TEST_CASE("ECS command buffer")
+{
+	int counter = 0;
+
+	struct TestComponent
+	{
+		TestComponent(std::string str, int* counter) : counter(counter), str(str)
+		{
+			if (counter) *counter += 1;
+		}
+
+		TestComponent(const TestComponent&) = delete;
+
+		~TestComponent()
+		{
+			if (counter) *counter -= 1;
+		}
+
+		TestComponent(TestComponent&& other) noexcept
+		{
+			this->counter = other.counter;
+			other.counter = nullptr;
+			this->str = std::move(other.str);
+		}
+
+		std::string str;
+		int* counter;
+	};
+
+	EntityManager manager;
+
+	EntityID entity1 = manager.CreateEntity();
+	EntityID entity2 = manager.CreateEntity();
+
+	CommandBuffer command_buffer(manager);
+	command_buffer.AddComponent(entity1, TestComponent("some_text1", &counter));
+	command_buffer.AddComponent(entity2, TestComponent("some_text2", &counter));
+	command_buffer.Flush();
+
+	REQUIRE(counter == 2);
+	
+	auto* component1 = manager.GetComponent<TestComponent>(entity1);
+	auto* component2 = manager.GetComponent<TestComponent>(entity2);
+	REQUIRE(component1->str == "some_text1");
+	REQUIRE(component2->str == "some_text2");
+	
+	command_buffer.RemoveComponent<TestComponent>(entity1);
+	REQUIRE(counter == 2);
+	command_buffer.Flush();
+	REQUIRE(counter == 1);
+	command_buffer.DestroyEntity(entity2);
+	command_buffer.DestroyEntity(entity1);
+	REQUIRE(manager.EntityExists(entity1));
+	command_buffer.Flush();
+	REQUIRE(counter == 0);
+	REQUIRE(!manager.EntityExists(entity2));
+
+	// Transient entity
+
+	auto transient1 = command_buffer.CreateEntity();
+	auto transient2 = command_buffer.CreateEntity();
+	command_buffer.AddComponent(transient1, TestComponent("text3", &counter));
+	command_buffer.AddComponent(transient2, TestComponent("text4", &counter));
+	command_buffer.RemoveComponent<TestComponent>(transient2);
+	REQUIRE(counter == 2);
+	command_buffer.Flush();
+	REQUIRE(counter == 1);
 }

@@ -46,8 +46,8 @@ layout(std140, binding = 1) buffer hdr_data
 float4 ToneMap(float4 src_color, float exposure)
 {
     //return float4(src_color.rgb / (src_color.rgb + float3(1.0, 1.0, 1.0)), 1.0);
-    //return float4(float3(1.0, 1.0, 1.0) - exp(-src_color.rgb * exposure), 1.0);
-    return src_color;
+    return float4(float3(1.0, 1.0, 1.0) - exp(-src_color.rgb * exposure), 1.0);
+    //return src_color;
 }
 
 #define CLUSTER_COUNT_X 4.0f

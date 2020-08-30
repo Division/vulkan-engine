@@ -1,12 +1,12 @@
 #include <fstream>
 #include <limits>
 
-#include "MeshSet.h"
+#include "MultiMesh.h"
 #include "render/mesh/Mesh.h"
 
 namespace Resources
 {
-	MeshSet::MeshSet(const std::wstring& filename)
+	MultiMesh::MultiMesh(const std::wstring& filename)
 	{
 		std::ifstream stream(filename, std::ios::binary);
 		stream.exceptions(std::ios::badbit | std::ios::failbit);
@@ -32,7 +32,7 @@ namespace Resources
 		}
 	}
 
-	Common::Handle<Mesh> MeshSet::LoadMesh(std::istream& stream)
+	Common::Handle<Mesh> MultiMesh::LoadMesh(std::istream& stream)
 	{
 		uint32_t flags, vertex_count, triangle_count;
 		AABB mesh_aabb;
@@ -58,7 +58,7 @@ namespace Resources
 		return Mesh::Create(flags, vertex_data.data(), vertex_count, index_data.data(), triangle_count, mesh_aabb);
 	}
 
-	MeshSet::~MeshSet()
+	MultiMesh::~MultiMesh()
 	{
 
 	}

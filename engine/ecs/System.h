@@ -15,6 +15,9 @@ namespace ECS {
 
 		virtual void ProcessChunks(const ChunkList::List& list)
 		{
+			// Scoped handle during processing
+			auto handle = manager.GetProcessingHandle();
+
 			for (auto* chunk_list : list)
 			{
 				auto* chunk = chunk_list->GetFirstChunk();

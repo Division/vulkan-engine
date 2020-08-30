@@ -1,6 +1,7 @@
 #pragma once
 
 #include <set>
+#include <shared_mutex>
 #include <unordered_map>
 #include <functional>
 #include "stdint.h"
@@ -50,10 +51,37 @@ namespace ECS {
 			bool operator==(uint64_t compare_id) { return id == compare_id; }
 		};
 
+		struct ProcessingHandle
+		{
+			ProcessingHandle(EntityManager& manager) 
+				: manager(manager)
+			{
+				manager.processing_counter += 1;
+			}
+
+			ProcessingHandle() = delete;
+			ProcessingHandle(ProcessingHandle&&) = delete;
+			ProcessingHandle(const ProcessingHandle&) = delete;
+
+			~ProcessingHandle()
+			{
+				manager.processing_counter -= 1;
+			}
+
+			EntityManager& manager;
+		};
+
 		~EntityManager()
 		{
+			assert(processing_counter.load() == 0);
+
 			while (!entity_address.empty())
 				DestroyEntity((*entity_address.begin()).first);
+		}
+
+		ProcessingHandle GetProcessingHandle()
+		{
+			return ProcessingHandle(*this);
 		}
 
 		CallbackHandle AddEntityDestroyCallback(EntityCallback callback)
@@ -72,17 +100,16 @@ namespace ECS {
 			}
 		}
 
-		EntityID CreateEntity(ComponentSetHash set_hash = 0)
+		EntityID CreateEntity()
 		{
+			ValidateNoProcessing();
 			auto entity_id = ++id_counter;
-			auto address = EntityAddress{ nullptr, (uint32_t)-1 };
 
-			if (set_hash)
 			{
-				assert(false); // not ready yet
+				std::unique_lock lock(mutex);
+				auto address = EntityAddress{ nullptr, (uint32_t)-1 };
+				entity_address[entity_id] = address;
 			}
-
-			entity_address[entity_id] = address;
 
 			auto* entity = AddComponent<EntityData>(entity_id); // EntityData component exists for all entities
 			entity->id = entity_id;
@@ -91,6 +118,9 @@ namespace ECS {
 
 		void DestroyEntity(EntityID entity)
 		{
+			std::unique_lock lock(mutex);
+			ValidateNoProcessing();
+
 			auto address_it = entity_address.find(entity);
 			assert(address_it != entity_address.end());
 			TriggerDestroyCallbacks(entity);
@@ -103,6 +133,9 @@ namespace ECS {
 		template<typename T, typename ...Args>
 		T* AddComponent(EntityID entity, Args&& ...args)
 		{
+			std::unique_lock lock(mutex);
+			ValidateNoProcessing();
+
 			auto entity_address_it = entity_address.find(entity);
 			assert(entity_address_it != entity_address.end());
 
@@ -130,24 +163,62 @@ namespace ECS {
 			return pointer;
 		}
 
+		void* AddComponent(EntityID entity, ComponentData&& data)
+		{
+			std::unique_lock lock(mutex);
+			ValidateNoProcessing();
+
+			auto entity_address_it = entity_address.find(entity);
+			assert(entity_address_it != entity_address.end());
+
+			auto old_address = entity_address_it->second;
+			auto layout = old_address.chunk ? old_address.chunk->GetComponentLayout() : ComponentLayout(CHUNK_SIZE);
+
+			auto hash = data.hash;
+
+			if (old_address.chunk)
+			{
+				if (!layout.AddComponent(std::move(data)))
+					return nullptr;
+			}
+			else
+				layout.AddComponent(std::move(data));
+
+			auto* chunk_list = GetOrCreateChunkList(layout);
+			auto* chunk = chunk_list->GetFirstChunk();
+			auto new_address = chunk->AddEntity(entity, old_address.chunk ? &old_address : nullptr);
+
+			if (old_address.chunk)
+				old_address.chunk->RemoveEntity(old_address.index);
+
+			auto* pointer = new_address.chunk->GetComponentPointer(new_address.index, hash);
+
+			return pointer;
+		}
+
 		template<typename T>
 		void RemoveComponent(EntityID entity)
 		{
+			RemoveComponent(entity, GetComponentHash<T>());
+		}
+
+		void RemoveComponent(EntityID entity, ComponentHash hash)
+		{
+			std::unique_lock lock(mutex);
+			ValidateNoProcessing();
+
 			auto entity_address_it = entity_address.find(entity);
 			assert(entity_address_it != entity_address.end());
 
 			auto old_address = entity_address_it->second;
 			assert(old_address.chunk);
 			auto layout = old_address.chunk->GetComponentLayout();
-			auto* component_data = layout.GetComponentData(GetComponentHash<T>());
+			auto* component_data = layout.GetComponentData(hash);
 
 			if (!component_data)
 				throw std::runtime_error("Component doesn't exist");
-			
-			auto* component_pointer = old_address.chunk->GetComponentPointer(old_address.index, component_data);
-			component_data->destructor(component_pointer);
 
-			layout.RemoveComponent<T>();
+			layout.RemoveComponent(hash);
 
 			auto* chunk_list = GetOrCreateChunkList(layout);
 			auto* chunk = chunk_list->GetFirstChunk();
@@ -157,6 +228,8 @@ namespace ECS {
 
 		ChunkList* GetOrCreateChunkList(const ComponentLayout& layout)
 		{
+			ValidateNoProcessing();
+
 			auto chunk_list_it = chunks.find(layout.GetHash());
 			if (chunk_list_it == chunks.end())
 			{
@@ -170,6 +243,7 @@ namespace ECS {
 		template<typename T>
 		T* GetComponent(EntityID entity)
 		{
+			std::shared_lock lock(mutex);
 			auto address = entity_address.at(entity);
 			return (T*)address.chunk->GetComponentPointer(address.index, GetComponentHash<T>());
 		}
@@ -185,6 +259,8 @@ namespace ECS {
 
 		void ForEachChunkList(std::function<void(ChunkList*)> callback, std::function<bool(ChunkList*)> predicate)
 		{
+			std::shared_lock lock(mutex);
+
 			for (auto& chunk : chunks)
 				if (predicate(chunk.second.get()))
 					callback(chunk.second.get());
@@ -239,6 +315,13 @@ namespace ECS {
 			});
 		}
 
+		void ValidateNoProcessing()
+		{
+			if (processing_counter.load() != 0)
+				throw std::runtime_error("Invalid operation during system processing");
+		}
+
+		bool EntityExists(EntityID entity) const { return entity_address.find(entity) != entity_address.end(); }
 
 	private:
 		void TriggerDestroyCallbacks(EntityID id)
@@ -248,8 +331,10 @@ namespace ECS {
 		}
 
 	private:
+		std::shared_mutex mutex;
+		std::atomic_uint32_t processing_counter = 0;
 		uint64_t callback_id = 0;
-		EntityID id_counter = 0;
+		std::atomic<EntityID> id_counter = 0;
 		std::unordered_map<ComponentSetHash, std::unique_ptr<ChunkList>> chunks;
 		std::unordered_map<EntityID, EntityAddress> entity_address;
 		std::vector<EntityCallbackData> entity_destroy_callbacks;

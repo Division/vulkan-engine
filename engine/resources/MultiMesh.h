@@ -15,13 +15,13 @@ namespace Common
 namespace Resources
 {
 
-	class MeshSet
+	class MultiMesh
 	{
 	public:
-		using Handle = Handle<MeshSet>;
+		using Handle = Handle<MultiMesh>;
 
-		MeshSet(const std::wstring& filename);
-		~MeshSet();
+		MultiMesh(const std::wstring& filename);
+		~MultiMesh();
 
 		const size_t GetMeshCount() const { return meshes.size(); }
 		const auto& GetMesh(int index) const { return meshes[index]; }

@@ -94,10 +94,31 @@ namespace ECS {
 			return true;
 		}
 
+		bool AddComponent(ComponentData&& data)
+		{
+			auto* existing_component = GetComponentData(data.hash);
+			if (existing_component)
+				return false;
+
+			components[component_count] = std::move(data);
+
+			component_count += 1;
+			assert(component_count <= MAX_COMPONENTS);
+			std::sort(components.begin(), components.begin() + component_count);
+			RecalculateOffsets();
+			UpdateHash();
+
+			return true;
+		}
+
 		template<typename T>
 		bool RemoveComponent()
 		{
-			auto hash = GetComponentHash<T>();
+			return RemoveComponent(GetComponentHash<T>());
+		}
+
+		bool RemoveComponent(ComponentHash hash)
+		{
 			auto* existing_component = GetComponentData(hash);
 			if (!existing_component)
 				return false;
@@ -107,7 +128,7 @@ namespace ECS {
 			assert(new_end == components.begin() + component_count);
 			assert(component_count >= 0);
 			memset(&*(components.begin() + component_count), 0, sizeof(ComponentData));
-			
+
 			std::sort(components.begin(), components.begin() + component_count);
 			RecalculateOffsets();
 			UpdateHash();

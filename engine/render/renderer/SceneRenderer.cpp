@@ -144,6 +144,8 @@ namespace render {
 	{
 		OPTICK_EVENT();
 
+		draw_call_manager->Update();
+
 		auto* entity_manager = scene.GetEntityManager();
 
 		light_grid->UpdateSlices(scene.GetCamera()->cameraProjectionMatrix());

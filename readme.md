@@ -1,11 +1,11 @@
 Roadmap:
 +- optimize tiled lighting or implement clustered
+- Rendering of MultiMesh
 - Fix and migrate lighting, decals, shadowmaps to ECS
 - HLSL includes must be included in hash
 - PhysX integration 
 - Image based lighting support
 - Handles for all engine resources
-- Fix release build settings in cmake
 - FBX mesh export
 - New skinning animation system
 - Use pipelines directly
@@ -13,7 +13,6 @@ Roadmap:
 - dds loading
 - Multithreaded rendering
 - GameObject file format and editor
-- lambda API for ECS
 - GUI library integration
 
 Check:
@@ -24,3 +23,5 @@ Check:
 
 + Multithreading, job system
 + Async resource loading
++ Fix release build settings in cmake
++ lambda API for ECS

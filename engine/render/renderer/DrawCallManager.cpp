@@ -4,6 +4,7 @@
 #include "render/shader/ShaderBindings.h"
 #include "render/renderer/SceneRenderer.h"
 #include "ecs/components/DrawCall.h"
+#include "ecs/CommandBuffer.h"
 #include "render/device/VulkanDescriptorCache.h"
 #include "Engine.h"
 #include "utils/Pool.h"
@@ -14,12 +15,74 @@ namespace render {
 	using namespace ECS;
 	using namespace Device;
 
+	ECS::components::DrawCall* DrawCallManager::Handle::AddDrawCall(const Mesh& mesh, const Material& material)
+	{
+		if (!manager)
+			throw std::runtime_error("Handle isn't initialized");
+
+		auto data = manager->AddDrawCall(mesh, material);
+		draw_calls.push_back(data);
+		return data.second;
+	}
+
+	DrawCallManager::Handle::Handle(Handle&& other)
+	{
+		draw_calls = std::move(other.draw_calls);
+		manager = other.manager;
+		other.manager = nullptr;
+	}
+
+	DrawCallManager::Handle& DrawCallManager::Handle::operator=(Handle&& other)
+	{
+		RemoveAllDrawCalls();
+		draw_calls = std::move(other.draw_calls);
+		manager = other.manager;
+		other.manager = nullptr;
+
+		return *this;
+	}
+
+	bool DrawCallManager::Handle::RemoveDrawCall(ECS::components::DrawCall* draw_call)
+	{
+		if (!manager)
+			throw std::runtime_error("Handle isn't initialized");
+
+		bool found = false;
+
+		for (int i = 0; i < draw_calls.size(); i++)
+			if (draw_calls[i].second == draw_call)
+			{
+				found = true;
+				manager->RemoveDrawCall(draw_calls[i].first);
+				draw_calls[i] = draw_calls[draw_calls.size() - 1];
+				draw_calls.pop_back();
+				break;
+			}
+
+		return found;
+	}
+
+	DrawCallManager::Handle::~Handle()
+	{
+		if (manager)
+			RemoveAllDrawCalls();
+	}
+
+	void DrawCallManager::Handle::RemoveAllDrawCalls()
+	{
+		for (auto& item : draw_calls)
+		{
+			manager->RemoveDrawCall(item.first);
+		}
+	}
+	
 	DrawCallManager::~DrawCallManager() = default;
 
 	DrawCallManager::DrawCallManager(SceneRenderer& scene_renderer)
 		: scene_renderer(scene_renderer)
 	{
 		manager = std::make_unique<EntityManager>();
+		command_buffer = std::make_unique<ECS::CommandBuffer>(*manager);
 		shader_cache = scene_renderer.GetShaderCache();
 		draw_call_list_pool = std::make_unique<utils::Pool<DrawCallList>>();
 	}
@@ -30,11 +93,8 @@ namespace render {
 
 		components::DrawCall* draw_call;
 		EntityID entity;
-		{
-			std::lock_guard<std::mutex> lock(mutex);
-			entity = manager->CreateEntity();
-			draw_call = manager->AddComponent<components::DrawCall>(entity);
-		}
+		entity = manager->CreateEntity();
+		draw_call = manager->AddComponent<components::DrawCall>(entity);
 
 		*draw_call = components::DrawCall();
 		draw_call->mesh = &mesh;
@@ -73,6 +133,11 @@ namespace render {
 	void DrawCallManager::RemoveDrawCall(EntityID entity)
 	{
 		manager->DestroyEntity(entity);
+	}
+
+	void DrawCallManager::Update()
+	{
+		command_buffer->Flush();
 	}
 
 	DrawCallList* DrawCallManager::ObtaintDrawCallList()
