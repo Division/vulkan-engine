@@ -12,6 +12,7 @@ namespace Memory {
 		JobSystem,
 		Texture,
 		ECS,
+		Physics,
 		UnknownResource,
 		Unknown,
 		Count

@@ -12,6 +12,7 @@
 #include "render/debug/DebugSettings.h"
 #include "render/debug/DebugDraw.h"
 #include "Engine.h"
+#include "Physics.h"
 
 using namespace ECS;
 
@@ -28,6 +29,7 @@ Scene::Scene(render::DebugSettings* settings)
     no_child_system = std::make_unique<systems::NoChildTransformSystem>(*transform_graph, *entity_manager);
     root_transform_system = std::make_unique<systems::RootTransformSystem>(*transform_graph, *entity_manager);
     update_renderer_system = std::make_unique<systems::UpdateRendererSystem>(*entity_manager);
+    physx_manager = std::make_unique<Physics::PhysXManager>();
 }
 
 void Scene::Update(IGame& game, float dt)

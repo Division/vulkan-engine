@@ -9,6 +9,11 @@ class Projector;
 class LightObject;
 class Camera;
 
+namespace Physics
+{
+    class PhysXManager;
+}
+
 namespace ECS
 {
 	class EntityManager;
@@ -69,6 +74,7 @@ private:
     std::vector<SceneLightData> visible_lights;
     std::vector<ECS::components::Projector*> visible_projectors;
     std::unique_ptr<Camera> camera;
+    std::unique_ptr<Physics::PhysXManager> physx_manager;
 
     // ECS
     void OnEntityDestroyed(ECS::EntityID entity);
