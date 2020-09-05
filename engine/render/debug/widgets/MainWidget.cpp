@@ -5,6 +5,7 @@
 #include "Engine.h"
 #include "scene/Scene.h"
 #include "objects/Camera.h"
+#include "scene/Physics.h"
 
 namespace render {
 
@@ -38,6 +39,13 @@ namespace render {
 
 				ImGui::Checkbox("Show OBB", &debug_settings->draw_bounding_boxes);
 				ImGui::Checkbox("Show Lights", &debug_settings->draw_lights);
+				
+				auto* physics = Engine::Get()->GetScene()->GetPhysics();
+				bool physics_debug = physics->GetDebugRenderEnabled();
+				if (ImGui::Checkbox("Physics", &physics_debug))
+				{
+					physics->SetDebugRenderEnabled(physics_debug);
+				}
 			}
 
 			ImGui::End();

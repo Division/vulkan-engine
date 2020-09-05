@@ -68,10 +68,13 @@ set(ENGINE_SOURCES
 	ecs/components/DrawCall.h
 	ecs/components/Light.h
 	ecs/components/Light.cpp
+	ecs/components/Physics.h
 	ecs/systems/TransformSystem.h
 	ecs/systems/TransformSystem.cpp
 	ecs/systems/RendererSystem.h
 	ecs/systems/RendererSystem.cpp
+	ecs/systems/PhysicsSystem.h
+	ecs/systems/PhysicsSystem.cpp
 	ecs/systems/CullingSystem.h
 	ecs/systems/CullingSystem.cpp
 	ecs/systems/UpdateDrawCallsSystem.h
@@ -260,13 +263,14 @@ target_link_libraries(vk_engine spirv-cross-cpp)
 target_link_libraries(vk_engine spirv-cross-reflect)
 target_link_libraries(vk_engine OptickCore)
 
-# .lib files
+# dll .lib files
 target_link_libraries(vk_engine ${CMAKE_CURRENT_SOURCE_DIR}/lib/static/dxc/dxcompiler.lib)
 target_link_libraries(vk_engine ${CMAKE_CURRENT_SOURCE_DIR}/lib/static/physx/PhysX_64.lib)
 target_link_libraries(vk_engine ${CMAKE_CURRENT_SOURCE_DIR}/lib/static/physx/PhysXCommon_64.lib)
 target_link_libraries(vk_engine ${CMAKE_CURRENT_SOURCE_DIR}/lib/static/physx/PhysXFoundation_64.lib)
 target_link_libraries(vk_engine ${CMAKE_CURRENT_SOURCE_DIR}/lib/static/physx/PhysXCooking_64.lib)
 
+# static .lib files
 if (${CMAKE_BUILD_TYPE} STREQUAL "Debug")
 	target_link_libraries(vk_engine ${CMAKE_CURRENT_SOURCE_DIR}/lib/static/physx/PhysXPvdSDK_static_debug_64.lib)
 	target_link_libraries(vk_engine ${CMAKE_CURRENT_SOURCE_DIR}/lib/static/physx/PhysXExtensions_static_debug_64.lib)

@@ -10,6 +10,7 @@
 #include "ecs/components/MultiMeshRenderer.h"
 #include "scene/Scene.h"
 #include "objects/LightObject.h"
+#include "objects/Camera.h"
 #include "render/debug/DebugDraw.h"
 #include "render/texture/Texture.h"
 #include "resources/TextureResource.h"
@@ -23,6 +24,7 @@ ModelViewer::~ModelViewer() = default;
 using namespace System;
 using namespace ECS;
 using namespace ECS::systems;
+using namespace physx;
 
 class TestEntity {};
 
@@ -35,6 +37,7 @@ EntityID ModelViewer::CreateMeshEntity(vec3 position, EntityID parent, Mesh* mes
 	auto* transform = manager->AddComponent<components::Transform>(entity);
 	*transform = components::Transform();
 	transform->position = position;
+	transform->bounds = mesh->aabb();
 
 	auto* mesh_renderer = manager->AddComponent<components::MeshRenderer>(entity);
 	mesh_renderer->render_queue = RenderQueue::Opaque;
@@ -44,7 +47,7 @@ EntityID ModelViewer::CreateMeshEntity(vec3 position, EntityID parent, Mesh* mes
 	return entity;
 }
 
-EntityID ModelViewer::CreateMultiMeshEntity(vec3 position, EntityID parent, const Resources::Handle<Resources::MultiMesh>& mesh, const Common::Handle<render::MaterialList>& materials)
+EntityID ModelViewer::CreateMultiMeshEntity(vec3 position, quat rotation, ECS::EntityID parent, const Resources::Handle<Resources::MultiMesh>& mesh, const Common::Handle<render::MaterialList>& materials)
 {
 	auto entity = manager->CreateEntity();
 	if (parent)
@@ -77,6 +80,91 @@ EntityID ModelViewer::CreateLightEntity(vec3 position, float radius, components:
 	return entity;
 }
 
+PxRigidActor* ModelViewer::AddPhysics(ECS::EntityID entity, PhysicsInitializer init)
+{
+	PxRigidActor* result = nullptr;
+	auto* physics = Engine::Get()->GetScene()->GetPhysics();
+	auto bounds = AABB(vec3(-1), vec3(1));
+	vec3 scale(init.size);
+
+	if (init.is_static)
+	{
+		auto component = manager->AddComponent<components::RigidbodyStatic>(entity);
+		switch (init.shape)
+		{
+		case PhysicsInitializer::Shape::Plane:
+		{
+			component->body = physics->CreatePlaneStatic(init.position, init.rotation);
+			break;
+		}
+
+		default:
+			throw std::runtime_error("unsupported physics parameters");
+		}
+
+		result = component->body.get();
+	}
+	else
+	{
+		auto component = manager->AddComponent<components::RigidbodyDynamic>(entity);
+		switch (init.shape)
+		{
+		case PhysicsInitializer::Shape::Box:
+		{
+			component->body = physics->CreateBoxDynamic(init.position, init.rotation, init.size);
+			break;
+		}
+
+		case PhysicsInitializer::Shape::Sphere:
+		{
+			component->body = physics->CreateSphereDynamic(init.position, init.rotation, init.size);
+			break;
+		}
+
+		default:
+			throw std::runtime_error("unsupported physics parameters");
+		}
+
+		result = component->body.get();
+	}
+
+	auto* transform = manager->GetComponent<components::Transform>(entity);
+	if (transform)
+	{
+		transform->position = init.position;
+		transform->rotation = init.rotation;
+		transform->scale = scale;
+	}
+
+	return result;
+}
+
+std::vector<ECS::EntityID> ModelViewer::CreateStack(vec3 position, quat rotation, float half_extent, uint32_t count)
+{
+	auto* physics = Engine::Get()->GetScene()->GetPhysics();
+
+	PxTransform t = Physics::ConvertTransform(position, rotation);
+
+	std::vector<ECS::EntityID> result;
+
+	for(PxU32 i=0; i<count;i++)
+	{
+		for(PxU32 j=0;j<count-i;j++)
+		{
+			PxTransform localTm(PxVec3(PxReal(j*2) - PxReal(count-i), PxReal(i*2+1), 0) * half_extent);
+			Physics::ConvertTransform(t.transform(localTm), position, rotation);
+			ECS::EntityID cube = CreateMeshEntity(vec3(0, 0, 0), 0, box_mesh.get());
+			AddPhysics(cube, PhysicsInitializer(position, rotation, PhysicsInitializer::Shape::Box, half_extent));
+			auto renderer = manager->GetComponent<components::MeshRenderer>(cube);
+			renderer->material = renderer->material->Clone();
+			renderer->material->SetColor(vec4(0.2, 0.9, 0.1, 1));
+			result.push_back(cube);
+		}
+	}
+
+	return result;
+}
+
 void ModelViewer::init()
 {
 	//ModelBundleHandle model(L"resources/models/sphere.mdl");
@@ -94,7 +182,7 @@ void ModelViewer::init()
 	manager = engine->GetEntityManager();
 	graph = engine->GetTransformGraph();
 
-	auto light_entity = CreateLightEntity(vec3(-5, 0, -10), 100, components::Light::Type::Point, vec3(1,1,1) * 2.0f);
+	auto light_entity = CreateLightEntity(vec3(-5, 10, -10), 100, components::Light::Type::Point, vec3(1,1,1) * 2.0f);
 
 	/*light = CreateGameObject<LightObject>();
 	light->castShadows(false);
@@ -106,7 +194,7 @@ void ModelViewer::init()
 	camera = std::make_unique<ViewerCamera>();
 	
 	plane_mesh = Mesh::Create();
-	MeshGeneration::generateQuad(plane_mesh.get(), vec2(50, 50));
+	MeshGeneration::generateQuad(plane_mesh.get(), vec2(500, 500));
 	plane_mesh->calculateNormals();
 	plane_mesh->createBuffer();
 
@@ -118,6 +206,10 @@ void ModelViewer::init()
 	sphere_mesh->calculateNormals();
 	sphere_mesh->createBuffer();
 	
+	box_mesh = Mesh::Create();
+	MeshGeneration::generateBox(box_mesh.get(), 2, 2, 2);
+	box_mesh->calculateNormals();
+	box_mesh->createBuffer();
 
 	material_light_only = Material::Create();
 	material_light_only->LightingEnabled(true);
@@ -127,12 +219,12 @@ void ModelViewer::init()
 	material_default->LightingEnabled(true);
 	//material_default->Texture0(lama_tex->Get());
 
-	/*plane = CreateMeshEntity(vec3(0, -5, 0), 0, plane_mesh.get());
+	plane = CreateMeshEntity(vec3(0, 0, 0), 0, plane_mesh.get());
 	auto mesh_renderer = manager->GetComponent<components::MeshRenderer>(plane);
 	manager->GetComponent<components::Transform>(plane)->rotation = glm::angleAxis((float)M_PI / 2, vec3(1, 0, 0));
-	mesh_renderer->material_id = material_manager->GetMaterialID(*material_light_only);
-	mesh_renderer->mesh = plane_mesh.get(); */
-
+	mesh_renderer->material = material_light_only;
+	mesh_renderer->mesh = plane_mesh.get(); 
+	/*
 	uint32_t sphere_count = 10;
 	uint32_t sphere_offset = 3;
 	float start_pos = sphere_offset * (sphere_count - 1) / 2.0f;
@@ -153,24 +245,27 @@ void ModelViewer::init()
 		mesh_renderer->mesh = sphere_mesh.get();
 		temp_entities.push_back(sphere);
 	}
+	*/
 
 	auto materials = render::MaterialList::Create();
 	auto material = Material::Create();
 	material->LightingEnabled(true);
 	materials->push_back(material);
-	test_mesh_entity = CreateMultiMeshEntity(vec3(3, 10, 0), 0, test_mesh, materials);
+	test_mesh_entity = CreateMultiMeshEntity(vec3(3, 10, 0), quat(), 0, test_mesh, materials);
+
+	auto* physics = Engine::Get()->GetScene()->GetPhysics();
+	physics_static.emplace_back(physics->CreatePlaneStatic(vec3(), glm::rotate(quat(), (float)M_PI / 2, vec3(0,0,1))));
+
+	CreateStack(vec3(0), quat(), 0.5, 10);
 }
 
 void ModelViewer::update(float dt)
 {
 	Resources::Cache::Get().GCCollect();
 	camera->Update(dt);
-
+	auto scene_camera = Engine::Get()->GetScene()->GetCamera();
 	std::vector<int> results;
 	std::mutex mutex;
-	Engine::Get()->GetDebugDraw()->DrawAABB(vec3(0,0,0), vec3(10,10,10), vec4(1, 0, 0, 1));
-	Engine::Get()->GetDebugDraw()->DrawPoint(vec3(), vec4(1, 1, 1, 10));
-	///*
 	auto entities = manager->GetChunkListsWithComponents<TestEntity, components::Transform>();
 	ECS::CallbackSystem([dt](ECS::Chunk* chunk){
 		ECS::ComponentFetcher<components::Transform> transform_fetcher(*chunk);
@@ -185,41 +280,23 @@ void ModelViewer::update(float dt)
 	auto input = Engine::Get()->GetInput();
 	if (input->keyDown(Key::Space))
 	{
-		if (temp_entities.size())
-		{
-			manager->DestroyEntity(temp_entities.back());
-			temp_entities.pop_back();
-		}
+		auto box = CreateMeshEntity(vec3(0, 0, 0), 0, box_mesh.get());
+		AddPhysics(box, PhysicsInitializer(scene_camera->Transform().position, scene_camera->Transform().rotation, PhysicsInitializer::Shape::Box, 2.0f));
+		auto renderer = manager->GetComponent<components::MeshRenderer>(box);
+		renderer->material = renderer->material->Clone();
+		renderer->material->SetColor(vec4(Random(), Random(), Random(), 1));
+
 		std::this_thread::sleep_for(std::chrono::milliseconds(100));
 	}
 
-	//*/
-
-	/*
-	for (int i = 0; i < 100; i++)
+	if (input->keyDown(Key::MouseRight))
 	{
-		OPTICK_EVENT("Spawning job");
+		auto sphere = CreateMeshEntity(vec3(0, 0, 0), 0, sphere_mesh.get());
+		auto sphere_body = static_cast<PxRigidDynamic*>(AddPhysics(sphere, PhysicsInitializer(scene_camera->Transform().position, scene_camera->Transform().rotation, PhysicsInitializer::Shape::Sphere, 1.0f)));
+		sphere_body->setLinearVelocity(Physics::Convert((scene_camera->Transform().Forward() * 100.0f)));
 
-		Thread::Scheduler::Get().SpawnJob<Thread::FunctionJob>(Thread::Job::Priority::High, [&mutex, &results, i] {
-			OPTICK_EVENT("job...");
-			std::this_thread::sleep_for(std::chrono::microseconds(100));
-			int result = i * i;
-			std::scoped_lock lock(mutex);
-			results.push_back(result);
-		});
-	}
-
-	Thread::Scheduler::Get().Wait(Thread::Job::Priority::High);
-	{
-		OPTICK_EVENT("OUTPUT");
-		std::stringstream s;
-		for (auto i : results)
-			s << i << ",";
-		s << "\n";
-
-		std::cout << s.str();
-
-	}*/
+		std::this_thread::sleep_for(std::chrono::milliseconds(100));
+	} 
 }
 
 void ModelViewer::cleanup()

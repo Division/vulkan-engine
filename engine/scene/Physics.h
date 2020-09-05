@@ -1,24 +1,21 @@
 #pragma once
 
-#if defined(_DEBUG)
-#pragma message("WARNING: Building with _DEBUG")
-#endif
-
-#if defined(NDEBUG)
-
-#pragma message("WARNING: Building with NDEBUG")
-#endif
-
-#pragma message("WARNING: asdasd")
-
 #include <unordered_map>
 #include <mutex>
 #include <physx/PxPhysicsAPI.h>
 #include "memory/Allocator.h"
 #include <memory>
+#include "utils/Math.h"
 
 namespace Physics
 {
+	inline vec3 Convert(physx::PxVec3 v) { return vec3(v.x, v.y, v.z); }
+	inline physx::PxVec3 Convert(vec3 v) { return physx::PxVec3(v.x, v.y, v.z); }
+	inline quat Convert(physx::PxQuat q) { return quat(q.w, q.x, q.y, q.z); }
+	inline physx::PxQuat Convert(quat q) { return physx::PxQuat(q.x, q.y, q.z, q.w); }
+	inline physx::PxTransform ConvertTransform(vec3 position, quat rotation) { return physx::PxTransform(Convert(position), Convert(rotation)); }
+	inline void ConvertTransform(const physx::PxTransform& transform, vec3& out_position, quat& out_rotation) { out_position = Convert(transform.p); out_rotation = Convert(transform.q); }
+
 	template<typename T>
 	class Handle
 	{
@@ -87,6 +84,17 @@ namespace Physics
 
 		void StepPhysics(float dt);
 		void FetchResults();
+		void SetDebugRenderEnabled(bool enabled);
+		bool GetDebugRenderEnabled();
+		void DrawDebug();
+
+		// Utility functions
+		Handle<physx::PxRigidDynamic> CreateDynamic(const vec3 position, const quat rotation, const physx::PxGeometry& geometry, physx::PxMaterial* material = nullptr, bool add_to_scene = true);
+		Handle<physx::PxRigidStatic> CreateStatic(const vec3 position, const quat rotation, const physx::PxGeometry& geometry, physx::PxMaterial* material = nullptr, bool add_to_scene = true);
+		std::vector<Handle<physx::PxRigidDynamic>> CreateStack(const vec3 position, const quat rotation, uint32_t size, float halfExtent, physx::PxMaterial* material = nullptr);
+		Handle<physx::PxRigidStatic> CreatePlaneStatic(const vec3 position, const quat rotation, physx::PxMaterial* material = nullptr);
+		Handle<physx::PxRigidDynamic> CreateBoxDynamic(const vec3 position, const quat rotation, float half_size, physx::PxMaterial* material = nullptr);
+		Handle<physx::PxRigidDynamic> CreateSphereDynamic(const vec3 position, const quat rotation, float readius, physx::PxMaterial* material = nullptr);
 
 	private:
 		class Allocator : public physx::PxAllocatorCallback
@@ -116,7 +124,11 @@ namespace Physics
 		Handle<physx::PxPvdTransport> transport;
 		Handle<physx::PxDefaultCpuDispatcher> dispatcher;
 		Handle<physx::PxScene> default_scene;
+		Handle<physx::PxMaterial> default_material;
 		bool use_remote_debugger = true;
+		double last_time = 0.0f;
+		double current_time = 0.0f;
+		bool has_results = false;
 	};
 
 }

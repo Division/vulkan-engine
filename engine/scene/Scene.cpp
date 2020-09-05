@@ -5,9 +5,11 @@
 #include "ecs/systems/RendererSystem.h"
 #include "ecs/systems/TransformSystem.h"
 #include "ecs/systems/UpdateDrawCallsSystem.h"
+#include "ecs/systems/PhysicsSystem.h"
 #include "ecs/components/MeshRenderer.h"
 #include "ecs/components/MultiMeshRenderer.h"
 #include "ecs/components/Light.h"
+#include "ecs/components/Physics.h"
 #include "render/renderer/DrawCallManager.h"
 #include "render/debug/DebugSettings.h"
 #include "render/debug/DebugDraw.h"
@@ -29,6 +31,7 @@ Scene::Scene(render::DebugSettings* settings)
     no_child_system = std::make_unique<systems::NoChildTransformSystem>(*transform_graph, *entity_manager);
     root_transform_system = std::make_unique<systems::RootTransformSystem>(*transform_graph, *entity_manager);
     update_renderer_system = std::make_unique<systems::UpdateRendererSystem>(*entity_manager);
+    physics_post_update_system = std::make_unique<systems::PhysicsPostUpdateSystem>(*entity_manager);
     physx_manager = std::make_unique<Physics::PhysXManager>();
 }
 
@@ -38,7 +41,13 @@ void Scene::Update(IGame& game, float dt)
     game.update(dt);
     camera->Update();
 
+    // Physics
+    physx_manager->StepPhysics(dt);
+    physx_manager->FetchResults();
+    physx_manager->DrawDebug();
+
     // ECS update
+    ProcessPhysicsSystems();
     ProcessTransformSystems();
     ProcessRendererSystems();
 
@@ -63,6 +72,13 @@ void Scene::Update(IGame& game, float dt)
 void Scene::OnEntityDestroyed(EntityID entity)
 {
 
+}
+
+void Scene::ProcessPhysicsSystems()
+{
+    // Update transform components with physics simulated data
+    auto rigidbody_list = entity_manager->GetChunkListsWithComponents<components::RigidbodyDynamic, components::Transform>();
+    physics_post_update_system->ProcessChunks(rigidbody_list);
 }
 
 void Scene::ProcessTransformSystems()

@@ -6,6 +6,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/quaternion.hpp>
 #include <string>
+#include <cstdlib>
 
 using namespace glm;
 
@@ -152,4 +153,19 @@ inline uint32_t FastHash(const std::wstring& str)
 inline float LogBase(float num, float base)
 {
     return log2f(num) / log2f(base);
+}
+
+inline vec4 RGBAFromUint(uint32_t color)
+{
+    return vec4( 
+                 ((color >> 24) & 0xff) / 255.0f,
+                 ((color >> 16) & 0xff) / 255.0f,
+                 ((color >>  8) & 0xff) / 255.0f,
+                 ((color      ) & 0xff) / 255.0f
+               );
+}
+
+inline float Random()
+{
+    return std::rand() / ((float)RAND_MAX + 1);
 }

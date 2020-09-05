@@ -322,7 +322,7 @@ float4 ps_main(VS_out input) : SV_TARGET
             float distanceToLight = length(lightDir);
             lightDir /= distanceToLight; // normalize
             float attenuation = 1.0f;// GetAttenuation(distanceToLight, lights[lightIndex].radius);
-            lightDir = float3(1, 0, 0);
+            //lightDir = float3(1, 0, 0);
 
             //vec3 lightValue = calculateFragmentDiffuse(normalizedDistanceToLight, lights[lightIndex].attenuation, normal_worldspace.xyz, lightDir, eyeDir_worldspace, lights[lightIndex].color, materialSpecular);
             float3 radiance = lights[lightIndex].color.rgb * attenuation;

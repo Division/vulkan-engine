@@ -33,6 +33,7 @@ namespace ECS
         class NoChildTransformSystem;
         class RootTransformSystem;
         class UpdateRendererSystem;
+        class PhysicsPostUpdateSystem;
     }
 }
 
@@ -65,7 +66,10 @@ public:
 
     auto& GetVisibleLights() const { return visible_lights; }
 
+    Physics::PhysXManager* GetPhysics() const { return physx_manager.get(); };
+
 private:
+    void ProcessPhysicsSystems();
     void ProcessTransformSystems();
     void ProcessRendererSystems();
 
@@ -82,6 +86,7 @@ private:
     std::unique_ptr<ECS::EntityManager> entity_manager;
     std::unique_ptr<ECS::TransformGraph> transform_graph;
 
+    std::unique_ptr<ECS::systems::PhysicsPostUpdateSystem> physics_post_update_system;
     std::unique_ptr<ECS::systems::NoChildTransformSystem> no_child_system;
     std::unique_ptr<ECS::systems::RootTransformSystem> root_transform_system;
     std::unique_ptr<ECS::systems::UpdateRendererSystem> update_renderer_system;

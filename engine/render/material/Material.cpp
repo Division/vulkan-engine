@@ -12,6 +12,11 @@ Material::~Material()
 
 }
 
+Material::Handle Material::Clone()
+{
+	return Handle(std::make_unique<Material>(*this));
+}
+
 void Material::SetDirty()
 {
 	shader_hash_dirty = true;
