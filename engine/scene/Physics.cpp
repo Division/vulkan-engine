@@ -64,6 +64,12 @@ namespace Physics
 		if (!physics)
 			throw std::runtime_error("PxCreatePhysics failed!");
 
+		if (!PxInitVehicleSDK(*physics))
+			throw std::runtime_error("PxInitVehicleSDK failed!");
+
+		PxVehicleSetBasisVectors(PxVec3(0, 1, 0), PxVec3(0, 0, -1));
+		PxVehicleSetUpdateMode(PxVehicleUpdateMode::eACCELERATION);
+
 		PxSceneDesc scene_desc(physics->getTolerancesScale());
 		scene_desc.gravity = PxVec3(0.0f, -9.81f, 0.0f);
 		dispatcher = PxDefaultCpuDispatcherCreate(std::thread::hardware_concurrency());
@@ -85,6 +91,7 @@ namespace Physics
 		{
 			SetDebugRenderEnabled(true);
 		}
+
 	}
 
 	void PhysXManager::StepPhysics(float dt)
@@ -171,7 +178,7 @@ namespace Physics
 
 	PhysXManager::~PhysXManager()
 	{
-
+		PxCloseVehicleSDK();
 	}
 
 
