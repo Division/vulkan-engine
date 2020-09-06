@@ -96,11 +96,11 @@ namespace render {
 		compute_bindings->AddBufferBinding(buffer_binding->address.binding, 0, compute_buffer->GetSize(), compute_buffer->GetBuffer()->Buffer());
 		*/
 
-		//environment_cubemap = loader::LoadTexture("resources/environment/skybox_unorm.ktx"); // TODO: assign via setter
-		environment_cubemap = TextureResource::Handle(L"resources/environment/skybox2.ktx");
-		radiance_cubemap = TextureResource::Handle(L"resources/environment/grace_probe_radiance_rgba.ktx");
-		irradiance_cubemap = TextureResource::Handle(L"resources/environment/grace_probe_irradiance_rgba.ktx");
-		//environment_cubemap = loader::LoadTexture("resources/lama.ktx"); // TODO: assign via setter
+		//environment_cubemap = loader::LoadTexture("assets/resources/environment/skybox_unorm.ktx"); // TODO: assign via setter
+		environment_cubemap = TextureResource::Handle(L"assets/resources/environment/skybox2.ktx");
+		radiance_cubemap = TextureResource::Handle(L"assets/resources/environment/grace_probe_radiance_rgba.ktx");
+		irradiance_cubemap = TextureResource::Handle(L"assets/resources/environment/grace_probe_irradiance_rgba.ktx");
+		//environment_cubemap = loader::LoadTexture("assets/resources/lama.ktx"); // TODO: assign via setter
 		skybox = std::make_unique<effects::Skybox>(*shader_cache);
 		skybox->SetTexture(environment_cubemap->Get().get());
 

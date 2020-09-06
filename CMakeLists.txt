@@ -27,9 +27,13 @@ set(CMAKE_STATIC_LINKER_FLAGS_RELEASE "${CMAKE_SHARED_LINKER_FLAGS_RELEASE} /DEB
 message(STATUS "CMAKE_CXX_FLAGS_RELEASE: ${CMAKE_CXX_FLAGS_RELEASE}")
 message(STATUS "CMAKE_CXX_FLAGS_DEBUG: ${CMAKE_CXX_FLAGS_DEBUG}")
 
+set(GLFW_BUILD_DOCS false)
+set(GLFW_BUILD_EXAMPLES false)
+set(GLFW_BUILD_TESTS false)
+set(GLFW_INSTALL false)
+
 add_subdirectory(engine)
 add_subdirectory(game)
-add_subdirectory(game_ecs)
 add_subdirectory(model_viewer)
 add_subdirectory(tools/ShaderCompiler) 
 add_subdirectory(tools/FBXExporter) 

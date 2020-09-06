@@ -25,7 +25,7 @@ TEST_CASE("KTX")
 	ktx_size_t offset;
 	ktx_uint8_t* image;
 	ktx_uint32_t level, layer, faceSlice;
-	result = ktxTexture_CreateFromNamedFile("resources/lama.ktx",
+	result = ktxTexture_CreateFromNamedFile("assets/resources/lama.ktx",
 	KTX_TEXTURE_CREATE_LOAD_IMAGE_DATA_BIT,
 	&texture);
 

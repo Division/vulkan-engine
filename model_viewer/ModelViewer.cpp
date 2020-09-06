@@ -167,14 +167,14 @@ std::vector<ECS::EntityID> ModelViewer::CreateStack(vec3 position, quat rotation
 
 void ModelViewer::init()
 {
-	//ModelBundleHandle model(L"resources/models/sphere.mdl");
+	//ModelBundleHandle model(L"assets/resources/models/sphere.mdl");
 	//auto& model_bundle = *model;
 
 	OPTICK_EVENT();
 
-	sphere_bundle = ModelBundleHandle(L"resources/models/sphere.mdl");
-	environment = Resources::TextureResource::Handle(L"resources/environment/skybox.ktx");
-	lama_tex = Resources::TextureResource::Handle(L"resources/lama.ktx");
+	sphere_bundle = ModelBundleHandle(L"assets/resources/models/sphere.mdl");
+	environment = Resources::TextureResource::Handle(L"assets/resources/environment/skybox.ktx");
+	lama_tex = Resources::TextureResource::Handle(L"assets/resources/lama.ktx");
 
 	test_mesh = Resources::MultiMesh::Handle(L"assets/Models/Turret/Turret.mesh");
 

@@ -15,7 +15,7 @@ std::unique_ptr<Texture> loader::LoadTexture(const std::wstring &name, bool sRGB
     auto file_data = loader::LoadFile(name);
     if (file_data.size() == 0)
     {
-        ENGLog("Loading texture failed ", name.c_str());
+        ENGLog("Texture doesn't exist: %s", name.c_str());
         return nullptr;
     }
 
@@ -97,6 +97,7 @@ std::unique_ptr<Texture> loader::LoadTexture(const std::wstring &name, bool sRGB
         {
             ktxTexture_Destroy(texture);
 
+            ENGLog("Loading texture failed %s", name.c_str());
             throw std::runtime_error("Error loading texture");
         }
 

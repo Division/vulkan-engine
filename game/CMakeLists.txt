@@ -1,15 +1,11 @@
 cmake_minimum_required(VERSION 3.14)
 
+set(CMAKE_CXX_STANDARD 17)
+
 set(GAME_SOURCES
 	main.cpp
 	Game.h
 	Game.cpp
-	level/Level.h
-	level/Level.cpp
-	objects/FollowCamera.h
-	objects/FollowCamera.cpp
-	objects/PlayerController.h
-	objects/PlayerController.cpp
 )
  
 include_directories(../engine ../engine/lib)
