@@ -6,3 +6,6 @@ bin/*.ilk
 bin/*.pdb
 bin/spirv-cross.exe
 bin/shaders_compiled
+bin/*.obj
+bin/*.manifest
+bin/*.opt

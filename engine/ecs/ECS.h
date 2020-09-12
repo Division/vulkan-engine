@@ -79,6 +79,25 @@ namespace ECS {
 				DestroyEntity((*entity_address.begin()).first);
 		}
 
+		template<typename T>
+		void AddStaticComponent(T* component)
+		{
+			std::unique_lock lock(static_component_mutex);
+			const auto hash = GetComponentHash<T>();
+			if (static_components.find(hash) != static_components.end())
+				throw std::runtime_error("Static component already exists");
+
+			static_components.insert(std::make_pair(hash, component));
+		}
+
+		template<typename T>
+		T* GetStaticComponent()
+		{
+			std::shared_lock lock(static_component_mutex);
+			auto it = static_components.find(GetComponentHash<T>());
+			return it == static_components.end() ? nullptr : reinterpret_cast<T*>(it->second);
+		}
+
 		ProcessingHandle GetProcessingHandle()
 		{
 			return ProcessingHandle(*this);
@@ -332,11 +351,13 @@ namespace ECS {
 
 	private:
 		std::shared_mutex mutex;
+		std::shared_mutex static_component_mutex;
 		std::atomic_uint32_t processing_counter = 0;
 		uint64_t callback_id = 0;
 		std::atomic<EntityID> id_counter = 0;
 		std::unordered_map<ComponentSetHash, std::unique_ptr<ChunkList>> chunks;
 		std::unordered_map<EntityID, EntityAddress> entity_address;
+		std::unordered_map<ComponentHash, void*> static_components;
 		std::vector<EntityCallbackData> entity_destroy_callbacks;
 	};
 

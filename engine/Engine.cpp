@@ -72,7 +72,7 @@ Engine::Engine(std::unique_ptr<IGame> game) : game(std::move(game))
 
 	{
 		OPTICK_EVENT("Creating subsystems");
-		scene = std::make_unique<Scene>(debug_settings.get());
+		scene = std::make_unique<Scene>(*this->game, debug_settings.get());
 		shader_cache = std::make_unique<Device::ShaderCache>();
 		debug_draw = std::make_unique<render::DebugDraw>(*shader_cache);
 		scene_renderer = std::make_unique<render::SceneRenderer>(*scene, shader_cache.get(), debug_settings.get());

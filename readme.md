@@ -1,11 +1,20 @@
-Roadmap:
--+ optimize tiled lighting or implement clustered
+Game roadmap:
+- Add basic vehicle
+- Add basic spherical world
+- Import vehicle model and setup physics (ignore vehicle shape for now)
+
+Engine roadmap:
+- [partly done] optimize tiled lighting or implement clustered
+- [partly done] FBX mesh export
+- Add support for singleton components (store in EntityManager by pointer)
+- FBX physics mesh export
+- Material resource
+- physics rendering interpolation
 - Fix logging, log from multiple threads
 - Fix and migrate lighting, decals, shadowmaps to ECS
 - HLSL includes must be included in hash
 - Image based lighting support
 - Handles for all engine resources
-- FBX mesh export
 - New skinning animation system
 - Use pipelines directly
 - Shader reloading
@@ -26,3 +35,4 @@ Check:
 + lambda API for ECS
 + PhysX integration 
 + Rendering of MultiMesh
++ Extract assets into a private repo

@@ -6,6 +6,9 @@
 #include "memory/Allocator.h"
 #include <memory>
 #include "utils/Math.h"
+#include <functional>
+
+class IGamePhysicsDelegate;
 
 namespace Physics
 {
@@ -79,7 +82,7 @@ namespace Physics
 	class PhysXManager
 	{
 	public:
-		PhysXManager();
+		PhysXManager(IGamePhysicsDelegate* delegate);
 		~PhysXManager();
 
 		void StepPhysics(float dt);
@@ -87,7 +90,10 @@ namespace Physics
 		void SetDebugRenderEnabled(bool enabled);
 		bool GetDebugRenderEnabled();
 		void DrawDebug();
-
+		physx::PxPhysics* GetPhysX() { return physics.get(); };
+		physx::PxCooking* GetCooking() { return cooking.get(); };
+		physx::PxScene* GetScene() { return default_scene.get(); };
+		physx::PxAllocatorCallback* GetAllocator() { return &allocator; };
 		// Utility functions
 		Handle<physx::PxRigidDynamic> CreateDynamic(const vec3 position, const quat rotation, const physx::PxGeometry& geometry, physx::PxMaterial* material = nullptr, bool add_to_scene = true);
 		Handle<physx::PxRigidStatic> CreateStatic(const vec3 position, const quat rotation, const physx::PxGeometry& geometry, physx::PxMaterial* material = nullptr, bool add_to_scene = true);
@@ -115,13 +121,14 @@ namespace Physics
 
 		Allocator allocator;
 		ErrorCallback error_callback;
-		
-		// Order is important
+		IGamePhysicsDelegate* delegate;
+
+		// Order is important for correct deinitialization
 		Handle<physx::PxFoundation> foundation;
+		Handle<physx::PxPvdTransport> transport;
+		Handle<physx::PxPvd> debugger;
 		Handle<physx::PxPhysics> physics;
 		Handle<physx::PxCooking> cooking;
-		Handle<physx::PxPvd> debugger;
-		Handle<physx::PxPvdTransport> transport;
 		Handle<physx::PxDefaultCpuDispatcher> dispatcher;
 		Handle<physx::PxScene> default_scene;
 		Handle<physx::PxMaterial> default_material;

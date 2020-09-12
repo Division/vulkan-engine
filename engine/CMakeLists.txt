@@ -61,6 +61,7 @@ set(ENGINE_SOURCES
 	ecs/EntityChunks.h
 	ecs/TransformGraph.h
 	ecs/CommandBuffer.h
+	ecs/components/Static.h
 	ecs/components/Transform.h
 	ecs/components/Entity.h
 	ecs/components/MeshRenderer.h

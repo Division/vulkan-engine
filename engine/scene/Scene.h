@@ -54,7 +54,7 @@ class Scene
 {
 public:
 
-    Scene(render::DebugSettings* settings);
+    Scene(IGame& game, render::DebugSettings* settings);
     ~Scene();
 
     void Update(IGame& game, float dt);
@@ -79,6 +79,7 @@ private:
     std::vector<ECS::components::Projector*> visible_projectors;
     std::unique_ptr<Camera> camera;
     std::unique_ptr<Physics::PhysXManager> physx_manager;
+    IGame* game;
 
     // ECS
     void OnEntityDestroyed(ECS::EntityID entity);
@@ -90,4 +91,5 @@ private:
     std::unique_ptr<ECS::systems::NoChildTransformSystem> no_child_system;
     std::unique_ptr<ECS::systems::RootTransformSystem> root_transform_system;
     std::unique_ptr<ECS::systems::UpdateRendererSystem> update_renderer_system;
+
 };

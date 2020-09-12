@@ -41,7 +41,8 @@ namespace Physics
 		std::cout << "[PhysX Error] " << message << "\n" << file << line << "\n";
 	}
 
-	PhysXManager::PhysXManager()
+	PhysXManager::PhysXManager(IGamePhysicsDelegate* delegate)
+		: delegate(delegate)
 	{
 		foundation = PxCreateFoundation(PX_PHYSICS_VERSION, allocator, error_callback);
 		if(!foundation)
@@ -51,7 +52,10 @@ namespace Physics
 		{
 			debugger = PxCreatePvd(*foundation);
 			transport = PxDefaultPvdSocketTransportCreate("127.0.0.1", 5425, 10);
-			debugger->connect(*transport, PxPvdInstrumentationFlag::eALL);
+			if (!debugger->connect(*transport, PxPvdInstrumentationFlag::eALL))
+			{
+				std::wcout << "Couldn't connect physx visual debugger\n";
+			}
 		}
 
 		
@@ -60,7 +64,7 @@ namespace Physics
 		if (!cooking)
 			throw std::runtime_error("PxCreateCooking failed!");
 
-		physics = PxCreatePhysics(PX_PHYSICS_VERSION, *foundation, scale, true);
+		physics = PxCreatePhysics(PX_PHYSICS_VERSION, *foundation, scale, true, debugger.get());
 		if (!physics)
 			throw std::runtime_error("PxCreatePhysics failed!");
 
@@ -74,9 +78,9 @@ namespace Physics
 		scene_desc.gravity = PxVec3(0.0f, -9.81f, 0.0f);
 		dispatcher = PxDefaultCpuDispatcherCreate(std::thread::hardware_concurrency());
 		scene_desc.cpuDispatcher = dispatcher.get();
-		scene_desc.filterShader	= PxDefaultSimulationFilterShader;
+		scene_desc.filterShader	= delegate ? delegate->GetFilterShader() : PxDefaultSimulationFilterShader;
 		default_scene = physics->createScene(scene_desc);
-		
+
 		auto pvd_client = default_scene->getScenePvdClient();
 		if(pvd_client)
 		{
@@ -108,6 +112,9 @@ namespace Physics
 		{
 			// Allowing higher DT to compensate longer frames. May worth trying multiple fixed steps as well.
 			const auto simulation_dt = std::min((float)time_since_update, max_dt);
+			if (delegate)
+				delegate->UpdatePhysics(simulation_dt);
+
 			default_scene->simulate(simulation_dt);
 			last_time += simulation_dt;
 			has_results = true;

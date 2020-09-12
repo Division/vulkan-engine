@@ -20,8 +20,8 @@ using namespace ECS;
 
 Scene::~Scene() = default;
 
-Scene::Scene(render::DebugSettings* settings)
-    : debug_settings(settings)
+Scene::Scene(IGame& game, render::DebugSettings* settings)
+    : debug_settings(settings), game(&game)
 {
     camera = std::make_unique<Camera>();
 
@@ -32,7 +32,7 @@ Scene::Scene(render::DebugSettings* settings)
     root_transform_system = std::make_unique<systems::RootTransformSystem>(*transform_graph, *entity_manager);
     update_renderer_system = std::make_unique<systems::UpdateRendererSystem>(*entity_manager);
     physics_post_update_system = std::make_unique<systems::PhysicsPostUpdateSystem>(*entity_manager);
-    physx_manager = std::make_unique<Physics::PhysXManager>();
+    physx_manager = std::make_unique<Physics::PhysXManager>(game.GetPhysicsDelegate());
 }
 
 void Scene::Update(IGame& game, float dt)

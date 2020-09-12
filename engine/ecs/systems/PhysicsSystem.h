@@ -10,4 +10,11 @@ namespace ECS::systems
 		PhysicsPostUpdateSystem(EntityManager& manager) : System(manager) {}
 		void Process(Chunk* chunk) override;
 	};
+
+	class VehicleControlSystem : public System
+	{
+	public:
+		VehicleControlSystem(EntityManager& manager) : System(manager) {}
+		void Process(Chunk* chunk) override;
+	};
 }
