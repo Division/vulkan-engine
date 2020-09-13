@@ -6,14 +6,31 @@
 
 namespace fs = std::filesystem;
 
+using namespace physx;
+using namespace Physics;
+
 namespace Exporter
 {
 	namespace
 	{
-		const std::string mesh_prefix = "mesh_";
+		const std::string mesh_prefix = "mesh_"; // goes to .mesh file
+		const std::string phys_convex_prefix = "phys_convex_"; // Exported to .phys file
+		const std::string phys_mesh_prefix = "phys_mesh_"; // Exported to .phys file
 		const std::string default_key = "_default";
 		const std::wstring mesh_extension = L".mesh";
+		const std::wstring phys_extension = L".phys";
+
+		auto export_prefixes = { mesh_prefix, phys_convex_prefix, phys_mesh_prefix };
 	}
+
+	class ErrorCallback : public PxErrorCallback
+	{
+	public:
+		void reportError(physx::PxErrorCode::Enum code, const char* message, const char* file, int line) override
+		{
+			std::cerr << message << std::endl << "file: " << file << ", line: " << line << std::endl;
+		}
+	};
 
 	SceneExporter::SceneExporter(FBXExporterSetting settings) : settings(settings)
 	{
@@ -21,6 +38,18 @@ namespace Exporter
 		FbxIOSettings *ios = FbxIOSettings::Create(manager, IOSROOT);
 		manager->SetIOSettings(ios);
 		input_is_in_assets = utils::BeginsWith(settings.input_path.wstring(), settings.assets_path.wstring());
+
+		static PxDefaultAllocator DefaultAllocator;
+		static ErrorCallback ErrorCallback;
+
+		foundation = Handle(PxCreateFoundation(PX_PHYSICS_VERSION, DefaultAllocator, ErrorCallback));
+		if (!foundation)
+			throw std::runtime_error("PxCreateFoundation failed!");
+
+		PxTolerancesScale scale;
+		cooking = PxCreateCooking(PX_PHYSICS_VERSION, *foundation, PxCookingParams(scale));
+		if (!cooking)
+			throw std::runtime_error("PxCreateCooking failed!");
 	}
 
 	SceneExporter::~SceneExporter()
@@ -80,6 +109,21 @@ namespace Exporter
 		return ExportRootNode(scene, path);
 	}
 
+	FileMetadata SceneExporter::GetMetadataForFile(const std::filesystem::path& path)
+	{
+		FileMetadata result;
+
+		fs::path json_path = path.wstring() + L".json";
+		rapidjson::Document json;
+		if (LoadJSONFile(json_path, json))
+		{
+			if (json.HasMember("scale"))
+				result.scale = json["scale"].GetFloat();
+		}
+
+		return result;
+	}
+
 	std::unordered_map<std::string, MeshExportData> SceneExporter::GetMeshesToExport(FbxScene* scene)
 	{
 		std::unordered_map<std::string, MeshExportData> result;
@@ -96,14 +140,32 @@ namespace Exporter
 			if (utils::BeginsWith(name, mesh_prefix))
 			{
 				if (current_name != default_key)
-					throw std::runtime_error("Nested meshes not supported");
+					throw std::runtime_error("Nested export groups not supported");
 
 				current_name = name.substr(mesh_prefix.size());
 				utils::Lowercase(current_name);
 
 				if (result.find(current_name) != result.end())
-					throw std::runtime_error("Mesh already defined: " + current_name);
+					throw std::runtime_error("Export group already defined: " + current_name);
 
+				result[current_name].root_node = node;
+				result[current_name].type = MeshExportData::Type::Mesh;
+				nested_depth = depth;
+			}
+			else
+			if (utils::BeginsWith(name, phys_convex_prefix))
+			{
+				if (current_name != default_key)
+					throw std::runtime_error("Nested export groups not supported");
+
+				current_name = name.substr(phys_convex_prefix.size());
+				utils::Lowercase(current_name);
+
+				if (result.find(current_name) != result.end())
+					throw std::runtime_error("Export group already defined: " + current_name);
+
+				result[current_name].root_node = node;
+				result[current_name].type = MeshExportData::Type::PhysConvex;
 				nested_depth = depth;
 			}
 
@@ -131,6 +193,8 @@ namespace Exporter
 	{
 		try
 		{
+			auto metadata = GetMetadataForFile(path);
+
 			auto filename = path.filename().replace_extension().string();
 			utils::Lowercase(filename);
 
@@ -145,9 +209,27 @@ namespace Exporter
 
 			for (auto& it : meshes)
 			{
-				auto output_filename = GetMeshOutputPath(it.first, path);
-				if (!WriteMeshToFile(it.second.submeshes, output_filename))
-					throw std::runtime_error("error writing mesh file: " + utils::WStringToString(output_filename));
+				switch (it.second.type)
+				{
+					case MeshExportData::Type::Mesh:
+					{
+						auto output_filename = GetMeshOutputPath(it.first, path);
+						if (!WriteMeshToFile(it.second.submeshes, output_filename))
+							throw std::runtime_error("error writing mesh file: " + utils::WStringToString(output_filename));
+						break;
+					}
+					case MeshExportData::Type::PhysConvex:
+					case MeshExportData::Type::Phys:
+					{
+						auto output_filename = fs::path(GetMeshOutputPath(it.first, path));
+						output_filename.replace_extension(phys_extension);
+						const bool convex = it.second.type == MeshExportData::Type::PhysConvex;
+						if (!WritePhysMeshToFile(it.second.submeshes, output_filename, convex, cooking.get()))
+							throw std::runtime_error("error writing phys file: " + utils::WStringToString(output_filename));
+						break;
+					}
+				}
+
 			}
 		}
 		catch (std::runtime_error e)

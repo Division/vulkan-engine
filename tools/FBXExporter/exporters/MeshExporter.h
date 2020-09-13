@@ -5,6 +5,7 @@
 #include <glm/glm.hpp>
 #include <fbxsdk.h>
 #include "utils/Math.h"
+#include <physx/PxPhysicsAPI.h>
 
 using namespace glm;
 
@@ -17,6 +18,9 @@ namespace Exporter
 	constexpr uint32_t MESH_FLAG_HAS_TBN = 1 << 1;
 	constexpr uint32_t MESH_FLAG_HAS_UV0 = 1 << 2;
 	constexpr uint32_t MESH_FLAG_HAS_WEIGHTS = 1 << 3;
+
+	constexpr uint32_t PHYS_FILE_VERSION = 1;
+	constexpr uint32_t PHYS_FILE_MAGIC = 'phys';
 
 	struct MeshVertex
 	{
@@ -61,5 +65,6 @@ namespace Exporter
 
 	std::vector<SubMesh> ExtractMeshes(const std::vector<FbxMesh*>& meshes);
 	bool WriteMeshToFile(const std::vector<SubMesh>& meshes, const std::wstring& filename);
+	bool WritePhysMeshToFile(const std::vector<SubMesh>& meshes, const std::wstring& filename, bool is_convex, physx::PxCooking* cooking);
 
 }

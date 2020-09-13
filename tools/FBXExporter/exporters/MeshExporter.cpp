@@ -2,9 +2,11 @@
 #include <filesystem>
 #include <fstream>
 #include "MeshExporter.h"
+#include "scene/Physics.h"
 //#include "utils/Math.h"
 
 namespace fs = std::filesystem;
+using namespace physx;
 
 namespace Exporter
 {
@@ -222,12 +224,6 @@ namespace Exporter
 
 	void WriteSubMesh(std::ostream& stream, const SubMesh& submesh)
 	{
-		uint32_t flags = 0;
-		if (submesh.has_normals) flags |= MESH_FLAG_HAS_NORMALS;
-		if (submesh.has_binormals && submesh.has_tangents) flags |= MESH_FLAG_HAS_TBN;
-		if (submesh.has_uv0) flags |= MESH_FLAG_HAS_UV0;
-		if (submesh.has_skinning_weights) flags |= MESH_FLAG_HAS_WEIGHTS;
-
 		const uint32_t vertex_count = submesh.vertices.size();
 		const uint32_t index_count = submesh.indices.size();
 		if (index_count % 3 != 0)
@@ -236,7 +232,6 @@ namespace Exporter
 		const uint32_t triangle_count = index_count / 3;
 		const bool use_short_indices = index_count <= std::numeric_limits<uint16_t>::max();
 
-		stream.write((char*)&flags, sizeof(flags));
 		stream.write((char*)&vertex_count, sizeof(vertex_count));
 		stream.write((char*)&triangle_count, sizeof(triangle_count));
 		stream.write((char*)&submesh.aabb, sizeof(submesh.aabb));
@@ -253,7 +248,6 @@ namespace Exporter
 
 		for (int i = 0; i < vertex_count; i++)
 			WriteVertex(stream, submesh, i);
-
 	}
 
 	bool WriteMeshToFile(const std::vector<SubMesh>& meshes, const std::wstring& filename)
@@ -280,6 +274,80 @@ namespace Exporter
 
 		for (auto& mesh : meshes)
 			WriteSubMesh(stream, mesh);
+
+		return stream.good();
+	}
+
+	void WritePhysMesh(std::ostream& stream, const SubMesh& submesh, bool is_convex, PxCooking* cooking)
+	{
+		const uint32_t vertex_count = submesh.vertices.size();
+		const uint32_t index_count = submesh.indices.size();
+		if (index_count % 3 != 0)
+			throw std::runtime_error("Mesh index count must be divisable by 3");
+
+		const uint32_t triangle_count = index_count / 3;
+		const bool use_short_indices = index_count <= std::numeric_limits<uint16_t>::max();
+		uint8_t convex = is_convex;
+
+		stream.write((char*)&convex, sizeof(convex));
+		
+		std::vector<PxVec3> vertices(vertex_count);
+		for (int i = 0; i < vertex_count; i++)
+			vertices[i] = Physics::Convert(submesh.vertices[i].position);
+
+		if (is_convex)
+		{
+			PxConvexMeshDesc convexDesc;
+			convexDesc.points.count = vertex_count;
+			convexDesc.points.stride = sizeof(PxVec3);
+			convexDesc.points.data = vertices.data();
+			convexDesc.flags = PxConvexFlag::eCOMPUTE_CONVEX;
+
+			PxDefaultMemoryOutputStream buf;
+			if (!cooking->cookConvexMesh(convexDesc, buf))
+				throw std::runtime_error("cooking failed");
+
+			uint32_t size = buf.getSize();
+			stream.write((char*)&size, sizeof(size));
+			stream.write((char*)buf.getData(), size);
+		}
+		else
+		{
+			PxTriangleMeshDesc meshDesc;
+			meshDesc.points.count = vertex_count;
+			meshDesc.points.stride = sizeof(PxVec3);
+			meshDesc.points.data = vertices.data();
+
+			meshDesc.triangles.count = triangle_count;
+			meshDesc.triangles.stride = 3 * sizeof(PxU32);
+			meshDesc.triangles.data = submesh.indices.data();
+
+			PxDefaultMemoryOutputStream buf;
+			if (!cooking->cookTriangleMesh(meshDesc, buf))
+				throw std::runtime_error("cooking failed");
+
+			uint32_t size = buf.getSize();
+			stream.write((char*)&size, sizeof(size));
+			stream.write((char*)buf.getData(), size);
+		}
+	}
+
+	bool WritePhysMeshToFile(const std::vector<SubMesh>& meshes, const std::wstring& filename, bool is_convex, PxCooking* cooking)
+	{
+		fs::path path = filename;
+		fs::create_directories(path.parent_path());
+
+		const uint32_t sub_mesh_count = meshes.size();
+
+		std::ofstream stream(filename, std::ios::binary);
+		stream.exceptions(std::ifstream::failbit | std::ifstream::badbit);
+
+		stream.write((char*)&PHYS_FILE_MAGIC, sizeof(PHYS_FILE_MAGIC));
+		stream.write((char*)&PHYS_FILE_VERSION, sizeof(PHYS_FILE_VERSION));
+		stream.write((char*)&sub_mesh_count, sizeof(sub_mesh_count));
+
+		for (auto& mesh : meshes)
+			WritePhysMesh(stream, mesh, is_convex, cooking);
 
 		return stream.good();
 	}

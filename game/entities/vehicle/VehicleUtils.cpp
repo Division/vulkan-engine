@@ -139,7 +139,7 @@ namespace Vehicle::Utils
 	void computeWheelCenterActorOffsets4W(const PxF32 wheelFrontZ, const PxF32 wheelRearZ, const PxVec3& chassisDims, const PxF32 wheelWidth, const PxF32 wheelRadius, const PxU32 numWheels, PxVec3* wheelCentreOffsets)
 	{
 		//chassisDims.z is the distance from the rear of the chassis to the front of the chassis.
-		//The front has z = 0.5*chassisDims.z and the rear has z = -0.5*chassisDims.z.
+		//The front has z = -0.5*chassisDims.z and the rear has z = -0.5*chassisDims.z.
 		//Compute a position for the front wheel and the rear wheel along the z-axis.
 		//Compute the separation between each wheel along the z-axis.
 		const PxF32 numLeftWheels = numWheels/2.0f;
@@ -147,10 +147,10 @@ namespace Vehicle::Utils
 		//Set the outside of the left and right wheels to be flush with the chassis.
 		//Set the top of the wheel to be just touching the underside of the chassis.
 		//Begin by setting the rear-left/rear-right/front-left,front-right wheels.
-		wheelCentreOffsets[PxVehicleDrive4WWheelOrder::eREAR_LEFT] = PxVec3((-chassisDims.x + wheelWidth)*0.5f, -(chassisDims.y/2 + wheelRadius), wheelRearZ + 0*deltaZ*0.5f);
-		wheelCentreOffsets[PxVehicleDrive4WWheelOrder::eREAR_RIGHT] = PxVec3((+chassisDims.x - wheelWidth)*0.5f, -(chassisDims.y/2 + wheelRadius), wheelRearZ + 0*deltaZ*0.5f);
-		wheelCentreOffsets[PxVehicleDrive4WWheelOrder::eFRONT_LEFT] = PxVec3((-chassisDims.x + wheelWidth)*0.5f, -(chassisDims.y/2 + wheelRadius), wheelRearZ + (numLeftWheels-1)*deltaZ);
-		wheelCentreOffsets[PxVehicleDrive4WWheelOrder::eFRONT_RIGHT] = PxVec3((+chassisDims.x - wheelWidth)*0.5f, -(chassisDims.y/2 + wheelRadius), wheelRearZ + (numLeftWheels-1)*deltaZ);
+		wheelCentreOffsets[PxVehicleDrive4WWheelOrder::eFRONT_LEFT] = PxVec3((-chassisDims.x + wheelWidth)*0.5f, -(chassisDims.y/2 + wheelRadius), wheelRearZ + 0*deltaZ*0.5f);
+		wheelCentreOffsets[PxVehicleDrive4WWheelOrder::eFRONT_RIGHT] = PxVec3((+chassisDims.x - wheelWidth)*0.5f, -(chassisDims.y/2 + wheelRadius), wheelRearZ + 0*deltaZ*0.5f);
+		wheelCentreOffsets[PxVehicleDrive4WWheelOrder::eREAR_LEFT] = PxVec3((-chassisDims.x + wheelWidth)*0.5f, -(chassisDims.y/2 + wheelRadius), wheelRearZ + (numLeftWheels-1)*deltaZ);
+		wheelCentreOffsets[PxVehicleDrive4WWheelOrder::eREAR_RIGHT] = PxVec3((+chassisDims.x - wheelWidth)*0.5f, -(chassisDims.y/2 + wheelRadius), wheelRearZ + (numLeftWheels-1)*deltaZ);
 		//Set the remaining wheels.
 		for(PxU32 i = 2, wheelCount = 4; i < numWheels-2; i+=2, wheelCount+=2)
 		{
@@ -374,7 +374,7 @@ namespace Vehicle::Utils
 
 			//Gears
 			PxVehicleGearsData gears;
-			gears.mSwitchTime=0.5f;
+			gears.mSwitchTime=0.1f;
 			driveSimData.setGearsData(gears);
 
 			//Clutch
@@ -386,8 +386,8 @@ namespace Vehicle::Utils
 			PxVehicleAckermannGeometryData ackermann;
 			ackermann.mAccuracy=1.0f;
 			ackermann.mAxleSeparation=
-				wheelsSimData->getWheelCentreOffset(PxVehicleDrive4WWheelOrder::eFRONT_LEFT).z-
-				wheelsSimData->getWheelCentreOffset(PxVehicleDrive4WWheelOrder::eREAR_LEFT).z;
+				wheelsSimData->getWheelCentreOffset(PxVehicleDrive4WWheelOrder::eREAR_LEFT).z-
+				wheelsSimData->getWheelCentreOffset(PxVehicleDrive4WWheelOrder::eFRONT_LEFT).z;
 			ackermann.mFrontWidth=
 				wheelsSimData->getWheelCentreOffset(PxVehicleDrive4WWheelOrder::eFRONT_RIGHT).x-
 				wheelsSimData->getWheelCentreOffset(PxVehicleDrive4WWheelOrder::eFRONT_LEFT).x;
@@ -513,7 +513,7 @@ namespace Vehicle::Utils
 	static PxF32 TireFrictionMultipliers[MAX_NUM_SURFACE_TYPES][MAX_NUM_TIRE_TYPES] =
 	{
 		//NORMAL,	WORN
-		{1.00f,		0.1f}//TARMAC
+		{2.00f,		0.1f}//TARMAC
 	};
 
 	Handle<PxVehicleDrivableSurfaceToTireFrictionPairs> CreateFrictionPairs(const PxMaterial& defaultMaterial)

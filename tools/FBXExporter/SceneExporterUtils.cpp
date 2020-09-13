@@ -1,4 +1,7 @@
+#include <fstream>
 #include "SceneExporterUtils.h"
+
+namespace fs = std::filesystem;
 
 namespace Exporter
 {
@@ -105,4 +108,24 @@ namespace Exporter
         }
     }
 
+    bool LoadJSONFile(const fs::path& json_path, rapidjson::Document& out_json)
+    {
+        if (!fs::exists(json_path))
+            return false;
+        
+        std::ifstream file(json_path);
+        file.seekg(0, file.end);
+        size_t size = file.tellg();
+        file.seekg(0, file.beg);
+        std::vector<uint8_t> data(size);
+        file.read((char*)data.data(), size);
+        if (file.bad())
+            return false;
+
+        out_json.Parse((char*)data.data(), size);
+        if (out_json.HasParseError())
+            return false;
+
+        return true;
+    }
 }

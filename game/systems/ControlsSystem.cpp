@@ -32,8 +32,8 @@ namespace ECS::systems
 
 			vehicle->input.setDigitalAccel(player_input->accelerate);
 			vehicle->input.setDigitalBrake(player_input->brake);
-			vehicle->input.setDigitalSteerLeft(player_input->turn_left);
-			vehicle->input.setDigitalSteerRight(player_input->turn_right);
+			vehicle->input.setDigitalSteerLeft(player_input->turn_right);
+			vehicle->input.setDigitalSteerRight(player_input->turn_left);
 		}
 	}
 
@@ -81,7 +81,7 @@ namespace ECS::systems
 		auto* batch_query = data_cache->GetBatchQuery();
 		auto* friction_pairs = data_cache->GetFrictionPairs();
 
-		float dt = manager.GetStaticComponent<components::DeltaTime>()->physics_dt;
+		const float dt = manager.GetStaticComponent<components::DeltaTime>()->physics_dt;
 
 		for (int i = 0; i < chunk->GetEntityCount(); i++)
 		{
