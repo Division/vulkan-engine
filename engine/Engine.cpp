@@ -98,16 +98,18 @@ Engine::~Engine()
 	game->cleanup();
 	game = nullptr;
 
+	Resources::Cache::Get().GCCollect(); // Need to destroy physics resources freed by the game before scene
+
 	input = nullptr;
 	scene = nullptr;
 	scene_renderer = nullptr;
 	shader_cache = nullptr;
 	debug_draw = nullptr;
-	
-	Common::GetReleaser().Clear();
-	Resources::Cache::Get().Destroy();
-	Common::GetReleaser().Clear();
-	::Device::GetReleaser().Clear();
+
+	Common::GetReleaser().Clear(); // Common::Resource may contain Resources::Resource
+	Resources::Cache::Get().Destroy(); // Destroying Resources from the cache
+	Common::GetReleaser().Clear(); // Need to clear it again since Resources from cache could contain Common::Handle
+	::Device::GetReleaser().Clear(); // Goes last since Device::Resource never contains Common::Resource
 	vulkan_context->Cleanup();
 	vulkan_context = nullptr;
 

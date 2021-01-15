@@ -2,6 +2,7 @@
 #include "utils/Math.h"
 #include "ecs/components/Physics.h"
 #include "ecs/components/Transform.h"
+#include "resources/PhysCollider.h"
 
 using namespace physx;
 using namespace Physics;
@@ -323,10 +324,20 @@ namespace Vehicle::Utils
 				wheelMaterials[i] = vehicle4WDesc.wheelMaterial;
 			}
 
-			//Chassis just has a single convex shape for simplicity.
-			PxConvexMesh* chassisConvexMesh = createChassisMesh(chassisDims, *physics, *cooking);
-			PxConvexMesh* chassisConvexMeshes[1] = {chassisConvexMesh};
-			PxMaterial* chassisMaterials[1] = {vehicle4WDesc.chassisMaterial};
+			std::vector<PxConvexMesh*> chassisConvexMeshes;
+			std::vector<PxMaterial*> chassisMaterials;
+			if (vehicle4WDesc.chassis_collider)
+			{
+				for (int i = 0; i < vehicle4WDesc.chassis_collider->GetConvexCount(); i++)
+					chassisConvexMeshes.push_back(vehicle4WDesc.chassis_collider->GetConvex(i));
+			}
+			else
+			{
+				chassisConvexMeshes.push_back(createChassisMesh(chassisDims, *physics, *cooking));
+			}
+
+			for (int i = 0; i < chassisConvexMeshes.size(); i++)
+				chassisMaterials.push_back(vehicle4WDesc.chassisMaterial);
 
 			//Rigid body data.
 			PxVehicleChassisData rigidBodyData;
@@ -337,7 +348,7 @@ namespace Vehicle::Utils
 			veh4WActor = createVehicleActor
 			(rigidBodyData,
 				wheelMaterials, wheelConvexMeshes, numWheels, wheelSimFilterData,
-				chassisMaterials, chassisConvexMeshes, 1, chassisSimFilterData,
+				chassisMaterials.data(), chassisConvexMeshes.data(), chassisConvexMeshes.size(), chassisSimFilterData,
 				*physics);
 		}
 

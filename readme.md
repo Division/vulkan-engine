@@ -7,6 +7,7 @@ Engine roadmap:
 - [partly done] optimize tiled lighting or implement clustered
 - [partly done] FBX mesh export
 - Add support for singleton components (store in EntityManager by pointer)
+- Proper alignment of ECS components, remove packing
 - FBX physics mesh export
 - Material resource
 - physics rendering interpolation

@@ -27,9 +27,9 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/lib ${ENGINE_DIR}lib)
 add_executable(FBXExporter ${SOURCE_LIST}) 
 target_link_libraries(FBXExporter ${CMAKE_CURRENT_SOURCE_DIR}/lib/static/libfbxsdk.lib)
 target_link_libraries(FBXExporter ${CMAKE_CURRENT_SOURCE_DIR}/lib/static/zlib-mt.lib)
+target_link_libraries(FBXExporter ${CMAKE_CURRENT_SOURCE_DIR}/lib/static/libxml2-mt.lib)
+add_definitions(-DFBXSDK_SHARED) # dynamically linking FBXSDK needs this
 
-#target_link_libraries(FBXExporter ${ENGINE_DIR}lib/static/physx/PhysX_64.lib)
-#target_link_libraries(FBXExporter ${ENGINE_DIR}lib/static/physx/PhysXCommon_64.lib)
 target_link_libraries(FBXExporter ${ENGINE_DIR}lib/static/physx/PhysXFoundation_64.lib)
 target_link_libraries(FBXExporter ${ENGINE_DIR}lib/static/physx/PhysXCooking_64.lib)
 # static .lib files

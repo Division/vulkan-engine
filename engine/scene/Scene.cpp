@@ -15,10 +15,14 @@
 #include "render/debug/DebugDraw.h"
 #include "Engine.h"
 #include "Physics.h"
+#include "resources/ResourceCache.h"
 
 using namespace ECS;
 
-Scene::~Scene() = default;
+Scene::~Scene() 
+{
+
+};
 
 Scene::Scene(IGame& game, render::DebugSettings* settings)
     : debug_settings(settings), game(&game)

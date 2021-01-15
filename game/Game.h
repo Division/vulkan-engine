@@ -39,6 +39,7 @@ namespace Resources
 {
 	class TextureResource;
 	class MultiMesh;
+	class PhysCollider;
 }
 
 class Game : public IGame, public IGamePhysicsDelegate {
@@ -82,6 +83,7 @@ private:
 	Resources::Handle<Resources::TextureResource> lama_tex;
 	Resources::Handle<Resources::TextureResource> environment;
 	Resources::Handle<Resources::MultiMesh> test_mesh;
+	Resources::Handle<Resources::PhysCollider> player_collider;
 	std::vector<Physics::Handle<physx::PxRigidStatic>> physics_static;
 	ECS::EntityID test_mesh_entity;
 

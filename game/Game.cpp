@@ -16,6 +16,7 @@
 #include "render/texture/Texture.h"
 #include "resources/TextureResource.h"
 #include "resources/MultiMesh.h"
+#include "resources/PhysCollider.h"
 #include "system/JobSystem.h"
 #include "system/Input.h"
 #include "entities/vehicle/VehicleUtils.h"
@@ -221,6 +222,7 @@ void Game::init()
 	lama_tex = Resources::TextureResource::Handle(L"assets/resources/lama.ktx");
 
 	test_mesh = Resources::MultiMesh::Handle(L"assets/Models/Turret/Turret.mesh");
+	player_collider = Resources::PhysCollider::Handle(L"assets/vehicle/player/car_body_collider.phys");
 
 	auto* engine = Engine::Get();
 	manager = engine->GetEntityManager();
@@ -309,6 +311,7 @@ void Game::init()
 
 	//Create a vehicle that will drive on the plane.
 	Vehicle::Utils::VehicleDesc vehicleDesc = Vehicle::Utils::InitVehicleDesc(plane_px_material.get());
+	vehicleDesc.chassis_collider = player_collider;
 	auto vehicle_entity = Vehicle::Utils::CreateVehicle(*manager, *physics, vec3(20, 0, 0), quat(), vehicleDesc);
 	manager->AddComponent<components::PlayerInput>(vehicle_entity);
 

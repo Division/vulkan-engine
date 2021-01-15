@@ -96,6 +96,25 @@ namespace Exporter
 		importer->Import(scene);
 		importer->Destroy();
 
+		// Get the current scene units (incoming from FBX file)
+		FbxSystemUnit SceneSystemUnit = scene->GetGlobalSettings().GetSystemUnit();
+
+		
+		// If the incoming FBX file is defined in centimeters, we have nothing to do
+		// so we can skip the conversion...
+		if (SceneSystemUnit.GetScaleFactor() != 1.0)
+			// Force the conversion to centimeters so we make sure
+			// that the scale compensation is correctly adjusted
+			FbxSystemUnit::cm.ConvertScene(scene);
+
+		// But we want the scene in meters so let's convert again, 
+		// but do not re-adjust the scale compensation since it has already 
+		// being handled in the above conversion.
+		FbxSystemUnit::ConversionOptions lOptions;
+		lOptions.mConvertRrsNodes = false;
+		FbxSystemUnit::m.ConvertScene(scene, lOptions);
+		
+
 		FbxGeometryConverter converter(manager);
 		if (!converter.Triangulate(scene, true))
 			std::wcout << L"[Warning] triangulation finished with errors.\n";
@@ -175,7 +194,7 @@ namespace Exporter
 				if (attrib->GetAttributeType() == FbxNodeAttribute::eMesh)
 				{
 					attrib->SetName(node->GetName());
-					result[current_name].meshes.push_back({(FbxMesh*)attrib});
+					result[current_name].meshes.push_back(SourceMesh(node, (FbxMesh*)attrib));
 				}
 				if (attrib->GetAttributeType() == FbxNodeAttribute::eSkeleton)
 				{
@@ -204,7 +223,7 @@ namespace Exporter
 				if (it.first == filename)
 					throw std::runtime_error("Mesh can't have the same name as source file: " + it.first);
 
-				it.second.submeshes = ExtractMeshes(it.second.meshes);
+				it.second.submeshes = ExtractMeshes(it.second.meshes, it.second.root_node);
 			}
 
 			for (auto& it : meshes)

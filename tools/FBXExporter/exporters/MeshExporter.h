@@ -11,6 +11,7 @@ using namespace glm;
 
 namespace Exporter
 {
+	typedef std::pair<FbxNode*, FbxMesh*> SourceMesh;
 
 	constexpr uint32_t MESH_FILE_VERSION = 1;
 	constexpr uint32_t MESH_FILE_MAGIC = 'mesh';
@@ -63,7 +64,7 @@ namespace Exporter
 		AABB aabb;
 	};
 
-	std::vector<SubMesh> ExtractMeshes(const std::vector<FbxMesh*>& meshes);
+	std::vector<SubMesh> ExtractMeshes(const std::vector<SourceMesh>& meshes, FbxNode* parent_node);
 	bool WriteMeshToFile(const std::vector<SubMesh>& meshes, const std::wstring& filename);
 	bool WritePhysMeshToFile(const std::vector<SubMesh>& meshes, const std::wstring& filename, bool is_convex, physx::PxCooking* cooking);
 

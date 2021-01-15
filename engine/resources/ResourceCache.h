@@ -172,6 +172,7 @@ namespace Resources
 	{
 	public:
 		Handle() : resource(nullptr) {}
+		Handle(nullptr_t) : resource(nullptr) {}
 
 		explicit Handle(const std::wstring& filename)
 		{
@@ -201,6 +202,16 @@ namespace Resources
 			other.resource = nullptr;
 		}
 
+		Handle& operator=(nullptr_t)
+		{
+			if (resource)
+				resource->RemoveRef();
+
+			resource = nullptr;
+
+			return *this;
+		}
+		
 		Handle& operator=(const Handle& other)
 		{
 			if (resource)
@@ -229,15 +240,19 @@ namespace Resources
 				resource->RemoveRef();
 		}
 
-		const T& operator*()
+		const T& operator*() const
 		{
 			return resource->operator*();
 		}
 
-		const T* operator->()
+		const T* operator->() const
 		{
 			return resource->operator->();
 		}
+
+		operator bool() const { return (bool)resource; }
+
+		bool IsResolved() const { return resource && resource->IsResolved(); }
 
 	private:
 		Resource<T>* resource;

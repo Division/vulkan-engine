@@ -7,6 +7,7 @@
 
 namespace fs = std::filesystem;
 using namespace physx;
+using namespace fbxsdk;
 
 namespace Exporter
 {
@@ -63,15 +64,23 @@ namespace Exporter
 		}
 	}
 
-	std::vector<SubMesh> ExtractMeshes(const std::vector<FbxMesh*>& meshes)
+	std::vector<SubMesh> ExtractMeshes(const std::vector<SourceMesh>& meshes, FbxNode* parent_node)
 	{
 		std::vector<SubMesh> result;
 
 		// Maps material id to triangle list
 		std::unordered_map<FbxGeometryElementMaterial*, std::vector<MeshTriangle>> material_triangles;
 
-		for (auto* mesh : meshes)
+		auto root_node_inv_transform = parent_node ? parent_node->EvaluateGlobalTransform() : fbxsdk::FbxAMatrix();
+		root_node_inv_transform = fbxsdk::FbxAMatrix(-root_node_inv_transform.GetT(), FbxVector4(), FbxVector4(1,1,1,1)); // Inverse translation only
+
+		for (auto& mesh_pair : meshes)
 		{
+			auto* mesh = mesh_pair.second;
+
+			// Transformation related to root node
+			auto mesh_transform = root_node_inv_transform * mesh_pair.first->EvaluateGlobalTransform();
+
 			if (!mesh->IsTriangleMesh())
 				throw std::runtime_error("Mesh has non-triangle polygons: " + std::string(mesh->GetName()));
 
@@ -110,6 +119,7 @@ namespace Exporter
 				{
 					const int index = mesh->GetPolygonVertex(i, v);
 					FbxVector4 fbx_vertex = mesh->GetControlPoints()[index];
+					fbx_vertex = mesh_transform.MultT(fbx_vertex);
 					triangle.vertices[v].position = vec3(fbx_vertex[0], fbx_vertex[1], fbx_vertex[2]);
 				}
 
@@ -119,6 +129,8 @@ namespace Exporter
 					{
 						FbxVector4 fbx_normal;
 						mesh->GetPolygonVertexNormal(i, v, fbx_normal);
+						fbx_normal[3] = 0;
+						fbx_normal = mesh_transform.MultT(fbx_normal);
 						triangle.vertices[v].normal = vec3(fbx_normal[0], fbx_normal[1], fbx_normal[2]);
 					}
 				}
@@ -140,6 +152,8 @@ namespace Exporter
 					{
 						const int index = mesh->GetPolygonVertex(i, v);
 						FbxVector4 fbx_binormal;
+
+
 						switch (binormal_reference_mode)
 						{
 							case FbxGeometryElement::eDirect:
@@ -155,6 +169,8 @@ namespace Exporter
 								throw std::runtime_error("Mesh binormal reference mode unsupported: " + std::string(mesh->GetName()));
 						}
 
+						fbx_binormal[3] = 0;
+						fbx_binormal = mesh_transform.MultT(fbx_binormal);
 						triangle.vertices[v].binormal = vec3(fbx_binormal[0], fbx_binormal[1], fbx_binormal[2]);
 					}
 				}
@@ -180,6 +196,8 @@ namespace Exporter
 							throw std::runtime_error("Mesh tangent reference mode unsupported: " + std::string(mesh->GetName()));
 						}
 
+						fbx_tangent[3] = 0;
+						fbx_tangent = mesh_transform.MultT(fbx_tangent);
 						triangle.vertices[v].tangent = vec3(fbx_tangent[0], fbx_tangent[1], fbx_tangent[2]);
 					}
 				}
@@ -224,6 +242,12 @@ namespace Exporter
 
 	void WriteSubMesh(std::ostream& stream, const SubMesh& submesh)
 	{
+		uint32_t flags = 0;
+		if (submesh.has_normals) flags |= MESH_FLAG_HAS_NORMALS;
+		if (submesh.has_binormals && submesh.has_tangents) flags |= MESH_FLAG_HAS_TBN;
+		if (submesh.has_uv0) flags |= MESH_FLAG_HAS_UV0;
+		if (submesh.has_skinning_weights) flags |= MESH_FLAG_HAS_WEIGHTS;
+
 		const uint32_t vertex_count = submesh.vertices.size();
 		const uint32_t index_count = submesh.indices.size();
 		if (index_count % 3 != 0)
@@ -232,6 +256,7 @@ namespace Exporter
 		const uint32_t triangle_count = index_count / 3;
 		const bool use_short_indices = index_count <= std::numeric_limits<uint16_t>::max();
 
+		stream.write((char*)&flags, sizeof(flags));
 		stream.write((char*)&vertex_count, sizeof(vertex_count));
 		stream.write((char*)&triangle_count, sizeof(triangle_count));
 		stream.write((char*)&submesh.aabb, sizeof(submesh.aabb));

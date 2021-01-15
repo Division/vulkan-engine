@@ -1,6 +1,7 @@
 #pragma once
 
 #include "scene/Physics.h"
+#include "resources/PhysCollider.h"
 
 namespace ECS::components
 {
@@ -24,6 +25,7 @@ namespace ECS::components
 	{
 		physx::PxVehicleDrive4W* vehicle = nullptr;
 		physx::PxVehicleDrive4WRawInputData input;
+		Resources::Handle<Resources::PhysCollider> chassis_collider;
 
 		Vehicle() = default;
 		Vehicle(Vehicle&& other)

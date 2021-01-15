@@ -1,8 +1,14 @@
 #pragma once
 
+#include "resources/ResourceCache.h"
 #include "scene/Physics.h"
 #include "ecs/ECS.h"
 #include "SceneQuery.h"
+
+namespace Resources
+{
+	class PhysCollider;
+}
 
 namespace Vehicle::Utils
 {
@@ -53,7 +59,8 @@ namespace Vehicle::Utils
 			wheelWidth(0.0f),
 			wheelRadius(0.0f),
 			wheelMOI(0.0f),
-			wheelMaterial(NULL)
+			wheelMaterial(NULL),
+			chassis_collider(nullptr)
 		{
 		}
 
@@ -71,6 +78,7 @@ namespace Vehicle::Utils
 		physx::PxMaterial* wheelMaterial;
 		physx::PxU32 numWheels;
 		physx::PxFilterData wheelSimFilterData;	//word0 = collide type, word1 = collide against types, word2 = PxPairFlags
+		Resources::Handle<Resources::PhysCollider> chassis_collider;
 	};
 
 	class VehicleDataCache

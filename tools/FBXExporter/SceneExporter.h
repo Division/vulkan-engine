@@ -19,8 +19,9 @@ namespace Exporter
 			PhysConvex
 		};
 
+
 		std::string name;
-		std::vector<FbxMesh*> meshes;
+		std::vector<SourceMesh> meshes;
 		std::vector<FbxSkeleton*> bones;
 		std::vector<SubMesh> submeshes;
 		Type type = Type::Mesh;
