@@ -91,6 +91,7 @@ namespace render {
 		std::unique_ptr<DrawCallManager> draw_call_manager;
 		std::unique_ptr<ECS::systems::CreateDrawCallsSystem> create_draw_calls_system;
 		std::unique_ptr<ECS::systems::UploadDrawCallsSystem> upload_draw_calls_system;
+		Device::Handle<Device::Texture> blank_texture;
 		Resources::Handle<Resources::TextureResource> environment_cubemap;
 		Resources::Handle<Resources::TextureResource> radiance_cubemap;
 		Resources::Handle<Resources::TextureResource> irradiance_cubemap;

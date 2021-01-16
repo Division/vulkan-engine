@@ -8,8 +8,6 @@ Engine roadmap:
 - [partly done] FBX mesh export
 - Add support for singleton components (store in EntityManager by pointer)
 - Proper alignment of ECS components, remove packing
-- FBX physics mesh export
-- Material resource
 - physics rendering interpolation
 - Fix logging, log from multiple threads
 - Fix and migrate lighting, decals, shadowmaps to ECS
@@ -30,6 +28,7 @@ Check:
 
 -- Completed -----------------------------------
 
++ Material resource
 + Multithreading, job system
 + Async resource loading
 + Fix release build settings in cmake
@@ -37,3 +36,4 @@ Check:
 + PhysX integration 
 + Rendering of MultiMesh
 + Extract assets into a private repo
++ FBX physics mesh export

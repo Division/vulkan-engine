@@ -129,6 +129,17 @@ inline int32_t getPowerOfTwo(int32_t value) {
 	return pow(2, (int)ceilf(result));
 }
 
+inline uint32_t NextPowerOfTwo(uint32_t n)
+{
+    --n;
+    n |= n >> 1;
+    n |= n >> 2;
+    n |= n >> 4;
+    n |= n >> 8;
+    n |= n >> 16;
+    return n + 1;
+}
+
 inline mat4 ComposeMatrix(const vec3& position, const quat& rotation, const vec3& scale)
 {
 	mat4 result;

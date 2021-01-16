@@ -2,6 +2,7 @@
 #include "utils/Math.h"
 
 using namespace Device;
+using namespace Resources;
 
 Material::Material()
 {
@@ -25,17 +26,42 @@ void Material::SetDirty()
 
 void Material::Texture0(Device::Handle<Device::Texture> texture) {
 	texture0 = texture;
-	
+	texture0_resource = TextureResource::Handle();
+
 	if ((bool)texture != has_texture0) {
 		has_texture0 = (bool)texture;
 		SetDirty();
 	}
 }
 
-void Material::NormalMap(Device::Handle<Device::Texture> normal_map) {
-	normal_map = normal_map;
+void Material::NormalMap(Device::Handle<Device::Texture> normal_map) 
+{
+	this->normal_map = normal_map;
+	normal_map_resource = TextureResource::Handle();
 
 	if ((bool)normal_map != has_normal_map) {
+		has_normal_map = (bool)normal_map;
+		SetDirty();
+	}
+}
+
+void Material::SetTexture0Resource(TextureResource::Handle texture)
+{
+	texture0_resource = texture;
+	this->texture0.Reset();
+
+	if ((bool)texture0_resource != has_texture0) {
+		has_texture0 = (bool)texture;
+		SetDirty();
+	}
+}
+
+void Material::SetNormalMapResource(Resources::TextureResource::Handle normal_map)
+{
+	this->normal_map_resource = normal_map;
+	this->normal_map.Reset();
+
+	if ((bool)normal_map_resource != has_normal_map) {
 		has_normal_map = (bool)normal_map;
 		SetDirty();
 	}

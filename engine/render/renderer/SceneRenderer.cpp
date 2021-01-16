@@ -87,6 +87,11 @@ namespace render {
 
 		compute_buffer = std::make_unique<DynamicBuffer<unsigned char>>(128 * 128 * sizeof(vec4), BufferType::Storage);
 
+		uint32_t colors[16];
+		for (auto& color : colors)
+			color = 0xFFFF00FF;
+		blank_texture = Device::Texture::Create(Device::TextureInitializer(4, 4, 4, colors, false));
+
 		/*auto compute_shader_info = ShaderProgramInfo()
 			.AddShader(ShaderProgram::Stage::Compute, L"shaders/test.comp");
 		compute_program = shader_cache->GetShaderProgram(compute_shader_info);
@@ -459,7 +464,14 @@ namespace render {
 		switch (texture_name)
 		{
 		case ShaderTextureName::Texture0:
-			return material.Texture0().get();
+		{
+			if (!material.GetTexture0Resource() && material.Texture0())
+				return material.Texture0().get();
+			else if (material.GetTexture0Resource().IsResolved())
+				return material.GetTexture0Resource()->Get().get();
+			else
+				return blank_texture.get();
+		}
 
 		case ShaderTextureName::ShadowMap:
 			return shadowmap_atlas_attachment->GetTexture().get();

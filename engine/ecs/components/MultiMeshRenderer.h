@@ -12,8 +12,6 @@ class Material;
 namespace ECS::components 
 {
 
-#pragma pack(push)
-#pragma pack(1)
 	struct MultiMeshRenderer
 	{
 		Resources::MultiMesh::Handle multi_mesh;
@@ -22,6 +20,5 @@ namespace ECS::components
 		utils::SmallVector<Device::ShaderBufferStruct::ObjectParams, 4> object_params;
 		render::DrawCallManager::Handle draw_calls;
 	};
-#pragma pack(pop)
 
 }

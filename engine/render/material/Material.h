@@ -5,6 +5,7 @@
 #include "render/device/Resource.h"
 #include "render/texture/Texture.h"
 #include "render/shader/ShaderCache.h"
+#include "resources/TextureResource.h"
 #include "Handle.h"
 
 namespace Device 
@@ -32,9 +33,15 @@ public:
 
 	void Texture0(Device::Handle<Device::Texture> texture);
 	const Device::Handle<Device::Texture>& Texture0() const { return texture0; };
-	
+
+	void SetTexture0Resource(Resources::TextureResource::Handle texture);
+	const Resources::TextureResource::Handle& GetTexture0Resource() const { return texture0_resource; };
+
 	void NormalMap(Device::Handle<Device::Texture> normal_map_);
 	Device::Handle<Device::Texture> NormalMap() const { return normal_map; };
+
+	void SetNormalMapResource(Resources::TextureResource::Handle normal_map);
+	const Resources::TextureResource::Handle& GetNormalMapResource() const { return normal_map_resource; };
 
 	void LightingEnabled(bool lighting_enabled_);
 	bool LightingEnabled() const { return lighting_enabled; }
@@ -82,10 +89,11 @@ protected:
 
 	bool has_texture0 = false;
 	Device::Handle<Device::Texture> texture0;
-
+	Resources::TextureResource::Handle texture0_resource;
 
 	bool has_normal_map = false;
 	Device::Handle<Device::Texture> normal_map;
+	Resources::TextureResource::Handle normal_map_resource;
 
 	bool lighting_enabled = true;
 	bool vertex_color_enabled = false;

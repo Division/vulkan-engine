@@ -279,7 +279,7 @@ float4 ps_main(VS_out input) : SV_TARGET
     float4 result_color = object_params.color;
     
 #if defined(TEXTURE0)
-    float4 texture0_color = texture0.Sample(SamplerLinearWrap, normalize(input.texcoord0));
+    float4 texture0_color = texture0.Sample(SamplerLinearWrap, input.texcoord0);
     result_color *= texture0_color;
 #endif
 

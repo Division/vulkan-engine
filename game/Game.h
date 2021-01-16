@@ -40,6 +40,7 @@ namespace Resources
 	class TextureResource;
 	class MultiMesh;
 	class PhysCollider;
+	class MaterialResource;
 }
 
 class Game : public IGame, public IGamePhysicsDelegate {
@@ -73,6 +74,7 @@ private:
 	ECS::EntityID entity2;
 	ECS::EntityID plane;
 
+	Resources::Handle<Resources::MaterialResource> test_material;
 	Common::Handle<Material> material_light_only;
 	Common::Handle<Material> material_no_light;
 	Common::Handle<Material> material_default;

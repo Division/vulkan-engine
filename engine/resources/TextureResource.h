@@ -19,7 +19,7 @@ namespace Resources
 		TextureResource(const std::wstring& filename);
 		~TextureResource();
 
-		Device::Handle<Device::Texture> Get() const { return texture; }
+		const Device::Handle<Device::Texture>& Get() const { return texture; }
 
 	private:
 		Device::Handle<Device::Texture> texture;

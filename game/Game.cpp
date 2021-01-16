@@ -17,6 +17,7 @@
 #include "resources/TextureResource.h"
 #include "resources/MultiMesh.h"
 #include "resources/PhysCollider.h"
+#include "resources/MaterialResource.h"
 #include "system/JobSystem.h"
 #include "system/Input.h"
 #include "entities/vehicle/VehicleUtils.h"
@@ -194,8 +195,8 @@ std::vector<ECS::EntityID> Game::CreateStack(vec3 position, quat rotation, float
 			ECS::EntityID cube = CreateMeshEntity(vec3(0, 0, 0), 0, box_mesh.get());
 			AddPhysics(cube, PhysicsInitializer(position, rotation, PhysicsInitializer::Shape::Box, half_extent));
 			auto renderer = manager->GetComponent<components::MeshRenderer>(cube);
-			renderer->material = renderer->material->Clone();
-			renderer->material->SetColor(vec4(0.2, 0.9, 0.1, 1));
+			renderer->material = test_material->Get();
+			//renderer->material->SetColor(vec4(0.2, 0.9, 0.1, 1));
 			result.push_back(cube);
 		}
 	}
@@ -216,6 +217,8 @@ void Game::init()
 	vehicle_data_cache = std::make_unique<VehicleDataCache>(*physics->GetScene(), *physics->GetAllocator(), *tire_material);
 
 	delta_time = std::make_unique<components::DeltaTime>();
+
+	test_material = Resources::MaterialResource::Handle(L"assets/Entities/Sphere/sphere.mat");
 
 	sphere_bundle = ModelBundleHandle(L"assets/resources/models/sphere.mdl");
 	environment = Resources::TextureResource::Handle(L"assets/resources/environment/skybox.ktx");
@@ -268,7 +271,7 @@ void Game::init()
 	material_no_light->LightingEnabled(false);
 	material_default = Material::Create();
 	material_default->LightingEnabled(true);
-	//material_default->Texture0(lama_tex->Get());
+	material_default->Texture0(lama_tex->Get());
 
 	plane = CreateMeshEntity(vec3(0, 0, 0), 0, plane_mesh.get());
 	auto mesh_renderer = manager->GetComponent<components::MeshRenderer>(plane);

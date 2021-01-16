@@ -199,7 +199,7 @@ namespace ECS {
 			, entity_address_callback(entity_address_callback)
 			, entity_count(0)
 		{
-			memory = allocator.allocate(CHUNK_SIZE);
+			memory = allocator.allocate_aligned(CHUNK_SIZE, 128);
 		}
 
 		Chunk(ComponentLayout&& layout, EntityAddressChangedCallback entity_address_callback) = delete;
