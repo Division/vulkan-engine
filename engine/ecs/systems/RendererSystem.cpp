@@ -55,9 +55,9 @@ namespace ECS { namespace systems {
 			auto* transform = transform_fetcher.GetComponent(i);
 			mesh_renderer->object_params.resize(mesh_renderer->multi_mesh->GetMeshCount());
 
-			assert(mesh_renderer->materials->size() > 0);
+			assert(mesh_renderer->HasMaterials());
 
-			if (mesh_renderer->materials->empty())
+			if (!mesh_renderer->HasMaterials())
 			{
 				mesh_renderer->object_params.clear();
 				continue;
@@ -66,7 +66,7 @@ namespace ECS { namespace systems {
 			for (int j = 0; j < mesh_renderer->multi_mesh->GetMeshCount(); j++)
 			{
 				auto& object_params = mesh_renderer->object_params[j];
-				auto& material = (*mesh_renderer->materials)[std::min((size_t)j, mesh_renderer->materials->size() - 1)];
+				auto& material = mesh_renderer->GetMaterial(j);
 				object_params.transform = transform->local_to_world;
 				object_params.uvOffset = vec2(0, 0);
 				object_params.uvScale = vec2(1, 1);

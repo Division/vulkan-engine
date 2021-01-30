@@ -8,6 +8,7 @@
 #include "utils/Math.h"
 #include "EntityChunks.h"
 #include "components/Entity.h"
+#include "EntityTemplate.h"
 
 namespace ECS {
 
@@ -77,6 +78,24 @@ namespace ECS {
 
 			while (!entity_address.empty())
 				DestroyEntity((*entity_address.begin()).first);
+		}
+
+		template<typename T>
+		void RegisterComponentTemplate(std::string key)
+		{
+			assert(component_templates.find(key) == component_templates.end());
+			component_templates[key] = []() -> std::unique_ptr<ComponentTemplate> {
+				return std::make_unique<T>();
+			};
+		}
+
+		std::unique_ptr<ComponentTemplate> GetComponentTemplate(const std::string& key)
+		{
+			auto iter = component_templates.find(key);
+			if (iter == component_templates.end())
+				return nullptr;
+			
+			return (*iter->second)();
 		}
 
 		template<typename T>
@@ -359,6 +378,7 @@ namespace ECS {
 		std::unordered_map<EntityID, EntityAddress> entity_address;
 		std::unordered_map<ComponentHash, void*> static_components;
 		std::vector<EntityCallbackData> entity_destroy_callbacks;
+		std::unordered_map<std::string, std::unique_ptr<ComponentTemplate>(*)(void)> component_templates;
 	};
 
 }

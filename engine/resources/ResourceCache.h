@@ -35,6 +35,7 @@ namespace Resources
 
 		uint32_t GetRefCount() const { return reference_counter; }
 		bool IsResolved() { return state == State::Loaded; }
+		const std::wstring& GetFilename() const { return filename; }
 
 	protected:
 		
@@ -253,6 +254,7 @@ namespace Resources
 		operator bool() const { return (bool)resource; }
 
 		bool IsResolved() const { return resource && resource->IsResolved(); }
+		const std::wstring GetFilename() const { return resource ? resource->GetFilename() : L""; }
 
 	private:
 		Resource<T>* resource;
@@ -264,7 +266,7 @@ namespace Resources
 		template<typename> friend class Handle;
 		static Cache& Get();
 
-		void GCCollect();
+		size_t GCCollect();
 		void Destroy();
 
 	private:

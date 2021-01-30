@@ -32,6 +32,8 @@ Scene::Scene(IGame& game, render::DebugSettings* settings)
     entity_manager = std::make_unique<EntityManager>();
     transform_graph = std::make_unique<TransformGraph>(*entity_manager);
 
+    RegisterEngineComponentTemplates(*entity_manager);
+
     no_child_system = std::make_unique<systems::NoChildTransformSystem>(*transform_graph, *entity_manager);
     root_transform_system = std::make_unique<systems::RootTransformSystem>(*transform_graph, *entity_manager);
     update_renderer_system = std::make_unique<systems::UpdateRendererSystem>(*entity_manager);

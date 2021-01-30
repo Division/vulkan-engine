@@ -17,7 +17,7 @@
 #include "resources/TextureResource.h"
 #include "resources/MultiMesh.h"
 #include "resources/PhysCollider.h"
-#include "resources/MaterialResource.h"
+#include "resources/EntityResource.h"
 #include "system/JobSystem.h"
 #include "system/Input.h"
 #include "entities/vehicle/VehicleUtils.h"
@@ -53,8 +53,8 @@ struct Game::PhysicsInitializer
 	bool is_static;
 	vec3 position;
 	quat rotation;
-	float size; // radius or half_size
-	Shape shape;
+	float size; 
+	Shape shape;// radius or half_size
 };
 
 EntityID Game::CreateMeshEntity(vec3 position, EntityID parent, Mesh* mesh)
@@ -76,7 +76,7 @@ EntityID Game::CreateMeshEntity(vec3 position, EntityID parent, Mesh* mesh)
 	return entity;
 }
 
-EntityID Game::CreateMultiMeshEntity(vec3 position, quat rotation, ECS::EntityID parent, const Resources::Handle<Resources::MultiMesh>& mesh, const Common::Handle<render::MaterialList>& materials)
+EntityID Game::CreateMultiMeshEntity(vec3 position, quat rotation, ECS::EntityID parent, const Resources::Handle<Resources::MultiMesh>& mesh, const render::MaterialList::Handle& materials)
 {
 	auto entity = manager->CreateEntity();
 	if (parent)
@@ -218,7 +218,10 @@ void Game::init()
 
 	delta_time = std::make_unique<components::DeltaTime>();
 
+	entity_resource = Resources::EntityResource::Handle(L"assets/Entities/Sphere/sphere.entity");
 	test_material = Resources::MaterialResource::Handle(L"assets/Entities/Sphere/sphere.mat");
+
+	entity_resource_id = entity_resource->Spawn(vec3(10, -10, 10));
 
 	sphere_bundle = ModelBundleHandle(L"assets/resources/models/sphere.mdl");
 	environment = Resources::TextureResource::Handle(L"assets/resources/environment/skybox.ktx");

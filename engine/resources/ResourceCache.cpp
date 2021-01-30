@@ -1,6 +1,7 @@
 #include "ResourceCache.h"
 #include <vector>
 #include "utils/StringUtils.h"
+#include "Handle.h"
 
 namespace Resources
 {
@@ -17,6 +18,15 @@ namespace Resources
 	void Cache::Destroy()
 	{
 		bool has_leaks = false;
+
+		// Destroying resources in multiple iterations since resource may retain references to other resources
+		while (true)
+		{
+			const auto released_resource_count = GCCollect();
+			const auto released_common_count = Common::GetReleaser().Clear(); // Need to clear it since Resources from cache could contain Common::Handle
+			if (released_resource_count == 0 && released_common_count == 0)
+				break;
+		}
 
 		for (auto& pair : resources)
 		{
@@ -51,17 +61,24 @@ namespace Resources
 		resources.insert(std::make_pair(filename, std::move(resource)));
 	}
 
-	void Cache::GCCollect()
+	size_t Cache::GCCollect()
 	{
+		size_t destroyed = 0;
+
 		std::vector<const std::wstring*> filenames_to_free;
 		for (auto& pair : resources)
 		{
 			if (pair.second->GetRefCount() == 0)
+			{
 				filenames_to_free.push_back(&pair.first);
+				destroyed += 1;
+			}
 		}
 
 		for (auto* filename : filenames_to_free)
 			resources.erase(*filename);
+
+		return destroyed;
 	}
 
 	Exception::Exception(const std::wstring& filename)

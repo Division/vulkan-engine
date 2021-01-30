@@ -104,7 +104,7 @@ namespace render
 	class MaterialList : public std::vector<Material::Handle>, public Common::Resource
 	{
 	public:
-		using Handle = Common::Handle<MaterialList>;
+		using Handle = std::shared_ptr<MaterialList>;
 
 		static Handle Create()
 		{

@@ -9,6 +9,16 @@ namespace ECS { namespace systems {
 
 	using namespace ECS::components;
 
+	const Material::Handle& GetMaterial(MultiMeshRenderer* mesh_renderer, size_t index)
+	{
+		return (*mesh_renderer->materials)[std::min(index, mesh_renderer->materials->size() - 1)];
+	};
+
+	const Material::Handle& GetMaterialResource(MultiMeshRenderer* mesh_renderer, size_t index)
+	{
+		return (*mesh_renderer->material_resources)[std::min(index, mesh_renderer->material_resources->size() - 1)]->Get();
+	};
+
 	void CreateDrawCallsSystem::Process(Chunk* chunk)
 	{
 		OPTICK_EVENT();
@@ -53,17 +63,21 @@ namespace ECS { namespace systems {
 				if (mesh_renderer->object_params.size() != mesh_renderer->multi_mesh->GetMeshCount())
 					continue;
 
+				assert((bool)mesh_renderer->material_resources ^ (bool)mesh_renderer->materials);
+
 				auto handle = draw_call_manager.CreateHandle();
 				auto* transform = transform_fetcher.GetComponent(i);
+
+				auto get_material_function = mesh_renderer->material_resources ? &GetMaterialResource : &GetMaterial;
 
 				for (int j = 0; j < mesh_renderer->multi_mesh->GetMeshCount(); j++)
 				{
 					auto& mesh = mesh_renderer->multi_mesh->GetMesh(j);
-					auto& material = (*mesh_renderer->materials)[std::min((size_t)j, mesh_renderer->materials->size() - 1)];
+					auto material = mesh_renderer->GetMaterial((size_t)j);
 					auto draw_call = handle.AddDrawCall(*mesh, *material);
 					draw_call->transform = transform;
 					draw_call->queue = mesh_renderer->render_queue;
-					draw_call->object_params = &mesh_renderer->object_params[j]; // TODO: move to AddDrawCall					
+					draw_call->object_params = &mesh_renderer->object_params[j]; // TODO: move to AddDrawCall
 				}
 
 				mesh_renderer->draw_calls = std::move(handle);

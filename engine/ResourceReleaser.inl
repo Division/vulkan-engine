@@ -31,24 +31,31 @@ void ResourceReleaser::Swap()
 	ClearBucket(next_bucket);
 }
 
-void ResourceReleaser::ClearBucket(int index)
+size_t ResourceReleaser::ClearBucket(int index)
 {
+	const size_t cleared_count = buckets[index].size();
+
 	for (int i = 0; i < buckets[index].size(); i++)
 	{
 		buckets[index][i].reset();
 	}
 
 	buckets[index].clear();
+
+	return cleared_count;
 }
 
-void ResourceReleaser::Clear()
+size_t ResourceReleaser::Clear()
 {
 	std::scoped_lock lock(mutex);
 
+	size_t cleared_count = 0;
+
 	for (current_bucket = 0; current_bucket < buckets.size(); current_bucket++)
 	{
-		ClearBucket(current_bucket);
+		cleared_count += ClearBucket(current_bucket);
 	}
 
 	current_bucket = 0;
+	return cleared_count;
 }

@@ -9,6 +9,7 @@
 #include "ecs/components/Light.h"
 #include "ecs/components/Physics.h"
 #include "resources/ResourceCache.h"
+#include "resources/MaterialResource.h"
 
 
 class Mesh;
@@ -41,6 +42,7 @@ namespace Resources
 	class MultiMesh;
 	class PhysCollider;
 	class MaterialResource;
+	class EntityResource;
 }
 
 class Game : public IGame, public IGamePhysicsDelegate {
@@ -60,7 +62,7 @@ public:
 private:
 	ECS::EntityID CreateMeshEntity(vec3 position, ECS::EntityID parent, Mesh* mesh);
 	ECS::EntityID CreateLightEntity(vec3 position, float radius, ECS::components::Light::Type type, vec3 color = vec3(1));
-	ECS::EntityID CreateMultiMeshEntity(vec3 position, quat rotation, ECS::EntityID parent, const Resources::Handle<Resources::MultiMesh>& mesh, const Common::Handle<render::MaterialList>& materials);
+	ECS::EntityID CreateMultiMeshEntity(vec3 position, quat rotation, ECS::EntityID parent, const Resources::Handle<Resources::MultiMesh>& mesh, const render::MaterialList::Handle& materials);
 	std::vector<ECS::EntityID> CreateStack(vec3 position, quat rotation, float half_extent, uint32_t count);
 	physx::PxRigidActor* AddPhysics(ECS::EntityID entity, const PhysicsInitializer& init);
 
@@ -73,8 +75,10 @@ private:
 	ECS::EntityID entity1;
 	ECS::EntityID entity2;
 	ECS::EntityID plane;
+	ECS::EntityID entity_resource_id;
 
 	Resources::Handle<Resources::MaterialResource> test_material;
+	Resources::Handle<Resources::EntityResource> entity_resource;
 	Common::Handle<Material> material_light_only;
 	Common::Handle<Material> material_no_light;
 	Common::Handle<Material> material_default;

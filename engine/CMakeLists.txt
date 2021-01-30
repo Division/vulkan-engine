@@ -61,6 +61,8 @@ set(ENGINE_SOURCES
 	ecs/EntityChunks.h
 	ecs/TransformGraph.h
 	ecs/CommandBuffer.h
+	ecs/EntityTemplate.h
+	ecs/EntityTemplate.cpp
 	ecs/components/Static.h
 	ecs/components/Transform.h
 	ecs/components/Entity.h
@@ -205,6 +207,12 @@ set(ENGINE_SOURCES
 	resources/TextureResource.cpp
 	resources/MultiMesh.h
 	resources/MultiMesh.cpp
+	resources/PhysCollider.h
+	resources/PhysCollider.cpp
+	resources/MaterialResource.h
+	resources/MaterialResource.cpp
+	resources/EntityResource.h
+	resources/EntityResource.cpp
 	loader/TextureLoader.h
 	loader/TextureLoader.cpp
 	loader/FileLoader.h

@@ -21,10 +21,10 @@ namespace Common
 
 		void Add(std::shared_ptr<Resource> resource);
 		void Swap();
-		void Clear();
+		size_t Clear();
 
 	private:
-		void ClearBucket(int index);
+		size_t ClearBucket(int index);
 
 		std::recursive_mutex mutex;
 		uint32_t current_bucket = 0;

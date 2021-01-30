@@ -15,9 +15,28 @@ namespace ECS {
 
 	struct EntityData
 	{
-		//EntityAddress address;
 		EntityID id = 0;
-		//const ComponentLayout* layout;
 	};
+
+
+	namespace components
+	{
+		struct RootEntity
+		{
+			//utils::SmallVector<EntityID, 4> entities;
+
+			// TODO: implement destruction of related entities
+
+			RootEntity()
+			{
+
+			}
+
+			~RootEntity()
+			{
+			
+			}
+		};
+	}
 
 }

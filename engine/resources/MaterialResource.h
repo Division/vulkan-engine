@@ -19,5 +19,24 @@ namespace Resources
 
 	private:
 		Common::Handle<Material> material;
+
+	};
+}
+
+namespace render
+{
+	class MaterialResourceList : public std::vector<Resources::MaterialResource::Handle>, public Common::Resource
+	{
+	public:
+		using Handle = std::shared_ptr<MaterialResourceList>;
+
+		static Handle Create()
+		{
+			return Handle(std::make_unique<MaterialResourceList>());
+		}
+
+		~MaterialResourceList()
+		{
+		}
 	};
 }

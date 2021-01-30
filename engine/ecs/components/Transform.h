@@ -3,6 +3,7 @@
 #include "CommonIncludes.h"
 #include "Entity.h"
 #include "utils/Math.h"
+#include "ecs/EntityTemplate.h"
 
 namespace ECS { namespace components {
 
@@ -10,7 +11,7 @@ namespace ECS { namespace components {
 	{
 		AABB bounds = AABB(vec3(-1), vec3(1));
 		quat rotation;
-		vec3 position;
+		vec3 position = vec3(0,0,0);
 		vec3 scale = vec3(1,1,1);
 		mat4 local_to_world;
 		
@@ -61,5 +62,6 @@ namespace ECS { namespace components {
 	{
 		EntityID parent_id;
 	};
+
 
 } }

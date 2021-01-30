@@ -19,7 +19,7 @@ Engine roadmap:
 - Shader reloading
 - dds loading
 - Multithreaded rendering
-- GameObject file format and editor
+- GameObject file format
 - GUI library integration
 
 Check:

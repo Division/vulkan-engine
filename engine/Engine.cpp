@@ -106,9 +106,7 @@ Engine::~Engine()
 	shader_cache = nullptr;
 	debug_draw = nullptr;
 
-	Common::GetReleaser().Clear(); // Common::Resource may contain Resources::Resource
-	Resources::Cache::Get().Destroy(); // Destroying Resources from the cache
-	Common::GetReleaser().Clear(); // Need to clear it again since Resources from cache could contain Common::Handle
+	Resources::Cache::Get().Destroy(); // Destroying Resources from the cache as well as all the Common::Resource
 	::Device::GetReleaser().Clear(); // Goes last since Device::Resource never contains Common::Resource
 	vulkan_context->Cleanup();
 	vulkan_context = nullptr;
