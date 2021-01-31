@@ -15,6 +15,11 @@ set(GAME_SOURCES
 	systems/ControlsSystem.h
 	systems/ControlsSystem.cpp
 	components/PlayerInput.h
+	gameplay/Gameplay.h
+	gameplay/Gameplay.cpp
+	gameplay/GameplayUtils.h
+	gameplay/GameplayUtils.cpp
+	gameplay/components/Sphere.h
 )
  
 include_directories(../engine ../engine/lib .)

@@ -27,8 +27,8 @@ int main(int argc, char** argv) {
             return 1;
         }
 
-        settings.bin_assets_path = json["exported_asset_path"].GetString();
-        settings.assets_path = json["asset_path"].GetString();
+        settings.bin_assets_path = fs::absolute(fs::path(json["exported_asset_path"].GetString()));
+        settings.assets_path = fs::absolute(fs::path(json["asset_path"].GetString()));
     }
 
     if (argc == 0)
@@ -37,11 +37,10 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-
     std::filesystem::create_directories(settings.bin_assets_path);
 
 #if defined (_DEBUG)
-    settings.input_path = settings.assets_path / "vehicle/player/player.fbx";
+    settings.input_path = settings.assets_path / "Entities/Sphere/sphere.fbx";
 #endif
 
     if (argc == 2)

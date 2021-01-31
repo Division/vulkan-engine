@@ -8,6 +8,7 @@ class IGamePhysicsDelegate
 public:
 	virtual ~IGamePhysicsDelegate() = default;
 	virtual physx::PxSimulationFilterShader GetFilterShader() = 0;
+	virtual physx::PxVec3 GetGravity() = 0;
 	virtual void UpdatePhysics(float dt) = 0;
 };
 

@@ -6,6 +6,7 @@
 #include "rapidjson/writer.h"
 #include "rapidjson/stringbuffer.h"
 #include "utils/StringUtils.h"
+#include "utils/JsonUtils.h"
 #include "system/Logging.h"
 
 namespace Resources
@@ -62,7 +63,7 @@ namespace Resources
 			}
 			else if (name == "color")
 			{
-				//new_material->SetColor(0);
+				new_material->SetColor(utils::JSON::ReadVector4(iter->value));
 			}
 			else
 			{

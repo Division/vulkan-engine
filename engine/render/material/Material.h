@@ -29,7 +29,7 @@ public:
 	Material();
 	~Material();
 
-	Handle Clone();
+	Handle Clone() const;
 
 	void Texture0(Device::Handle<Device::Texture> texture);
 	const Device::Handle<Device::Texture>& Texture0() const { return texture0; };

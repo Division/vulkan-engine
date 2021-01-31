@@ -36,6 +36,11 @@ namespace ECS::components
 	struct DeltaTime;
 }
 
+namespace game
+{
+	class Gameplay;
+}
+
 namespace Resources
 {
 	class TextureResource;
@@ -54,49 +59,17 @@ public:
 	void UpdatePhysics(float dt) override;
 	IGamePhysicsDelegate* GetPhysicsDelegate() override;
 	physx::PxSimulationFilterShader GetFilterShader() override;
+	physx::PxVec3 GetGravity() override;
 	void cleanup() override;
-
-	struct PhysicsInitializer;
-
-
-private:
-	ECS::EntityID CreateMeshEntity(vec3 position, ECS::EntityID parent, Mesh* mesh);
-	ECS::EntityID CreateLightEntity(vec3 position, float radius, ECS::components::Light::Type type, vec3 color = vec3(1));
-	ECS::EntityID CreateMultiMeshEntity(vec3 position, quat rotation, ECS::EntityID parent, const Resources::Handle<Resources::MultiMesh>& mesh, const render::MaterialList::Handle& materials);
-	std::vector<ECS::EntityID> CreateStack(vec3 position, quat rotation, float half_extent, uint32_t count);
-	physx::PxRigidActor* AddPhysics(ECS::EntityID entity, const PhysicsInitializer& init);
 
 private:
 	std::unique_ptr<ViewerCamera> camera;
 	std::unique_ptr<ECS::components::DeltaTime> delta_time;
 	std::unique_ptr<Vehicle::Utils::VehicleDataCache> vehicle_data_cache;
-	std::shared_ptr<ModelBundle> player_model;
+	std::unique_ptr<game::Gameplay> gameplay;
 
-	ECS::EntityID entity1;
-	ECS::EntityID entity2;
-	ECS::EntityID plane;
-	ECS::EntityID entity_resource_id;
-
-	Resources::Handle<Resources::MaterialResource> test_material;
-	Resources::Handle<Resources::EntityResource> entity_resource;
-	Common::Handle<Material> material_light_only;
-	Common::Handle<Material> material_no_light;
-	Common::Handle<Material> material_default;
-	Common::Handle<Mesh> plane_mesh;
-	Common::Handle<Mesh> sphere_mesh;
-	Common::Handle<Mesh> box_mesh;
-	Resources::Handle<ModelBundle> sphere_bundle;
-	Resources::Handle<Resources::TextureResource> lama_tex;
-	Resources::Handle<Resources::TextureResource> environment;
-	Resources::Handle<Resources::MultiMesh> test_mesh;
-	Resources::Handle<Resources::PhysCollider> player_collider;
-	std::vector<Physics::Handle<physx::PxRigidStatic>> physics_static;
-	ECS::EntityID test_mesh_entity;
-
-	ECS::EntityManager* manager;
-	ECS::TransformGraph* graph;
-
-	std::vector<ECS::EntityID> temp_entities;
+	ECS::EntityManager* manager = nullptr;
+	ECS::TransformGraph* graph = nullptr;
 
 	bool camera_control = false;
 };

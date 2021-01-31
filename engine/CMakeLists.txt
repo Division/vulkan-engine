@@ -183,6 +183,8 @@ set(ENGINE_SOURCES
 	scene/Scene.cpp
 	scene/Physics.h
 	scene/Physics.cpp
+	scene/PhysicsHelper.h
+	scene/PhysicsHelper.cpp
 	scene/Transform.h
 	scene/Transform.cpp
 	objects/Camera.h
@@ -242,6 +244,7 @@ set(ENGINE_SOURCES
 	utils/Pool.h
 	utils/CapsSet.h
 	utils/Frustum.h
+	utils/JsonUtils.h
 )
 
 include_directories(./ lib)

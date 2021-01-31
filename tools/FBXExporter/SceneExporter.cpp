@@ -39,6 +39,8 @@ namespace Exporter
 		manager->SetIOSettings(ios);
 		input_is_in_assets = utils::BeginsWith(settings.input_path.wstring(), settings.assets_path.wstring());
 
+		std::cout << "input_is_in_assets: " << input_is_in_assets << "\n";
+
 		static PxDefaultAllocator DefaultAllocator;
 		static ErrorCallback ErrorCallback;
 
@@ -264,7 +266,7 @@ namespace Exporter
 	{
 		if (input_is_in_assets)
 		{
-			auto path = src_path.wstring().replace(0, settings.assets_path.wstring().size(), settings.bin_assets_path);
+			auto path = src_path.wstring().replace(0, settings.assets_path.wstring().size(), settings.bin_assets_path );
 			return path;
 		}
 		else 

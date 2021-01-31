@@ -13,7 +13,7 @@ Material::~Material()
 
 }
 
-Material::Handle Material::Clone()
+Material::Handle Material::Clone() const
 {
 	return Handle(std::make_unique<Material>(*this));
 }

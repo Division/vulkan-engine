@@ -101,6 +101,7 @@ namespace Physics
 		Handle<physx::PxRigidStatic> CreatePlaneStatic(const vec3 position, const quat rotation, physx::PxMaterial* material = nullptr);
 		Handle<physx::PxRigidDynamic> CreateBoxDynamic(const vec3 position, const quat rotation, float half_size, physx::PxMaterial* material = nullptr);
 		Handle<physx::PxRigidDynamic> CreateSphereDynamic(const vec3 position, const quat rotation, float readius, physx::PxMaterial* material = nullptr);
+		Handle<physx::PxRigidStatic> CreateSphereStatic(const vec3 position, const quat rotation, float radius, physx::PxMaterial* material = nullptr);
 
 	private:
 		class Allocator : public physx::PxAllocatorCallback

@@ -6,6 +6,8 @@ Game roadmap:
 Engine roadmap:
 - [partly done] optimize tiled lighting or implement clustered
 - [partly done] FBX mesh export
+- Proper deletion of entities loaded from resource
+- export default materials from maya (with texture paths)
 - Add support for singleton components (store in EntityManager by pointer)
 - Proper alignment of ECS components, remove packing
 - physics rendering interpolation
@@ -19,7 +21,6 @@ Engine roadmap:
 - Shader reloading
 - dds loading
 - Multithreaded rendering
-- GameObject file format
 - GUI library integration
 
 Check:
@@ -37,3 +38,4 @@ Check:
 + Rendering of MultiMesh
 + Extract assets into a private repo
 + FBX physics mesh export
++ GameObject file format

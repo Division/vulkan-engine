@@ -3,7 +3,9 @@
 #include "components/MultiMeshRenderer.h"
 #include "ECS.h"
 #include "utils/StringUtils.h"
+#include "utils/JsonUtils.h"
 #include "resources/MaterialResource.h"
+#include "scene/PhysicsHelper.h"
 
 namespace ECS
 {
@@ -17,28 +19,15 @@ namespace ECS
 
 			virtual void Load(const rapidjson::Value& data) override
 			{
-				vec3 p(0, 0, 0);
-
 				if (data.HasMember("position"))
 				{
-					auto& position = data["position"];
-					if (!position.IsArray())
-						throw std::runtime_error("position must be an array");
-
-					int i = 0;
-					for (auto iter = position.Begin(); iter != position.End(); iter++)
-					{
-						if (i == 3) 
-							throw std::runtime_error("position array must be of length 3");
-
-						p[i++] = iter->GetFloat();
-					}
-
-					if (i != 3)
-						throw std::runtime_error("position array must be of length 3");
-
-					transform.position = p;
+					transform.position = utils::JSON::ReadVector3(data["position"]);
 					skip_position = true;
+				}
+
+				if (data.HasMember("scale"))
+				{
+					transform.scale = utils::JSON::ReadVector3(data["scale"]);
 				}
 			}
 
@@ -87,13 +76,64 @@ namespace ECS
 				component->multi_mesh = Resources::MultiMesh::Handle(path);
 
 				component->material_resources = render::MaterialResourceList::Create();
-				//component->materials = render::MaterialList::Create();
 
 				for (auto& material_path : materials)
 				{
 					component->material_resources->emplace_back(material_path);
-					//component->materials->push_back(Resources::MaterialResource::Handle(material_path)->Get());
 				}
+			}
+		};
+
+		class PhysBodyTemplate : public ComponentTemplate
+		{
+			Physics::Helper::PhysicsInitializer initializer;
+
+			virtual void Load(const rapidjson::Value& data) override
+			{
+				if (!data.HasMember("shape"))
+					throw std::runtime_error("shape must be defined");
+
+				auto& shape = data["shape"];
+				if (!shape.IsString())
+					throw std::runtime_error("shape must be a string");
+
+				const bool has_size = data.HasMember("size");
+				auto& size = data["size"];
+
+				const bool dynamic = data.HasMember("dynamic") && data["dynamic"].GetBool();
+
+				initializer.is_static = !dynamic;
+
+				if (shape.GetString() == std::string("sphere"))
+				{
+					initializer.shape = Physics::Helper::PhysicsInitializer::Shape::Sphere;
+					if (!has_size || !size.IsNumber())
+						throw std::runtime_error("size is missing or must be a number");
+
+					initializer.size = size.GetFloat();
+				}
+				else if (shape.GetString() == std::string("box"))
+				{
+					initializer.shape = Physics::Helper::PhysicsInitializer::Shape::Box;
+					if (!has_size || !size.IsNumber())
+						throw std::runtime_error("size is missing or must be a number");
+
+					initializer.size = size.GetFloat();
+				}
+				else if (shape.GetString() == std::string("plane"))
+				{
+					initializer.shape = Physics::Helper::PhysicsInitializer::Shape::Plane;
+				}
+				else
+				{
+					throw std::runtime_error("unknown shape");
+				}
+			}
+
+			virtual void Spawn(EntityManager& manager, EntityID entity, vec3 position) override
+			{
+				initializer.position = position;
+				Physics::Helper::AddPhysics(manager, entity, initializer);
 			}
 		};
 	}
@@ -142,6 +182,7 @@ namespace ECS
 	{
 		manager.RegisterComponentTemplate<components::TransformTemplate>("Transform");
 		manager.RegisterComponentTemplate<components::MultiMeshRendererTemplate>("MultiMeshRenderer");
+		manager.RegisterComponentTemplate<components::PhysBodyTemplate>("PhysBody");
 		
 	}
 

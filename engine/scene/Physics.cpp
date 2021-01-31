@@ -7,7 +7,7 @@ using namespace physx;
 namespace Physics
 {
 
-	constexpr bool DEBUG_RENDER_ENABLED_AT_START = true;
+	constexpr bool DEBUG_RENDER_ENABLED_AT_START = false;
 
 	void* PhysXManager::Allocator::allocate(size_t size, const char* typeName, const char* filename, int line)
 	{
@@ -75,7 +75,7 @@ namespace Physics
 		PxVehicleSetUpdateMode(PxVehicleUpdateMode::eACCELERATION);
 
 		PxSceneDesc scene_desc(physics->getTolerancesScale());
-		scene_desc.gravity = PxVec3(0.0f, -9.81f, 0.0f);
+		scene_desc.gravity = delegate->GetGravity();
 		dispatcher = PxDefaultCpuDispatcherCreate(std::thread::hardware_concurrency());
 		scene_desc.cpuDispatcher = dispatcher.get();
 		scene_desc.filterShader	= delegate ? delegate->GetFilterShader() : PxDefaultSimulationFilterShader;
@@ -262,4 +262,10 @@ namespace Physics
 	{
 		return CreateDynamic(position, rotation, PxSphereGeometry(radius));
 	}
+
+	Handle<physx::PxRigidStatic> PhysXManager::CreateSphereStatic(const vec3 position, const quat rotation, float radius, physx::PxMaterial* material)
+	{
+		return CreateStatic(position, rotation, PxSphereGeometry(radius));
+	}
+
 }
