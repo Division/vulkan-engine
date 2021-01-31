@@ -52,3 +52,13 @@ void Camera::Update()
     view_projection_matrix = projection_matrix * view_matrix;
     frustum.calcPlanes(view_projection_matrix);
 }
+
+std::pair<vec3, vec3> Camera::GetMouseRay(vec2 mouse_position)
+{
+    const vec3 start = Transform().WorldPosition();
+    const auto screen_size = Engine::Get()->GetScreenSize();
+    const glm::vec3 world_pos = glm::unProject(vec3(vec2(mouse_position.x, screen_size.y - mouse_position.y), 1.0f), view_matrix, projection_matrix, viewport);
+    const glm::vec3 dir = glm::normalize(glm::vec3(world_pos) - start);
+     
+    return std::make_pair(start, dir);
+}

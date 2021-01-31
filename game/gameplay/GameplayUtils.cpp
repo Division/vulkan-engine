@@ -65,4 +65,9 @@ namespace game
 
 		return entity;
 	}
+
+	utils::SmallVector<ECS::EntityID, 10> Gameplay::GameplayUtils::Raycast(vec3 position, vec3 direction)
+	{
+		return {};
+	}
 }

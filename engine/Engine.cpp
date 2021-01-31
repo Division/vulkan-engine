@@ -1,5 +1,6 @@
 #include "Engine.h"
 #include "render/device/VulkanContext.h"
+#include "render/device/VulkanSwapchain.h"
 #include "render/device/VulkanUploader.h"
 #include "system/Logging.h"
 #include "scene/Scene.h"
@@ -119,6 +120,11 @@ Engine::~Engine()
 	glfwTerminate();
 
 	OPTICK_SHUTDOWN();
+}
+
+vec2 Engine::GetScreenSize()
+{
+	return vec2(GetContext()->GetSwapchain()->GetWidth(), GetContext()->GetSwapchain()->GetHeight());
 }
 
 void Engine::SizeCallback(GLFWwindow* window, int32_t width, int32_t height)

@@ -13,12 +13,7 @@
 
 
 class Mesh;
-class FollowCamera;
-class ModelBundle;
-class MeshObject;
-class PlayerController;
 class Material;
-class LightObject;
 class ViewerCamera;
 
 namespace render

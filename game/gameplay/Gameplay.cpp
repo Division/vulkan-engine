@@ -5,6 +5,8 @@
 #include "ecs/System.h"
 #include "utils/Math.h"
 #include "objects/Camera.h"
+#include "system/Input.h"
+#include "render/debug/DebugDraw.h"
 
 using namespace ECS;
 using namespace physx;
@@ -96,6 +98,25 @@ namespace game
 			rigidbody->body->setLinearVelocity(PxVec3(-30, 0, 0));
 		}
 
+		ProcessInput();
+	}
+
+	void Gameplay::ProcessInput()
+	{
+		static vec3 debug_start;
+		static vec3 debug_dir;
+
+		auto input = engine->GetInput();
+		if (input->keyDown(::System::Key::MouseLeft))
+		{
+			auto* camera = Engine::Get()->GetScene()->GetCamera();
+			auto ray = camera->GetMouseRay(input->mousePosition());
+			debug_start = ray.first;
+			debug_dir = ray.second;
+		}
+
+		auto debug_draw = engine->GetDebugDraw();
+		debug_draw->DrawLine(debug_start, debug_start + debug_dir * 100.0f, vec4(1, 0, 0, 1));
 	}
 
 }

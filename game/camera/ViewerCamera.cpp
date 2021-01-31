@@ -41,7 +41,7 @@ void ViewerCamera::Update(float dt) {
       posDelta += scene_camera->Transform().Backward();
     }
 
-    if (input->keyDown(Key::MouseLeft)) {
+    if (input->keyDown(Key::MouseRight)) {
 		//scene_camera->transform()->rotate(vec3(1, 0, 0), -input->mouseDelta().y * 0.008f);
 		//scene_camera->transform()->rotate(vec3(0, 1, 0), -input->mouseDelta().x * 0.008f);
 		_angleX -= input->mouseDelta().y * 0.008f;

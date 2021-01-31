@@ -58,6 +58,7 @@ public:
   void cameraIndex(uint32_t index) override { camera_index = index; };
 
   ECS::components::Transform& Transform() { return transform; }
+  std::pair<vec3, vec3> GetMouseRay(vec2 mouse_position);
 
 protected:
   unsigned int visibility_mask = ~0u; // all visible by default

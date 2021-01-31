@@ -50,6 +50,8 @@ public:
 	render::DebugDraw* GetDebugDraw() const { return debug_draw.get(); }
 	render::SceneRenderer* GetSceneRenderer() const { return scene_renderer.get(); }
 
+	vec2 GetScreenSize();
+
 	void MainLoop();
 
 private:

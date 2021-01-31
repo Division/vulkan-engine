@@ -175,36 +175,16 @@ set(ENGINE_SOURCES
 	render/texture/Texture.cpp
 	render/texture/SpriteSheet.h
 	render/texture/SpriteSheet.cpp
-	scene/AnimationController.h
-	scene/AnimationController.cpp
-	scene/GameObject.h
-	scene/GameObject.cpp
 	scene/Scene.h
 	scene/Scene.cpp
 	scene/Physics.h
 	scene/Physics.cpp
 	scene/PhysicsHelper.h
 	scene/PhysicsHelper.cpp
-	scene/Transform.h
-	scene/Transform.cpp
 	objects/Camera.h
 	objects/Camera.cpp
-	objects/LightObject.h
-	objects/LightObject.cpp
-	objects/MeshObject.h
-	objects/MeshObject.cpp
-	objects/Projector.h
-	objects/Projector.cpp
-	objects/SkinnedMeshObject.h
-	objects/SkinnedMeshObject.cpp
-	resources/ModelBundle.h
-	resources/ModelBundle.cpp
 	resources/ResourceCache.h
 	resources/ResourceCache.cpp
-	resources/HierarchyData.h
-	resources/HierarchyData.cpp
-	resources/SkinningData.h
-	resources/SkinningData.cpp
 	resources/TextureResource.h
 	resources/TextureResource.cpp
 	resources/MultiMesh.h
@@ -219,12 +199,8 @@ set(ENGINE_SOURCES
 	loader/TextureLoader.cpp
 	loader/FileLoader.h
 	loader/FileLoader.cpp
-	loader/HierarchyLoader.h
-	loader/HierarchyLoader.cpp
 	loader/SpritesheetLoader.h
 	loader/SpritesheetLoader.cpp
-	loader/ModelLoader.h
-	loader/ModelLoader.cpp
 	loader/ModelLoaderUtils.h
 	loader/ModelLoaderUtils.cpp
 	system/Logging.h

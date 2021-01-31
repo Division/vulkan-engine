@@ -21,6 +21,7 @@ namespace game
 	private:
 		void ApplyGravity();
 		vec4 GetSphereColor(int index);
+		void ProcessInput();
 
 	private:
 		class GameplayUtils;
