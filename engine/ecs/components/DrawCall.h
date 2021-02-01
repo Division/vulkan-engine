@@ -18,9 +18,8 @@ namespace ECS { namespace components {
 	{
 		// TODO: remove mesh from draw call
 		const Mesh* mesh = nullptr;
-		//Transform* transform = nullptr;
-		OBB* obb;
-		Device::ShaderBufferStruct::ObjectParams* object_params;
+		OBB obb;
+		Device::ShaderBufferStruct::ObjectParams object_params;
 		Device::ShaderProgram* shader = nullptr;
 		vk::DescriptorSet descriptor_set;
 		Device::ShaderProgram* depth_only_shader = nullptr;

@@ -6,7 +6,6 @@
 #include "ecs/systems/TransformSystem.h"
 #include "ecs/systems/UpdateDrawCallsSystem.h"
 #include "ecs/systems/PhysicsSystem.h"
-#include "ecs/components/MeshRenderer.h"
 #include "ecs/components/MultiMeshRenderer.h"
 #include "ecs/components/Light.h"
 #include "ecs/components/Physics.h"
@@ -136,15 +135,14 @@ void Scene::ProcessRendererSystems()
 
     // TODO: add projectors
 
-    // Append render data to MeshRenderer component
+    // Append render data to MultiMeshRenderer component
 
     // Must have transform and either MeshRenderer or MultiMeshRenderer
     auto list = entity_manager->GetChunkLists([](ChunkList* chunk_list) {
-        auto hash1 = GetComponentHash<components::MeshRenderer>();
         auto hash2 = GetComponentHash<components::MultiMeshRenderer>();
         auto transform_hash = GetComponentHash<components::Transform>();
         
-        return chunk_list->HasComponent(transform_hash) && (chunk_list->HasComponent(hash1) || chunk_list->HasComponent(hash2));
+        return chunk_list->HasComponent(transform_hash) && chunk_list->HasComponent(hash2);
     });
 
     // Updates object_params of the MeshRenderer

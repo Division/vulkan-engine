@@ -3,7 +3,6 @@
 #include "render/shader/ShaderDefines.h"
 #include "render/shader/ShaderBindings.h"
 #include "render/renderer/SceneRenderer.h"
-#include "ecs/components/DrawCall.h"
 #include "ecs/CommandBuffer.h"
 #include "render/device/VulkanDescriptorCache.h"
 #include "Engine.h"
@@ -21,7 +20,7 @@ namespace render {
 			throw std::runtime_error("Handle isn't initialized");
 
 		auto data = manager->AddDrawCall(mesh, material);
-		draw_calls.push_back(data);
+		draw_calls.push_back(data.first);
 		return data.second;
 	}
 
@@ -44,20 +43,23 @@ namespace render {
 		return *this;
 	}
 
-	bool DrawCallManager::Handle::RemoveDrawCall(ECS::components::DrawCall* draw_call)
+	bool DrawCallManager::Handle::RemoveDrawCall(ECS::EntityID draw_call)
 	{
 		if (!manager)
 			throw std::runtime_error("Handle isn't initialized");
 
 		bool found = false;
 
-		for (int i = 0; i < draw_calls.size(); i++)
-			if (draw_calls[i].second == draw_call)
+		for (size_t i = 0; i < draw_calls.size(); i++)
+			if (draw_calls[i] == draw_call)
 			{
 				found = true;
-				manager->RemoveDrawCall(draw_calls[i].first);
-				draw_calls[i] = draw_calls[draw_calls.size() - 1];
+
+				for (int j = i; j < (int)draw_calls.size() - 1; j++)
+					draw_calls[j] = draw_calls[(size_t)j + 1];
 				draw_calls.pop_back();
+
+				manager->RemoveDrawCall(draw_call);
 				break;
 			}
 
@@ -80,9 +82,9 @@ namespace render {
 
 	void DrawCallManager::Handle::RemoveAllDrawCalls()
 	{
-		for (auto& item : draw_calls)
+		for (int i = draw_calls.size() - 1; i >= 0; i--)
 		{
-			manager->RemoveDrawCall(item.first);
+			manager->RemoveDrawCall(draw_calls[i]);
 		}
 	}
 	

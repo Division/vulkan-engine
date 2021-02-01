@@ -66,7 +66,6 @@ set(ENGINE_SOURCES
 	ecs/components/Static.h
 	ecs/components/Transform.h
 	ecs/components/Entity.h
-	ecs/components/MeshRenderer.h
 	ecs/components/MultiMeshRenderer.h
 	ecs/components/DrawCall.h
 	ecs/components/Light.h

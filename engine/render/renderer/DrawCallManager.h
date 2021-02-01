@@ -6,6 +6,7 @@
 #include <mutex>
 #include "IRenderer.h"
 #include "render/shader/ShaderCache.h"
+#include "ecs/components/DrawCall.h"
 
 namespace ECS 
 {
@@ -59,7 +60,7 @@ namespace render {
 		{
 		public:
 			ECS::components::DrawCall* AddDrawCall(const Mesh& mesh, const Material& material);
-			bool RemoveDrawCall(ECS::components::DrawCall*);
+			bool RemoveDrawCall(ECS::EntityID draw_call);
 			void RemoveAllDrawCalls();
 
 			~Handle();
@@ -71,7 +72,10 @@ namespace render {
 			Handle& operator=(Handle&& other);
 
 			size_t GetDrawCallCount() const { return draw_calls.size(); }
-			ECS::components::DrawCall* GetDrawCall(size_t index) const { return draw_calls[index].second; } // TODO: this will stop working if draw calls start changing chinks
+			ECS::components::DrawCall* GetDrawCall(size_t index) const 
+			{ 
+				return manager->GetManager()->GetComponent<ECS::components::DrawCall>(draw_calls[index]);
+			}
 
 			void Reset();
 
@@ -80,7 +84,7 @@ namespace render {
 			Handle(DrawCallManager& manager) : manager(&manager) {};
 			
 		private:
-			utils::SmallVector<std::pair<ECS::EntityID, ECS::components::DrawCall*>, 4> draw_calls;
+			utils::SmallVector<ECS::EntityID, 4> draw_calls;
 			DrawCallManager* manager;
 		};
 

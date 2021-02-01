@@ -21,8 +21,7 @@ namespace ECS::components
 		render::MaterialList::Handle materials;
 		render::MaterialResourceList::Handle material_resources;
 		RenderQueue render_queue = RenderQueue::Opaque;
-		std::vector<std::unique_ptr<OBB>> obb;
-		std::vector<std::unique_ptr<Device::ShaderBufferStruct::ObjectParams>> object_params;
+		std::vector<Device::ShaderBufferStruct::ObjectParams> object_params;
 		render::DrawCallManager::Handle draw_calls;
 
 		bool HasMaterials()

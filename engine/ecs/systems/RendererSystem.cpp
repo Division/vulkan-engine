@@ -1,5 +1,4 @@
 #include "RendererSystem.h"
-#include "ecs/components/MeshRenderer.h"
 #include "ecs/components/MultiMeshRenderer.h"
 #include "ecs/components/Transform.h"
 #include "ecs/components/DrawCall.h"
@@ -12,35 +11,7 @@ namespace ECS { namespace systems {
 
 	void UpdateRendererSystem::Process(Chunk* chunk)
 	{
-		const auto& layout = chunk->GetComponentLayout();
-		const bool has_mesh_renderer = layout.GetComponentData(GetComponentHash<MeshRenderer>());
-		const bool has_multimesh_renderer = layout.GetComponentData(GetComponentHash<MultiMeshRenderer>());
-		
-		if (has_mesh_renderer)
-			ProcessMeshRenderer(chunk);
-		if (has_multimesh_renderer)
-			ProcessMultiMeshRenderer(chunk);
-	}
-
-	void UpdateRendererSystem::ProcessMeshRenderer(Chunk* chunk)
-	{
-		OPTICK_EVENT();
-
-		ComponentFetcher<MeshRenderer> mesh_renderer_fetcher(*chunk);
-		ComponentFetcher<Transform> transform_fetcher(*chunk);
-
-		for (int i = 0; i < chunk->GetEntityCount(); i++)
-		{
-			auto* mesh_renderer = mesh_renderer_fetcher.GetComponent(i);
-			auto* transform = transform_fetcher.GetComponent(i);
-			auto& material = mesh_renderer->material;
-			mesh_renderer->object_params.transform = transform->local_to_world;
-			mesh_renderer->object_params.uvOffset = vec2(0, 0);
-			mesh_renderer->object_params.uvScale = vec2(1, 1);
-			mesh_renderer->object_params.roughness = material->GetRoughness();
-			mesh_renderer->object_params.metalness = material->GetMetalness();
-			mesh_renderer->object_params.color = material->GetColor();
-		}
+		ProcessMultiMeshRenderer(chunk);
 	}
 
 	void UpdateRendererSystem::ProcessMultiMeshRenderer(Chunk* chunk)
@@ -59,12 +30,6 @@ namespace ECS { namespace systems {
 			{
 				assert(!mesh_renderer->draw_calls);
 				mesh_renderer->object_params.resize(mesh_renderer->multi_mesh->GetMeshCount());
-				mesh_renderer->obb.resize(mesh_renderer->multi_mesh->GetMeshCount());
-				for (int j = 0; j < mesh_renderer->multi_mesh->GetMeshCount(); j++)
-				{
-					mesh_renderer->object_params[j] = std::make_unique<Device::ShaderBufferStruct::ObjectParams>();
-					mesh_renderer->obb[j] = std::make_unique<OBB>();
-				}
 			}
 
 			assert(mesh_renderer->HasMaterials());
@@ -78,15 +43,21 @@ namespace ECS { namespace systems {
 			assert(!mesh_renderer->draw_calls || mesh_renderer->draw_calls.GetDrawCallCount() == mesh_renderer->multi_mesh->GetMeshCount());
 			for (int j = 0; j < mesh_renderer->multi_mesh->GetMeshCount(); j++)
 			{
-				auto& object_params = *mesh_renderer->object_params[j];
+				auto& object_params = mesh_renderer->object_params[j];
 				auto& material = mesh_renderer->GetMaterial(j);
 				object_params.transform = transform->local_to_world;
 				object_params.uvOffset = vec2(0, 0);
 				object_params.uvScale = vec2(1, 1);
 				object_params.roughness = material->GetRoughness();
 				object_params.metalness = material->GetMetalness();
-				object_params.color = material->GetColor();				
-				*mesh_renderer->obb[j] = transform->GetOBB();
+				object_params.color = material->GetColor();
+				
+				if (mesh_renderer->draw_calls)
+				{
+					auto* draw_call = mesh_renderer->draw_calls.GetDrawCall(j);
+					draw_call->obb = transform->GetOBB();
+					draw_call->object_params = object_params;
+				}
 			}
 		}
 	}
