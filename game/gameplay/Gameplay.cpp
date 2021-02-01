@@ -94,29 +94,122 @@ namespace game
 		{
 			last_spawn_time = engine->Get()->time();
 			auto entity_id = utils->CreateSphere(vec3(25, 15, 3 * Random()), quat(), components::Sphere::Type::Default, (int)(Random() * 4));
+
 			auto* rigidbody = manager->GetComponent<ECS::components::RigidbodyDynamic>(entity_id);
 			rigidbody->body->setLinearVelocity(PxVec3(-30, 0, 0));
 		}
 
 		ProcessInput();
+		UpdatePopSelection();
 	}
 
 	void Gameplay::ProcessInput()
 	{
-		static vec3 debug_start;
-		static vec3 debug_dir;
-
 		auto input = engine->GetInput();
 		if (input->keyDown(::System::Key::MouseLeft))
 		{
 			auto* camera = Engine::Get()->GetScene()->GetCamera();
 			auto ray = camera->GetMouseRay(input->mousePosition());
-			debug_start = ray.first;
-			debug_dir = ray.second;
+
+			auto hits = utils->Raycast(ray.first, ray.second);
+			if (hits.size())
+			{
+				ProcessSelection(hits);
+			}
+
+			selection_active = true;
+		}
+		else if (selection_active)
+		{
+			FinishSelection();
+			selection_active = false;
 		}
 
-		auto debug_draw = engine->GetDebugDraw();
-		debug_draw->DrawLine(debug_start, debug_start + debug_dir * 100.0f, vec4(1, 0, 0, 1));
+		//auto debug_draw = engine->GetDebugDraw();
+		//debug_draw->DrawLine(debug_start, debug_start + debug_dir * 100.0f, vec4(1, 0, 0, 1));
 	}
+
+	void Gameplay::ProcessSelection(const RaycastResult& hits)
+	{
+
+		for (auto id : hits)
+		{
+			auto iter = std::find(current_selection.begin(), current_selection.end(), id);
+			if (iter == current_selection.end())
+			{
+				utils->Select(id);
+			}
+			else if (current_selection.size() > 1)
+			{
+				if (*iter == current_selection[current_selection.size() - 2])
+				{
+					utils->Deselect(current_selection.back());
+				}
+			}
+		}
+	}
+
+	void Gameplay::FinishSelection()
+	{
+		if (current_selection.size() < MIN_POP_SELECTION)
+		{
+			for (int i = current_selection.size() - 1; i >= 0; i--)
+			{
+				utils->Deselect(current_selection[i]);
+			}
+		}
+		else
+		{
+			QueuePopSelection();
+		}
+	}
+
+	void Gameplay::QueuePopSelection()
+	{
+		if (current_selection.size() >= MIN_POP_SELECTION)
+		{
+			PopChain chain;
+			for (auto id : current_selection)
+			{
+				non_selectable_entities.insert(id);
+				chain.ids.push_back(id);
+			}
+
+			pop_chains.emplace_back(std::move(chain));
+			current_selection.clear();
+		}
+	}
+
+	void Gameplay::UpdatePopSelection()
+	{
+		if (pop_chains.empty())
+			return;
+
+		bool can_pop = engine->Get()->time() - last_pop_time > POP_INTERVAL;
+		while (can_pop && pop_chains.size() > 0)
+		{
+			auto& first = pop_chains.front();
+			if (first.position >= first.ids.size())
+			{
+				pop_chains.pop_front();
+			}
+			else
+			{
+				PopEntity(first.ids[first.position]);
+				first.position += 1;
+				can_pop = false;
+				last_pop_time = engine->Get()->time();
+			}
+		}
+	}
+
+	void Gameplay::PopEntity(ECS::EntityID id)
+	{
+		manager->DestroyEntity(id);
+		non_selectable_entities.erase(id);
+		all_entities.erase(id);
+		live_sphere_count -= 1;
+	}
+
 
 }

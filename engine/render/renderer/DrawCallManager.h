@@ -70,6 +70,11 @@ namespace render {
 
 			Handle& operator=(Handle&& other);
 
+			size_t GetDrawCallCount() const { return draw_calls.size(); }
+			ECS::components::DrawCall* GetDrawCall(size_t index) const { return draw_calls[index].second; } // TODO: this will stop working if draw calls start changing chinks
+
+			void Reset();
+
 		private:
 			friend class DrawCallManager;
 			Handle(DrawCallManager& manager) : manager(&manager) {};

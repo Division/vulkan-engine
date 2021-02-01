@@ -21,6 +21,8 @@ namespace game
 		ECS::EntityID CreateAttractor(vec3 position, quat rotation);
 		ECS::EntityID CreateLight(vec3 position, float radius, ECS::components::Light::Type type, vec3 color);
 
-		utils::SmallVector<ECS::EntityID, 10> Raycast(vec3 position, vec3 direction);
+		Gameplay::RaycastResult Raycast(vec3 position, vec3 direction);
+		bool Select(ECS::EntityID id);
+		void Deselect(ECS::EntityID id);
 	};
 }

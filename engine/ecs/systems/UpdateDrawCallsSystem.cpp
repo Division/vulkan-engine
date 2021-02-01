@@ -2,6 +2,7 @@
 #include "ecs/components/MeshRenderer.h"
 #include "ecs/components/MultiMeshRenderer.h"
 #include "ecs/components/Transform.h"
+#include "ecs/components/Entity.h"
 #include "render/renderer/SceneBuffers.h"
 #include "Engine.h"
 
@@ -25,6 +26,7 @@ namespace ECS { namespace systems {
 		ComponentFetcher<MeshRenderer> mesh_renderer_fetcher(*chunk);
 		ComponentFetcher<MultiMeshRenderer> multimesh_renderer_fetcher(*chunk);
 		ComponentFetcher<Transform> transform_fetcher(*chunk);
+		ComponentFetcher<EntityData> entity_fetcher(*chunk);
 		auto& layout = chunk->GetComponentLayout();
 		const bool has_mesh_renderer = layout.GetComponentData(GetComponentHash<MeshRenderer>());
 		const bool has_multimesh_renderer = layout.GetComponentData(GetComponentHash<MultiMeshRenderer>());
@@ -43,7 +45,8 @@ namespace ECS { namespace systems {
 				auto draw_call = handle.AddDrawCall(*mesh_renderer->mesh, *material);
 				mesh_renderer->draw_call_handle = std::move(handle);
 			
-				draw_call->transform = transform;
+				assert(false);
+
 				draw_call->queue = mesh_renderer->render_queue;
 				draw_call->object_params = &mesh_renderer->object_params; // TODO: move to AddDrawCall
 			}
@@ -75,9 +78,9 @@ namespace ECS { namespace systems {
 					auto& mesh = mesh_renderer->multi_mesh->GetMesh(j);
 					auto material = mesh_renderer->GetMaterial((size_t)j);
 					auto draw_call = handle.AddDrawCall(*mesh, *material);
-					draw_call->transform = transform;
 					draw_call->queue = mesh_renderer->render_queue;
-					draw_call->object_params = &mesh_renderer->object_params[j]; // TODO: move to AddDrawCall
+					draw_call->object_params = mesh_renderer->object_params[j].get(); // TODO: move to AddDrawCall
+					draw_call->obb = mesh_renderer->obb[j].get(); // TODO: move to AddDrawCall
 				}
 
 				mesh_renderer->draw_calls = std::move(handle);

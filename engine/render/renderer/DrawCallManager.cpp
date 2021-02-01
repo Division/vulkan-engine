@@ -34,7 +34,9 @@ namespace render {
 
 	DrawCallManager::Handle& DrawCallManager::Handle::operator=(Handle&& other)
 	{
-		RemoveAllDrawCalls();
+		if (manager)
+			RemoveAllDrawCalls();
+
 		draw_calls = std::move(other.draw_calls);
 		manager = other.manager;
 		other.manager = nullptr;
@@ -66,6 +68,14 @@ namespace render {
 	{
 		if (manager)
 			RemoveAllDrawCalls();
+	}
+
+	void DrawCallManager::Handle::Reset()
+	{
+		if (manager)
+			RemoveAllDrawCalls();
+
+		manager = nullptr;
 	}
 
 	void DrawCallManager::Handle::RemoveAllDrawCalls()

@@ -198,7 +198,6 @@ namespace Physics
 
 		PxTransform transform = ConvertTransform(position, rotation);
 		PxRigidDynamic* dynamic = PxCreateDynamic(*physics, transform, geometry, *material, 10.0f);
-
 		dynamic->setAngularDamping(0.5f);
 
 		if (add_to_scene)

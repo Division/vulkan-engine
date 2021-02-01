@@ -14,7 +14,7 @@ namespace ECS { namespace systems {
 		for (int i = 0; i < chunk->GetEntityCount(); i++)
 		{
 			auto* draw_call = draw_call_fetcher.GetComponent(i);
-			auto obb = draw_call->transform->GetOBB();
+			auto& obb = *draw_call->obb;
 			bool visible = frustum.isVisible(obb.matrix, obb.min, obb.max);
 
 			if (!visible)

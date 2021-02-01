@@ -7,6 +7,7 @@
 #include "render/material/Material.h"
 #include "utils/DataStructures.h"
 #include "render/renderer/DrawCallManager.h"
+#include "utils/Math.h"
 
 class Mesh;
 class Material;
@@ -20,7 +21,8 @@ namespace ECS::components
 		render::MaterialList::Handle materials;
 		render::MaterialResourceList::Handle material_resources;
 		RenderQueue render_queue = RenderQueue::Opaque;
-		utils::SmallVector<Device::ShaderBufferStruct::ObjectParams, 4> object_params;
+		std::vector<std::unique_ptr<OBB>> obb;
+		std::vector<std::unique_ptr<Device::ShaderBufferStruct::ObjectParams>> object_params;
 		render::DrawCallManager::Handle draw_calls;
 
 		bool HasMaterials()

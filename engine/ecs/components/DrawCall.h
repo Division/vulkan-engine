@@ -3,6 +3,7 @@
 #include "CommonIncludes.h"
 #include "render/renderer/IRenderer.h"
 #include "render/shader/ShaderBufferStruct.h"
+#include "utils/Math.h"
 
 namespace Device
 {
@@ -13,13 +14,12 @@ namespace ECS { namespace components {
 
 	class Transform;
 
-#pragma pack(push)
-#pragma pack(1)
 	struct DrawCall
 	{
 		// TODO: remove mesh from draw call
 		const Mesh* mesh = nullptr;
-		Transform* transform = nullptr;
+		//Transform* transform = nullptr;
+		OBB* obb;
 		Device::ShaderBufferStruct::ObjectParams* object_params;
 		Device::ShaderProgram* shader = nullptr;
 		vk::DescriptorSet descriptor_set;
@@ -29,6 +29,5 @@ namespace ECS { namespace components {
 		uint32_t visible = 0;
 		RenderQueue queue = RenderQueue::Opaque;
 	};
-#pragma pack(pop)
 
 } }

@@ -61,6 +61,8 @@ namespace Physics::Helper
 			result = component->body.get();
 		}
 
+		static_assert(sizeof(result->userData) == sizeof(entity));
+		result->userData = (void*)entity;
 		return result;
 	}
 }
