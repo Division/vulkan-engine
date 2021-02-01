@@ -157,9 +157,17 @@ namespace Device {
 			if (ShaderCompiler::CompileShader(*this, shader_data, result))
 			{
 				module_data = std::move(result.data);
-				// Saving to file
-				std::ofstream stream(filename, std::ofstream::binary);
-				stream.write((char*)module_data.data(), module_data.size());
+
+				// TODO: save in a separate job
+				std::error_code error;
+				std::filesystem::create_directories(std::filesystem::path(filename).remove_filename(), error);
+
+				if (!error)
+				{
+					// Saving to file
+					std::ofstream stream(filename, std::ofstream::binary);
+					stream.write((char*)module_data.data(), module_data.size());
+				}
 			}
 			else
 			{

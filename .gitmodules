@@ -4,6 +4,3 @@
 [submodule "engine/lib/optick"]
 	path = engine/lib/optick
 	url = https://github.com/bombomby/optick.git
-[submodule "game/SphericalAssets"]
-	path = game/SphericalAssets
-	url = https://github.com/Division/SphericalAssets.git

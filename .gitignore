@@ -9,3 +9,10 @@ bin/shaders_compiled
 bin/*.obj
 bin/*.manifest
 bin/*.opt
+*.mayaSwatches
+*.exe
+*.ilk
+imgui.ini
+*.pdb
+*.opt
+log.txt

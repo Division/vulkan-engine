@@ -111,10 +111,10 @@ VS_out vs_main(VS_in input)
 
 #if defined (LIGHTING)
 [[vk::binding(3,  0)]] Texture2D shadow_map : register(t3);
-[[vk::binding(10, 0)]] TextureCube environment_cubemap : register(t10);
+/*[[vk::binding(10, 0)]] TextureCube environment_cubemap : register(t10);
 [[vk::binding(11, 0)]] TextureCube radiance_cubemap : register(t11);
 [[vk::binding(12, 0)]] TextureCube irradiance_cubemap : register(t12);
-
+*/
 struct LightGridItem
 {
     uint offset;
@@ -284,10 +284,6 @@ float4 ps_main(VS_out input) : SV_TARGET
 #endif
 
 #if defined(LIGHTING)
-    float4 skybox_color = radiance_cubemap.Sample(SamplerLinearWrap, float3(1,1,1));
-    result_color += skybox_color * 0.0001f;
-
-
     float4 light_color = float4(0, 0, 0, 0);
     float2 screenSize = float2(camera.cameraScreenSize);
     float2 pixelCoord = float2(input.frag_coord.x, screenSize.y - input.frag_coord.y);

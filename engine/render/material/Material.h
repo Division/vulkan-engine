@@ -27,6 +27,7 @@ public:
 
 	Material(const Material&) = default;
 	Material();
+	Material(const std::wstring& shader_path);
 	~Material();
 
 	Handle Clone() const;

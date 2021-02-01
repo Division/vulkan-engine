@@ -8,9 +8,13 @@ Material::Material()
 {
 }
 
+Material::Material(const std::wstring& shader_path) 
+	: shader_path(shader_path)
+{
+}
+
 Material::~Material()
 {
-
 }
 
 Material::Handle Material::Clone() const

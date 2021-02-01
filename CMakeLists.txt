@@ -33,7 +33,7 @@ set(GLFW_BUILD_TESTS false)
 set(GLFW_INSTALL false)
 
 add_subdirectory(engine)
-add_subdirectory(game)
+add_subdirectory(demos/action-puzzle)
 add_subdirectory(tools/ShaderCompiler) 
 add_subdirectory(tools/FBXExporter) 
 

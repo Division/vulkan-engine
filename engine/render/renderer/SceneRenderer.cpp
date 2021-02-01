@@ -97,12 +97,12 @@ namespace render {
 		*/
 
 		//environment_cubemap = loader::LoadTexture("assets/resources/environment/skybox_unorm.ktx"); // TODO: assign via setter
-		environment_cubemap = TextureResource::Handle(L"assets/resources/environment/skybox2.ktx");
+		//environment_cubemap = TextureResource::Handle(L"assets/resources/environment/skybox.ktx");
 		radiance_cubemap = TextureResource::Handle(L"assets/resources/environment/grace_probe_radiance_rgba.ktx");
-		irradiance_cubemap = TextureResource::Handle(L"assets/resources/environment/grace_probe_irradiance_rgba.ktx");
+		//irradiance_cubemap = TextureResource::Handle(L"assets/resources/environment/grace_probe_irradiance_rgba.ktx");
 		//environment_cubemap = loader::LoadTexture("assets/resources/lama.ktx"); // TODO: assign via setter
 		skybox = std::make_unique<effects::Skybox>(*shader_cache);
-		skybox->SetTexture(environment_cubemap->Get().get());
+		//skybox->SetTexture(environment_cubemap->Get().get());
 
 		post_process = std::make_unique<effects::PostProcess>(*shader_cache, *environment_settings);
 	}
@@ -525,7 +525,7 @@ namespace render {
 	{
 		OPTICK_EVENT();
 		global_shader_bindings = std::make_unique<ShaderBindings>();
-		Material material;
+		Material material(L"shaders/global_bindings.hlsl");
 		material.LightingEnabled(true); // For now it's enough to get all the global bindings
 		auto& shader_info =  material.GetShaderInfo();
 
