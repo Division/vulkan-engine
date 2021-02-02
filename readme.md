@@ -1,15 +1,8 @@
-Game roadmap:
-- Add basic vehicle
-- Add basic spherical world
-- Import vehicle model and setup physics (ignore vehicle shape for now)
-
 Engine roadmap:
 - [partly done] optimize tiled lighting or implement clustered
 - [partly done] FBX mesh export
 - Proper deletion of entities loaded from resource
 - export default materials from maya (with texture paths)
-- Add support for singleton components (store in EntityManager by pointer)
-- Proper alignment of ECS components, remove packing
 - physics rendering interpolation
 - Fix logging, log from multiple threads
 - Fix and migrate lighting, decals, shadowmaps to ECS
@@ -22,13 +15,16 @@ Engine roadmap:
 - dds loading
 - Multithreaded rendering
 - GUI library integration
+- effects for action-puzzle demo
 
 Check:
-- Shader compiles / loads every time?
 - postprocess, changed HLSL texture binding but C++ side didn't see it changed
 
 -- Completed -----------------------------------
 
++ Proper alignment of ECS components
++ Action puzzle demo
++ Add support for singleton components (store in EntityManager by pointer)
 + Material resource
 + Multithreading, job system
 + Async resource loading

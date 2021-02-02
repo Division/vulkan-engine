@@ -20,6 +20,7 @@ namespace ECS {
 
 	const uint32_t MAX_COMPONENTS = 16;
 	const uint32_t CHUNK_SIZE = 16 * 1024;
+	constexpr size_t ALIGNMENT = 32;
 
 	typedef size_t ComponentHash;
 	typedef uint32_t ComponentSetHash;
@@ -154,19 +155,22 @@ namespace ECS {
 
 		void RecalculateOffsets()
 		{
-			uint32_t total_size = 0;
+			uint32_t total_size = component_count * ALIGNMENT;
 			for (int i = 0; i < component_count; i++)
 				total_size += components[i].size;
 
 			max_entity_count = (uint32_t)chunk_size / total_size;
 
-			auto last_offset = 0;
+			size_t last_offset = 0;
 			for (int i = 0; i < component_count; i++)
 			{
-				components[i].offset = last_offset;
-				last_offset += components[i].size * max_entity_count;
+				size_t chunk_size = CHUNK_SIZE - (size_t)last_offset;
+				const size_t components_size = components[i].size * max_entity_count;
+				components[i].offset = AlignMemory(last_offset, ALIGNMENT);
+				last_offset = components[i].offset + components_size;
 			}
 
+			assert(last_offset < CHUNK_SIZE);
 			assert(max_entity_count > 0);
 		}
 
@@ -199,7 +203,7 @@ namespace ECS {
 			, entity_address_callback(entity_address_callback)
 			, entity_count(0)
 		{
-			memory = allocator.allocate_aligned(CHUNK_SIZE, 128);
+			memory = allocator.allocate_aligned(CHUNK_SIZE, ALIGNMENT);
 		}
 
 		Chunk(ComponentLayout&& layout, EntityAddressChangedCallback entity_address_callback) = delete;

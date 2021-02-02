@@ -140,6 +140,11 @@ inline uint32_t NextPowerOfTwo(uint32_t n)
     return n + 1;
 }
 
+inline uint32_t AlignMemory(size_t ptr, size_t alignment)
+{
+    return (((ptr)+((alignment)-1)) & ~((alignment)-1));
+}
+
 inline mat4 ComposeMatrix(const vec3& position, const quat& rotation, const vec3& scale)
 {
 	mat4 result;
