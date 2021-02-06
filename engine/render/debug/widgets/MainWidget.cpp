@@ -38,6 +38,7 @@ namespace render {
 				}
 
 				ImGui::Checkbox("Show OBB", &debug_settings->draw_bounding_boxes);
+				ImGui::Checkbox("Show skeletons", &debug_settings->draw_skeletons);
 				ImGui::Checkbox("Show Lights", &debug_settings->draw_lights);
 				
 				auto* physics = Engine::Get()->GetScene()->GetPhysics();

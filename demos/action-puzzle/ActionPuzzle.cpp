@@ -36,8 +36,6 @@ void Game::init()
 	auto tire_material = Physics::Handle(physics->GetPhysX()->createMaterial(0.5, 0.5, 0.5));
 	vehicle_data_cache = std::make_unique<VehicleDataCache>(*physics->GetScene(), *physics->GetAllocator(), *tire_material);
 
-	delta_time = std::make_unique<components::DeltaTime>();
-
 	auto* engine = Engine::Get();
 	manager = engine->GetEntityManager();
 	graph = engine->GetTransformGraph();
@@ -45,7 +43,6 @@ void Game::init()
 	manager->AddStaticComponent(vehicle_data_cache.get());
 	manager->AddStaticComponent(graph);
 	manager->AddStaticComponent(physics);
-	manager->AddStaticComponent(delta_time.get());
 
 	camera = std::make_unique<ViewerCamera>();
 
@@ -54,14 +51,12 @@ void Game::init()
 
 void Game::UpdatePhysics(float dt)
 {
-	manager->GetStaticComponent<components::DeltaTime>()->physics_dt = dt;
 	gameplay->UpdatePhysics(dt);
 	systems::VehicleControlSystem(*manager).ProcessChunks(manager->GetChunkListsWithComponents<components::PlayerInput, components::Vehicle>());
 }
 
 void Game::update(float dt)
 {
-	manager->GetStaticComponent<components::DeltaTime>()->dt = dt;
 	Resources::Cache::Get().GCCollect();
 	camera->Update(dt);
 	gameplay->Update(dt);

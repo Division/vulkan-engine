@@ -1,10 +1,12 @@
 #include "EntityTemplate.h"
 #include "components/Transform.h"
 #include "components/MultiMeshRenderer.h"
+#include "components/AnimationController.h"
 #include "ECS.h"
 #include "utils/StringUtils.h"
 #include "utils/JsonUtils.h"
 #include "resources/MaterialResource.h"
+#include "resources/SkeletonResource.h"
 #include "scene/PhysicsHelper.h"
 
 namespace ECS
@@ -81,6 +83,24 @@ namespace ECS
 				{
 					component->material_resources->emplace_back(material_path);
 				}
+			}
+		};
+
+		class AnimationControllerTemplate : public ComponentTemplate
+		{
+			std::wstring skeleton;
+
+			virtual void Load(const rapidjson::Value& data) override
+			{
+				if (!data.HasMember("skeleton"))
+					throw std::runtime_error("skeleton must be defined");
+
+				skeleton = utils::StringToWString(data["skeleton"].GetString());
+			}
+
+			virtual void Spawn(EntityManager& manager, EntityID entity, vec3 position) override
+			{
+				manager.AddComponent<AnimationController>(entity, Resources::SkeletonResource::Handle(skeleton));
 			}
 		};
 
@@ -183,7 +203,7 @@ namespace ECS
 		manager.RegisterComponentTemplate<components::TransformTemplate>("Transform");
 		manager.RegisterComponentTemplate<components::MultiMeshRendererTemplate>("MultiMeshRenderer");
 		manager.RegisterComponentTemplate<components::PhysBodyTemplate>("PhysBody");
-		
+		manager.RegisterComponentTemplate<components::AnimationControllerTemplate>("AnimationController");
 	}
 
 }

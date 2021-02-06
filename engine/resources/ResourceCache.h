@@ -190,14 +190,14 @@ namespace Resources
 				resource->Load();
 		}
 
-		explicit Handle(const Handle& other)
+		Handle(const Handle& other)
 		{
 			resource = other.resource;
 			if (resource)
 				resource->AddRef();
 		}
 
-		explicit Handle(Handle&& other)
+		Handle(Handle&& other)
 		{
 			resource = other.resource;
 			other.resource = nullptr;

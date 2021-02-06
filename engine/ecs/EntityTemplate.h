@@ -15,7 +15,7 @@ namespace ECS
 		virtual void Load(const rapidjson::Value& data) = 0;
 		virtual void Spawn(EntityManager& manager, EntityID entity, vec3 position) = 0;
 
-		~ComponentTemplate() = default;
+		virtual ~ComponentTemplate() = default;
 	};
 
 	class EntityTemplate

@@ -10,6 +10,11 @@
 
 class IGamePhysicsDelegate;
 
+namespace ECS::components
+{
+	struct DeltaTime;
+}
+
 namespace Physics
 {
 	inline vec3 Convert(physx::PxVec3 v) { return vec3(v.x, v.y, v.z); }
@@ -82,7 +87,7 @@ namespace Physics
 	class PhysXManager
 	{
 	public:
-		PhysXManager(IGamePhysicsDelegate* delegate);
+		PhysXManager(IGamePhysicsDelegate* delegate, ECS::components::DeltaTime* delta_time);
 		~PhysXManager();
 
 		void StepPhysics(float dt);
@@ -123,6 +128,7 @@ namespace Physics
 		Allocator allocator;
 		ErrorCallback error_callback;
 		IGamePhysicsDelegate* delegate;
+		ECS::components::DeltaTime* delta_time;
 
 		// Order is important for correct deinitialization
 		Handle<physx::PxFoundation> foundation;

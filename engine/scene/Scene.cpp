@@ -6,9 +6,12 @@
 #include "ecs/systems/TransformSystem.h"
 #include "ecs/systems/UpdateDrawCallsSystem.h"
 #include "ecs/systems/PhysicsSystem.h"
+#include "ecs/systems/SkinningSystem.h"
+#include "ecs/components/Static.h"
 #include "ecs/components/MultiMeshRenderer.h"
 #include "ecs/components/Light.h"
 #include "ecs/components/Physics.h"
+#include "ecs/components/AnimationController.h"
 #include "render/renderer/DrawCallManager.h"
 #include "render/debug/DebugSettings.h"
 #include "render/debug/DebugDraw.h"
@@ -31,17 +34,22 @@ Scene::Scene(IGame& game, render::DebugSettings* settings)
     entity_manager = std::make_unique<EntityManager>();
     transform_graph = std::make_unique<TransformGraph>(*entity_manager);
 
+    delta_time_static = std::make_unique<components::DeltaTime>();
+    entity_manager->AddStaticComponent(delta_time_static.get());
+
     RegisterEngineComponentTemplates(*entity_manager);
 
     no_child_system = std::make_unique<systems::NoChildTransformSystem>(*transform_graph, *entity_manager);
     root_transform_system = std::make_unique<systems::RootTransformSystem>(*transform_graph, *entity_manager);
     update_renderer_system = std::make_unique<systems::UpdateRendererSystem>(*entity_manager);
     physics_post_update_system = std::make_unique<systems::PhysicsPostUpdateSystem>(*entity_manager);
-    physx_manager = std::make_unique<Physics::PhysXManager>(game.GetPhysicsDelegate());
+    physx_manager = std::make_unique<Physics::PhysXManager>(game.GetPhysicsDelegate(), delta_time_static.get());
+    skinning_system = std::make_unique<systems::SkinningSystem>(*entity_manager);
 }
 
 void Scene::Update(IGame& game, float dt)
 {
+    delta_time_static->dt = dt;
     // Game update
     game.update(dt);
     camera->Update();
@@ -51,11 +59,19 @@ void Scene::Update(IGame& game, float dt)
     physx_manager->FetchResults();
     physx_manager->DrawDebug();
 
+    auto animation_controllers = entity_manager->GetChunkListsWithComponent<components::AnimationController>();
+    skinning_system->ProcessChunks(animation_controllers); // find a better place?
+
     // ECS update
     ProcessPhysicsSystems();
     ProcessTransformSystems();
     ProcessRendererSystems();
 
+    DrawDebug();
+}
+
+void Scene::DrawDebug()
+{
     if (debug_settings && debug_settings->draw_bounding_boxes)
     {
         auto transforms = entity_manager->GetChunkListsWithComponent<components::Transform>();
@@ -65,10 +81,16 @@ void Scene::Update(IGame& game, float dt)
             for (int i = 0; i < chunk->GetEntityCount(); i++)
             {
                 auto* transform = transform_fetcher.GetComponent(i);
-                Engine::Get()->GetDebugDraw()->DrawOBB(transform->GetOBB(), vec4(1,1,1,1));
+                Engine::Get()->GetDebugDraw()->DrawOBB(transform->GetOBB(), vec4(1, 1, 1, 1));
             }
 
             }, *entity_manager, false).ProcessChunks(transforms);
+    }
+
+    if (debug_settings && debug_settings->draw_skeletons)
+    {
+        auto controllers = entity_manager->GetChunkListsWithComponents<components::Transform, components::AnimationController>();
+        systems::DebugDrawSkinningSystem(*entity_manager).ProcessChunks(controllers);
     }
 }
 

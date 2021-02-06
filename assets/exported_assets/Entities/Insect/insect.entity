@@ -1,0 +1,21 @@
+[
+    {
+        "id":  "test",
+        "components": [
+            {
+                "type": "Transform"
+            },
+            {
+                "type": "MultiMeshRenderer",
+                "path": "assets/art/Entities/Sphere/sphere_basic.mesh",
+                "materials": [
+                    "assets/Entities/Insect/insect.mat"
+                ]
+            },
+            {
+                "type": "AnimationController",
+                "skeleton": "assets/art/Entities/Insect/skeleton.ozz"
+            }
+        ]
+    }
+]

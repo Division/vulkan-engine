@@ -59,7 +59,6 @@ public:
 
 private:
 	std::unique_ptr<ViewerCamera> camera;
-	std::unique_ptr<ECS::components::DeltaTime> delta_time;
 	std::unique_ptr<Vehicle::Utils::VehicleDataCache> vehicle_data_cache;
 	std::unique_ptr<game::Gameplay> gameplay;
 
