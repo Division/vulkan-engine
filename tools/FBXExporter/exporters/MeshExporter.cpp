@@ -3,7 +3,13 @@
 #include <fstream>
 #include "MeshExporter.h"
 #include "scene/Physics.h"
-//#include "utils/Math.h"
+#include "FBXUtils.h"
+#include "ozz/animation/runtime/animation.h"
+#include "ozz/animation/runtime/skeleton.h"
+#include "ozz/animation/offline/fbx/fbx.h"
+#include "ozz/base/containers/map.h"
+#include <numeric>
+#include <map>
 
 namespace fs = std::filesystem;
 using namespace physx;
@@ -11,9 +17,25 @@ using namespace fbxsdk;
 
 namespace Exporter
 {
+	bool MeshVertex::operator==(const MeshVertex& other) const
+	{
+		return std::tie(position, normal, binormal, tangent, uv0, weights, bone_indices) ==
+			std::tie(other.position, other.normal, other.binormal, other.tangent, other.uv0, other.weights, other.bone_indices);
+	}
+
 	uint32_t MeshVertex::GetHash() const
 	{
-		return FastHash(this, sizeof(*this));
+		uint8_t data[sizeof(position) + sizeof(normal) + sizeof(binormal) + sizeof(tangent) + sizeof(uv0) + sizeof(weights) + sizeof(bone_indices)];
+		uint8_t* ptr = data;
+		memcpy(ptr, &position, sizeof(position)); ptr += sizeof(position);
+		memcpy(ptr, &normal, sizeof(normal)); ptr += sizeof(normal);
+		memcpy(ptr, &binormal, sizeof(binormal)); ptr += sizeof(binormal);
+		memcpy(ptr, &tangent, sizeof(tangent)); ptr += sizeof(tangent);
+		memcpy(ptr, &uv0, sizeof(uv0)); ptr += sizeof(uv0);
+		memcpy(ptr, &weights, sizeof(weights)); ptr += sizeof(weights);
+		memcpy(ptr, &bone_indices, sizeof(bone_indices)); ptr += sizeof(bone_indices);
+
+		return FastHash(data, std::size(data));
 	}
 
 	Material ExtractMaterial(FbxMesh* mesh)
@@ -64,9 +86,141 @@ namespace Exporter
 		}
 	}
 
-	std::vector<SubMesh> ExtractMeshes(const std::vector<SourceMesh>& meshes, FbxNode* parent_node)
+	struct BoneWeight
 	{
+		uint16_t index; // bone index
+		float weight;
+		bool operator<(const BoneWeight& other) const { return weight < other.weight; }
+		bool operator>(const BoneWeight& other) const { return weight > other.weight; }
+	};
+
+	struct VertexSkinningData
+	{
+		MeshVertex* vertex;
+		std::vector<BoneWeight> weights;
+	};
+
+	void AddSkinningWeights(FbxScene* scene, SubMesh& sub_mesh, FbxMesh *mesh, FbxSkin* deformer, ozz::animation::Skeleton* skeleton, std::vector<MeshTriangle>& triangles)
+	{
+		std::vector<std::vector<VertexSkinningData>> skinning_data;
+		skinning_data.resize(mesh->GetControlPointsCount());
+
+		ozz::animation::offline::fbx::FbxSystemConverter converter(scene->GetGlobalSettings().GetAxisSystem(), scene->GetGlobalSettings().GetSystemUnit());
+
+		std::map<uint16_t, uint16_t> joint_remap;
+
+		sub_mesh.inv_bindpose.resize(skeleton->num_joints(), glm::mat4());
+
+		// Builds joints names map.
+		ozz::cstring_map<uint16_t> joint_name_map;
+		for (int i = 0; i < skeleton->num_joints(); ++i) {
+			joint_name_map[skeleton->joint_names()[i]] = static_cast<uint16_t>(i);
+		}
+
+		for (auto& triangle : triangles)
+			for (auto& vertex : triangle.vertices)
+			{
+				if (vertex.control_point_index >= skinning_data.size())
+					throw std::runtime_error("control point index exceeds estimated limit");
+				auto& item = skinning_data[vertex.control_point_index].emplace_back();
+				item.vertex = &vertex;
+			}
+
+		// Computes geometry matrix.
+		const FbxAMatrix geometry_matrix(mesh->GetNode()->GetGeometricTranslation(FbxNode::eSourcePivot), mesh->GetNode()->GetGeometricRotation(FbxNode::eSourcePivot), mesh->GetNode()->GetGeometricScaling(FbxNode::eSourcePivot));
+
+		// Collect all joint weights from the clusters
+		const int cluster_count = deformer->GetClusterCount();
+		for (int cl = 0; cl < cluster_count; ++cl) 
+		{
+			FbxCluster* cluster = deformer->GetCluster(cl);
+			FbxNode* node = cluster->GetLink();
+			if (!node) continue;
+
+			const FbxCluster::ELinkMode mode = cluster->GetLinkMode();
+			if (mode != FbxCluster::eNormalize)
+				throw std::runtime_error(std::string("Unsupported link mode for joint ") + node->GetName());
+
+			// Get corresponding joint index;
+			auto it = joint_name_map.find(node->GetName());
+			if (it == joint_name_map.end())
+				throw std::runtime_error(std::string("Required joint ") + node->GetName() + " not found in provided skeleton.\n");
+
+			const uint16_t joint = it->second;
+
+			joint_remap.insert({ joint, 0 }); // fill the remap list with all joints used by the submesh
+
+			// Computes joint's inverse bind-pose matrix.
+			FbxAMatrix transform_matrix;
+			cluster->GetTransformMatrix(transform_matrix);
+			transform_matrix *= geometry_matrix;
+
+			FbxAMatrix transform_link_matrix;
+			cluster->GetTransformLinkMatrix(transform_link_matrix);
+
+			const FbxAMatrix inverse_bind_pose = transform_link_matrix.Inverse() * transform_matrix;
+
+			// Stores inverse transformation.
+			sub_mesh.inv_bindpose[joint] = (mat4&)converter.ConvertMatrix(inverse_bind_pose);
+
+			// Affect joint to all vertices of the cluster.
+			const int ctrl_point_index_count = cluster->GetControlPointIndicesCount();
+
+			const int* ctrl_point_indices = cluster->GetControlPointIndices();
+			const double* ctrl_point_weights = cluster->GetControlPointWeights();
+			for (int cpi = 0; cpi < ctrl_point_index_count; ++cpi) 
+			{
+				const BoneWeight bone_weight = { joint, static_cast<float>(ctrl_point_weights[cpi]) };
+				if (bone_weight.weight < 1e-5) continue;
+
+				const int ctrl_point = ctrl_point_indices[cpi];
+				assert(ctrl_point < static_cast<int>(skinning_data.size()));
+
+				for (auto& vertices : skinning_data[ctrl_point])
+					vertices.weights.push_back(bone_weight);
+
+			}
+		}
+
+		// Sub mesh may use only part of the joints so need to map sub mesh joint index to full skeleton joint index
+		int index = 0;
+		sub_mesh.bone_index_remap.resize(joint_remap.size());
+		for (auto& pair : joint_remap)
+		{
+			sub_mesh.bone_index_remap[index] = pair.first;
+			pair.second = index;
+			index++;
+		}
+
+		for (auto& vertices : skinning_data)
+			for (auto& vertex : vertices)
+			{
+				std::sort(vertex.weights.begin(), vertex.weights.end(), std::greater<BoneWeight>());
+				vertex.weights.resize(std::min((size_t)4, vertex.weights.size()));
+				if (vertex.weights.empty())
+					throw std::runtime_error("No bones assigned to a vertex");
+
+				vertex.vertex->weights = vec4(0, 0, 0, 0);
+				vertex.vertex->bone_indices = vec4(0, 0, 0, 0);
+				float sum = 0;
+				for (int i = 0; i < vertex.weights.size(); i++)
+				{
+					vertex.vertex->weights[i] = vertex.weights[i].weight;
+					vertex.vertex->bone_indices[i] = joint_remap.at(vertex.weights[i].index); // Assigning remapped index
+					sum += vertex.weights[i].weight;
+				}
+				
+				if (sum > 1e-3)
+					vertex.vertex->weights /= sum; // normalize weights
+			}
+	}
+
+	std::vector<SubMesh> ExtractMeshes(const std::vector<SourceMesh>& meshes, FbxNode* parent_node, FbxScene* scene, ozz::animation::Skeleton* skeleton)
+	{
+		ozz::animation::offline::fbx::FbxSystemConverter converter(scene->GetGlobalSettings().GetAxisSystem(), scene->GetGlobalSettings().GetSystemUnit());
+
 		std::vector<SubMesh> result;
+		std::vector<FbxVector4> control_points;
 
 		// Maps material id to triangle list
 		std::unordered_map<FbxGeometryElementMaterial*, std::vector<MeshTriangle>> material_triangles;
@@ -78,6 +232,17 @@ namespace Exporter
 		{
 			auto* mesh = mesh_pair.second;
 
+			const bool lHasVertexCache = mesh->GetDeformerCount(FbxDeformer::eVertexCache) &&
+				(static_cast<FbxVertexCacheDeformer*>(mesh->GetDeformer(0, FbxDeformer::eVertexCache)))->Active.Get();
+			const bool lHasShape = mesh->GetShapeCount() > 0;
+
+
+			control_points.resize(mesh->GetControlPointsCount());
+			memcpy(control_points.data(), &mesh->GetControlPoints()[0], sizeof(FbxVector4) * mesh->GetControlPointsCount());
+
+			FbxAMatrix identity; identity.SetIdentity();
+			//ComputeLinearDeformation(identity, mesh, FbxTime(), control_points.data(), nullptr);
+
 			// Transformation related to root node
 			auto mesh_transform = root_node_inv_transform * mesh_pair.first->EvaluateGlobalTransform();
 
@@ -88,11 +253,20 @@ namespace Exporter
 			auto& triangles = material_triangles[material];
 			auto& sub_mesh = result.emplace_back();
 
+			const int skin_count = mesh->GetDeformerCount(FbxDeformer::eSkin);
+			if (skin_count > 1)
+				throw std::runtime_error("Mesh has more than one skin: " + std::string(mesh->GetName()));
+
+			sub_mesh.name = mesh->GetName();
 			sub_mesh.has_normals = mesh->GetElementNormalCount() > 0;
 			sub_mesh.has_binormals = mesh->GetElementBinormalCount() > 0;
 			sub_mesh.has_tangents = mesh->GetElementTangentCount() > 0;
-			sub_mesh.has_skinning_weights = false;
+			sub_mesh.has_skinning_weights = skin_count == 1;
 			sub_mesh.has_uv0 = mesh->GetElementUVCount() > 0;
+
+			if (sub_mesh.has_skinning_weights ^ (bool)skeleton)
+				throw std::runtime_error("Skeleton not provided mismatch: " + std::string(mesh->GetName()));
+
 			FbxGeometryElementBinormal* binormal_element = sub_mesh.has_binormals ? mesh->GetElementBinormal(0) : nullptr;
 			auto binormal_reference_mode = sub_mesh.has_binormals ? binormal_element->GetReferenceMode() : FbxGeometryElement::eDirect;
 			if (binormal_element && binormal_element->GetMappingMode() != FbxGeometryElement::eByPolygonVertex)
@@ -115,12 +289,14 @@ namespace Exporter
 			for (int i = 0; i < triangle_count; i++)
 			{
 				auto& triangle = triangles.emplace_back();
+
 				for (int v = 0; v < triangle.vertices.size(); v++)
 				{
 					const int index = mesh->GetPolygonVertex(i, v);
-					FbxVector4 fbx_vertex = mesh->GetControlPoints()[index];
+					FbxVector4 fbx_vertex = control_points[index];
 					fbx_vertex = mesh_transform.MultT(fbx_vertex);
-					triangle.vertices[v].position = vec3(fbx_vertex[0], fbx_vertex[1], fbx_vertex[2]);
+					triangle.vertices[v].position = (vec3&)converter.ConvertPoint(fbx_vertex);
+					triangle.vertices[v].control_point_index = index;
 				}
 
 				if (sub_mesh.has_normals)
@@ -203,6 +379,16 @@ namespace Exporter
 				}
 			}
 
+			if (sub_mesh.has_skinning_weights)
+			{
+				auto deformer = static_cast<FbxSkin*>(mesh->GetDeformer(0, FbxDeformer::eSkin));
+				FbxSkin::EType skinning_type = deformer->GetSkinningType();
+				if (skinning_type != FbxSkin::eRigid && skinning_type != FbxSkin::eLinear)
+					throw std::runtime_error("Unsupported skinning type");
+				
+				AddSkinningWeights(scene, sub_mesh, mesh, deformer, skeleton, triangles);
+			}
+
 			AddVertices(sub_mesh, triangles);
 		}
 
@@ -255,11 +441,23 @@ namespace Exporter
 
 		const uint32_t triangle_count = index_count / 3;
 		const bool use_short_indices = index_count <= std::numeric_limits<uint16_t>::max();
+		const uint8_t name_length = std::min((size_t)std::numeric_limits<uint8_t>::max(), submesh.name.size());
 
 		stream.write((char*)&flags, sizeof(flags));
 		stream.write((char*)&vertex_count, sizeof(vertex_count));
 		stream.write((char*)&triangle_count, sizeof(triangle_count));
 		stream.write((char*)&submesh.aabb, sizeof(submesh.aabb));
+		stream.write((char*)&name_length, sizeof(name_length));
+		stream.write(submesh.name.data(), name_length);
+
+		if (submesh.has_skinning_weights)
+		{
+			auto bone_count = (uint16_t)submesh.bone_index_remap.size();
+			stream.write((char*)&bone_count, sizeof(bone_count));
+			stream.write((char*)submesh.bone_index_remap.data(), bone_count * sizeof(uint16_t));
+			for (int i = 0; i < bone_count; i++)
+				stream.write((char*)&submesh.inv_bindpose[submesh.bone_index_remap[i]], sizeof(mat4));
+		}
 
 		if (use_short_indices)
 		{
@@ -277,6 +475,12 @@ namespace Exporter
 
 	bool WriteMeshToFile(const std::vector<SubMesh>& meshes, const std::wstring& filename)
 	{
+		if (meshes.empty())
+		{
+			std::cout << "mesh list is empty\n";
+			return false;
+		}
+
 		fs::path path = filename;
 		fs::create_directories(path.parent_path());
 

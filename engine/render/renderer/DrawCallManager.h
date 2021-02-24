@@ -49,6 +49,18 @@ namespace render {
 		}
 	};
 
+	struct DrawCallInitializer
+	{
+		DrawCallInitializer(const Mesh& mesh, const Material& material)
+			: mesh(mesh), material(material)
+		{}
+
+		DrawCallInitializer& SetHasSkinning(bool value) { has_skinning = value; return *this; }
+
+		const Mesh& const mesh;
+		const Material& const material;
+		bool has_skinning = false;
+	};
 
 	class DrawCallManager
 	{
@@ -59,7 +71,7 @@ namespace render {
 		class Handle
 		{
 		public:
-			ECS::components::DrawCall* AddDrawCall(const Mesh& mesh, const Material& material);
+			ECS::components::DrawCall* AddDrawCall(const DrawCallInitializer& initializer);
 			bool RemoveDrawCall(ECS::EntityID draw_call);
 			void RemoveAllDrawCalls();
 
@@ -75,6 +87,11 @@ namespace render {
 			ECS::components::DrawCall* GetDrawCall(size_t index) const 
 			{ 
 				return manager->GetManager()->GetComponent<ECS::components::DrawCall>(draw_calls[index]);
+			}
+
+			ECS::components::SkinningData* GetSkinningData(size_t index) const
+			{
+				return manager->GetManager()->GetComponent<ECS::components::SkinningData>(draw_calls[index]);
 			}
 
 			void Reset();
@@ -95,9 +112,10 @@ namespace render {
 
 		Handle CreateHandle() { return Handle(*this); }
 
-		std::pair<ECS::EntityID, ECS::components::DrawCall*> AddDrawCall(const Mesh& mesh, const Material& material);
+		std::pair<ECS::EntityID, ECS::components::DrawCall*> AddDrawCall(const DrawCallInitializer& initializer);
 		void RemoveDrawCall(ECS::EntityID entity);
-		ECS::ChunkList::List GetDrawCallChunks();
+		ECS::ChunkList::List GetDrawCallChunks() const;
+		ECS::ChunkList::List GetSkinningChunks() const;
 
 		DrawCallList* ObtaintDrawCallList();
 		void ReleaseDrawCallLists();

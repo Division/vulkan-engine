@@ -71,6 +71,7 @@ namespace render {
 		draw_call_manager = std::make_unique<DrawCallManager>(*this);
 		create_draw_calls_system = std::make_unique<systems::CreateDrawCallsSystem>(*scene.GetEntityManager(), *draw_call_manager);
 		upload_draw_calls_system = std::make_unique<systems::UploadDrawCallsSystem>(*draw_call_manager, *scene_buffers);
+		upload_skinning_system = std::make_unique<systems::UploadSkinningSystem>(*draw_call_manager, *scene_buffers);
 
 		light_grid = std::make_unique<LightGrid>();
 		shadow_map = std::make_unique<ShadowMap>(ShadowAtlasSize(), ShadowAtlasSize());
@@ -126,8 +127,8 @@ namespace render {
 
 	void SceneRenderer::UploadDrawCalls()
 	{
-		auto list = draw_call_manager->GetDrawCallChunks();
-		upload_draw_calls_system->ProcessChunks(list);
+		upload_draw_calls_system->ProcessChunks(draw_call_manager->GetDrawCallChunks());
+		upload_skinning_system->ProcessChunks(draw_call_manager->GetSkinningChunks());
 	}
 
 	static ShaderBufferStruct::Camera GetCameraData(ICameraParamsProvider* camera)

@@ -43,6 +43,10 @@ bool ExtractSkeleton(FbxSceneLoader& _loader,
                      const OzzImporter::NodeType& _types,
                      RawSkeleton* _skeleton);
 
+bool ExtractSkeleton(FbxNode* root_node, FbxSystemConverter* converter,
+                     const OzzImporter::NodeType& _types,
+                     RawSkeleton* _skeleton);
+
 }  // namespace fbx
 }  // namespace offline
 }  // namespace animation

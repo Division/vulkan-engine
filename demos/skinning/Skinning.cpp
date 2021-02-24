@@ -21,6 +21,21 @@ using namespace ECS;
 using namespace ECS::systems;
 using namespace physx;
 
+ECS::EntityID Game::CreateLight(vec3 position, float radius, ECS::components::Light::Type type, vec3 color)
+{
+	auto entity = manager->CreateEntity();
+
+	auto* transform = manager->AddComponent<ECS::components::Transform>(entity);
+	transform->position = position;
+
+	auto* light = manager->AddComponent<ECS::components::Light>(entity);
+	light->type = type;
+	light->color = color;
+	light->radius = radius;
+
+	return entity;
+}
+
 void Game::init()
 {
 	OPTICK_EVENT();
@@ -31,15 +46,21 @@ void Game::init()
 
 	manager->AddStaticComponent(graph);
 
+	CreateLight(vec3(5, 5, 5), 100, ECS::components::Light::Type::Point, vec3(1, 1, 1));
+
 	camera = std::make_unique<ViewerCamera>();
 
 	animated_entity = Resources::EntityResource::Handle(L"assets/Entities/Insect/insect.entity");
 	animation = Resources::SkeletalAnimationResource::Handle(L"assets/art/Entities/Insect/Insect@Flying.ozz");
+	//animation = Resources::SkeletalAnimationResource::Handle(L"assets/art/Entities/Insect/Take 001.ozz");
 
 	animated_entity_id = animated_entity->Spawn(vec3(0, 0, 0));
-
 	auto* controller = manager->GetComponent<components::AnimationController>(animated_entity_id);
 	auto anim_instance = controller->mixer->PlayAnimation(animation, SkeletalAnimation::PlaybackMode::Loop);
+
+	animated_entity_id = animated_entity->Spawn(vec3(5, 0, 0));
+	controller = manager->GetComponent<components::AnimationController>(animated_entity_id);
+	controller->mixer->PlayAnimation(animation, SkeletalAnimation::PlaybackMode::Loop);
 }
 
 void Game::UpdatePhysics(float dt)
@@ -50,6 +71,10 @@ void Game::update(float dt)
 {
 	Resources::Cache::Get().GCCollect();
 	camera->Update(dt);
+
+	Engine::Get()->GetDebugDraw()->DrawLine(vec3(), vec3(1, 0, 0), vec4(1, 0, 0, 1));
+	Engine::Get()->GetDebugDraw()->DrawLine(vec3(), vec3(0, 1, 0), vec4(0, 1, 0, 1));
+	Engine::Get()->GetDebugDraw()->DrawLine(vec3(), vec3(0, 0, 1), vec4(0, 0, 1, 1));
 }
 
 IGamePhysicsDelegate* Game::GetPhysicsDelegate()

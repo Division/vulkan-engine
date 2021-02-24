@@ -9,6 +9,11 @@
 
 using namespace glm;
 
+namespace ozz::animation
+{
+	class Skeleton;
+}
+
 namespace Exporter
 {
 	typedef std::pair<FbxNode*, FbxMesh*> SourceMesh;
@@ -25,15 +30,15 @@ namespace Exporter
 
 	struct MeshVertex
 	{
-		vec3 position;
-		vec3 normal;
-		vec3 binormal;
-		vec3 tangent;
-		vec2 uv0;
-		vec4 weights;
-		vec4 bone_indices;
-
-		bool operator==(const MeshVertex& other) const = default;
+		vec3 position = vec3(0);
+		vec3 normal = vec3(0);
+		vec3 binormal = vec3(0);
+		vec3 tangent = vec3(0);
+		vec2 uv0 = vec2(0);
+		vec4 weights = vec4(0);
+		vec4 bone_indices = vec4(0);
+		int control_point_index = 0;
+		bool operator==(const MeshVertex& other) const;
 
 		uint32_t GetHash() const;
 	};
@@ -54,8 +59,11 @@ namespace Exporter
 	struct SubMesh
 	{
 		Material material;
+		std::string name;
 		std::vector<MeshVertex> vertices;
 		std::vector<uint32_t> indices;
+		std::vector<uint16_t> bone_index_remap;
+		std::vector<mat4> inv_bindpose;
 		bool has_uv0 = false;
 		bool has_normals = false;
 		bool has_binormals = false;
@@ -64,7 +72,7 @@ namespace Exporter
 		AABB aabb;
 	};
 
-	std::vector<SubMesh> ExtractMeshes(const std::vector<SourceMesh>& meshes, FbxNode* parent_node);
+	std::vector<SubMesh> ExtractMeshes(const std::vector<SourceMesh>& meshes, FbxNode* parent_node, FbxScene* scene, ozz::animation::Skeleton* skeleton);
 	bool WriteMeshToFile(const std::vector<SubMesh>& meshes, const std::wstring& filename);
 	bool WritePhysMeshToFile(const std::vector<SubMesh>& meshes, const std::wstring& filename, bool is_convex, physx::PxCooking* cooking);
 

@@ -14,12 +14,12 @@ namespace render {
 	using namespace ECS;
 	using namespace Device;
 
-	ECS::components::DrawCall* DrawCallManager::Handle::AddDrawCall(const Mesh& mesh, const Material& material)
+	ECS::components::DrawCall* DrawCallManager::Handle::AddDrawCall(const DrawCallInitializer& initializer)
 	{
 		if (!manager)
 			throw std::runtime_error("Handle isn't initialized");
 
-		auto data = manager->AddDrawCall(mesh, material);
+		auto data = manager->AddDrawCall(initializer);
 		draw_calls.push_back(data.first);
 		return data.second;
 	}
@@ -99,36 +99,37 @@ namespace render {
 		draw_call_list_pool = std::make_unique<utils::Pool<DrawCallList>>();
 	}
 
-	std::pair<EntityID, components::DrawCall*> DrawCallManager::AddDrawCall(const Mesh& mesh, const Material& material)
+	std::pair<EntityID, components::DrawCall*> DrawCallManager::AddDrawCall(const DrawCallInitializer& initializer)
 	{
 		auto* descriptor_cache = Engine::GetVulkanContext()->GetDescriptorCache();
 
 		components::DrawCall* draw_call;
 		EntityID entity;
 		entity = manager->CreateEntity();
+
+		if (initializer.has_skinning)
+		{
+			manager->AddComponent<components::SkinningData>(entity);
+		}
+
 		draw_call = manager->AddComponent<components::DrawCall>(entity);
+		draw_call->mesh = &initializer.mesh;
 
-		*draw_call = components::DrawCall();
-		draw_call->mesh = &mesh;
-
-		bool has_skinning = false; // TODO: proper check
-
-		ShaderCapsSet depth_caps;
-		if (has_skinning)
-			depth_caps.addCap(ShaderCaps::Skinning);
-
-		auto& depth_shader_info = material.GetDepthOnlyShaderInfo();
-		auto& shader_info = material.GetShaderInfo();
+		auto& depth_shader_info = initializer.has_skinning ? initializer.material.GetDepthOnlyShaderInfoSkinning() : initializer.material.GetDepthOnlyShaderInfo();
+		auto& shader_info = initializer.has_skinning ? initializer.material.GetShaderInfoSkinning() : initializer.material.GetShaderInfo();
 
 		draw_call->shader = shader_cache->GetShaderProgram(shader_info);
 		draw_call->depth_only_shader = shader_cache->GetShaderProgram(depth_shader_info);
 		
+		assert(draw_call->shader);
+		assert(draw_call->depth_only_shader);
+
 		auto* depth_descriptor_set = draw_call->depth_only_shader->GetDescriptorSet(DescriptorSet::Object);
 		auto* descriptor_set = draw_call->shader->GetDescriptorSet(DescriptorSet::Object);
 		ShaderBindings depth_bindings;
 		ShaderBindings bindings;
-		scene_renderer.SetupShaderBindings(material, *depth_descriptor_set, depth_bindings);
-		scene_renderer.SetupShaderBindings(material, *descriptor_set, bindings);
+		scene_renderer.SetupShaderBindings(initializer.material, *depth_descriptor_set, depth_bindings);
+		scene_renderer.SetupShaderBindings(initializer.material, *descriptor_set, bindings);
 		
 		draw_call->depth_only_descriptor_set = descriptor_cache->GetDescriptorSet(depth_bindings, *depth_descriptor_set);
 		draw_call->descriptor_set = descriptor_cache->GetDescriptorSet(bindings, *descriptor_set);
@@ -137,9 +138,14 @@ namespace render {
 		return std::make_pair(entity, draw_call);
 	}
 
-	ChunkList::List DrawCallManager::GetDrawCallChunks()
+	ChunkList::List DrawCallManager::GetDrawCallChunks() const
 	{
 		return manager->GetChunkListsWithComponent<components::DrawCall>();
+	}
+
+	ChunkList::List DrawCallManager::GetSkinningChunks() const
+	{
+		return manager->GetChunkListsWithComponents<components::DrawCall, components::SkinningData>();
 	}
 
 	void DrawCallManager::RemoveDrawCall(EntityID entity)

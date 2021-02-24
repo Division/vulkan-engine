@@ -86,7 +86,7 @@ Mesh::Mesh(bool keepData, int componentCount, bool isStatic)
 }
 
 Mesh::Mesh(uint32_t flags, uint8_t* vertices, uint32_t vertex_count, uint8_t* indices, uint32_t triangle_count, AABB aabb)
-    : Mesh(false, 3, true)
+    : Mesh(true, 3, true)
 {
     this->_aabb = aabb;
 
@@ -120,8 +120,8 @@ Mesh::Mesh(uint32_t flags, uint8_t* vertices, uint32_t vertex_count, uint8_t* in
     
     if (_hasWeights) 
     {
-        layout.AddAttrib(VertexAttrib::JointWeights, WEIGHTS_FORMAT, WEIGHT_SIZE * 4);
         layout.AddAttrib(VertexAttrib::JointIndices, JOINT_INDEX_FORMAT, JOINT_INDEX_SIZE * 4);
+        layout.AddAttrib(VertexAttrib::JointWeights, WEIGHTS_FORMAT, WEIGHT_SIZE * 4);
     }
 
     uint32_t index_count = triangle_count * 3;
@@ -141,6 +141,29 @@ Mesh::Mesh(uint32_t flags, uint8_t* vertices, uint32_t vertex_count, uint8_t* in
         .MemoryUsage(VMA_MEMORY_USAGE_GPU_ONLY)
         .Data(indices);
     _indexBuffer = Device::VulkanBuffer::Create(index_initializer);
+
+    if (_keepData)
+    {
+        for (int i = 0; i < vertex_count; i++)
+        {
+            vec3 position = (vec3&)vertices[i * _strideBytes + layout.GetAttribOffset(VertexAttrib::Position)];
+            _vertices.insert(_vertices.end(), { position.x, position.y, position.z });
+            if (_hasNormals)
+            {
+                vec3 normal = (vec3&)vertices[i * _strideBytes + layout.GetAttribOffset(VertexAttrib::Normal)];
+                _normals.insert(_normals.end(), { normal.x, normal.y, normal.z } );
+            }
+
+            if (_hasWeights)
+            {
+                vec4 indexes = *(vec4*)&vertices[i * _strideBytes + layout.GetAttribOffset(VertexAttrib::JointIndices)];
+                vec4 weights = (vec4&)vertices[i * _strideBytes + layout.GetAttribOffset(VertexAttrib::JointWeights)];
+
+                _jointIndices.insert(_jointIndices.end(), { indexes.x, indexes.y, indexes.z, indexes.w });
+                _weights.insert(_weights.end(), { weights.x, weights.y, weights.z, weights.w });
+            }
+        }
+    }
 }
 
 Mesh::~Mesh() {
@@ -160,6 +183,12 @@ size_t Mesh::GetVertexStride(uint32_t flags)
     if (flags & Mesh::MESH_FLAG_HAS_WEIGHTS) result += sizeof(vec4) * 2; // bone weights and indices
 
     return result;
+}
+
+void Mesh::SetBoneRemap(const uint16_t* indices, int bone_count)
+{
+    bone_remap.resize(bone_count);
+    memcpy(bone_remap.data(), indices, sizeof(uint16_t) * bone_count);
 }
 
 void Mesh::setVertices(const vec3 *vertices, int vertexCount) {

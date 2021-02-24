@@ -21,6 +21,11 @@ struct ObjectParamsData
     float metalness;
 };
 
+struct SkinningMatricesData
+{
+    float4x4 matrices[70];
+};
+
 [[vk::binding(0, 0)]]
 cbuffer Camera : register(b0) 
 {
@@ -33,6 +38,15 @@ cbuffer ObjectParams : register(b1)
     ObjectParamsData object_params;
 };
 
+#if defined(SKINNING)
+[[vk::binding(2, 1)]]
+cbuffer SkinningMatrices : register(b2) 
+{
+    SkinningMatricesData skinning_matrices;
+};
+
+#endif
+
 struct VS_in
 {
     float4 position : POSITION;
@@ -42,6 +56,11 @@ struct VS_in
 
 #if defined(LIGHTING)
     float4 normal : NORMAL;
+#endif
+
+#if defined(SKINNING)
+    float4 joint_weights : BLENDWEIGHT;
+    float4 joint_indices : BLENDINDICES;
 #endif
 };
 
@@ -75,13 +94,14 @@ VS_out vs_main(VS_in input)
     VS_out result;
     float4x4 model_matrix = object_params.objectModelMatrix;
 #if defined(SKINNING)
-    /*model_matrix = mat4(0); // object model transform is included into bone matrices so just blend them
-    for (int i = 0; i < 3; i++) {
-        int joint_index = int(joint_indices[i]);
-        float joint_weight = joint_weights[i];
-        model_matrix += skinning.matrices[joint_index] * joint_weight;
-    }*/
-    not implemented
+    model_matrix = float4x4(0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0);
+    [unroll]
+    for (int i = 0; i < 4; i++)
+    {
+        int joint_index = int(input.joint_indices[i]);
+        float joint_weight = input.joint_weights[i];
+        model_matrix += skinning_matrices.matrices[joint_index] * joint_weight;
+    }
 #endif
 
     float4 position_worldspace = mul(model_matrix, float4(input.position.xyz, 1.0));

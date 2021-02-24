@@ -60,6 +60,9 @@ public:
 	void cleanup() override;
 
 private:
+	ECS::EntityID CreateLight(vec3 position, float radius, ECS::components::Light::Type type, vec3 color);
+
+private:
 	std::unique_ptr<ViewerCamera> camera;
 
 	ECS::EntityManager* manager = nullptr;

@@ -112,9 +112,6 @@ void Material::UpdateCaps() const {
 		shader_caps.removeCap(ShaderCaps::VertexColor);
 	}
 
-	shader_caps_skinning = shader_caps;
-	shader_caps_skinning.addCap(ShaderCaps::Skinning);
-
 	caps_dirty = false;
 }
 
@@ -129,17 +126,29 @@ void Material::UpdateShaderHash() const
 	auto fragment_data = ShaderProgramInfo::ShaderData(ShaderProgram::Stage::Fragment, shader_path, "ps_main", defines);
 	auto vertex_depth_only_data = ShaderProgramInfo::ShaderData(ShaderProgram::Stage::Vertex, shader_path, "vs_main", { {"DEPTH_ONLY", "1" } });
 	auto fragment_depth_only_data = ShaderProgramInfo::ShaderData(ShaderProgram::Stage::Fragment, L"shaders/noop.hlsl");
-	vertex_hash = ShaderCache::GetShaderDataHash(vertex_data);
-	vertex_hash_depth_only = ShaderCache::GetShaderDataHash(vertex_depth_only_data);
-	fragment_hash = ShaderCache::GetShaderDataHash(fragment_data);
+
+	ShaderCapsSet skinning_caps;
+	skinning_caps.addCap(ShaderCaps::Skinning);
+	ShaderCache::AppendCapsDefines(skinning_caps, defines);
+	auto vertex_data_skinning = ShaderProgramInfo::ShaderData(ShaderProgram::Stage::Vertex, shader_path, "vs_main", defines);
+	auto vertex_depth_only_data_skinning = ShaderProgramInfo::ShaderData(ShaderProgram::Stage::Vertex, shader_path, "vs_main", { {"DEPTH_ONLY", "1" }, { "SKINNING", "1"} });
+	auto fragment_data_skinning = ShaderProgramInfo::ShaderData(ShaderProgram::Stage::Fragment, shader_path, "ps_main", defines);
 
 	shader_info.Clear();
 	shader_info.AddShader(std::move(vertex_data));
 	shader_info.AddShader(std::move(fragment_data));
 
+	shader_info_skinning.Clear();
+	shader_info_skinning.AddShader(std::move(vertex_data_skinning));
+	shader_info_skinning.AddShader(std::move(fragment_data_skinning));
+
 	depth_only_shader_info.Clear();
 	depth_only_shader_info.AddShader(std::move(vertex_depth_only_data));
-	depth_only_shader_info.AddShader(std::move(fragment_depth_only_data));
+	depth_only_shader_info.AddShader(ShaderProgramInfo::ShaderData(fragment_depth_only_data));
+
+	depth_only_shader_info_skinning.Clear();
+	depth_only_shader_info_skinning.AddShader(std::move(vertex_depth_only_data_skinning));
+	depth_only_shader_info_skinning.AddShader(ShaderProgramInfo::ShaderData(fragment_depth_only_data));
 
 	shader_hash_dirty = false;
 }
@@ -149,8 +158,6 @@ uint32_t Material::GetHash() const
 	UpdateCaps();
 	UpdateShaderHash();
 	uint32_t hashes[] = {
-		vertex_hash,
-		fragment_hash,
 		shader_caps.getBitmask(),
 		texture0 ? texture0->GetHash() : 0,
 		normal_map ? normal_map->GetHash() : 0,

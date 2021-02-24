@@ -2,6 +2,7 @@
 #include "ecs/components/MultiMeshRenderer.h"
 #include "ecs/components/Transform.h"
 #include "ecs/components/Entity.h"
+#include "ecs/components/AnimationController.h"
 #include "render/renderer/SceneBuffers.h"
 #include "Engine.h"
 
@@ -26,6 +27,8 @@ namespace ECS { namespace systems {
 		ComponentFetcher<Transform> transform_fetcher(*chunk);
 		ComponentFetcher<EntityData> entity_fetcher(*chunk);
 		
+		const bool has_skinning = chunk->GetComponentLayout().GetComponentData(ECS::GetComponentHash<components::AnimationController>());
+
 		for (int i = 0; i < chunk->GetEntityCount(); i++)
 		{
 			auto* mesh_renderer = multimesh_renderer_fetcher.GetComponent(i);
@@ -50,7 +53,12 @@ namespace ECS { namespace systems {
 			{
 				auto& mesh = mesh_renderer->multi_mesh->GetMesh(j);
 				auto material = mesh_renderer->GetMaterial((size_t)j);
-				auto draw_call = handle.AddDrawCall(*mesh, *material);
+
+				render::DrawCallInitializer initializer(*mesh, *material);
+				initializer.SetHasSkinning(has_skinning);
+
+				auto draw_call = handle.AddDrawCall(initializer);
+					
 				draw_call->queue = mesh_renderer->render_queue;
 				draw_call->object_params = mesh_renderer->object_params[j]; // TODO: move to AddDrawCall
 				draw_call->obb = obb;
@@ -66,14 +74,29 @@ namespace ECS { namespace systems {
 	{
 		OPTICK_EVENT();
 		ComponentFetcher<DrawCall> draw_call_fetcher(*chunk);
-		// TODO: add skinning
 		auto* buffer = scene_buffers.GetObjectParamsBuffer();
 
 		for (int i = 0; i < chunk->GetEntityCount(); i++)
 		{
 			auto* draw_call = draw_call_fetcher.GetComponent(i);
-			auto offset = buffer->Append(draw_call->object_params);
+			const auto offset = buffer->Append(draw_call->object_params);
 			draw_call->dynamic_offset = offset;
+		}
+	}
+
+	void UploadSkinningSystem::Process(Chunk* chunk)
+	{
+		OPTICK_EVENT();
+		ComponentFetcher<DrawCall> draw_call_fetcher(*chunk);
+		ComponentFetcher<SkinningData> skinning_data_fetcher(*chunk);
+		auto* buffer = scene_buffers.GetSkinningMatricesBuffer();
+
+		for (int i = 0; i < chunk->GetEntityCount(); i++)
+		{
+			auto* draw_call = draw_call_fetcher.GetComponent(i);
+			auto* skinning_data = skinning_data_fetcher.GetComponent(i);
+			const auto offset = buffer->Append(skinning_data->bone_matrices);
+			draw_call->skinning_dynamic_offset = offset;
 		}
 	}
 

@@ -89,8 +89,11 @@ void Scene::DrawDebug()
 
     if (debug_settings && debug_settings->draw_skeletons)
     {
-        auto controllers = entity_manager->GetChunkListsWithComponents<components::Transform, components::AnimationController>();
-        systems::DebugDrawSkinningSystem(*entity_manager).ProcessChunks(controllers);
+        auto controllers1 = entity_manager->GetChunkListsWithComponents<components::Transform, components::AnimationController>();
+        systems::DebugDrawSkinningSystem(*entity_manager).ProcessChunks(controllers1);
+
+        //auto controllers2 = entity_manager->GetChunkListsWithComponents<components::Transform, components::AnimationController>();
+        //systems::DebugDrawSkinningVerticesSystem(*entity_manager).ProcessChunks(controllers2);
     }
 }
 

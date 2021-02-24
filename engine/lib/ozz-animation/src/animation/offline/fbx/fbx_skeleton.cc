@@ -161,6 +161,21 @@ bool ExtractSkeleton(FbxSceneLoader& _loader,
   }
   return true;
 }
+
+bool ExtractSkeleton(FbxNode* root_node, FbxSystemConverter* converter, const OzzImporter::NodeType& _types, RawSkeleton* _skeleton) {
+  RecurseReturn ret = RecurseNode(root_node, converter, _types,
+                  _skeleton, nullptr, FbxAMatrix());
+  if (ret == kNoSkeleton) {
+    ozz::log::Err() << "No skeleton found in Fbx scene." << std::endl;
+    return false;
+  } else if (ret == kError) {
+    ozz::log::Err() << "Failed to extract skeleton." << std::endl;
+    return false;
+  }
+  return true;
+}
+
+
 }  // namespace fbx
 }  // namespace offline
 }  // namespace animation

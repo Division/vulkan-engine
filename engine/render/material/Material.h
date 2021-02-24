@@ -60,10 +60,11 @@ public:
 	void SetColor(vec4 value) { color = value; }
 
 	const ShaderCapsSet& ShaderCaps() const { if (caps_dirty) UpdateCaps(); return shader_caps; }
-	const ShaderCapsSet &ShaderCapsSkinning() const { if (caps_dirty) UpdateCaps(); return shader_caps_skinning; }
 
 	const Device::ShaderProgramInfo& GetShaderInfo() const { UpdateShaderHash(); return shader_info; }
 	const Device::ShaderProgramInfo& GetDepthOnlyShaderInfo() const { UpdateShaderHash(); return depth_only_shader_info; }
+	const Device::ShaderProgramInfo& GetShaderInfoSkinning() const { UpdateShaderHash(); return shader_info_skinning; }
+	const Device::ShaderProgramInfo& GetDepthOnlyShaderInfoSkinning() const { UpdateShaderHash(); return depth_only_shader_info_skinning; }
 
 	uint32_t GetHash() const;
 
@@ -77,16 +78,15 @@ protected:
 	mutable bool shader_hash_dirty = true;
 	std::wstring shader_path = L"shaders/material_main.hlsl";
 	mutable ShaderCapsSet shader_caps;
-	mutable ShaderCapsSet shader_caps_skinning;
 	vec4 color = vec4(1,1,1,1);
 	float roughness = 0.5;
 	float metalness = 0.2;
 
+	// TODO: unify/factorize this when more combinations is needed
 	mutable Device::ShaderProgramInfo shader_info;
 	mutable Device::ShaderProgramInfo depth_only_shader_info;
-	mutable uint32_t vertex_hash_depth_only = 0;
-	mutable uint32_t vertex_hash = 0;
-	mutable uint32_t fragment_hash = 0;
+	mutable Device::ShaderProgramInfo shader_info_skinning;
+	mutable Device::ShaderProgramInfo depth_only_shader_info_skinning;
 
 	bool has_texture0 = false;
 	Device::Handle<Device::Texture> texture0;

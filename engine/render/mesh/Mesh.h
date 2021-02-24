@@ -42,6 +42,10 @@ public:
 
   const VertexLayout& GetVertexLayout() const { return layout; }
 
+  void SetBoneRemap(const uint16_t* indices, int bone_count);
+  uint16_t GetBoneRemapIndex(uint16_t mesh_bone_index) const { return bone_remap[mesh_bone_index]; }
+  uint16_t GetBoneCount() const { return bone_remap.size(); }
+
   void setVertices(const vec3 *vertices, int vertexCount);
   void setVertices(const float *vertexComponents, int vertexCount);
   void setVertices(const std::vector<vec3> &vertices);
@@ -82,15 +86,25 @@ public:
   }
   vec4 getWeights(int index) const {
     if (!_hasWeights|| !_keepData) { return vec4(); }
-    else { return vec4(_weights[index * JOINT_PER_VERTEX_MAX], _weights[index * JOINT_PER_VERTEX_MAX + 1], _weights[index * JOINT_PER_VERTEX_MAX + 2], 0); };
+    else { return vec4(_weights[index * JOINT_PER_VERTEX_MAX], _weights[index * JOINT_PER_VERTEX_MAX + 1], _weights[index * JOINT_PER_VERTEX_MAX + 2], _weights[index * JOINT_PER_VERTEX_MAX + 3]); };
   }
   ivec4 getJointIndices(int index) const {
     if (!_hasWeights|| !_keepData) { return ivec4(); }
     else { return ivec4(lround(_jointIndices[index * JOINT_PER_VERTEX_MAX]),
                         lround(_jointIndices[index * JOINT_PER_VERTEX_MAX + 1]),
                         lround(_jointIndices[index * JOINT_PER_VERTEX_MAX + 2]),
-                        0);
+                        lround(_jointIndices[index * JOINT_PER_VERTEX_MAX + 3]));
     };
+  }
+
+  ivec4 GetSkeletonMappedJointIndices(int index) const {
+      if (!_hasWeights || !_keepData) { return ivec4(); }
+      else {
+          return ivec4(GetBoneRemapIndex(lround(_jointIndices[index * JOINT_PER_VERTEX_MAX])),
+              GetBoneRemapIndex(lround(_jointIndices[index * JOINT_PER_VERTEX_MAX + 1])),
+              GetBoneRemapIndex(lround(_jointIndices[index * JOINT_PER_VERTEX_MAX + 2])),
+              GetBoneRemapIndex(lround(_jointIndices[index * JOINT_PER_VERTEX_MAX + 3])));
+      };
   }
 
   bool hasVertices() const { return _hasVertices; }
@@ -179,5 +193,6 @@ private:
   std::vector<float> _weights;
   std::vector<float> _jointIndices;
   std::vector<float> _colors;
+  std::vector<uint16_t> bone_remap;
 };
 

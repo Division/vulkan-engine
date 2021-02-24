@@ -3,11 +3,20 @@
 #include "utils/StringUtils.h"
 #include "SceneExporterUtils.h"
 #include <fbxsdk/utils/fbxgeometryconverter.h>
+#include <ozz/animation/runtime/skeleton.h>
+#include <ozz/animation/offline/fbx/fbx_skeleton.h>
+#include <ozz/animation/offline/fbx/fbx.h>
+#include <ozz/animation/offline/raw_skeleton.h>
+#include <ozz/animation/offline/skeleton_builder.h>
+
 
 namespace fs = std::filesystem;
 
 using namespace physx;
 using namespace Physics;
+using namespace ozz::animation::offline::fbx;
+using namespace ozz::animation::offline;
+using namespace ozz::animation;
 
 namespace Exporter
 {
@@ -101,20 +110,12 @@ namespace Exporter
 		// Get the current scene units (incoming from FBX file)
 		FbxSystemUnit SceneSystemUnit = scene->GetGlobalSettings().GetSystemUnit();
 
-		
-		// If the incoming FBX file is defined in centimeters, we have nothing to do
-		// so we can skip the conversion...
 		if (SceneSystemUnit.GetScaleFactor() != 1.0)
-			// Force the conversion to centimeters so we make sure
-			// that the scale compensation is correctly adjusted
 			FbxSystemUnit::cm.ConvertScene(scene);
 
-		// But we want the scene in meters so let's convert again, 
-		// but do not re-adjust the scale compensation since it has already 
-		// being handled in the above conversion.
-		FbxSystemUnit::ConversionOptions lOptions;
-		lOptions.mConvertRrsNodes = false;
-		FbxSystemUnit::m.ConvertScene(scene, lOptions);
+		//FbxSystemUnit::ConversionOptions lOptions;
+		//lOptions.mConvertRrsNodes = false;
+		//FbxSystemUnit::m.ConvertScene(scene, lOptions);
 		
 
 		FbxGeometryConverter converter(manager);
@@ -201,6 +202,7 @@ namespace Exporter
 				if (attrib->GetAttributeType() == FbxNodeAttribute::eSkeleton)
 				{
 					result[current_name].bones.push_back((FbxSkeleton*)attrib);
+					result[current_name].type = MeshExportData::Type::Skeleton; // probably wrong
 				}
 			}
 
@@ -208,6 +210,28 @@ namespace Exporter
 		});
 
 		return result;
+	}
+
+	bool ExtractOzzRuntimeSkeleton(FbxScene* scene, ozz::unique_ptr<Skeleton>& out_skeleton)
+	{
+		//ozz::animation::
+		FbxSystemConverter converter(scene->GetGlobalSettings().GetAxisSystem(), scene->GetGlobalSettings().GetSystemUnit());
+		RawSkeleton raw_skeleton;
+		OzzImporter::NodeType node_type;
+		node_type.skeleton = true;
+		node_type.geometry = false;
+		node_type.camera = false;
+		ExtractSkeleton(scene->GetRootNode(), &converter, node_type, &raw_skeleton);
+
+		SkeletonBuilder builder;
+		out_skeleton = builder(raw_skeleton);
+		if (!out_skeleton) {
+			return false;
+		}
+
+		std::cout << "SKELETON BONE COUNT " << raw_skeleton.num_joints() << "\n";
+
+		return true;
 	}
 
 	bool SceneExporter::ExportRootNode(FbxScene* scene, const std::filesystem::path& path)
@@ -219,13 +243,16 @@ namespace Exporter
 			auto filename = path.filename().replace_extension().string();
 			utils::Lowercase(filename);
 
+			ozz::unique_ptr<Skeleton> skeleton;
+			const bool has_skeleton = ExtractOzzRuntimeSkeleton(scene, skeleton);
+
 			auto meshes = GetMeshesToExport(scene);
 			for (auto& it : meshes)
 			{
 				if (it.first == filename)
 					throw std::runtime_error("Mesh can't have the same name as source file: " + it.first);
 
-				it.second.submeshes = ExtractMeshes(it.second.meshes, it.second.root_node);
+				it.second.submeshes = ExtractMeshes(it.second.meshes, it.second.root_node, scene, skeleton.get());
 			}
 
 			for (auto& it : meshes)

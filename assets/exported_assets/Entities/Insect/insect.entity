@@ -7,7 +7,7 @@
             },
             {
                 "type": "MultiMeshRenderer",
-                "path": "assets/art/Entities/Sphere/sphere_basic.mesh",
+                "path": "assets/art/Entities/Insect/insect.mesh",
                 "materials": [
                     "assets/Entities/Insect/insect.mat"
                 ]

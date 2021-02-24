@@ -15,7 +15,7 @@ namespace Device {
 		{ "color", VertexAttrib::VertexColor },
 		{ "joint_weights", VertexAttrib::JointWeights },
 		{ "joint_indices", VertexAttrib::JointIndices },
-		{ "blendweights", VertexAttrib::JointWeights },
+		{ "blendweight", VertexAttrib::JointWeights },
 		{ "blendindices", VertexAttrib::JointIndices },
 	
 	};

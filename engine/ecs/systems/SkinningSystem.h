@@ -27,4 +27,15 @@ namespace ECS::systems {
 
 	};
 
+	class DebugDrawSkinningVerticesSystem : public System
+	{
+	public:
+		DebugDrawSkinningVerticesSystem(EntityManager& manager)
+			: System(manager, false)
+		{}
+
+		void Process(Chunk* chunk) override;
+
+	};
+
 }
