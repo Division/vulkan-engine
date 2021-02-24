@@ -8,9 +8,13 @@
             {
                 "type": "MultiMeshRenderer",
                 "path": "assets/art/Entities/Insect/insect.mesh",
-                "materials": [
-                    "assets/Entities/Insect/insect.mat"
-                ]
+                "materials": 
+                {
+                    "Jaw" : "assets/Entities/Insect/insect2.mat",
+                    "Eyes" : "assets/Entities/Insect/insect3.mat",
+                    "Body" : "assets/Entities/Insect/insect4.mat",
+                    "Wings" : "assets/Entities/Insect/insect.mat"
+                }
             },
             {
                 "type": "AnimationController",

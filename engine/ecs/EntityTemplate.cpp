@@ -47,6 +47,7 @@ namespace ECS
 		{
 			std::wstring path;
 			std::vector<std::wstring> materials;
+			std::map<std::string, std::wstring> material_map;
 			Material::Handle material;
 
 			virtual void Load(const rapidjson::Value& data) override
@@ -62,13 +63,26 @@ namespace ECS
 				if (data.HasMember("materials"))
 				{
 					auto& materials_node = data["materials"];
-					if (!materials_node.IsArray())
-						throw std::runtime_error("materials must be an array");
-
-					for (auto iter = materials_node.Begin(); iter != materials_node.End(); iter++)
+					if (materials_node.IsArray())
 					{
-						materials.push_back(utils::StringToWString(iter->GetString()));
+						for (auto iter = materials_node.Begin(); iter != materials_node.End(); iter++)
+						{
+							materials.push_back(utils::StringToWString(iter->GetString()));
+						}
 					}
+					else if (materials_node.IsObject())
+					{
+						auto obj = materials_node.GetObjectA();
+						std::wstring default_material;
+						for (auto iter = obj.MemberBegin(); iter != obj.MemberEnd(); iter++)
+						{
+							std::string mesh_name = iter->name.GetString();
+							utils::Lowercase(mesh_name);
+							material_map[mesh_name] = utils::StringToWString(iter->value.GetString());
+						}
+					}
+					else
+						throw std::runtime_error("materials must be array or object");
 				}
 			}
 
@@ -78,6 +92,23 @@ namespace ECS
 				component->multi_mesh = Resources::MultiMesh::Handle(path);
 
 				component->material_resources = render::MaterialResourceList::Create();
+
+				if (materials.empty() && !material_map.empty())
+				{
+					const auto default_iter = material_map.find("default");
+					auto default_material = default_iter != material_map.end() ? default_iter->second : material_map.begin()->second;
+
+					for (int i = 0; i < component->multi_mesh->GetMeshCount(); i++)
+					{
+						std::string mesh_name = component->multi_mesh->GetMeshName(i);
+						utils::Lowercase(mesh_name);
+						auto iter = material_map.find(mesh_name);
+						if (iter != material_map.end())
+							materials.push_back(iter->second);
+						else
+							materials.push_back(default_material);
+					}
+				}
 
 				for (auto& material_path : materials)
 				{
