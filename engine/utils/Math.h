@@ -7,6 +7,8 @@
 #include <glm/gtc/quaternion.hpp>
 #include <string>
 #include <cstdlib>
+#include <algorithm>
+#include <half/half.h>
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
@@ -48,6 +50,56 @@ struct OBB {
     this->max = max;
     this->matrix = matrix;
   }
+};
+
+struct Vector2Half
+{
+    FLOAT16 x, y;
+
+    Vector2Half() = default;
+    Vector2Half(float x, float y) : x(x), y(y) {};
+
+    operator vec2() const
+    {
+        return vec2(FLOAT16::ToFloat32(x), FLOAT16::ToFloat32(y));
+    }
+};
+
+struct Vector4b
+{
+    union
+    {
+        uint8_t data[4];
+        struct
+        {
+            uint8_t x, y, z, w;
+        };
+    };
+
+    Vector4b() = default;
+    Vector4b(uint8_t x, uint8_t y, uint8_t z, uint8_t w) : x(x), y(y), z(z), w(w) {};
+    static Vector4b FromNormalizedFloat(vec4 src) 
+    {
+        return Vector4b(
+            (uint8_t)(std::min(1.0f, std::max(src.x, 0.0f)) * std::numeric_limits<uint8_t>::max()),
+            (uint8_t)(std::min(1.0f, std::max(src.y, 0.0f)) * std::numeric_limits<uint8_t>::max()),
+            (uint8_t)(std::min(1.0f, std::max(src.z, 0.0f)) * std::numeric_limits<uint8_t>::max()),
+            (uint8_t)(std::min(1.0f, std::max(src.w, 0.0f)) * std::numeric_limits<uint8_t>::max())
+        );
+    }
+
+    vec4 ToNormalizedFloat() const
+    {
+        return vec4(x, y, z, w) / (float)std::numeric_limits<uint8_t>::max();
+    }
+
+    static Vector4b FromUInt(ivec4 src)
+    {
+        return Vector4b(
+            (uint8_t)src.x, (uint8_t)src.y, (uint8_t)src.z, (uint8_t)src.w
+        );
+    }
+
 };
 
 struct AABB 

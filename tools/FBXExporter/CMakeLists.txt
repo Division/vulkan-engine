@@ -73,6 +73,8 @@ set(SOURCE_LIST
 	${ENGINE_DIR}utils/StringUtils.cpp
 	${ENGINE_DIR}lib/murmurhash/MurmurHash3.h
 	${ENGINE_DIR}lib/murmurhash/MurmurHash3.cpp
+	${ENGINE_DIR}lib/half/half.h
+	${ENGINE_DIR}lib/half/half.cpp
 	${OZZ_SOURCE_LIST}
 )
 

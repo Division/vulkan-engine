@@ -49,6 +49,8 @@ set(ENGINE_SOURCES
 	lib/ktx/uthash.h
 	lib/ktx/vkloader.c
 	lib/ktx/vk_funcs.c
+	lib/half/half.h
+	lib/half/half.cpp
 	Engine.h
 	Engine.cpp
 	Handle.h
@@ -121,6 +123,8 @@ set(ENGINE_SOURCES
 	render/buffer/DynamicBuffer.h
 	render/material/Material.h
 	render/material/Material.cpp
+	render/renderer/RenderModeUtils.h
+	render/renderer/RenderModeUtils.cpp
 	render/renderer/IRenderer.h
 	render/renderer/ICameraParamsProvider.h
 	render/renderer/DrawCallManager.h

@@ -201,7 +201,7 @@ namespace Exporter
 					throw std::runtime_error("No bones assigned to a vertex");
 
 				vertex.vertex->weights = vec4(0, 0, 0, 0);
-				vertex.vertex->bone_indices = vec4(0, 0, 0, 0);
+				vertex.vertex->bone_indices = ivec4(0, 0, 0, 0);
 				float sum = 0;
 				for (int i = 0; i < vertex.weights.size(); i++)
 				{
@@ -416,13 +416,16 @@ namespace Exporter
 
 		if (submesh.has_uv0)
 		{
-			stream.write((char*)&vertex.uv0, sizeof(vertex.uv0));
+			Vector2Half uv(vertex.uv0.x, vertex.uv0.y);
+			stream.write((char*)&uv, sizeof(uv));
 		}
 
 		if (submesh.has_skinning_weights)
 		{
-			stream.write((char*)&vertex.bone_indices, sizeof(vertex.bone_indices));
-			stream.write((char*)&vertex.weights, sizeof(vertex.weights));
+			Vector4b weights = Vector4b::FromNormalizedFloat(vertex.weights);
+			Vector4b indices = Vector4b::FromUInt(vertex.bone_indices);
+			stream.write((char*)&indices, sizeof(indices));
+			stream.write((char*)&weights, sizeof(weights));
 		}
 	}
 

@@ -36,7 +36,7 @@ namespace Exporter
 		vec3 tangent = vec3(0);
 		vec2 uv0 = vec2(0);
 		vec4 weights = vec4(0);
-		vec4 bone_indices = vec4(0);
+		ivec4 bone_indices = ivec4(0);
 		int control_point_index = 0;
 		bool operator==(const MeshVertex& other) const;
 

@@ -60,7 +60,7 @@ struct VS_in
 
 #if defined(SKINNING)
     float4 joint_weights : BLENDWEIGHT;
-    float4 joint_indices : BLENDINDICES;
+    uint4 joint_indices : BLENDINDICES;
 #endif
 };
 
@@ -98,7 +98,7 @@ VS_out vs_main(VS_in input)
     [unroll]
     for (int i = 0; i < 4; i++)
     {
-        int joint_index = int(input.joint_indices[i]);
+        uint joint_index = input.joint_indices[i];
         float joint_weight = input.joint_weights[i];
         model_matrix += skinning_matrices.matrices[joint_index] * joint_weight;
     }

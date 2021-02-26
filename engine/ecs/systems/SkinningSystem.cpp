@@ -128,7 +128,7 @@ namespace ECS::systems {
 					for (int j = 0; j < 4; j++)
 					{
 						glm::mat4x4& m = (glm::mat4x4&)model_matrices[indexes[j]];
-						auto ibp = inv_bind_poses[unmapped_indexes[j]]; //*/inv_bind_poses[indexes[j]];
+						auto ibp = inv_bind_poses[unmapped_indexes.data[j]];
 						auto pos = vec4(p, 1);
 						result += vec3(transform->local_to_world * m * ibp * pos) * weights[j];
 					}
