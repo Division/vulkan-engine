@@ -1,9 +1,8 @@
 {
-    "texture0": null,
+    "texture0": "assets/Entities/Insect/textures/Insect_Albedo.png",
     "normal_map": null,
     "lighting_enabled": true,
     "vertex_color_enabled": false,
     "roughness": 0.0,
-    "metallness": 0.0,
-    "color": [1, 0.8, 0.1, 1]
+    "metallness": 0.0
 }

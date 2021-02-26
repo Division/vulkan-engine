@@ -39,8 +39,8 @@ cbuffer ObjectParams : register(b1)
 };
 
 #if defined(SKINNING)
-[[vk::binding(2, 1)]]
-cbuffer SkinningMatrices : register(b2) 
+[[vk::binding(3, 1)]]
+cbuffer SkinningMatrices : register(b3) 
 {
     SkinningMatricesData skinning_matrices;
 };
@@ -371,6 +371,7 @@ float4 ps_main(VS_out input) : SV_TARGET
     }
 
     float3 ambient = float3(0.03, 0.03, 0.03) * albedo * ao;
+    light_color.a = 1.0f;
     result_color = result_color * light_color + float4(ambient, 0);
 
     //result_color = result_color * 0.00001 + float4(0.5,0.5,0.5, 1);

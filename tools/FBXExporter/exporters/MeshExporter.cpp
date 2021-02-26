@@ -264,8 +264,8 @@ namespace Exporter
 			sub_mesh.has_skinning_weights = skin_count == 1;
 			sub_mesh.has_uv0 = mesh->GetElementUVCount() > 0;
 
-			if (sub_mesh.has_skinning_weights ^ (bool)skeleton)
-				throw std::runtime_error("Skeleton not provided mismatch: " + std::string(mesh->GetName()));
+			/*if (sub_mesh.has_skinning_weights ^ (bool)skeleton)
+				throw std::runtime_error("Skeleton not provided mismatch: " + std::string(mesh->GetName()));*/
 
 			FbxGeometryElementBinormal* binormal_element = sub_mesh.has_binormals ? mesh->GetElementBinormal(0) : nullptr;
 			auto binormal_reference_mode = sub_mesh.has_binormals ? binormal_element->GetReferenceMode() : FbxGeometryElement::eDirect;
@@ -318,7 +318,7 @@ namespace Exporter
 						FbxVector2 fbx_uv;
 						bool unmapped;
 						mesh->GetPolygonVertexUV(i, v, uv_name, fbx_uv, unmapped);
-						triangle.vertices[v].uv0 = vec2(fbx_uv[0], fbx_uv[1]);
+						triangle.vertices[v].uv0 = vec2(fbx_uv[0], 1.0f - fbx_uv[1]);
 					}
 				}
 

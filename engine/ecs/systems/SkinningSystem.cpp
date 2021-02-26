@@ -31,15 +31,21 @@ namespace ECS::systems {
 
 			auto model_matrices = animation_controller->mixer->GetModelMatrices();
 
+			auto bounds = multi_mesh->multi_mesh->GetMesh(0)->aabb();
+
 			for (int j = 0; j < multi_mesh->multi_mesh->GetMeshCount(); j++)
 			{
 				if (!multi_mesh->draw_calls) continue;
 				
+
 				auto* skinning_data = multi_mesh->draw_calls.GetSkinningData(j);
 				if (!skinning_data) continue;
 
 				auto& mesh = multi_mesh->multi_mesh->GetMesh(j);
 				auto& inv_bind_pose = multi_mesh->multi_mesh->GetInvBindPose(j);
+				const AABB mesh_bounds = mesh->aabb();
+				bounds.expand(mesh_bounds.min);
+				bounds.expand(mesh_bounds.max);
 
 				for (uint16_t k = 0; k < mesh->GetBoneCount(); k++)
 				{
@@ -47,6 +53,12 @@ namespace ECS::systems {
 					skinning_data->bone_matrices.matrices[k] = transform->local_to_world * (mat4&)model_matrices[remap_index] * inv_bind_pose[k];
 				}
 			}
+
+			//auto b1 = vec3((mat4&)model_matrices[0] * vec4(bounds.min, 1));
+			//auto b2 = vec3((mat4&)model_matrices[0] * vec4(bounds.max, 1));
+			auto b1 = bounds.min;
+			auto b2 = bounds.max;
+			transform->bounds = AABB(glm::min(b1, b2), glm::max(b1, b2));
 		}
 	}
 

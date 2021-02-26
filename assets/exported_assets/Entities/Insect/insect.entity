@@ -10,10 +10,8 @@
                 "path": "assets/art/Entities/Insect/insect.mesh",
                 "materials": 
                 {
-                    "Jaw" : "assets/Entities/Insect/insect2.mat",
-                    "Eyes" : "assets/Entities/Insect/insect3.mat",
-                    "Body" : "assets/Entities/Insect/insect4.mat",
-                    "Wings" : "assets/Entities/Insect/insect.mat"
+                    "Wings" : "assets/Entities/Insect/insect2.mat",
+                    "default" : "assets/Entities/Insect/insect.mat"
                 }
             },
             {

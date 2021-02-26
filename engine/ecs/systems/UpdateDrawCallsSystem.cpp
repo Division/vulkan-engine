@@ -59,7 +59,7 @@ namespace ECS { namespace systems {
 
 				auto draw_call = handle.AddDrawCall(initializer);
 					
-				draw_call->queue = mesh_renderer->render_queue;
+				draw_call->queue = material->GetRenderQueue();
 				draw_call->object_params = mesh_renderer->object_params[j]; // TODO: move to AddDrawCall
 				draw_call->obb = obb;
 			}

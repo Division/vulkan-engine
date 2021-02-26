@@ -46,7 +46,7 @@ void Game::init()
 
 	manager->AddStaticComponent(graph);
 
-	CreateLight(vec3(5, 5, 5), 100, ECS::components::Light::Type::Point, vec3(1, 1, 1));
+	CreateLight(vec3(5, 100, -100), 1000, ECS::components::Light::Type::Point, vec3(1, 1, 1) * 6.0f);
 
 	camera = std::make_unique<ViewerCamera>();
 

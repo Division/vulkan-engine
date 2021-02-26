@@ -75,7 +75,7 @@ void Scene::DrawDebug()
     if (debug_settings && debug_settings->draw_bounding_boxes)
     {
         auto transforms = entity_manager->GetChunkListsWithComponent<components::Transform>();
-        CallbackSystem([&](Chunk* chunk) {
+        CallbackSystem([](Chunk* chunk) {
             ComponentFetcher<components::Transform> transform_fetcher(*chunk);
 
             for (int i = 0; i < chunk->GetEntityCount(); i++)
@@ -94,6 +94,22 @@ void Scene::DrawDebug()
 
         //auto controllers2 = entity_manager->GetChunkListsWithComponents<components::Transform, components::AnimationController>();
         //systems::DebugDrawSkinningVerticesSystem(*entity_manager).ProcessChunks(controllers2);
+    }
+
+    if (debug_settings && debug_settings->draw_lights)
+    {
+        auto lights = entity_manager->GetChunkListsWithComponents<components::Transform, components::Light>();
+        CallbackSystem([](Chunk* chunk) {
+            ComponentFetcher<components::Transform> transform_fetcher(*chunk);
+            ComponentFetcher<components::Light> light_fetcher(*chunk);
+            for (int i = 0; i < chunk->GetEntityCount(); i++)
+            {
+                auto* transform = transform_fetcher.GetComponent(i);
+                auto* light = light_fetcher.GetComponent(i);
+                Engine::Get()->GetDebugDraw()->DrawOBB(transform->GetOBB(), vec4(light->color, 1));
+                Engine::Get()->GetDebugDraw()->DrawPoint(transform->WorldPosition(), light->color, 5.0f);
+            }
+        }, *entity_manager, false).ProcessChunks(lights);
     }
 }
 

@@ -7,6 +7,7 @@
 #include "render/shader/ShaderCache.h"
 #include "resources/TextureResource.h"
 #include "Handle.h"
+#include "render/renderer/IRenderer.h"
 
 namespace Device 
 {
@@ -59,6 +60,9 @@ public:
 	vec4 GetColor() const { return color; }
 	void SetColor(vec4 value) { color = value; }
 
+	RenderQueue GetRenderQueue() const { return render_queue; }
+	void SetRenderQueue(RenderQueue value) { render_queue = value; }
+
 	const ShaderCapsSet& ShaderCaps() const { if (caps_dirty) UpdateCaps(); return shader_caps; }
 
 	const Device::ShaderProgramInfo& GetShaderInfo() const { UpdateShaderHash(); return shader_info; }
@@ -98,6 +102,7 @@ protected:
 
 	bool lighting_enabled = true;
 	bool vertex_color_enabled = false;
+	RenderQueue render_queue = RenderQueue::Opaque;
 };
 
 namespace render
