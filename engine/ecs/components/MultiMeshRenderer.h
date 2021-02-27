@@ -20,7 +20,6 @@ namespace ECS::components
 		Resources::MultiMesh::Handle multi_mesh;
 		render::MaterialList::Handle materials;
 		render::MaterialResourceList::Handle material_resources;
-		RenderQueue render_queue = RenderQueue::Opaque;
 		std::vector<Device::ShaderBufferStruct::ObjectParams> object_params;
 		render::DrawCallManager::Handle draw_calls;
 

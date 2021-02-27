@@ -334,6 +334,17 @@ namespace ECS {
 			});
 		}
 
+		template <typename T1, typename T2, typename T3>
+		ChunkList::List GetChunkListsWithComponents()
+		{
+			auto hash1 = GetComponentHash<T1>();
+			auto hash2 = GetComponentHash<T2>();
+			auto hash3 = GetComponentHash<T3>();
+			return GetChunkLists([=](ChunkList* chunk_list) {
+				return chunk_list->HasComponent(hash1) && chunk_list->HasComponent(hash2) && chunk_list->HasComponent(hash3);
+			});
+		}
+
 		template <typename T>
 		ChunkList::List GetChunkListsWithoutComponent()
 		{

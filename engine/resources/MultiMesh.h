@@ -25,14 +25,17 @@ namespace Resources
 
 		const size_t GetMeshCount() const { return meshes.size(); }
 		const auto& GetMesh(int index) const { return meshes[index]; }
+		const std::string& GetMeshName(int index) const { return mesh_names[index]; }
+		const std::vector<mat4>& GetInvBindPose(int index) const { return inv_bind_poses[index]; };
 
 	private:
-		Common::Handle<Mesh> LoadMesh(std::istream& stream);
+		std::tuple<Common::Handle<Mesh>, std::string, std::vector<mat4>> LoadMesh(std::istream& stream);
 
 	private:
 		std::vector<Common::Handle<Mesh>> meshes;
+		std::vector<std::string> mesh_names;
+		std::vector<std::vector<mat4>> inv_bind_poses;
 		AABB aabb;
-
 	};
 
 }

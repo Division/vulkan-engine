@@ -10,7 +10,7 @@ namespace Device
 	class ShaderProgram;
 }
 
-namespace ECS { namespace components {
+namespace ECS::components {
 
 	class Transform;
 
@@ -25,8 +25,14 @@ namespace ECS { namespace components {
 		Device::ShaderProgram* depth_only_shader = nullptr;
 		vk::DescriptorSet depth_only_descriptor_set;
 		uint32_t dynamic_offset = 0;
+		uint32_t skinning_dynamic_offset = -1;
 		uint32_t visible = 0;
 		RenderQueue queue = RenderQueue::Opaque;
 	};
 
-} }
+	struct SkinningData
+	{
+		Device::ShaderBufferStruct::SkinningMatrices bone_matrices;
+	};
+
+}

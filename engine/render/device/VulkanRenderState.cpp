@@ -442,7 +442,12 @@ namespace Device {
 		if (draw_call->descriptor_set)
 		{
 			utils::SmallVector<uint32_t, 4> dynamic_offsets;
-			dynamic_offsets.push_back(draw_call->dynamic_offset);
+			if (draw_call->skinning_dynamic_offset == -1 || !is_depth)
+				dynamic_offsets.push_back(draw_call->dynamic_offset);
+
+			if (draw_call->skinning_dynamic_offset != -1)
+				dynamic_offsets.push_back(draw_call->skinning_dynamic_offset);
+
 			auto descriptor_set = is_depth ? draw_call->depth_only_descriptor_set : draw_call->descriptor_set;
 			SetDescriptorSet(descriptor_set, DescriptorSet::Object, dynamic_offsets.size(), dynamic_offsets.data());
 		}

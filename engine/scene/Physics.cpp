@@ -1,6 +1,7 @@
 #include "Physics.h"
 #include "Engine.h"
 #include "render/debug/DebugDraw.h"
+#include "ecs/components/Static.h"
 
 using namespace physx;
 
@@ -41,8 +42,9 @@ namespace Physics
 		std::cout << "[PhysX Error] " << message << "\n" << file << line << "\n";
 	}
 
-	PhysXManager::PhysXManager(IGamePhysicsDelegate* delegate)
+	PhysXManager::PhysXManager(IGamePhysicsDelegate* delegate, ECS::components::DeltaTime* delta_time)
 		: delegate(delegate)
+		, delta_time(delta_time)
 	{
 		foundation = PxCreateFoundation(PX_PHYSICS_VERSION, allocator, error_callback);
 		if(!foundation)
@@ -57,7 +59,6 @@ namespace Physics
 				std::wcout << "Couldn't connect physx visual debugger\n";
 			}
 		}
-
 		
 		PxTolerancesScale scale;
 		cooking = PxCreateCooking(PX_PHYSICS_VERSION, *foundation, PxCookingParams(scale));
@@ -112,6 +113,10 @@ namespace Physics
 		{
 			// Allowing higher DT to compensate longer frames. May worth trying multiple fixed steps as well.
 			const auto simulation_dt = std::min((float)time_since_update, max_dt);
+
+			if (delta_time)
+				delta_time->physics_dt = simulation_dt;
+
 			if (delegate)
 				delegate->UpdatePhysics(simulation_dt);
 

@@ -45,4 +45,19 @@ namespace ECS { namespace systems {
 		render::SceneBuffers& scene_buffers;
 	};
 
+	// Uploads skinning data to the GPU buffer
+	class UploadSkinningSystem : public System
+	{
+	public:
+		UploadSkinningSystem(render::DrawCallManager& draw_call_manager, render::SceneBuffers& scene_buffers)
+			: System(*draw_call_manager.GetManager(), false)
+			, scene_buffers(scene_buffers)
+		{}
+
+		void Process(Chunk* chunk) override;
+
+	private:
+		render::SceneBuffers& scene_buffers;
+	};
+
 } }

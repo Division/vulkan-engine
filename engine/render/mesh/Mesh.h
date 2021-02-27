@@ -26,6 +26,21 @@ public:
       return count <= (std::numeric_limits<uint16_t>::max)();
   }
 
+  class Layout
+  {
+      VertexLayout layout;
+  public:
+      Layout(VertexLayout layout) : layout(layout) {}
+      vec3& GetPosition(uint8_t* data, size_t index) const { return (vec3&)data[index * layout.GetStride() + layout.GetAttribOffset(VertexAttrib::Position)]; }
+      Vector4_A2R10G10B10& GetNormal(uint8_t* data, size_t index) const { return (Vector4_A2R10G10B10&)data[index * layout.GetStride() + layout.GetAttribOffset(VertexAttrib::Normal)]; }
+      Vector4_A2R10G10B10& GetTangent(uint8_t* data, size_t index) const { return (Vector4_A2R10G10B10&)data[index * layout.GetStride() + layout.GetAttribOffset(VertexAttrib::Tangent)]; }
+      vec2& GetCorner(uint8_t* data, size_t index) const { return (vec2&)data[index * layout.GetStride() + layout.GetAttribOffset(VertexAttrib::Corner)]; }
+      vec4& GetColor(uint8_t* data, size_t index) const { return (vec4&)data[index * layout.GetStride() + layout.GetAttribOffset(VertexAttrib::VertexColor)]; }
+      Vector2Half& GetUV0(uint8_t* data, size_t index) const { return (Vector2Half&)data[index * layout.GetStride() + layout.GetAttribOffset(VertexAttrib::TexCoord0)]; }
+      Vector4b& GetIndices(uint8_t* data, size_t index) const { return (Vector4b&)data[index * layout.GetStride() + layout.GetAttribOffset(VertexAttrib::JointIndices)]; }
+      Vector4b& GetWeights(uint8_t* data, size_t index) const { return (Vector4b&)data[index * layout.GetStride() + layout.GetAttribOffset(VertexAttrib::JointWeights)]; }
+  };
+
   using Handle = Common::Handle<Mesh>;
 
   explicit Mesh(bool keepData = true, int componentCount = 3, bool isStatic = true);
@@ -41,6 +56,10 @@ public:
   bool UsesShortIndexes() const { return uses_short_indices; }
 
   const VertexLayout& GetVertexLayout() const { return layout; }
+
+  void SetBoneRemap(const uint16_t* indices, int bone_count);
+  uint16_t GetBoneRemapIndex(uint16_t mesh_bone_index) const { return bone_remap[mesh_bone_index]; }
+  uint16_t GetBoneCount() const { return bone_remap.size(); }
 
   void setVertices(const vec3 *vertices, int vertexCount);
   void setVertices(const float *vertexComponents, int vertexCount);
@@ -77,20 +96,36 @@ public:
   int indexCount() const { return _faceCount * _componentCount; }
   int vertexCount() const { return _vertexCount; }
   vec3 getVertex(int index) const {
-    if (!_hasVertices || !_keepData) { return vec3(); }
-    else { return vec3(_vertices[index * 3], _vertices[index * 3 + 1], _vertices[index * 3 + 2]); };
+    if (!_hasVertices || !_keepData) { 
+        return vec3(); 
+    }
+    else { 
+        return vec3(_vertices[index * 3], _vertices[index * 3 + 1], _vertices[index * 3 + 2]); 
+    };
   }
   vec4 getWeights(int index) const {
-    if (!_hasWeights|| !_keepData) { return vec4(); }
-    else { return vec4(_weights[index * JOINT_PER_VERTEX_MAX], _weights[index * JOINT_PER_VERTEX_MAX + 1], _weights[index * JOINT_PER_VERTEX_MAX + 2], 0); };
-  }
-  ivec4 getJointIndices(int index) const {
-    if (!_hasWeights|| !_keepData) { return ivec4(); }
-    else { return ivec4(lround(_jointIndices[index * JOINT_PER_VERTEX_MAX]),
-                        lround(_jointIndices[index * JOINT_PER_VERTEX_MAX + 1]),
-                        lround(_jointIndices[index * JOINT_PER_VERTEX_MAX + 2]),
-                        0);
+    if (!_hasWeights|| !_keepData) { 
+        return vec4(); 
+    }
+    else { 
+        return _weights[index].ToNormalizedFloat();
     };
+  }
+  Vector4b getJointIndices(int index) const {
+    if (!_hasWeights|| !_keepData) { 
+        return Vector4b(0, 0, 0, 0); }
+    else { 
+        return _jointIndices[index];
+    };
+  }
+
+  ivec4 GetSkeletonMappedJointIndices(int index) const {
+      if (!_hasWeights || !_keepData) { 
+          return ivec4(0, 0, 0, 0); 
+      }
+      else {
+          return ivec4(GetBoneRemapIndex(_jointIndices[index].x), GetBoneRemapIndex(_jointIndices[index].y), GetBoneRemapIndex(_jointIndices[index].z), GetBoneRemapIndex(_jointIndices[index].w));
+      };
   }
 
   bool hasVertices() const { return _hasVertices; }
@@ -104,7 +139,6 @@ public:
   int vertexOffsetBytes() const { return _vertexOffsetBytes; };
   int normalOffsetBytes() const { return _normalOffsetBytes; };
   int tangentOffsetBytes() const { return _tangentOffsetBytes; };
-  int bitangentOffsetBytes() const { return _bitangentOffsetBytes; };
   int texCoordOffsetBytes() const { return _texCoord0OffsetBytes; };
   int cornerOffsetBytes() const { return _cornerOffsetBytes; };
   int jointIndexOffsetBytes() const { return _jointIndexOffsetBytes; };
@@ -155,8 +189,6 @@ private:
   int _normalOffsetBytes;
   int _tangentOffset;
   int _tangentOffsetBytes;
-  int _bitangentOffset;
-  int _bitangentOffsetBytes;
   int _texCoord0Offset;
   int _texCoord0OffsetBytes;
   int _cornerOffset;
@@ -173,11 +205,11 @@ private:
   std::vector<float> _vertices;
   std::vector<float> _normals;
   std::vector<float> _tangents;
-  std::vector<float> _bitangents;
-  std::vector<float> _texCoord0;
+  std::vector<Vector2Half> _texCoord0;
   std::vector<float> _corners;
-  std::vector<float> _weights;
-  std::vector<float> _jointIndices;
+  std::vector<Vector4b> _weights;
+  std::vector<Vector4b> _jointIndices;
   std::vector<float> _colors;
+  std::vector<uint16_t> bone_remap;
 };
 

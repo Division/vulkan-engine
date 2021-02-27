@@ -15,6 +15,7 @@ namespace Exporter
 		enum class Type
 		{
 			Mesh,
+			Skeleton,
 			Phys,
 			PhysConvex
 		};

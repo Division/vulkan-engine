@@ -40,6 +40,7 @@
 #include "render/effects/PostProcess.h"
 #include "resources/TextureResource.h"
 #include "render/debug/DebugSettings.h"
+#include "RenderModeUtils.h"
 
 #include <functional>
 
@@ -71,6 +72,7 @@ namespace render {
 		draw_call_manager = std::make_unique<DrawCallManager>(*this);
 		create_draw_calls_system = std::make_unique<systems::CreateDrawCallsSystem>(*scene.GetEntityManager(), *draw_call_manager);
 		upload_draw_calls_system = std::make_unique<systems::UploadDrawCallsSystem>(*draw_call_manager, *scene_buffers);
+		upload_skinning_system = std::make_unique<systems::UploadSkinningSystem>(*draw_call_manager, *scene_buffers);
 
 		light_grid = std::make_unique<LightGrid>();
 		shadow_map = std::make_unique<ShadowMap>(ShadowAtlasSize(), ShadowAtlasSize());
@@ -126,8 +128,8 @@ namespace render {
 
 	void SceneRenderer::UploadDrawCalls()
 	{
-		auto list = draw_call_manager->GetDrawCallChunks();
-		upload_draw_calls_system->ProcessChunks(list);
+		upload_draw_calls_system->ProcessChunks(draw_call_manager->GetDrawCallChunks());
+		upload_skinning_system->ProcessChunks(draw_call_manager->GetSkinningChunks());
 	}
 
 	static ShaderBufferStruct::Camera GetCameraData(ICameraParamsProvider* camera)
@@ -328,12 +330,7 @@ namespace render {
 			state.SetGlobalBindings(*global_shader_bindings);
 			skybox->Render(state);
 
-			RenderMode mode;
-			mode.SetDepthWriteEnabled(false);
-			mode.SetDepthTestEnabled(true);
-			mode.SetDepthFunc(CompareOp::LessOrEqual);
-
-			state.SetRenderMode(mode);
+			state.SetRenderMode(GetRenderModeForQueue(RenderQueue::Opaque));
 
 			auto& render_queues = main_camera_culling_system.GetDrawCallList()->queues;
 			for (auto* draw_call : render_queues[(size_t)RenderQueue::Opaque])
@@ -341,23 +338,26 @@ namespace render {
 				state.RenderDrawCall(draw_call, false);
 			}
 
-			// Debug
-			mode.SetDepthWriteEnabled(false);
-			mode.SetDepthTestEnabled(false);
-			mode.SetPolygonMode(PolygonMode::Line);
-			mode.SetPrimitiveTopology(PrimitiveTopology::LineList);
+			state.SetRenderMode(GetRenderModeForQueue(RenderQueue::Translucent));
+			for (auto* draw_call : render_queues[(size_t)RenderQueue::Translucent])
+			{
+				state.RenderDrawCall(draw_call, false);
+			}
 
-			state.SetRenderMode(mode);
+			// Debug
+			auto debug_mode = GetRenderModeForQueue(RenderQueue::Debug);
+			debug_mode.SetPolygonMode(PolygonMode::Line);
+			debug_mode.SetPrimitiveTopology(PrimitiveTopology::LineList);
+			state.SetRenderMode(debug_mode);
 
 			for (auto& draw_call : debug_draw_calls_lines)
 			{
 				state.RenderDrawCall(&draw_call, false);
 			}
 
-			mode.SetPolygonMode(PolygonMode::Point);
-			mode.SetPrimitiveTopology(PrimitiveTopology::PointList);
-
-			state.SetRenderMode(mode);
+			debug_mode.SetPolygonMode(PolygonMode::Point);
+			debug_mode.SetPrimitiveTopology(PrimitiveTopology::PointList);
+			state.SetRenderMode(debug_mode);
 
 			for (auto& draw_call : debug_draw_calls_points)
 			{

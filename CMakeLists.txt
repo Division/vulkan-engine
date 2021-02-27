@@ -34,6 +34,7 @@ set(GLFW_INSTALL false)
 
 add_subdirectory(engine)
 add_subdirectory(demos/action-puzzle)
+add_subdirectory(demos/skinning)
 add_subdirectory(tools/ShaderCompiler) 
 add_subdirectory(tools/FBXExporter) 
 

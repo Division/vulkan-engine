@@ -8,6 +8,7 @@
 #include "utils/StringUtils.h"
 #include "utils/JsonUtils.h"
 #include "system/Logging.h"
+#include "render/renderer/RenderModeUtils.h"
 
 namespace Resources
 {
@@ -64,6 +65,12 @@ namespace Resources
 			else if (name == "color")
 			{
 				new_material->SetColor(utils::JSON::ReadVector4(iter->value));
+			}
+			else if (name == "queue")
+			{
+				std::string queue = iter->value.GetString();
+				utils::Lowercase(queue);
+				new_material->SetRenderQueue(render::RENDER_QUEUE_NAME_MAP.at(queue));
 			}
 			else
 			{

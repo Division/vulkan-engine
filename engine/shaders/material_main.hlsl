@@ -21,6 +21,11 @@ struct ObjectParamsData
     float metalness;
 };
 
+struct SkinningMatricesData
+{
+    float4x4 matrices[70];
+};
+
 [[vk::binding(0, 0)]]
 cbuffer Camera : register(b0) 
 {
@@ -33,6 +38,15 @@ cbuffer ObjectParams : register(b1)
     ObjectParamsData object_params;
 };
 
+#if defined(SKINNING)
+[[vk::binding(3, 1)]]
+cbuffer SkinningMatrices : register(b3) 
+{
+    SkinningMatricesData skinning_matrices;
+};
+
+#endif
+
 struct VS_in
 {
     float4 position : POSITION;
@@ -42,6 +56,11 @@ struct VS_in
 
 #if defined(LIGHTING)
     float4 normal : NORMAL;
+#endif
+
+#if defined(SKINNING)
+    float4 joint_weights : BLENDWEIGHT;
+    uint4 joint_indices : BLENDINDICES;
 #endif
 };
 
@@ -75,13 +94,14 @@ VS_out vs_main(VS_in input)
     VS_out result;
     float4x4 model_matrix = object_params.objectModelMatrix;
 #if defined(SKINNING)
-    /*model_matrix = mat4(0); // object model transform is included into bone matrices so just blend them
-    for (int i = 0; i < 3; i++) {
-        int joint_index = int(joint_indices[i]);
-        float joint_weight = joint_weights[i];
-        model_matrix += skinning.matrices[joint_index] * joint_weight;
-    }*/
-    not implemented
+    model_matrix = float4x4(0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0);
+    [unroll]
+    for (int i = 0; i < 4; i++)
+    {
+        uint joint_index = input.joint_indices[i];
+        float joint_weight = input.joint_weights[i];
+        model_matrix += skinning_matrices.matrices[joint_index] * joint_weight;
+    }
 #endif
 
     float4 position_worldspace = mul(model_matrix, float4(input.position.xyz, 1.0));
@@ -351,10 +371,14 @@ float4 ps_main(VS_out input) : SV_TARGET
     }
 
     float3 ambient = float3(0.03, 0.03, 0.03) * albedo * ao;
+    light_color.a = 1.0f;
     result_color = result_color * light_color + float4(ambient, 0);
 
     //result_color = result_color * 0.00001 + float4(0.5,0.5,0.5, 1);
     //result_color = pow((result_color + 0.055) / 1.055, 2.4); 
+
+    // result_color.rgb *= 0.00001;
+    // result_color.rgb += input.normal_worldspace.xyz;
 
 #else
     float4 light_color = float4(1.0, 1.0, 1.0, 1.0);

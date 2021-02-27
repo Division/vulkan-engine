@@ -5,7 +5,8 @@
 #include "utils/Math.h"
 #include "ecs/EntityTemplate.h"
 
-namespace ECS { namespace components {
+namespace ECS::components 
+{
 
 	struct Transform
 	{
@@ -64,4 +65,4 @@ namespace ECS { namespace components {
 	};
 
 
-} }
+}

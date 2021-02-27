@@ -49,6 +49,8 @@ set(ENGINE_SOURCES
 	lib/ktx/uthash.h
 	lib/ktx/vkloader.c
 	lib/ktx/vk_funcs.c
+	lib/half/half.h
+	lib/half/half.cpp
 	Engine.h
 	Engine.cpp
 	Handle.h
@@ -71,6 +73,7 @@ set(ENGINE_SOURCES
 	ecs/components/Light.h
 	ecs/components/Light.cpp
 	ecs/components/Physics.h
+	ecs/components/AnimationController.h
 	ecs/systems/TransformSystem.h
 	ecs/systems/TransformSystem.cpp
 	ecs/systems/RendererSystem.h
@@ -81,6 +84,8 @@ set(ENGINE_SOURCES
 	ecs/systems/CullingSystem.cpp
 	ecs/systems/UpdateDrawCallsSystem.h
 	ecs/systems/UpdateDrawCallsSystem.cpp
+	ecs/systems/SkinningSystem.h
+	ecs/systems/SkinningSystem.cpp
 	memory/Profiler.h
 	memory/Profiler.cpp
 	memory/Allocator.h
@@ -118,6 +123,8 @@ set(ENGINE_SOURCES
 	render/buffer/DynamicBuffer.h
 	render/material/Material.h
 	render/material/Material.cpp
+	render/renderer/RenderModeUtils.h
+	render/renderer/RenderModeUtils.cpp
 	render/renderer/IRenderer.h
 	render/renderer/ICameraParamsProvider.h
 	render/renderer/DrawCallManager.h
@@ -174,6 +181,8 @@ set(ENGINE_SOURCES
 	render/texture/Texture.cpp
 	render/texture/SpriteSheet.h
 	render/texture/SpriteSheet.cpp
+	render/animation/SkeletalAnimation.h
+	render/animation/SkeletalAnimation.cpp
 	scene/Scene.h
 	scene/Scene.cpp
 	scene/Physics.h
@@ -194,6 +203,10 @@ set(ENGINE_SOURCES
 	resources/MaterialResource.cpp
 	resources/EntityResource.h
 	resources/EntityResource.cpp
+	resources/SkeletonResource.h
+	resources/SkeletonResource.cpp
+	resources/SkeletalAnimationResource.h
+	resources/SkeletalAnimationResource.cpp
 	loader/TextureLoader.h
 	loader/TextureLoader.cpp
 	loader/FileLoader.h
@@ -234,14 +247,26 @@ add_subdirectory(lib/glfw-3.3)
 set(EXPORT_TARGETS ${EXPORT_TARGETS} glfw)
 set(OPTICK_ENABLED true)
 set(OPTICK_USE_VULKAN false)
+set(ozz_build_tools false)
+set(ozz_build_fbx false)
+set(ozz_build_gltf false)
+set(ozz_build_data false)
+set(ozz_build_samples false)
+set(ozz_build_howtos false)
+set(ozz_build_tests false)
+set(ozz_build_simd_ref false)
+set(ozz_build_msvc_rt_dll false)
+set(ozz_build_postfix false)
 
 add_subdirectory(lib/glm)
 add_subdirectory(lib/SPIRV-Cross)
 add_subdirectory(lib/optick)
+add_subdirectory(lib/ozz-animation)
 
 add_library(vk_engine ${ENGINE_SOURCES})
 target_compile_definitions(vk_engine PRIVATE VK_USE_PLATFORM_WIN32_KHR)
 target_include_directories(vk_engine PRIVATE Vulkan::Vulkan)
+target_include_directories(vk_engine PUBLIC ozz_animation)
 target_link_libraries(vk_engine glfw)
 target_link_libraries(vk_engine Vulkan::Vulkan)
 target_link_libraries(vk_engine spirv-cross-core)
@@ -249,7 +274,7 @@ target_link_libraries(vk_engine spirv-cross-glsl)
 target_link_libraries(vk_engine spirv-cross-cpp)
 target_link_libraries(vk_engine spirv-cross-reflect)
 target_link_libraries(vk_engine OptickCore)
-
+target_link_libraries(vk_engine ozz_animation)
 # dll .lib files
 target_link_libraries(vk_engine ${CMAKE_CURRENT_SOURCE_DIR}/lib/static/dxc/dxcompiler.lib)
 target_link_libraries(vk_engine ${CMAKE_CURRENT_SOURCE_DIR}/lib/static/physx/PhysX_64.lib)

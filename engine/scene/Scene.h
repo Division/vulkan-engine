@@ -23,9 +23,10 @@ namespace ECS
 
     namespace components
     {
-        class Light;
-        class Projector;
-        class Transform;
+        struct Light;
+        struct Projector;
+        struct Transform;
+        struct DeltaTime;
     }
 
     namespace systems
@@ -34,6 +35,7 @@ namespace ECS
         class RootTransformSystem;
         class UpdateRendererSystem;
         class PhysicsPostUpdateSystem;
+        class SkinningSystem;
     }
 }
 
@@ -72,6 +74,7 @@ private:
     void ProcessPhysicsSystems();
     void ProcessTransformSystems();
     void ProcessRendererSystems();
+    void DrawDebug();
 
 private:
     render::DebugSettings* debug_settings;
@@ -91,5 +94,7 @@ private:
     std::unique_ptr<ECS::systems::NoChildTransformSystem> no_child_system;
     std::unique_ptr<ECS::systems::RootTransformSystem> root_transform_system;
     std::unique_ptr<ECS::systems::UpdateRendererSystem> update_renderer_system;
+    std::unique_ptr<ECS::systems::SkinningSystem> skinning_system;
+    std::unique_ptr<ECS::components::DeltaTime> delta_time_static;
 
 };
