@@ -405,13 +405,14 @@ namespace Exporter
 		
 		if (submesh.has_normals)
 		{
-			stream.write((char*)&vertex.normal, sizeof(vertex.normal));
+			auto normal = Vector4_A2R10G10B10::FromSignedNormalizedFloat(vec4(glm::normalize(vertex.normal), 0));
+			stream.write((char*)&normal, sizeof(normal));
 		}
 		
 		if (submesh.has_tangents && submesh.has_binormals)
 		{
-			stream.write((char*)&vertex.binormal, sizeof(vertex.binormal));
-			stream.write((char*)&vertex.tangent, sizeof(vertex.tangent));
+			auto tangent = Vector4_A2R10G10B10::FromSignedNormalizedFloat(vec4(glm::normalize(vertex.tangent), 0));
+			stream.write((char*)&tangent, sizeof(tangent));
 		}
 
 		if (submesh.has_uv0)

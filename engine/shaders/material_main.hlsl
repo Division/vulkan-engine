@@ -377,6 +377,9 @@ float4 ps_main(VS_out input) : SV_TARGET
     //result_color = result_color * 0.00001 + float4(0.5,0.5,0.5, 1);
     //result_color = pow((result_color + 0.055) / 1.055, 2.4); 
 
+    // result_color.rgb *= 0.00001;
+    // result_color.rgb += input.normal_worldspace.xyz;
+
 #else
     float4 light_color = float4(1.0, 1.0, 1.0, 1.0);
     result_color *= light_color;

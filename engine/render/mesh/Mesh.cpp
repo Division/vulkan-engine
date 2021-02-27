@@ -16,8 +16,8 @@ const int JOINTS_MAX = Mesh::JOINTS_MAX;
 const int VERTEX_SIZE = 3 * 4;
 const Device::Format VERTEX_FORMAT = Device::Format::R32G32B32_float;
 
-const int NORMAL_SIZE = 3 * 4;
-const Device::Format NORMAL_FORMAT = Device::Format::R32G32B32_float;
+const int NORMAL_SIZE = 4;
+const Device::Format NORMAL_FORMAT = Device::Format::A2R10G10B10_snorm;
 
 const int TEXCOORD_SIZE = 2 * 2;
 const Device::Format TEXCOORD_FORMAT = Device::Format::R16G16_float;
@@ -73,8 +73,6 @@ Mesh::Mesh(bool keepData, int componentCount, bool isStatic)
     _normalOffsetBytes = 0;
     _tangentOffset = 0;
     _tangentOffsetBytes = 0;
-    _bitangentOffset = 0;
-    _bitangentOffsetBytes = 0;
     _texCoord0Offset = 0;
     _texCoord0OffsetBytes = 0;
     _jointIndexOffset = 0;
@@ -112,7 +110,6 @@ Mesh::Mesh(uint32_t flags, uint8_t* vertices, uint32_t vertex_count, uint8_t* in
     if (_hasTBN) 
     {
         layout.AddAttrib(VertexAttrib::Tangent, NORMAL_FORMAT, NORMAL_SIZE);
-        layout.AddAttrib(VertexAttrib::Bitangent, NORMAL_FORMAT, NORMAL_SIZE);
     }
 
     if (_hasTexCoord0) 
@@ -152,7 +149,7 @@ Mesh::Mesh(uint32_t flags, uint8_t* vertices, uint32_t vertex_count, uint8_t* in
             _vertices.insert(_vertices.end(), { position.x, position.y, position.z });
             if (_hasNormals)
             {
-                vec3& normal = mesh_layout.GetNormal(vertices, i);
+                vec3 normal = (vec4)mesh_layout.GetNormal(vertices, i);
                 _normals.insert(_normals.end(), { normal.x, normal.y, normal.z } );
             }
 
@@ -179,8 +176,8 @@ size_t Mesh::GetVertexStride(uint32_t flags)
     size_t result = 0;
 
     result += sizeof(vec3); // position
-    if (flags & Mesh::MESH_FLAG_HAS_NORMALS) result += sizeof(vec3); // normals
-    if (flags & Mesh::MESH_FLAG_HAS_TBN) result += sizeof(vec3) * 2; // tangent, bitangent
+    if (flags & Mesh::MESH_FLAG_HAS_NORMALS) result += sizeof(Vector4_A2R10G10B10); // normals
+    if (flags & Mesh::MESH_FLAG_HAS_TBN) result += sizeof(Vector4_A2R10G10B10); // tangent
     if (flags & Mesh::MESH_FLAG_HAS_UV0) result += sizeof(Vector2Half); // uv
     if (flags & Mesh::MESH_FLAG_HAS_WEIGHTS) result += sizeof(uint32_t) * 2; // bone weights and indices
 
@@ -332,11 +329,6 @@ void Mesh::createBuffer() {
     _tangentOffsetBytes = currentOffset;
     currentOffset += NORMAL_SIZE;
     layout.AddAttrib(VertexAttrib::Tangent, NORMAL_FORMAT, NORMAL_SIZE);
-
-    _bitangentOffset = currentOffset;
-    _bitangentOffsetBytes = currentOffset;
-    currentOffset += NORMAL_SIZE;
-    layout.AddAttrib(VertexAttrib::Bitangent, NORMAL_FORMAT, NORMAL_SIZE);
   }
   if (_hasTexCoord0) {
     _texCoord0Offset = currentOffset;
@@ -384,14 +376,12 @@ void Mesh::createBuffer() {
 
     if (_hasNormals) {
         auto& normal = mesh_layout.GetNormal(bufferData, i);
-        normal = vec3(_normals[i * 3], _normals[i * 3 + 1], _normals[i * 3 + 2]);
+        normal = Vector4_A2R10G10B10(_normals[i * 3], _normals[i * 3 + 1], _normals[i * 3 + 2], 0);
     }
 
     if (_hasTBN) {
         auto& tangent = mesh_layout.GetTangent(bufferData, i);
-        auto& bitangent = mesh_layout.GetBitangent(bufferData, i);
-        tangent = vec3(_tangents[i * 3], _tangents[i * 3 + 1], _tangents[i * 3 + 2]);
-        bitangent = vec3(_bitangents[i * 3], _bitangents[i * 3 + 1], _bitangents[i * 3 + 2]);
+        tangent = Vector4_A2R10G10B10(_tangents[i * 3], _tangents[i * 3 + 1], _tangents[i * 3 + 2], 0);
     }
 
     if (_hasTexCoord0) {
@@ -438,7 +428,6 @@ void Mesh::createBuffer() {
     std::vector<float>().swap(_vertices);
     std::vector<float>().swap(_normals);
     std::vector<float>().swap(_tangents);
-    std::vector<float>().swap(_bitangents);
     std::vector<Vector2Half>().swap(_texCoord0);
     std::vector<Vector4b>().swap(_weights);
     std::vector<Vector4b>().swap(_jointIndices);
@@ -502,9 +491,7 @@ void Mesh::calculateTBN() {
   }
 
   _tangents.resize(_vertices.size());
-  _bitangents.resize(_vertices.size());
   memset(&_tangents[0], 0, _tangents.size() * sizeof(float));
-  memset(&_bitangents[0], 0, _bitangents.size() * sizeof(float));
 
   for (int i = 0; i < _faceCount; i++) {
     int faceOffset = i * 3;
@@ -535,26 +522,18 @@ void Mesh::calculateTBN() {
     b = deltaPos2 * (deltaUV1[1] * r);
     vec3 tangent = a - b;
 
-    a = deltaPos2 * (deltaUV1[0] * r);
-    b = deltaPos1 * (deltaUV2[0] * r);
-    vec3 bitangent = a - b;
-
     for (int j = 0; j < 3; j++) {
       _tangents[indexA + j] += tangent[j];
       _tangents[indexB + j] += tangent[j];
       _tangents[indexC + j] += tangent[j];
-      _bitangents[indexA + j] += bitangent[j];
-      _bitangents[indexB + j] += bitangent[j];
-      _bitangents[indexC + j] += bitangent[j];
     }
   }
 
   for (int i = 0; i < _vertexCount; i++) {
-    vec3 *a = (vec3 *)&_tangents[i * 3];
-    vec3 *b = (vec3 *)&_bitangents[i * 3];
+   /* vec3 *a = (vec3 *)&_tangents[i * 3];
     vec3 *c = (vec3 *)&_normals[i * 3];
 
-    // Orthonormalize matrix. Since it's almost orthonormal we can just correct tangent a little.
+   // Orthonormalize matrix. Since it's almost orthonormal we can just correct tangent a little.
     // t = normalize(t - n * dot(n, t));
     *a = *a - *c * glm::dotf(*c, *a);
 
@@ -565,6 +544,7 @@ void Mesh::calculateTBN() {
 
     *a = -glm::normalize(*a);
     *b = -glm::normalize(*b); // have no idea why it should be inverted to look visually correct
+    */
   }
 
   _hasTBN = true;

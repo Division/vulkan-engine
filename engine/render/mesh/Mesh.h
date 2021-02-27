@@ -32,9 +32,8 @@ public:
   public:
       Layout(VertexLayout layout) : layout(layout) {}
       vec3& GetPosition(uint8_t* data, size_t index) const { return (vec3&)data[index * layout.GetStride() + layout.GetAttribOffset(VertexAttrib::Position)]; }
-      vec3& GetNormal(uint8_t* data, size_t index) const { return (vec3&)data[index * layout.GetStride() + layout.GetAttribOffset(VertexAttrib::Normal)]; }
-      vec3& GetTangent(uint8_t* data, size_t index) const { return (vec3&)data[index * layout.GetStride() + layout.GetAttribOffset(VertexAttrib::Tangent)]; }
-      vec3& GetBitangent(uint8_t* data, size_t index) const { return (vec3&)data[index * layout.GetStride() + layout.GetAttribOffset(VertexAttrib::Bitangent)]; }
+      Vector4_A2R10G10B10& GetNormal(uint8_t* data, size_t index) const { return (Vector4_A2R10G10B10&)data[index * layout.GetStride() + layout.GetAttribOffset(VertexAttrib::Normal)]; }
+      Vector4_A2R10G10B10& GetTangent(uint8_t* data, size_t index) const { return (Vector4_A2R10G10B10&)data[index * layout.GetStride() + layout.GetAttribOffset(VertexAttrib::Tangent)]; }
       vec2& GetCorner(uint8_t* data, size_t index) const { return (vec2&)data[index * layout.GetStride() + layout.GetAttribOffset(VertexAttrib::Corner)]; }
       vec4& GetColor(uint8_t* data, size_t index) const { return (vec4&)data[index * layout.GetStride() + layout.GetAttribOffset(VertexAttrib::VertexColor)]; }
       Vector2Half& GetUV0(uint8_t* data, size_t index) const { return (Vector2Half&)data[index * layout.GetStride() + layout.GetAttribOffset(VertexAttrib::TexCoord0)]; }
@@ -140,7 +139,6 @@ public:
   int vertexOffsetBytes() const { return _vertexOffsetBytes; };
   int normalOffsetBytes() const { return _normalOffsetBytes; };
   int tangentOffsetBytes() const { return _tangentOffsetBytes; };
-  int bitangentOffsetBytes() const { return _bitangentOffsetBytes; };
   int texCoordOffsetBytes() const { return _texCoord0OffsetBytes; };
   int cornerOffsetBytes() const { return _cornerOffsetBytes; };
   int jointIndexOffsetBytes() const { return _jointIndexOffsetBytes; };
@@ -191,8 +189,6 @@ private:
   int _normalOffsetBytes;
   int _tangentOffset;
   int _tangentOffsetBytes;
-  int _bitangentOffset;
-  int _bitangentOffsetBytes;
   int _texCoord0Offset;
   int _texCoord0OffsetBytes;
   int _cornerOffset;
@@ -209,7 +205,6 @@ private:
   std::vector<float> _vertices;
   std::vector<float> _normals;
   std::vector<float> _tangents;
-  std::vector<float> _bitangents;
   std::vector<Vector2Half> _texCoord0;
   std::vector<float> _corners;
   std::vector<Vector4b> _weights;

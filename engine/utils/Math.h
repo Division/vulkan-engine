@@ -52,6 +52,40 @@ struct OBB {
   }
 };
 
+// TODO: may be not portable
+struct Vector4_A2R10G10B10
+{
+    int b : 10;
+    int g : 10;
+    int r : 10;
+    int a : 2;
+
+    static constexpr uint32_t MaxRange(uint32_t bitsize)
+    {
+        return (1 << (bitsize - 1)) - 1;
+    }
+
+    Vector4_A2R10G10B10() : a(0), r(0), g(0), b(0) {};
+
+    Vector4_A2R10G10B10(int a, int r, int g, int b) : a(a), r(r), g(g), b(b) {}
+
+    static Vector4_A2R10G10B10 FromSignedNormalizedFloat(vec4 src)
+    {
+        src = glm::max(-glm::one<vec4>(), glm::min(src, glm::one<vec4>()));
+        return Vector4_A2R10G10B10(
+            src.w * MaxRange(2),
+            src.x * MaxRange(10),
+            src.y * MaxRange(10),
+            src.z * MaxRange(10)
+        );
+    }
+
+    operator vec4() const
+    {
+        return glm::max(-glm::one<vec4>(), vec4(r / (float)MaxRange(10), g / (float)MaxRange(10), b / (float)MaxRange(10), a / (float)MaxRange(2)));
+    }
+};
+
 struct Vector2Half
 {
     FLOAT16 x, y;
