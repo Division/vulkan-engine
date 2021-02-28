@@ -1,0 +1,9 @@
+{
+    "texture0": "assets/art/Textures/Ground/ground_cracks/ground_cracks_basecolor.ktx",
+    "normal_map": "assets/art/Textures/Ground/ground_cracks/ground_cracks_normal.ktx",
+    "lighting_enabled": true,
+    "vertex_color_enabled": false,
+    "roughness": 0.0,
+    "metallness": 0.0,
+    "color": [1, 1, 1, 1]
+}

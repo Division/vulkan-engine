@@ -12,6 +12,8 @@
 #include "resources/SkeletonResource.h"
 #include "resources/SkeletalAnimationResource.h"
 #include "system/Input.h"
+#include "objects/Camera.h"
+#include "utils/Math.h"
 
 Game::Game() = default;
 Game::~Game() = default;
@@ -46,13 +48,18 @@ void Game::init()
 
 	manager->AddStaticComponent(graph);
 
-	CreateLight(vec3(2.5, 0, 0), 1000, ECS::components::Light::Type::Point, vec3(1, 1, 1) * 6.0f);
+	point_light_id = CreateLight(vec3(2.5, 4, 0), 1000, ECS::components::Light::Type::Point, vec3(1, 1, 1) * 6.0f);
 
 	camera = std::make_unique<ViewerCamera>();
 
 	animated_entity = Resources::EntityResource::Handle(L"assets/Entities/Insect/insect.entity");
 	animation = Resources::SkeletalAnimationResource::Handle(L"assets/art/Entities/Insect/Insect@Flying.ozz");
-	//animation = Resources::SkeletalAnimationResource::Handle(L"assets/art/Entities/Insect/Take 001.ozz");
+	auto plane_handle = Resources::EntityResource::Handle(L"assets/Entities/Basic/Ground/cracks/plane10_ground_cracks.entity");
+	plane_handle->Spawn(vec3(0));
+
+	auto scifi_box_handle = Resources::EntityResource::Handle(L"assets/Entities/Basic/Crates/crate_scifi.entity");
+	auto scifi_box_id = scifi_box_handle->Spawn(vec3(1, 2, 3));
+	//manager->GetComponent<components::Transform>(scifi_box_id)->rotation = glm::angleAxis((float)M_PI * 4.8f, vec3(0, 1, 0)) * glm::angleAxis((float)M_PI * 4.8f, vec3(1, 0, 0));
 
 	animated_entity_id = animated_entity->Spawn(vec3(0, 0, 0));
 	auto* controller = manager->GetComponent<components::AnimationController>(animated_entity_id);
@@ -75,6 +82,13 @@ void Game::update(float dt)
 	Engine::Get()->GetDebugDraw()->DrawLine(vec3(), vec3(1, 0, 0), vec4(1, 0, 0, 1));
 	Engine::Get()->GetDebugDraw()->DrawLine(vec3(), vec3(0, 1, 0), vec4(0, 1, 0, 1));
 	Engine::Get()->GetDebugDraw()->DrawLine(vec3(), vec3(0, 0, 1), vec4(0, 0, 1, 1));
+
+	auto input = Engine::Get()->GetInput();
+	if (input->keyDown(Key::Space))
+	{
+		auto light_transform = manager->GetComponent<components::Transform>(point_light_id);
+		light_transform->position = Engine::Get()->GetScene()->GetCamera()->cameraPosition();
+	}
 }
 
 IGamePhysicsDelegate* Game::GetPhysicsDelegate()

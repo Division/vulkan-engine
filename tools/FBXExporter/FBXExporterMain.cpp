@@ -40,7 +40,9 @@ int main(int argc, char** argv) {
     std::filesystem::create_directories(settings.bin_assets_path);
 
 #if defined (_DEBUG)
-    settings.input_path = settings.assets_path / "Entities/Insect/Insect_mesh_test.fbx";
+    settings.input_path = settings.assets_path / "Entities/Insect/Insect_mesh.fbx";
+    //settings.input_path = settings.assets_path / "Entities/Basic/figures.fbx";
+    //settings.input_path = settings.assets_path / "Entities/Sphere/sphere.fbx";
     //settings.input_path = settings.assets_path / "Entities/Insect/animations/Insect@Flying.fbx";
 #endif
 

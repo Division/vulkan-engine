@@ -185,25 +185,25 @@ namespace Device {
 			sampler_info = vk::SamplerCreateInfo(
 				{}, vk::Filter::eNearest, vk::Filter::eNearest, vk::SamplerMipmapMode::eNearest,
 				vk::SamplerAddressMode::eRepeat, vk::SamplerAddressMode::eRepeat, vk::SamplerAddressMode::eRepeat,
-				0.0f, false, 0, false);
+				0.0f, false, 0, false, vk::CompareOp::eNever, 0.0f, VK_LOD_CLAMP_NONE);
 			break;
 		case ShaderSamplerName::PointClamp:
 			sampler_info = vk::SamplerCreateInfo(
 				{}, vk::Filter::eNearest, vk::Filter::eNearest, vk::SamplerMipmapMode::eNearest,
 				vk::SamplerAddressMode::eClampToEdge, vk::SamplerAddressMode::eClampToEdge, vk::SamplerAddressMode::eClampToEdge,
-				0.0f, false, 0, false);
+				0.0f, false, 0, false, vk::CompareOp::eNever, 0.0f, VK_LOD_CLAMP_NONE);
 			break;
 		case ShaderSamplerName::LinearWrap:
 			sampler_info = vk::SamplerCreateInfo(
 				{}, vk::Filter::eLinear, vk::Filter::eLinear, vk::SamplerMipmapMode::eLinear,
 				vk::SamplerAddressMode::eRepeat, vk::SamplerAddressMode::eRepeat, vk::SamplerAddressMode::eRepeat,
-				0.0f, true, 8, false);
+				0.0f, true, 8, false, vk::CompareOp::eNever, 0.0f, VK_LOD_CLAMP_NONE);
 			break;
 		case ShaderSamplerName::LinearClamp:
 			sampler_info = vk::SamplerCreateInfo(
 				{}, vk::Filter::eLinear, vk::Filter::eLinear, vk::SamplerMipmapMode::eLinear,
 				vk::SamplerAddressMode::eClampToEdge, vk::SamplerAddressMode::eClampToEdge, vk::SamplerAddressMode::eClampToEdge,
-				0.0f, true, 8, false);
+				0.0f, true, 8, false, vk::CompareOp::eNever, 0.0f, VK_LOD_CLAMP_NONE);
 			break;
 		default:
 			throw std::runtime_error("unsupported sampler");

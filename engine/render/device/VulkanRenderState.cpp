@@ -358,7 +358,7 @@ namespace Device {
 		vk::SamplerCreateInfo sampler_info(
 			{}, vk::Filter::eLinear, vk::Filter::eLinear, vk::SamplerMipmapMode::eNearest,
 			vk::SamplerAddressMode::eRepeat, vk::SamplerAddressMode::eRepeat, vk::SamplerAddressMode::eRepeat,
-			0.0f, true, 16, false);
+			0.0f, true, 16, false, vk::CompareOp::eNever, 0.0f, VK_LOD_CLAMP_NONE);
 
 		auto device = Engine::GetVulkanDevice();
 		auto sampler = device.createSamplerUnique(sampler_info);

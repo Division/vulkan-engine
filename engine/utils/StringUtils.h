@@ -29,6 +29,6 @@ namespace utils
 	template <typename T>
 	bool BeginsWith(const T& string, const T& value)
 	{
-		return string.find_first_of(value) == 0;
+		return string.find(value) == 0;
 	}
 }

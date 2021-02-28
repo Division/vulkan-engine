@@ -468,6 +468,16 @@ namespace render {
 				return blank_texture.get();
 		}
 
+		case ShaderTextureName::NormalMap:
+		{
+			if (!material.GetNormalMapResource() && material.NormalMap())
+				return material.Texture0().get();
+			else if (material.GetNormalMapResource().IsResolved())
+				return material.GetNormalMapResource()->Get().get();
+			else
+				return blank_texture.get();
+		}
+
 		case ShaderTextureName::ShadowMap:
 			return shadowmap_atlas_attachment->GetTexture().get();
 

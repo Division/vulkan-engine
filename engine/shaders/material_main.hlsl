@@ -56,6 +56,9 @@ struct VS_in
 
 #if defined(LIGHTING)
     float4 normal : NORMAL;
+#if defined(NORMAL_MAP)
+    float4 tangent : TANGENT;
+#endif
 #endif
 
 #if defined(SKINNING)
@@ -74,6 +77,7 @@ struct VS_out
 
 #if defined(LIGHTING)
     float4 normal_worldspace : NORMAL;
+    float4 tangent_worldspace : TANGENT;
     float linear_depth : POSITION1;
 #endif
 
@@ -113,6 +117,11 @@ VS_out vs_main(VS_in input)
 
 #if defined(LIGHTING)
     result.normal_worldspace = normalize(mul(model_matrix, float4(input.normal.xyz, 0)));
+    result.tangent_worldspace = 0.0f;
+    #if defined(NORMAL_MAP)
+    result.tangent_worldspace = normalize(mul(model_matrix, float4(input.tangent.xyz, 0)));
+    result.tangent_worldspace.w = input.tangent.w;
+    #endif
     result.linear_depth = LinearizeDepth(result.position.z / result.position.w, camera.zMin, camera.zMax);
 #endif
 
@@ -128,6 +137,11 @@ VS_out vs_main(VS_in input)
 #if defined(TEXTURE0)
 [[vk::binding(2, 1)]] Texture2D texture0 : register(t2);
 #endif
+
+#if defined(NORMAL_MAP)
+[[vk::binding(4, 1)]] Texture2D normal_map : register(t4);
+#endif
+
 
 #if defined (LIGHTING)
 [[vk::binding(3,  0)]] Texture2D shadow_map : register(t3);
@@ -304,6 +318,35 @@ float4 ps_main(VS_out input) : SV_TARGET
 #endif
 
 #if defined(LIGHTING)
+    float roughness_final = object_params.roughness;
+    float metalness_final = object_params.metalness;
+    float3 normal_worldspace_final = normalize(input.normal_worldspace.xyz);
+    
+    #if defined (NORMAL_MAP)
+    float4 normal_sampled = normal_map.Sample(SamplerLinearWrap, input.texcoord0);
+    float3 normal_tangentspace = normalize(normal_sampled.xyz * 2.0f - 1.0f);
+
+    float3 tangent_worldspace_final = normalize(input.tangent_worldspace.xyz);
+    float3 bitangent_worldspace_final = normalize(cross(normal_worldspace_final, tangent_worldspace_final) * input.tangent_worldspace.w);
+
+    float3x3 TBN = transpose(float3x3(tangent_worldspace_final, bitangent_worldspace_final, normal_worldspace_final));
+    //float3x3 TBN = transpose(float3x3(bitangent_worldspace_final, tangent_worldspace_final, normal_worldspace_final));
+
+    normal_worldspace_final = normalize(mul(TBN, normal_tangentspace));
+    if (metalness_final < 0.0f)
+    {
+        metalness_final = normal_sampled.w;
+    }
+
+    #if defined(TEXTURE0)
+    if (roughness_final < 0.0f)
+    {
+        roughness_final = texture0_color.w;
+    }
+    #endif
+    #endif
+
+
     float4 light_color = float4(0, 0, 0, 0);
     float2 screenSize = float2(camera.cameraScreenSize);
     float2 pixelCoord = float2(input.frag_coord.x, screenSize.y - input.frag_coord.y);
@@ -342,7 +385,7 @@ float4 ps_main(VS_out input) : SV_TARGET
 
             //vec3 lightValue = calculateFragmentDiffuse(normalizedDistanceToLight, lights[lightIndex].attenuation, normal_worldspace.xyz, lightDir, eyeDir_worldspace, lights[lightIndex].color, materialSpecular);
             float3 radiance = lights[lightIndex].color.rgb * attenuation;
-            float3 lightValue = CalculateLighting(albedo, radiance, normalize(input.normal_worldspace.xyz), eyeDir_worldspace, -lightDir, object_params.roughness, object_params.metalness);
+            float3 lightValue = CalculateLighting(albedo, radiance, normal_worldspace_final, eyeDir_worldspace, -lightDir, roughness_final, metalness_final);
             //float3 lightValue = CalculateLighting(albedo, radiance, normalize(input.normal_worldspace.xyz), eyeDir_worldspace, -lightDir, 0.9f, 0.0f);
 
             /*
