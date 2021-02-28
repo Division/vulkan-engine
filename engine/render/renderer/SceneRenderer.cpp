@@ -89,6 +89,10 @@ namespace render {
 			color = 0xFFFF00FF;
 		blank_texture = Device::Texture::Create(Device::TextureInitializer(4, 4, 4, colors, false));
 
+		Material material(L"shaders/global_bindings.hlsl");
+		material.LightingEnabled(true); // For now it's enough to get all the global bindings
+		global_bindings_program = shader_cache->GetShaderProgram(material.GetShaderInfo());
+
 		/*auto compute_shader_info = ShaderProgramInfo()
 			.AddShader(ShaderProgram::Stage::Compute, L"shaders/test.comp");
 		compute_program = shader_cache->GetShaderProgram(compute_shader_info);
@@ -536,10 +540,7 @@ namespace render {
 		OPTICK_EVENT();
 		global_shader_bindings = std::make_unique<ShaderBindings>();
 		Material material(L"shaders/global_bindings.hlsl");
-		material.LightingEnabled(true); // For now it's enough to get all the global bindings
-		auto& shader_info =  material.GetShaderInfo();
-
-		auto* shader = shader_cache->GetShaderProgram(shader_info);
+		auto* shader = global_bindings_program;
 		auto* descriptor_set = shader->GetDescriptorSet(DescriptorSet::Global);
 
 		SetupShaderBindings(material, *descriptor_set, *global_shader_bindings);

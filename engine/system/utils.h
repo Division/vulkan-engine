@@ -7,6 +7,25 @@
 
 #include <climits>
 
+struct MemoryBuffer : std::streambuf
+{
+    MemoryBuffer(char* base, size_t size)
+	{
+		this->setp(base, base + size);
+        this->setg(base, base, base + size);
+	}
+};
+
+struct OutputMemoryStream : virtual MemoryBuffer, std::ostream
+{
+	OutputMemoryStream(char* base, size_t size) : MemoryBuffer(base, size), std::ostream(static_cast<std::streambuf*>(this)) {}
+};
+
+struct InputMemoryStream : virtual MemoryBuffer, std::istream
+{
+    InputMemoryStream(char* base, size_t size) : MemoryBuffer(base, size), std::istream(static_cast<std::streambuf*>(this)) {}
+};
+
 template <typename T>
 T swap_endian(T u) {
   static_assert (CHAR_BIT == 8, "CHAR_BIT != 8");

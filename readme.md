@@ -8,7 +8,6 @@ Engine roadmap:
 - physics rendering interpolation
 - Fix logging, log from multiple threads
 - Fix and migrate lighting, decals, shadowmaps to ECS
-- HLSL includes must be included in hash
 - Image based lighting support
 - Handles for all engine resources
 - Use pipelines directly
@@ -22,6 +21,7 @@ Check:
 
 -- Completed -----------------------------------
 
++ HLSL includes must be included in hash
 + FBX mesh export
 + fix normal mapping
 + New skinning animation system

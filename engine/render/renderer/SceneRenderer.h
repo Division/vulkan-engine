@@ -107,6 +107,7 @@ namespace render {
 
 		std::unique_ptr<graph::RenderGraph> render_graph;
 		
+		Device::ShaderProgram* global_bindings_program;
 		Device::ShaderProgram* compute_program;
 		std::unique_ptr<Device::ShaderBindings> compute_bindings;
 		std::unique_ptr<Device::DynamicBuffer<unsigned char>> compute_buffer;

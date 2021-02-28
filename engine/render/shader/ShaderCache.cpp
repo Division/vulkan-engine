@@ -3,6 +3,7 @@
 #include "loader/FileLoader.h"
 #include "render/shader/ShaderDefines.h"
 #include "system/JobSystem.h"
+#include "system/utils.h"
 #include "ShaderCompiler.h"
 #include "utils/StringUtils.h"
 
@@ -72,18 +73,49 @@ namespace Device {
 		return FastHash(combined_hash, sizeof(combined_hash));
 	}
 
+	uint32_t GetShaderSourceHash(const std::wstring& path)
+	{
+		auto source_data = loader::LoadFile(path);
+		uint32_t source_hash = 0;
+		if (source_data.size())
+			source_hash = FastHash(source_data.data(), source_data.size());
+
+		utils::SmallVector<uint32_t, 20> all_hashes;
+		all_hashes.push_back(source_hash);
+
+		InputMemoryStream stream((char*)source_data.data(), source_data.size());
+		std::string line;
+
+		while (std::getline(stream, line))
+		{
+			if (line.find("#include \"") == 0)
+			{
+				auto last = line.rfind("\"");
+				if (last != std::string::npos && last > 0)
+				{
+					std::wstring include_path = utils::StringToWString(line.substr(10, last - 10));
+					auto include_hash = GetShaderSourceHash(L"shaders/" + include_path);
+					all_hashes.push_back(include_hash);
+				}
+			}
+		}
+
+		if (all_hashes.size() > 1)
+		{
+			source_hash = FastHash(all_hashes.data(), all_hashes.size() * sizeof(uint32_t));
+		}
+
+		return source_hash;
+	}
+
 	uint32_t ShaderCache::GetShaderDataHash(const ShaderProgramInfo::ShaderData& data)
 	{
 		auto defines_hash = GetDefinesHash(data.defines);
 		auto path_hash = FastHash(data.path.data(), data.path.length() * sizeof(wchar_t));
 		auto entry_point_hash = FastHash(data.entry_point.data(), data.entry_point.length());
-		auto source_hash = 0;
 
-		auto source_data = loader::LoadFile(data.path);
-		if (source_data.size())
-			source_hash = FastHash(source_data.data(), source_data.size());
-
-		uint32_t hashes[] = { defines_hash, path_hash, entry_point_hash, source_hash };
+		const uint32_t source_hash = GetShaderSourceHash(data.path);
+		const uint32_t hashes[] = { defines_hash, path_hash, entry_point_hash, source_hash };
 		return FastHash(hashes, sizeof(hashes));
 	}
 
