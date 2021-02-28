@@ -1,18 +1,18 @@
 Engine roadmap:
 - [partly done] optimize tiled lighting or implement clustered
-- [partly done] FBX mesh export
+- bone attachments
+- top down shooter demo
 - Proper deletion of entities loaded from resource
 - export default materials from maya (with texture paths)
+- dds loading
 - physics rendering interpolation
 - Fix logging, log from multiple threads
 - Fix and migrate lighting, decals, shadowmaps to ECS
 - HLSL includes must be included in hash
 - Image based lighting support
 - Handles for all engine resources
-- New skinning animation system
 - Use pipelines directly
 - Shader reloading
-- dds loading
 - Multithreaded rendering
 - GUI library integration
 - effects for action-puzzle demo
@@ -22,6 +22,9 @@ Check:
 
 -- Completed -----------------------------------
 
++ FBX mesh export
++ fix normal mapping
++ New skinning animation system
 + Proper alignment of ECS components
 + Action puzzle demo
 + Add support for singleton components (store in EntityManager by pointer)

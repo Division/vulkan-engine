@@ -1,0 +1,17 @@
+[
+    {
+        "components": [
+            {
+                "type": "Transform"
+            },
+            {
+                "type": "MultiMeshRenderer",
+                "path": "assets/art/Entities/Basic/plane_10.mesh",
+                "materials": [
+                    "assets/Entities/Basic/Ground/cracks/ground_cracks.mat"
+                ]
+            }
+            
+        ]
+    }
+]

@@ -70,6 +70,7 @@ private:
 
 	Resources::Handle<Resources::EntityResource> animated_entity;
 	ECS::EntityID animated_entity_id;
+	ECS::EntityID point_light_id;
 
 	Resources::Handle<Resources::SkeletalAnimationResource> animation;
 

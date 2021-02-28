@@ -264,6 +264,16 @@ namespace Exporter
 			sub_mesh.has_skinning_weights = skin_count == 1;
 			sub_mesh.has_uv0 = mesh->GetElementUVCount() > 0;
 
+			if (!sub_mesh.has_uv0)
+			{
+				throw std::runtime_error("Can't find UV0 on the mesh: " + std::string(mesh->GetName()));
+			}
+
+			if (!sub_mesh.has_normals || !sub_mesh.has_tangents || !sub_mesh.has_binormals)
+			{
+				throw std::runtime_error("Can't find tangents or binormals on the mesh: " + std::string(mesh->GetName()));
+			}
+
 			/*if (sub_mesh.has_skinning_weights ^ (bool)skeleton)
 				throw std::runtime_error("Skeleton not provided mismatch: " + std::string(mesh->GetName()));*/
 
@@ -400,18 +410,19 @@ namespace Exporter
 		if (vertex_index >= submesh.vertices.size())
 			throw std::runtime_error("Vertex index out of range");
 
-		auto& vertex = submesh.vertices[vertex_index];
+		const auto& vertex = submesh.vertices[vertex_index];
 		stream.write((char*)&vertex.position, sizeof(vertex.position));
 		
 		if (submesh.has_normals)
 		{
-			auto normal = Vector4_A2R10G10B10::FromSignedNormalizedFloat(vec4(glm::normalize(vertex.normal), 0));
+			const auto normal = Vector4_A2R10G10B10::FromSignedNormalizedFloat(vec4(glm::normalize(vertex.normal), 0));
 			stream.write((char*)&normal, sizeof(normal));
 		}
 		
 		if (submesh.has_tangents && submesh.has_binormals)
 		{
-			auto tangent = Vector4_A2R10G10B10::FromSignedNormalizedFloat(vec4(glm::normalize(vertex.tangent), 0));
+			const float bitangent_multiplier = glm::dot(glm::cross(vertex.normal, vertex.tangent), vertex.binormal) < 0.0f ? 1.0f : -1.0f;
+			const auto tangent = Vector4_A2R10G10B10::FromSignedNormalizedFloat(vec4(glm::normalize(vertex.tangent), bitangent_multiplier));
 			stream.write((char*)&tangent, sizeof(tangent));
 		}
 
@@ -423,8 +434,8 @@ namespace Exporter
 
 		if (submesh.has_skinning_weights)
 		{
-			Vector4b weights = Vector4b::FromNormalizedFloat(vertex.weights);
-			Vector4b indices = Vector4b::FromUInt(vertex.bone_indices);
+			const Vector4b weights = Vector4b::FromNormalizedFloat(vertex.weights);
+			const Vector4b indices = Vector4b::FromUInt(vertex.bone_indices);
 			stream.write((char*)&indices, sizeof(indices));
 			stream.write((char*)&weights, sizeof(weights));
 		}

@@ -19,6 +19,7 @@ std::unique_ptr<Texture> loader::LoadTexture(const std::wstring &name, bool sRGB
         return nullptr;
     }
 
+    // TODO: check magic, not extension
     ENGLog("Loading texture %s", name.c_str());
     if (extension == ".ktx")
     {
