@@ -7,9 +7,21 @@ struct CameraData
     float4x4 cameraProjectionMatrix;
 };
 
+struct EnvironmentSettingsData
+{
+    float exposure;
+    float environment_brightness;
+};
+
 [[vk::binding(0, 0)]]
 cbuffer Camera : register(b0) {
     CameraData camera;
+};
+
+[[vk::binding(1, 0)]]
+cbuffer EnvironmentSettings : register(b1) 
+{
+    EnvironmentSettingsData environment;
 };
 
 struct VS_in
@@ -43,5 +55,5 @@ float4 ps_main(VS_out input) : SV_TARGET
     float4 skybox_color = radiance_cubemap.Sample(SamplerLinearWrap, normalize(input.texcoord));
     //vec4 skybox_color = texture(radiance_cubemap, normalize(texcoord));
 	//return float4(input.texcoord, 1.0f);
-    return skybox_color;
+    return skybox_color * environment.environment_brightness;
 }

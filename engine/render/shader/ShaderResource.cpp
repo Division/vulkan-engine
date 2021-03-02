@@ -19,6 +19,7 @@ const std::map<std::string, ShaderBufferName> SHADER_BUFFER_NAMES =
 {
 	{ "ObjectParams", ShaderBufferName::ObjectParams },
 	{ "Camera", ShaderBufferName::Camera },
+	{ "EnvironmentSettings", ShaderBufferName::EnvironmentSettings },
 	{ "SkinningMatrices", ShaderBufferName::SkinningMatrices },
 	{ "Lights", ShaderBufferName::Light },
 	{ "Projectors", ShaderBufferName::Projector },

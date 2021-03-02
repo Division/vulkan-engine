@@ -24,6 +24,7 @@ enum class ShaderBufferName : uint32_t
 {
 	ObjectParams,
 	Camera,
+	EnvironmentSettings,
 	SkinningMatrices,
 	Light,
 	Projector,

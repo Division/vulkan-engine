@@ -5,6 +5,13 @@
 
 namespace Device { namespace ShaderBufferStruct {
 
+	struct EnvironmentSettings
+	{
+		float exposure;
+		float environment_brightness;
+		vec2 padding;
+	};
+
 	struct ObjectParams 
 	{
 		mat4 transform; // offset = 0, size = 64

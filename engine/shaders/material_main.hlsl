@@ -1,3 +1,8 @@
+struct EnvironmentSettingsData
+{
+    float exposure;
+    float environment_brightness;
+};
 
 struct CameraData
 {
@@ -30,6 +35,12 @@ struct SkinningMatricesData
 cbuffer Camera : register(b0) 
 {
     CameraData camera;
+};
+
+[[vk::binding(1, 0)]]
+cbuffer EnvironmentSettings : register(b1) 
+{
+    EnvironmentSettingsData environment;
 };
 
 [[vk::binding(1, 1)]]
@@ -342,7 +353,7 @@ float4 ps_main(VS_out input) : SV_TARGET
     }
 
     float ao = 1.0f;
-    float3 ambient = CalculateAmbient(albedo, normal_worldspace_final, eyeDir_worldspace, roughness_final, metalness_final, ao);
+    float3 ambient = CalculateAmbient(albedo, normal_worldspace_final, eyeDir_worldspace, roughness_final, metalness_final, ao) * environment.environment_brightness;
     result_color = light_color + float4(ambient, 0);
     result_color.a = result_alpha;
     //result_color = result_color * 0.00001 + float4(0.5,0.5,0.5, 1);

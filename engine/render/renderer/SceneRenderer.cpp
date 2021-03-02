@@ -183,6 +183,16 @@ namespace render {
 		return result;
 	}
 
+	static ShaderBufferStruct::EnvironmentSettings GetEnvSettings(const EnvironmentSettings& settings)
+	{
+		ShaderBufferStruct::EnvironmentSettings result;
+
+		result.environment_brightness = settings.environment_brightness;
+		result.exposure = settings.exposure;
+
+		return result;
+	}
+
 	void SceneRenderer::RenderScene()
 	{
 		OPTICK_EVENT();
@@ -237,6 +247,11 @@ namespace render {
 		skinning_matrices_buffer->Map();
 
 		UploadDrawCalls();
+
+		auto* env_settings_buffer = scene_buffers->GetEnvironmentSettingsBuffer();
+		env_settings_buffer->Map();
+		env_settings_buffer->Append(GetEnvSettings(*environment_settings));
+		env_settings_buffer->Unmap();
 
 		auto* camera_buffer = scene_buffers->GetCameraBuffer();
 		camera_buffer->Map();
@@ -440,6 +455,14 @@ namespace render {
 			auto* camera_buffer = scene_buffers->GetCameraBuffer();
 			buffer = camera_buffer->GetBuffer()->Buffer();
 			size = camera_buffer->GetElementSize();
+			break;
+		}
+
+		case ShaderBufferName::EnvironmentSettings:
+		{
+			auto* env_settings_buffer = scene_buffers->GetEnvironmentSettingsBuffer();
+			buffer = env_settings_buffer->GetBuffer()->Buffer();
+			size = env_settings_buffer->GetElementSize();
 			break;
 		}
 
