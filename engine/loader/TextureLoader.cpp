@@ -8,6 +8,28 @@
 
 using namespace Device;
 
+namespace
+{
+    Device::Format GetNoSRGBFormat(Device::Format src_format)
+    {
+        switch (src_format)
+        {
+            default: return src_format;
+            case Device::Format::R8_srgb: return Device::Format::R8G8B8A8_unorm;
+            case Device::Format::R8G8_srgb: return Device::Format::R8G8_unorm;
+            case Device::Format::R8G8B8_srgb: return Device::Format::R8G8B8_unorm;
+            case Device::Format::R8G8B8A8_srgb: return Device::Format::R8G8B8A8_unorm;
+            case Device::Format::BC1_RGB_srgb: return Device::Format::BC1_RGB_unorm;
+            case Device::Format::BC1_RGBA_srgb: return Device::Format::BC1_RGBA_unorm;
+            case Device::Format::BC2_srgb: return Device::Format::BC2_unorm;
+            case Device::Format::BC3_srgb: return Device::Format::BC3_unorm;
+            case Device::Format::BC7_srgb: return Device::Format::BC7_unorm;
+            case Device::Format::Undefined: throw std::runtime_error("Unknown format");
+        }
+    }
+}
+
+
 std::unique_ptr<Texture> loader::LoadTexture(const std::wstring &name, bool sRGB) {
 
     auto path = std::filesystem::path(name);
@@ -32,7 +54,7 @@ std::unique_ptr<Texture> loader::LoadTexture(const std::wstring &name, bool sRGB
             ktx_uint8_t* image;
             uint32_t num_iterations;
 
-            TextureInitializer initializer(texture->baseWidth, texture->baseHeight, texture->baseDepth, texture->numLayers * texture->numFaces, (Format)vk_format, texture->numLevels);
+            TextureInitializer initializer(texture->baseWidth, texture->baseHeight, texture->baseDepth, texture->numLayers * texture->numFaces, GetNoSRGBFormat((Format)vk_format), texture->numLevels, sRGB);
             initializer.SetData(texture->pData, texture->dataSize)
                        .SetArray(texture->isArray)
                        .SetCube(texture->isCubemap)

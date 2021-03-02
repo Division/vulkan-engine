@@ -7,6 +7,7 @@
 #include "scene/Scene.h"
 #include "render/debug/DebugDraw.h"
 #include "render/texture/Texture.h"
+#include "render/renderer/SceneRenderer.h"
 #include "resources/MultiMesh.h"
 #include "resources/EntityResource.h"
 #include "resources/SkeletonResource.h"
@@ -46,9 +47,12 @@ void Game::init()
 	manager = engine->GetEntityManager();
 	graph = engine->GetTransformGraph();
 
+	engine->GetSceneRenderer()->SetIrradianceCubemap(Resources::TextureResource::Handle(L"assets/art/Textures/environment/IBL/irradiance3.ktx"));
+	engine->GetSceneRenderer()->SetRadianceCubemap(Resources::TextureResource::Handle(L"assets/art/Textures/environment/IBL/radiance3.ktx"));
+
 	manager->AddStaticComponent(graph);
 
-	point_light_id = CreateLight(vec3(2.5, 4, 0), 1000, ECS::components::Light::Type::Point, vec3(1, 1, 1) * 6.0f);
+	point_light_id = CreateLight(vec3(2.5, 4, 0), 1000, ECS::components::Light::Type::Point, vec3(1, 1, 1) * 1.0f);
 
 	camera = std::make_unique<ViewerCamera>();
 
@@ -60,6 +64,9 @@ void Game::init()
 	auto scifi_box_handle = Resources::EntityResource::Handle(L"assets/Entities/Basic/Crates/crate_scifi.entity");
 	auto scifi_box_id = scifi_box_handle->Spawn(vec3(1, 2, 3));
 	//manager->GetComponent<components::Transform>(scifi_box_id)->rotation = glm::angleAxis((float)M_PI * 4.8f, vec3(0, 1, 0)) * glm::angleAxis((float)M_PI * 4.8f, vec3(1, 0, 0));
+
+	auto sphere_mirror_handle = Resources::EntityResource::Handle(L"assets/Entities/Basic/Spheres/sphere_mirror.entity");
+	sphere_mirror_handle->Spawn(vec3(4, 2, 1));
 
 	animated_entity_id = animated_entity->Spawn(vec3(0, 0, 0));
 	auto* controller = manager->GetComponent<components::AnimationController>(animated_entity_id);

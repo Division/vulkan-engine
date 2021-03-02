@@ -26,13 +26,19 @@ namespace Device {
 			data_size = width * height * depth * (uint32_t)format_sizes.at(format) / 8;
 		}
 
-		TextureInitializer(uint32_t width, uint32_t height, uint32_t depth, uint32_t array_layers, Format format, uint32_t mip_levels = 1)
-			: width(width), height(height), depth(depth), array_layers(array_layers), format(format), mip_levels(mip_levels) {}
+		TextureInitializer(uint32_t width, uint32_t height, uint32_t depth, uint32_t array_layers, Format format, uint32_t mip_levels = 1, bool srgb = false)
+			: width(width), height(height), depth(depth), array_layers(array_layers), format(format), mip_levels(mip_levels), sRGB(srgb) {}
 
 		TextureInitializer& TextureInitializer::SetData(void* data, size_t size)
 		{
 			this->data = data;
 			this->data_size = size;
+			return *this;
+		}
+
+		TextureInitializer& TextureInitializer::SetSRGB(bool value)
+		{
+			this->sRGB = value;
 			return *this;
 		}
 

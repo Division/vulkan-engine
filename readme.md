@@ -4,11 +4,9 @@ Engine roadmap:
 - top down shooter demo
 - Proper deletion of entities loaded from resource
 - export default materials from maya (with texture paths)
-- dds loading
 - physics rendering interpolation
 - Fix logging, log from multiple threads
 - Fix and migrate lighting, decals, shadowmaps to ECS
-- Image based lighting support
 - Handles for all engine resources
 - Use pipelines directly
 - Shader reloading
@@ -21,6 +19,8 @@ Check:
 
 -- Completed -----------------------------------
 
++ Image based lighting support
++ additional parameters for resource handles (e.g. texture srgb)
 + HLSL includes must be included in hash
 + FBX mesh export
 + fix normal mapping

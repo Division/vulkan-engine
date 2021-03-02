@@ -9,5 +9,10 @@ namespace Resources
 		texture = Device::Texture::Handle(loader::LoadTexture(filename));
 	}
 
+	TextureResource::TextureResource(const Initializer& initializer)
+	{
+		texture = Device::Texture::Handle(loader::LoadTexture(initializer.GetPath(), initializer.GetSRGB()));
+	}
+
 	TextureResource::~TextureResource() = default;
 }

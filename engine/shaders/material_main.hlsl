@@ -145,9 +145,12 @@ VS_out vs_main(VS_in input)
 
 #if defined (LIGHTING)
 [[vk::binding(3,  0)]] Texture2D shadow_map : register(t3);
-/*[[vk::binding(10, 0)]] TextureCube environment_cubemap : register(t10);
 [[vk::binding(11, 0)]] TextureCube radiance_cubemap : register(t11);
-[[vk::binding(12, 0)]] TextureCube irradiance_cubemap : register(t12);
+[[vk::binding(12, 0)]] TextureCube irradiance_cubemap : register(t12); // diffuse, ao
+[[vk::binding(13, 0)]] Texture2D brdf_lut : register(t13); // specular
+ 
+/*[[vk::binding(10, 0)]] TextureCube environment_cubemap : register(t10);
+
 */
 struct LightGridItem
 {
@@ -208,8 +211,12 @@ float GetAttenuation(float distance, float radius)
 #endif
 
 SamplerState SamplerLinearWrap;
+SamplerState SamplerLinearClamp;
 
+// TODO: pass textures as params
+#if defined(LIGHTING)
 #include "includes/pbr_t.inc"
+#endif
 
 float LogBase(float x, float base) 
 {
@@ -230,11 +237,13 @@ float GetSliceIndex(float depth)
 
 float4 ps_main(VS_out input) : SV_TARGET
 {
+    float result_alpha = object_params.color.a;
     float4 result_color = object_params.color;
     
 #if defined(TEXTURE0)
     float4 texture0_color = texture0.Sample(SamplerLinearWrap, input.texcoord0);
     result_color *= texture0_color;
+    result_alpha *= texture0_color.a;
 #endif
  
 #if defined(LIGHTING)
@@ -286,7 +295,6 @@ float4 ps_main(VS_out input) : SV_TARGET
     uint decalCount = cluster.projectorsCount >> 16;
     float3 eyeDir_worldspace = normalize(camera.cameraPosition - input.position_worldspace.xyz); // vector to camera
     float3 albedo = result_color.xyz;
-    float ao = 0.0f;
 
     uint i;
     //[[loop]]
@@ -333,10 +341,10 @@ float4 ps_main(VS_out input) : SV_TARGET
         }
     }
 
-    float3 ambient = float3(0.03, 0.03, 0.03) * albedo * ao;
-    light_color.a = 1.0f;
-    result_color = result_color * light_color + float4(ambient, 0);
-
+    float ao = 1.0f;
+    float3 ambient = CalculateAmbient(albedo, normal_worldspace_final, eyeDir_worldspace, roughness_final, metalness_final, ao);
+    result_color = light_color + float4(ambient, 0);
+    result_color.a = result_alpha;
     //result_color = result_color * 0.00001 + float4(0.5,0.5,0.5, 1);
     //result_color = pow((result_color + 0.055) / 1.055, 2.4); 
 

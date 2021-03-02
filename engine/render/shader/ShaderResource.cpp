@@ -12,6 +12,7 @@ const std::map<std::string, ShaderTextureName> SHADER_TEXTURE_NAMES =
 	{ "environment_cubemap", ShaderTextureName::EnvironmentCubemap },
 	{ "radiance_cubemap", ShaderTextureName::RadianceCubemap },
 	{ "irradiance_cubemap", ShaderTextureName::IrradianceCubemap },
+	{ "brdf_lut", ShaderTextureName::BrdfLUT },
 };
 
 const std::map<std::string, ShaderBufferName> SHADER_BUFFER_NAMES = 

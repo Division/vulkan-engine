@@ -31,6 +31,8 @@ VS_out vs_main(VS_in input)
 
 [[vk::binding(3,  0)]] Texture2D shadow_map : register(t3);
 [[vk::binding(11, 0)]] TextureCube radiance_cubemap : register(t11);
+[[vk::binding(12, 0)]] TextureCube irradiance_cubemap : register(t12);
+[[vk::binding(13, 0)]] Texture2D brdf_lut : register(t13);
 
 struct LightGridItem
 {
@@ -70,7 +72,9 @@ float4 ps_main(VS_out input) : SV_TARGET
     float4 result_color = float4(0, 0, 0, 0);
 
     float4 skybox_color = radiance_cubemap.Sample(SamplerLinearWrap, float3(1,1,1));
-    result_color += skybox_color * 0.0001f * camera.cameraScreenSize.x * LightIndices[0] * lights[0].mask;
+    float4 skybox_color2 = irradiance_cubemap.Sample(SamplerLinearWrap, float3(1,1,1));
+    float4 brdf = brdf_lut.Sample(SamplerLinearWrap, float2(1,1));
+    result_color += brdf * skybox_color2 * skybox_color * camera.cameraScreenSize.x * LightIndices[0] * lights[0].mask;
 
     LightGridItem cluster = LightGrid[0];
     result_color.x *= cluster.offset;

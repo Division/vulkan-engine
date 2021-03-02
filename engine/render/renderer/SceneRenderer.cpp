@@ -59,6 +59,16 @@ namespace render {
 		return shadow_atlas_size;
 	}
 
+	void SceneRenderer::SetRadianceCubemap(Resources::Handle<Resources::TextureResource> cubemap)
+	{
+		radiance_cubemap = cubemap;
+	}
+
+	void SceneRenderer::SetIrradianceCubemap(Resources::Handle<Resources::TextureResource> cubemap)
+	{
+		irradiance_cubemap = cubemap;
+	}
+
 	SceneRenderer::~SceneRenderer() = default;
 
 	SceneRenderer::SceneRenderer(Scene& scene, ShaderCache* shader_cache, DebugSettings* settings)
@@ -82,12 +92,36 @@ namespace render {
 		context->AddRecreateSwapchainCallback(std::bind(&SceneRenderer::OnRecreateSwapchain, this, std::placeholders::_1, std::placeholders::_2));
 		shadowmap_atlas_attachment = std::make_unique<VulkanRenderTargetAttachment>("Shadowmap Atlas", VulkanRenderTargetAttachment::Type::Depth, ShadowAtlasSize(), ShadowAtlasSize(), Format::D24_unorm_S8_uint);
 
+		brdf_lut = TextureResource::Linear(L"assets/art/Textures/LUT/brdf_lut.ktx");
+
 		compute_buffer = std::make_unique<DynamicBuffer<unsigned char>>(128 * 128 * sizeof(vec4), BufferType::Storage);
 
 		uint32_t colors[16];
 		for (auto& color : colors)
 			color = 0xFFFF00FF;
 		blank_texture = Device::Texture::Create(Device::TextureInitializer(4, 4, 4, colors, false));
+
+		uint32_t colors_cube[4*4*6];
+		memset(colors_cube, 0, sizeof(colors_cube));
+
+		/*TextureInitializer initializer(4, 4, 1, 6, Device::Format::R8G8B8A8_unorm, 1);
+		initializer.SetData(colors_cube, sizeof(colors_cube))
+			.SetArray(false)
+			.SetCube(true)
+			.SetNumDimensions(2);
+
+		for (int i = 0; i < 6; i++)
+		{
+			initializer.AddCopy(
+				vk::BufferImageCopy(offset, 0, 0,
+					vk::ImageSubresourceLayers(vk::ImageAspectFlagBits::eColor, 0, i, 1),
+					vk::Offset3D(0, 0, 0),
+					vk::Extent3D(width, height, depth)
+				));
+		}
+
+		blank_cube_texture = Device::Texture::Create(Device::TextureInitializer(4, 4, 4, colors, false));
+		*/
 
 		Material material(L"shaders/global_bindings.hlsl");
 		material.LightingEnabled(true); // For now it's enough to get all the global bindings
@@ -104,7 +138,7 @@ namespace render {
 
 		//environment_cubemap = loader::LoadTexture("assets/resources/environment/skybox_unorm.ktx"); // TODO: assign via setter
 		//environment_cubemap = TextureResource::Handle(L"assets/resources/environment/skybox.ktx");
-		radiance_cubemap = TextureResource::Handle(L"assets/resources/environment/grace_probe_radiance_rgba.ktx");
+		//radiance_cubemap = TextureResource::Handle(L"assets/resources/environment/grace_probe_radiance_rgba.ktx");
 		//irradiance_cubemap = TextureResource::Handle(L"assets/resources/environment/grace_probe_irradiance_rgba.ktx");
 		//environment_cubemap = loader::LoadTexture("assets/resources/lama.ktx"); // TODO: assign via setter
 		skybox = std::make_unique<effects::Skybox>(*shader_cache);
@@ -493,6 +527,9 @@ namespace render {
 		
 		case ShaderTextureName::IrradianceCubemap:
 			return irradiance_cubemap->Get().get();
+
+		case ShaderTextureName::BrdfLUT:
+			return brdf_lut->Get().get();
 
 		default:
 			throw std::runtime_error("unknown texture");

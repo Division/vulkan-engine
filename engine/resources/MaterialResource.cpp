@@ -44,7 +44,7 @@ namespace Resources
 			}
 			else if (name == "normal_map")
 			{
-				new_material->SetNormalMapResource(TextureResource::Handle(utils::StringToWString(iter->value.GetString())));
+				new_material->SetNormalMapResource(TextureResource::Linear(utils::StringToWString(iter->value.GetString())));
 			}
 			else if (name == "lighting_enabled")
 			{

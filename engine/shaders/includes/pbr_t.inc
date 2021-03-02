@@ -1,7 +1,12 @@
 float3 fresnelSchlick(float cosTheta, float3 F0)
 {
     return F0 + (1.0 - F0) * pow(1.0 - cosTheta, 5.0);
-}  
+}
+
+float3 fresnelSchlickRoughness(float cosTheta, float3 F0, float roughness)
+{
+    return F0 + (max(1.0 - roughness, F0) - F0) * pow(max(1.0 - cosTheta, 0.0), 5.0);
+}   
 
 float DistributionGGX(float3 N, float3 H, float roughness)
 {
@@ -61,4 +66,27 @@ float3 CalculateLighting(float3 albedo, float3 radiance, float3 N, float3 V, flo
     float NdotL = max(dot(N, L), 0.0);
     //return step(NdotL, 0.5);  
     return (kD * albedo / PI + specular) * radiance * NdotL; 
+}
+
+float3 CalculateAmbient(float3 albedo, float3 N, float3 V, float roughness, float metallic, float ao)
+{
+    float3 F0 = 0.04;
+    F0 = lerp(F0, albedo, metallic);
+
+    float3 R = reflect(-V, N);
+    const float MAX_REFLECTION_LOD = 4.0;
+    float3 prefilteredColor = radiance_cubemap.SampleLevel(SamplerLinearWrap, R, roughness * MAX_REFLECTION_LOD).rgb;
+    float3 F = fresnelSchlickRoughness(max(dot(N, V), 0.0), F0, roughness); 
+
+    float2 envBRDF  = brdf_lut.Sample(SamplerLinearClamp, float2(max(dot(N, V), 0.0), roughness)).rg;
+    float3 specular = prefilteredColor * (F * envBRDF.x + envBRDF.y);
+
+    float3 kS = F;
+    float3 kD = 1.0 - kS;
+    kD *= 1.0 - metallic;	  
+    float3 irradiance = irradiance_cubemap.Sample(SamplerLinearWrap, N).rgb;
+    float3 diffuse = irradiance * albedo;
+    
+    float3 ambient = (kD * diffuse + specular) * ao;
+    return ambient;
 }

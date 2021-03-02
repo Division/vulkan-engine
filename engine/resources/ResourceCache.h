@@ -24,16 +24,25 @@ namespace Resources
 			Unloaded,
 		};
 
-		ResourceBase(const std::wstring& path) 
+		typedef std::unique_ptr<void, std::function<void(void*)>> ParamPtr;
+		typedef void (*CreateCallback)(void*, void*);
+
+		ResourceBase(const std::wstring& path, uint32_t hash, ParamPtr param, CreateCallback create_callback)
 			: filename(path)
+			, hash(hash)
 			, resource_memory(nullptr)
 			, reference_counter(0)
 			, state(State::Unloaded)
+			, create_callback(create_callback)
+			, param(std::move(param))
 		{};
 
-		virtual ~ResourceBase() {}
+		virtual ~ResourceBase() 
+		{
+		}
 
 		uint32_t GetRefCount() const { return reference_counter; }
+		uint32_t GetHash() const { return hash; }
 		bool IsResolved() { return state == State::Loaded; }
 		const std::wstring& GetFilename() const { return filename; }
 
@@ -57,7 +66,11 @@ namespace Resources
 		std::atomic<State> state;
 		std::atomic_uint32_t reference_counter;
 		std::wstring filename;
+		uint32_t hash;
 		void* resource_memory;
+		ParamPtr param;
+
+		CreateCallback create_callback;
 	};
 
 	template <typename T, Memory::Tag Tag = Memory::Tag::UnknownResource>
@@ -77,7 +90,7 @@ namespace Resources
 			{
 				Allocator allocator;
 				resource->resource_memory = allocator.allocate(1);
-				new (resource->resource_memory) T(resource->filename);
+				resource->create_callback(resource->resource_memory, resource->param.get());
 
 				resource->state = State::Loaded;
 			}
@@ -130,9 +143,16 @@ namespace Resources
 		}
 
 	public:
-		Resource(const std::wstring& path) : ResourceBase(path) 
-		{
-		}
+		Resource(const std::wstring& path) : ResourceBase(path, FastHash(path)
+			, ResourceBase::ParamPtr(new std::wstring(path), [](void* ptr) { delete reinterpret_cast<std::wstring*>(ptr); })
+			, [](void* resource, void* param) { new (resource) T(*reinterpret_cast<std::wstring*>(param)); }
+		) {}
+
+		template<typename I>
+		Resource(const I& initializer) : ResourceBase(initializer.GetPath(), initializer.GetHash()
+			, ResourceBase::ParamPtr(new I(initializer), [](void* ptr) { delete reinterpret_cast<I*>(ptr); })
+			, [](void* resource, void* param) { new (resource) T(*reinterpret_cast<I*>(param)); }
+		) {}
 
 		~Resource()
 		{
@@ -175,20 +195,37 @@ namespace Resources
 		Handle() : resource(nullptr) {}
 		Handle(nullptr_t) : resource(nullptr) {}
 
-		explicit Handle(const std::wstring& filename)
+		template<typename HI>
+		Handle(const HI& initializer)
 		{
-			resource = static_cast<Resource<T>*>(Cache::Get().GetResource(filename));
+			resource = static_cast<Resource<T>*>(Cache::Get().GetResource(initializer.GetHash()));
 			if (!resource)
 			{
-				auto unique_resource = std::make_unique<Resource<T>>(filename);
+				auto unique_resource = std::make_unique<Resource<T>>(initializer);
 				resource = unique_resource.get();
-				Cache::Get().SetResource(filename, std::move(unique_resource));
+				Cache::Get().SetResource(resource->GetHash(), std::move(unique_resource));
 			}
 
 			resource->AddRef();
 			if (!resource->IsResolved())
 				resource->Load();
 		}
+
+		explicit Handle(const std::wstring& filename)
+		{
+			resource = static_cast<Resource<T>*>(Cache::Get().GetResource(FastHash(filename)));
+			if (!resource)
+			{
+				auto unique_resource = std::make_unique<Resource<T>>(filename);
+				resource = unique_resource.get();
+				Cache::Get().SetResource(resource->GetHash(), std::move(unique_resource));
+			}
+
+			resource->AddRef();
+			if (!resource->IsResolved())
+				resource->Load();
+		}
+		explicit Handle(const wchar_t* filename) : Handle(std::wstring(filename)) {}
 
 		Handle(const Handle& other)
 		{
@@ -270,9 +307,9 @@ namespace Resources
 		void Destroy();
 
 	private:
-		ResourceBase* GetResource(const std::wstring& filename);
-		void SetResource(const std::wstring& filename, std::unique_ptr<ResourceBase> resource);
-		std::unordered_map<std::wstring, std::unique_ptr<ResourceBase>> resources;
+		ResourceBase* GetResource(uint32_t key);
+		void SetResource(uint32_t key, std::unique_ptr<ResourceBase> resource);
+		std::unordered_map<uint32_t, std::unique_ptr<ResourceBase>> resources;
 	};
 
 	class Exception : public std::exception

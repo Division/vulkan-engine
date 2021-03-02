@@ -15,6 +15,7 @@ enum class ShaderTextureName : uint32_t
 	EnvironmentCubemap,
 	RadianceCubemap,
 	IrradianceCubemap,
+	BrdfLUT,
 	Unknown,
 	Count
 };

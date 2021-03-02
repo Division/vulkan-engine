@@ -17,9 +17,27 @@ namespace Device {
 		SetupDefault(initializer);
 	}
 
+	Format GetSRGBFormat(Format format, bool srgb)
+	{
+		switch (format)
+		{
+			default: return format;
+			case Device::Format::R8_unorm: return srgb ? Device::Format::R8_srgb : Device::Format::R8_unorm;
+			case Device::Format::R8G8_unorm: return srgb ? Device::Format::R8G8_srgb : Device::Format::R8G8_unorm;
+			case Device::Format::R8G8B8_unorm: return srgb ? Device::Format::R8G8B8_srgb : Device::Format::R8G8B8_unorm;
+			case Device::Format::R8G8B8A8_unorm: return srgb ? Device::Format::R8G8B8A8_srgb : Device::Format::R8G8B8A8_unorm;
+			case Device::Format::BC1_RGB_unorm: return srgb ? Device::Format::BC1_RGB_srgb : Device::Format::BC1_RGB_unorm;
+			case Device::Format::BC1_RGBA_unorm: return srgb ? Device::Format::BC1_RGBA_srgb : Device::Format::BC1_RGBA_unorm;
+			case Device::Format::BC2_unorm: return srgb ? Device::Format::BC2_srgb : Device::Format::BC2_unorm;
+			case Device::Format::BC3_unorm: return srgb ? Device::Format::BC3_srgb : Device::Format::BC3_unorm;
+			case Device::Format::BC7_unorm: return srgb ? Device::Format::BC7_srgb : Device::Format::BC7_unorm;
+			case Device::Format::Undefined: throw std::runtime_error("Unknown format");
+		}
+	}
+
 	vk::ImageViewCreateInfo GetImageViewCreateInfo(vk::Image& image, const TextureInitializer& initializer)
 	{
-		auto image_view_info = vk::ImageViewCreateInfo({}, image, vk::ImageViewType::e2D, vk::Format(initializer.format));
+		auto image_view_info = vk::ImageViewCreateInfo({}, image, vk::ImageViewType::e2D, vk::Format(GetSRGBFormat(initializer.format, initializer.sRGB)));
 		if (initializer.mode == TextureInitializer::DepthBuffer)
 			image_view_info.setSubresourceRange(vk::ImageSubresourceRange(vk::ImageAspectFlagBits::eDepth, 0, initializer.mip_levels, 0, initializer.array_layers));
 		else
@@ -58,7 +76,7 @@ namespace Device {
 		create_info.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
 		create_info.pNext = NULL;
 		create_info.imageType = VK_IMAGE_TYPE_2D;
-		create_info.format = VkFormat(initializer.format);
+		create_info.format = VkFormat(GetSRGBFormat(initializer.format, initializer.sRGB));
 		create_info.extent.width = initializer.width;
 		create_info.extent.height = initializer.height;
 		create_info.extent.depth = initializer.depth;
@@ -117,7 +135,7 @@ namespace Device {
 		array_layers = initializer.array_layers;
 		mip_levels = initializer.mip_levels;
 		depth = initializer.depth;
-		format = initializer.format;
+		format = GetSRGBFormat(initializer.format, initializer.sRGB);
 		size = initializer.data_size;
 		if (!size)
 			size = width * height * depth * (uint32_t)format_sizes.at(format) / 8;

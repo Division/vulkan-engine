@@ -33,14 +33,14 @@ VS_out vs_main(VS_in input)
     return result;
 }
 
-SamplerState SamplerPointWrap;
+SamplerState SamplerLinearWrap;
  
 [[vk::binding(11, 0)]]
 TextureCube radiance_cubemap : register(t11);
 
 float4 ps_main(VS_out input) : SV_TARGET
 {
-    float4 skybox_color = radiance_cubemap.Sample(SamplerPointWrap, normalize(input.texcoord));
+    float4 skybox_color = radiance_cubemap.Sample(SamplerLinearWrap, normalize(input.texcoord));
     //vec4 skybox_color = texture(radiance_cubemap, normalize(texcoord));
 	//return float4(input.texcoord, 1.0f);
     return skybox_color;

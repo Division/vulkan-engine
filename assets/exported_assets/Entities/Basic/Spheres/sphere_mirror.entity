@@ -1,0 +1,17 @@
+[
+    {
+        "components": [
+            {
+                "type": "Transform"
+            },
+            {
+                "type": "MultiMeshRenderer",
+                "path": "assets/art/Entities/Basic/sphere.mesh",
+                "materials": [
+                    "assets/Entities/Basic/Spheres/sphere_mirror.mat"
+                ]
+            }
+            
+        ]
+    }
+]

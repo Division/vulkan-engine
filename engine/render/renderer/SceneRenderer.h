@@ -77,6 +77,8 @@ namespace render {
 		void SetupShaderBindings(const Material& material, const Device::ShaderProgram::DescriptorSet& descriptor_set, Device::ShaderBindings& bindings);
 		auto* GetEnvironmentSettings() const { return environment_settings.get(); }
 		LightGrid& GetLightGrid() { return *light_grid; }
+		void SetRadianceCubemap(Resources::Handle<Resources::TextureResource> cubemap);
+		void SetIrradianceCubemap(Resources::Handle<Resources::TextureResource> cubemap);
 
 	private:
 		void CreateDrawCalls();
@@ -94,9 +96,11 @@ namespace render {
 		std::unique_ptr<ECS::systems::UploadDrawCallsSystem> upload_draw_calls_system;
 		std::unique_ptr<ECS::systems::UploadSkinningSystem> upload_skinning_system;
 		Device::Handle<Device::Texture> blank_texture;
+		Device::Handle<Device::Texture> blank_cube_texture;
 		Resources::Handle<Resources::TextureResource> environment_cubemap;
 		Resources::Handle<Resources::TextureResource> radiance_cubemap;
 		Resources::Handle<Resources::TextureResource> irradiance_cubemap;
+		Resources::Handle<Resources::TextureResource> brdf_lut;
 
 		Device::ShaderCache* shader_cache;
 		std::unique_ptr<SceneBuffers> scene_buffers;
