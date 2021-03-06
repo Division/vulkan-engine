@@ -8,6 +8,7 @@ const std::map<std::string, ShaderTextureName> SHADER_TEXTURE_NAMES =
 	{ "normal_map", ShaderTextureName::NormalMap },
 	{ "specular_map", ShaderTextureName::SpecularMap },
 	{ "shadow_map", ShaderTextureName::ShadowMap },
+	{ "shadow_map_atlas", ShaderTextureName::ShadowMapAtlas },
 	{ "projector_texture", ShaderTextureName::ProjectorTexture },
 	{ "environment_cubemap", ShaderTextureName::EnvironmentCubemap },
 	{ "radiance_cubemap", ShaderTextureName::RadianceCubemap },

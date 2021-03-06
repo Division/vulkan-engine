@@ -2,6 +2,7 @@
 #include "ecs/ECS.h"
 #include "ecs/components/MultiMeshRenderer.h"
 #include "ecs/components/Transform.h"
+#include "ecs/components/Light.h"
 #include "ecs/systems/RendererSystem.h"
 #include "ecs/systems/UpdateDrawCallsSystem.h"
 #include "scene/Scene.h"
@@ -76,8 +77,12 @@ namespace render {
 		, shader_cache(shader_cache)
 		, debug_settings(settings)
 	{
-		environment_settings = std::make_unique<EnvironmentSettings>();
 		scene_buffers = std::make_unique<SceneBuffers>();
+		directional_light = std::make_unique<components::DirectionalLight>();
+		scene.GetEntityManager()->AddStaticComponent(directional_light.get());
+		
+		environment_settings = std::make_unique<EnvironmentSettings>();
+		environment_settings->directional_light = directional_light.get();
 
 		draw_call_manager = std::make_unique<DrawCallManager>(*this);
 		create_draw_calls_system = std::make_unique<systems::CreateDrawCallsSystem>(*scene.GetEntityManager(), *draw_call_manager);
@@ -91,6 +96,7 @@ namespace render {
 		auto* context = Engine::GetVulkanContext();
 		context->AddRecreateSwapchainCallback(std::bind(&SceneRenderer::OnRecreateSwapchain, this, std::placeholders::_1, std::placeholders::_2));
 		shadowmap_atlas_attachment = std::make_unique<VulkanRenderTargetAttachment>("Shadowmap Atlas", VulkanRenderTargetAttachment::Type::Depth, ShadowAtlasSize(), ShadowAtlasSize(), Format::D24_unorm_S8_uint);
+		shadowmap_attachment = std::make_unique<VulkanRenderTargetAttachment>("Shadowmap", VulkanRenderTargetAttachment::Type::Depth, ShadowAtlasSize(), ShadowAtlasSize(), Format::D24_unorm_S8_uint);
 
 		brdf_lut = TextureResource::Linear(L"assets/art/Textures/LUT/brdf_lut.ktx");
 
@@ -170,14 +176,14 @@ namespace render {
 		upload_skinning_system->ProcessChunks(draw_call_manager->GetSkinningChunks());
 	}
 
-	static ShaderBufferStruct::Camera GetCameraData(ICameraParamsProvider* camera)
+	static ShaderBufferStruct::Camera GetCameraData(ICameraParamsProvider* camera, uvec2 screen_size)
 	{
 		ShaderBufferStruct::Camera result;
 		result.projectionMatrix = camera->cameraProjectionMatrix();
 		result.projectionMatrix[1][1] *= -1;
 		result.position = camera->cameraPosition();
 		result.viewMatrix = camera->cameraViewMatrix();
-		result.screenSize = camera->cameraViewSize();
+		result.screenSize = screen_size;
 		result.zMin = camera->cameraZMinMax().x;
 		result.zMax = camera->cameraZMinMax().y;
 		return result;
@@ -187,11 +193,16 @@ namespace render {
 	{
 		ShaderBufferStruct::EnvironmentSettings result;
 
-		result.direction_light_color = settings.direction_light_color;
-		result.direction_light_direction = settings.direction_light_direction;
+		result.direction_light_enabled = settings.directional_light && settings.directional_light->enabled;
+		if (result.direction_light_enabled)
+		{
+			result.direction_light_color = settings.directional_light->color;
+			result.direction_light_direction = settings.directional_light->transform.Forward();
+			result.direction_light_projection_matrix = settings.directional_light->cameraViewProjectionMatrix();
+		}
+
 		result.environment_brightness = settings.environment_brightness;
 		result.exposure = settings.exposure;
-
 		return result;
 	}
 
@@ -257,17 +268,17 @@ namespace render {
 
 		auto* camera_buffer = scene_buffers->GetCameraBuffer();
 		camera_buffer->Map();
-		camera_buffer->Append(GetCameraData(scene.GetCamera()));
+		camera_buffer->Append(GetCameraData(scene.GetCamera(), scene.GetCamera()->cameraViewSize()));
 		auto draw_calls = draw_call_manager->GetDrawCallChunks();
 
-		systems::CullingSystem main_camera_culling_system(*draw_call_manager, *scene.GetCamera());
+		systems::CullingSystem main_camera_culling_system(*draw_call_manager, scene.GetCamera()->GetFrustum());
 		main_camera_culling_system.ProcessChunks(draw_calls);
 
 		for (auto& shadow_caster : shadow_casters)
 		{
 			shadow_caster.second.ProcessChunks(draw_calls); // Cull and fill draw call list
-			auto offset = camera_buffer->Append(GetCameraData(shadow_caster.first));
-			shadow_caster.first->cameraIndex(offset);
+			auto offset = camera_buffer->Append(GetCameraData(shadow_caster.first, uvec2(0, 0)));
+			//shadow_caster.first->cameraIndex(offset);
 		}
 
 		camera_buffer->Unmap();
@@ -299,7 +310,7 @@ namespace render {
 		auto* main_color = render_graph->RegisterAttachment(*swapchain->GetColorAttachment(context->GetCurrentFrame()));
 		auto* main_offscreen_color = render_graph->RegisterAttachment(*main_color_attachment);
 		auto* main_depth = render_graph->RegisterAttachment(*main_depth_attachment);
-		auto* shadow_map = render_graph->RegisterAttachment(*shadowmap_atlas_attachment);
+		auto* shadow_map = render_graph->RegisterAttachment(*shadowmap_attachment);
 		auto* compute_buffer_resource = render_graph->RegisterBuffer(*compute_buffer->GetBuffer());
 		post_process->PrepareRendering(*render_graph);
 
@@ -355,10 +366,10 @@ namespace render {
 
 			for (auto& shadow_caster : shadow_casters)
 			{
-				global_bindings.GetBufferBindings()[global_shader_binding_camera_index].dynamic_offset = shadow_caster.first->cameraIndex();
+				//global_bindings.GetBufferBindings()[global_shader_binding_camera_index].dynamic_offset = shadow_caster.first->cameraIndex();
 				global_bindings.UpdateBindings(); // update dynamic offsets
 				state.SetGlobalBindings(global_bindings);
-				state.SetViewport(shadow_caster.first->cameraViewport());
+				//state.SetViewport(shadow_caster.first->cameraViewport()); // TODO: replace
 				auto& render_queues = shadow_caster.second.GetDrawCallList()->queues;
 				for (auto* draw_call : render_queues[(size_t)RenderQueue::DepthOnly])
 				{
@@ -541,8 +552,11 @@ namespace render {
 				return blank_texture.get();
 		}
 
-		case ShaderTextureName::ShadowMap:
+		case ShaderTextureName::ShadowMapAtlas:
 			return shadowmap_atlas_attachment->GetTexture().get();
+		
+		case ShaderTextureName::ShadowMap:
+			return shadowmap_attachment->GetTexture().get();
 
 		case ShaderTextureName::EnvironmentCubemap:
 			return environment_cubemap->Get().get();

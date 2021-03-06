@@ -253,9 +253,9 @@ float4 ps_main(VS_out input) : SV_TARGET
         }
     }
 
-    if (environment.direction_light_color.w > 0.5) // enabled
+    if (environment.direction_light_enabled) // enabled
     {
-        light_color += float4(CalculateLighting(albedo, environment.direction_light_color.rgb, normal_worldspace_final, eyeDir_worldspace, -environment.direction_light_direction.xyz, roughness_final, metalness_final), 0);
+        light_color += float4(CalculateLighting(albedo, environment.direction_light_color, normal_worldspace_final, eyeDir_worldspace, -environment.direction_light_direction, roughness_final, metalness_final), 0);
     }
     
     float ao = 1.0f;

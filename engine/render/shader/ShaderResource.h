@@ -11,6 +11,7 @@ enum class ShaderTextureName : uint32_t
 	NormalMap,
 	SpecularMap,
 	ShadowMap,
+	ShadowMapAtlas,
 	ProjectorTexture,
 	EnvironmentCubemap,
 	RadianceCubemap,

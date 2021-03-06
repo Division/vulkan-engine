@@ -103,7 +103,7 @@ void Game::update(float dt)
 	if (input->keyDown(Key::F))
 	{
 		auto* settings = Engine::Get()->GetSceneRenderer()->GetEnvironmentSettings();
-		settings->direction_light_direction = vec4(Engine::Get()->GetScene()->GetCamera()->cameraForward(), settings->direction_light_direction.w);
+		settings->directional_light->transform.LookAt(Engine::Get()->GetScene()->GetCamera()->cameraForward() + settings->directional_light->transform.position);
 	}
 }
 

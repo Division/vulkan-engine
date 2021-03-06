@@ -10,7 +10,7 @@
 #include "utils/Frustum.h"
 #include "ecs/components/Transform.h"
 
-class Camera : /*public GameObject,*/ public ICameraParamsProvider {
+class Camera : public ICameraParamsProvider {
 public:
   enum class Mode : int {
     Perspective = 0,
@@ -34,36 +34,36 @@ public:
   void Fov(float fov) { this->fov = fov; }
   float Fov() const { return fov; }
 
+  vec3 cameraForward() const { return transform.Forward(); }
+  vec3 cameraLeft() const { return transform.Left(); }
+  vec3 cameraRight() const{ return transform.Right(); }
+  vec3 cameraUp() const { return transform.Up(); }
+  vec3 cameraDown() const { return transform.Down(); }
+  uvec2 cameraViewSize() const { return  ScreenSize(); }
+  vec4 cameraViewport() const { return viewport; }
+  unsigned int cameraIndex() const { return camera_index; }; // index is an offset in the corresponding UBO
+  void cameraIndex(uint32_t index) { camera_index = index; };
+
   // Visibility check
   bool aabbVisible(const AABB &aabb) const { return frustum.isVisible(aabb.min, aabb.max); };
   bool obbVisible(const OBB &obb) const { return frustum.isVisible(obb.matrix, obb.min, obb.max); };
   bool sphereVisible(const vec3 &center, const float radius) const { return frustum.isVisible(center, radius); };
   void cameraVisibilityMask(unsigned int mask) { visibility_mask = mask; };
 
-  vec3 cameraForward() const { return transform.Forward(); }
-
   // ICameraParamsProvider
-  uvec2 cameraViewSize() const override { return  ScreenSize(); }
   vec3 cameraPosition() const override { return transform.WorldPosition(); }
   mat4 cameraViewProjectionMatrix() const override { return view_projection_matrix; }
-  vec3 cameraLeft() const override { return transform.Left(); }
-  vec3 cameraRight() const override { return transform.Right(); }
-  vec3 cameraUp() const override { return transform.Up(); }
-  vec3 cameraDown() const override { return transform.Down(); }
   mat4 cameraViewMatrix() const override { return view_matrix; }
   mat4 cameraProjectionMatrix() const override { return projectionMatrix(); }
-  vec4 cameraViewport() const override { return viewport; }
   vec2 cameraZMinMax() const override { return vec2(zMin, zMax); }
   unsigned int cameraVisibilityMask() const override { return visibility_mask; };
   const Frustum &GetFrustum() const override { return frustum; };
-  unsigned int cameraIndex() const override { return camera_index; }; // index is an offset in the corresponding UBO
-  void cameraIndex(uint32_t index) override { camera_index = index; };
 
   ECS::components::Transform& Transform() { return transform; }
   std::pair<vec3, vec3> GetMouseRay(vec2 mouse_position);
 
 protected:
-  unsigned int visibility_mask = ~0u; // all visible by default
+  uint32_t visibility_mask = ~0u; // all visible by default
   mat4 projection_matrix;
   mat4 view_matrix;
   vec4 viewport;
@@ -76,7 +76,7 @@ protected:
   float fov = 45.0f;
 
   Mode mode = Mode::Perspective;
-  float orthographic_size = 0.0f;
+  float orthographic_size = 10.0f;
 
   unsigned int camera_index = 0;
 

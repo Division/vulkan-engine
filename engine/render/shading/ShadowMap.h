@@ -26,6 +26,7 @@ namespace render {
 	public:
 		ShadowMap(unsigned int resolutionX, unsigned int resolutionY);
 
+		ivec2 GetAtlasSize() const { return ivec2(2048, 2048); }
 		void SetupShadowCasters(std::vector<std::pair<IShadowCaster*, ECS::systems::CullingSystem>>& shadow_casters);
 	
 	private:

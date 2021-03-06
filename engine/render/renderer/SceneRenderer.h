@@ -35,6 +35,11 @@ namespace ECS
 		class UploadSkinningSystem;
 	}
 
+	namespace components
+	{
+		struct DirectionalLight;
+	}
+
 	class EntityManager;
 }
 	
@@ -103,6 +108,7 @@ namespace render {
 		Resources::Handle<Resources::TextureResource> brdf_lut;
 
 		Device::ShaderCache* shader_cache;
+		std::unique_ptr<ECS::components::DirectionalLight> directional_light;
 		std::unique_ptr<SceneBuffers> scene_buffers;
 		std::unique_ptr<LightGrid> light_grid;
 		std::unique_ptr<ShadowMap> shadow_map;
@@ -118,6 +124,7 @@ namespace render {
 
 		std::unique_ptr<Device::VulkanRenderTargetAttachment> main_depth_attachment;
 		std::unique_ptr<Device::VulkanRenderTargetAttachment> shadowmap_atlas_attachment;
+		std::unique_ptr<Device::VulkanRenderTargetAttachment> shadowmap_attachment;
 		std::unique_ptr<Device::VulkanRenderTargetAttachment> main_color_attachment;
 
 		uint32_t depth_only_fragment_shader_hash;

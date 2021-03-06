@@ -40,6 +40,11 @@ namespace ECS::components
 			rotation = glm::conjugate(r);
 		}
 
+		void LookAt(const vec3& center, const vec3& up = vec3(0, 1, 0))
+		{
+			SetMatrix(glm::lookAt(position, center, up));
+		}
+
 		OBB GetOBB() const { return OBB(local_to_world, bounds.min, bounds.max); }
 
 		vec3 WorldPosition() const { return vec3(local_to_world[3]); }
