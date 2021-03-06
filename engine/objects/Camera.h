@@ -70,7 +70,7 @@ protected:
   mat4 view_projection_matrix;
   Frustum frustum;
   float zMin = 0.1;
-  float zMax = 10000;
+  float zMax = 1000;
   ECS::components::Transform transform;
 
   float fov = 45.0f;

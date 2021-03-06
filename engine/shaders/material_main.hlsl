@@ -81,7 +81,7 @@ float SrgbToLinear(float value)
 
 float LinearizeDepth(float depth_ndc, float near, float far) 
 {
-    return (2.0 * near * far) / (far + near - depth_ndc * (far - near));
+    return (2.0 * near * far) / (far + near - (depth_ndc * 2.0f - 1.0f) * (far - near));
 }
 
 VS_out vs_main(VS_in input)
