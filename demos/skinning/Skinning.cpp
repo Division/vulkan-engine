@@ -15,6 +15,7 @@
 #include "system/Input.h"
 #include "objects/Camera.h"
 #include "utils/Math.h"
+#include "render/renderer/EnvironmentSettings.h"
 
 Game::Game() = default;
 Game::~Game() = default;
@@ -52,20 +53,22 @@ void Game::init()
 
 	manager->AddStaticComponent(graph);
 
-	point_light_id = CreateLight(vec3(2.5, 4, 0), 1000, ECS::components::Light::Type::Point, vec3(1, 1, 1) * 1.0f);
+	point_light_id = CreateLight(vec3(2.5, 4, 0), 10, ECS::components::Light::Type::Point, vec3(1, 1, 1) * 10.0f);
 
 	camera = std::make_unique<ViewerCamera>();
 
 	animated_entity = Resources::EntityResource::Handle(L"assets/Entities/Insect/insect.entity");
 	animation = Resources::SkeletalAnimationResource::Handle(L"assets/art/Entities/Insect/Insect@Flying.ozz");
-	auto plane_handle = Resources::EntityResource::Handle(L"assets/Entities/Basic/Ground/cracks/plane10_ground_cracks.entity");
+	//auto plane_handle = Resources::EntityResource::Handle(L"assets/Entities/Basic/Ground/cracks/plane10_ground_cracks.entity");
+	auto plane_handle = Resources::EntityResource::Handle(L"assets/Entities/Basic/Ground/stylized/plane10_soil_water.entity");
 	plane_handle->Spawn(vec3(0));
 
 	auto scifi_box_handle = Resources::EntityResource::Handle(L"assets/Entities/Basic/Crates/crate_scifi.entity");
 	auto scifi_box_id = scifi_box_handle->Spawn(vec3(1, 2, 3));
 	//manager->GetComponent<components::Transform>(scifi_box_id)->rotation = glm::angleAxis((float)M_PI * 4.8f, vec3(0, 1, 0)) * glm::angleAxis((float)M_PI * 4.8f, vec3(1, 0, 0));
 
-	auto sphere_mirror_handle = Resources::EntityResource::Handle(L"assets/Entities/Basic/Spheres/sphere_mirror.entity");
+	//auto sphere_mirror_handle = Resources::EntityResource::Handle(L"assets/Entities/Basic/Spheres/sphere_mirror.entity");
+	auto sphere_mirror_handle = Resources::EntityResource::Handle(L"assets/Entities/Basic/Spheres/sphere_rust_coated.entity");
 	sphere_mirror_handle->Spawn(vec3(4, 2, 1));
 
 	animated_entity_id = animated_entity->Spawn(vec3(0, 0, 0));
@@ -95,6 +98,12 @@ void Game::update(float dt)
 	{
 		auto light_transform = manager->GetComponent<components::Transform>(point_light_id);
 		light_transform->position = Engine::Get()->GetScene()->GetCamera()->cameraPosition();
+	}
+
+	if (input->keyDown(Key::F))
+	{
+		auto* settings = Engine::Get()->GetSceneRenderer()->GetEnvironmentSettings();
+		settings->direction_light_direction = vec4(Engine::Get()->GetScene()->GetCamera()->cameraForward(), settings->direction_light_direction.w);
 	}
 }
 

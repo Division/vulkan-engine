@@ -187,6 +187,8 @@ namespace render {
 	{
 		ShaderBufferStruct::EnvironmentSettings result;
 
+		result.direction_light_color = settings.direction_light_color;
+		result.direction_light_direction = settings.direction_light_direction;
 		result.environment_brightness = settings.environment_brightness;
 		result.exposure = settings.exposure;
 

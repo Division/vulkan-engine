@@ -7,6 +7,8 @@ namespace Device { namespace ShaderBufferStruct {
 
 	struct EnvironmentSettings
 	{
+		float4 direction_light_color;
+		float4 direction_light_direction;
 		float exposure;
 		float environment_brightness;
 		vec2 padding;

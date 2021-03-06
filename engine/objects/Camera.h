@@ -40,6 +40,8 @@ public:
   bool sphereVisible(const vec3 &center, const float radius) const { return frustum.isVisible(center, radius); };
   void cameraVisibilityMask(unsigned int mask) { visibility_mask = mask; };
 
+  vec3 cameraForward() const { return transform.Forward(); }
+
   // ICameraParamsProvider
   uvec2 cameraViewSize() const override { return  ScreenSize(); }
   vec3 cameraPosition() const override { return transform.WorldPosition(); }

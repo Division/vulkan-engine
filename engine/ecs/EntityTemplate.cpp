@@ -114,6 +114,21 @@ namespace ECS
 				{
 					component->material_resources->emplace_back(material_path);
 				}
+
+				AABB combined_aabb;
+				if (component->multi_mesh->GetMeshCount())
+					combined_aabb = component->multi_mesh->GetMesh(0)->aabb();
+
+				for (int i = 1; i < component->multi_mesh->GetMeshCount(); i++)
+				{
+					const auto mesh_aabb = component->multi_mesh->GetMesh(i)->aabb();
+					combined_aabb.expand(mesh_aabb.min);
+					combined_aabb.expand(mesh_aabb.max);
+				}
+
+				auto* transform = manager.GetComponent<components::Transform>(entity);
+				if (transform)
+					transform->bounds = combined_aabb;
 			}
 		};
 

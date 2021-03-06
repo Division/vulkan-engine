@@ -1,18 +1,4 @@
-struct EnvironmentSettingsData
-{
-    float exposure;
-    float environment_brightness;
-};
-
-struct CameraData
-{
-    float3 cameraPosition;
-    float zMin;
-    int2 cameraScreenSize;
-    float zMax;
-    float4x4 cameraViewMatrix;
-    float4x4 cameraProjectionMatrix;
-};
+#include "includes/global.hlsl"
 
 struct ObjectParamsData 
 {
@@ -29,18 +15,6 @@ struct ObjectParamsData
 struct SkinningMatricesData
 {
     float4x4 matrices[70];
-};
-
-[[vk::binding(0, 0)]]
-cbuffer Camera : register(b0) 
-{
-    CameraData camera;
-};
-
-[[vk::binding(1, 0)]]
-cbuffer EnvironmentSettings : register(b1) 
-{
-    EnvironmentSettingsData environment;
 };
 
 [[vk::binding(1, 1)]]
@@ -99,6 +73,12 @@ struct VS_out
     float4 frag_coord : SV_Position;
 };
 
+float SrgbToLinear(float value)
+{
+    float gamma = 2.2;
+    return pow(value, gamma);
+}
+
 float LinearizeDepth(float depth_ndc, float near, float far) 
 {
     return (2.0 * near * far) / (far + near - depth_ndc * (far - near));
@@ -153,98 +133,19 @@ VS_out vs_main(VS_in input)
 [[vk::binding(4, 1)]] Texture2D normal_map : register(t4);
 #endif
 
-
-#if defined (LIGHTING)
-[[vk::binding(3,  0)]] Texture2D shadow_map : register(t3);
-[[vk::binding(11, 0)]] TextureCube radiance_cubemap : register(t11);
-[[vk::binding(12, 0)]] TextureCube irradiance_cubemap : register(t12); // diffuse, ao
-[[vk::binding(13, 0)]] Texture2D brdf_lut : register(t13); // specular
- 
-/*[[vk::binding(10, 0)]] TextureCube environment_cubemap : register(t10);
-
-*/
-struct LightGridItem
-{
-    uint offset;
-    uint lightsCount;
-    uint projectorsCount;
-};
-
-struct LightItem
-{
-    float3 position;
-    float attenuation;
-    float3 color;
-    float radius;
-    float3 direction;
-    float coneAngle;
-    float4x4 projectionMatrix;
-    float2 shadowmapScale;
-    float2 shadowmapOffset;
-    uint mask;
-};
-
-struct ProjectorItem
-{
-    float3 position;
-    float attenuation;
-    float4 color;
-    float2 scale;
-    float2 offset;
-    float2 shadowmapScale;
-    float2 shadowmapOffset;
-    float4x4 projectionMatrix;
-    float radius;
-    uint mask;
-};
-
-[[vk::binding(5, 0)]] cbuffer Lights : register(b5)
-{
-    LightItem lights[100];
-}
-
-[[vk::binding(5, 0)]] cbuffer Projectors : register(b6)
-{
-    ProjectorItem projectors[100];
-};
-
-[[vk::binding(7, 0)]] StructuredBuffer<LightGridItem> LightGrid;
-
-[[vk::binding(8, 0)]] StructuredBuffer<uint> LightIndices;
-
-float GetAttenuation(float distance, float radius)
-{
-    float lightInnerR = radius * 0.01;
-    float d = max(distance, lightInnerR);
-    return clamp(1.0 - pow(d / radius, 4.0), 0.0, 1.0) / (d * d + 1.0);
-}
-
-#endif
-
 SamplerState SamplerLinearWrap;
 SamplerState SamplerLinearClamp;
-
-// TODO: pass textures as params
-#if defined(LIGHTING)
-#include "includes/pbr_t.inc"
-#endif
 
 float LogBase(float x, float base) 
 {
     return log(x) / log(base);
 }
 
-#define CLUSTER_COUNT_X 4.0f
-#define CLUSTER_COUNT_Y 4.0f
-#define CLUSTER_COUNT_DEPTH 16.0f
-#define CLUSTER_NEAR 0.1f
-#define CLUSTER_FAR 50000.0f
-
-float GetSliceIndex(float depth)
-{
-    float index = LogBase(depth / CLUSTER_NEAR, (float)CLUSTER_FAR / (float)CLUSTER_NEAR) * CLUSTER_COUNT_DEPTH;
-    return max(0.0f, index);
-}
+#if defined(LIGHTING)
+#include "includes/lighting.hlsl"
+// TODO: pass textures as params
+#include "includes/pbr.hlsl"
+#endif
 
 float4 ps_main(VS_out input) : SV_TARGET
 {
@@ -270,17 +171,17 @@ float4 ps_main(VS_out input) : SV_TARGET
     float3 bitangent_worldspace_final = normalize(cross(normal_worldspace_final, tangent_worldspace_final) * input.tangent_worldspace.w);
 
     float3x3 TBN = transpose(float3x3(tangent_worldspace_final, bitangent_worldspace_final, normal_worldspace_final));
-    //float3x3 TBN = transpose(float3x3(bitangent_worldspace_final, tangent_worldspace_final, normal_worldspace_final));
 
     normal_worldspace_final = normalize(mul(TBN, normal_tangentspace));
-    if (metalness_final < 0.0f)
+    if (metalness_final < -0.5f)
     {
         metalness_final = normal_sampled.w;
     }
 
     #if defined(TEXTURE0)
-    if (roughness_final < 0.0f)
+    if (roughness_final < -0.5f)
     {
+        //roughness_final = SrgbToLinear(texture0_color.w);
         roughness_final = texture0_color.w;
     }
     #endif
@@ -319,7 +220,7 @@ float4 ps_main(VS_out input) : SV_TARGET
             float3 lightDir = input.position_worldspace.xyz - lightPosition;
             float distanceToLight = length(lightDir);
             lightDir /= distanceToLight; // normalize
-            float attenuation = 1.0f;// GetAttenuation(distanceToLight, lights[lightIndex].radius);
+            float attenuation = GetAttenuation(distanceToLight, lights[lightIndex].radius);
             //lightDir = float3(1, 0, 0);
 
             //vec3 lightValue = calculateFragmentDiffuse(normalizedDistanceToLight, lights[lightIndex].attenuation, normal_worldspace.xyz, lightDir, eyeDir_worldspace, lights[lightIndex].color, materialSpecular);
@@ -352,6 +253,11 @@ float4 ps_main(VS_out input) : SV_TARGET
         }
     }
 
+    if (environment.direction_light_color.w > 0.5) // enabled
+    {
+        light_color += float4(CalculateLighting(albedo, environment.direction_light_color.rgb, normal_worldspace_final, eyeDir_worldspace, -environment.direction_light_direction.xyz, roughness_final, metalness_final), 0);
+    }
+    
     float ao = 1.0f;
     float3 ambient = CalculateAmbient(albedo, normal_worldspace_final, eyeDir_worldspace, roughness_final, metalness_final, ao) * environment.environment_brightness;
     result_color = light_color + float4(ambient, 0);
@@ -361,6 +267,9 @@ float4 ps_main(VS_out input) : SV_TARGET
 
     // result_color.rgb *= 0.00001;
     // result_color.rgb += input.normal_worldspace.xyz;
+
+    // result_color.rgb *= 0.001;
+    // result_color.rgb += roughness_final;
 
 #else
     float4 light_color = float4(1.0, 1.0, 1.0, 1.0);

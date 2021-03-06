@@ -1,28 +1,7 @@
 // The only purpose of this shader is to compile and provide global bindings by reflection
 // It's not supposed to render anything
 
-struct CameraData
-{
-    int2 cameraScreenSize;
-};
-
-struct EnvironmentSettingsData
-{
-    float exposure;
-    float environment_brightness;
-};
-
-[[vk::binding(1, 0)]]
-cbuffer EnvironmentSettings : register(b1) 
-{
-    EnvironmentSettingsData environment;
-};
-
-[[vk::binding(0, 0)]]
-cbuffer Camera : register(b0) 
-{
-    CameraData camera;
-};
+#include "includes/global.hlsl"
 
 struct VS_in
 {
