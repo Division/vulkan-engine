@@ -9,7 +9,6 @@
 #include "render/buffer/DynamicBuffer.h"
 #include "render/debug/DebugDraw.h"
 #include "ecs/components/Light.h"
-#include "scene/Scene.h"
 
 using namespace Device;
 
@@ -49,10 +48,10 @@ void LightGrid::UpdateSlices(mat4 projection)
 
     auto inv = glm::inverse(projection);
     vec4 quad_near[4] = {
-        inv * vec4(-1, -1, -1, 1),
-        inv * vec4(1, -1, -1, 1),
-        inv * vec4(-1, 1, -1, 1),
-        inv * vec4(1, 1, -1, 1),
+        inv * vec4(-1, -1, 0, 1),
+        inv * vec4(1, -1, 0, 1),
+        inv * vec4(-1, 1, 0, 1),
+        inv * vec4(1, 1, 0, 1),
     };
 
     vec4 quad_far[4] = {
@@ -173,11 +172,11 @@ void ResizeBuffer(std::unique_ptr<DynamicBuffer<T>> buffer[2], size_t size, bool
 	}
 }
 
-AABB GetNDCAABB(const OBB& src_obb, mat4 projection)
+AABB GetViewSpaceAABB(const OBB& src_obb, mat4 view_matrix)
 {
     std::array<vec4, 8> verts;
     auto delta = src_obb.max - src_obb.min;
-    auto combined_matrix = projection * src_obb.matrix;
+    auto combined_matrix = view_matrix * src_obb.matrix;
     auto min = vec4(src_obb.min, 1);
 
     verts[0] = combined_matrix * min;
@@ -199,7 +198,7 @@ AABB GetNDCAABB(const OBB& src_obb, mat4 projection)
     return aabb;
 }
 
-void LightGrid::appendLights(const std::vector<SceneLightData> &light_list, ICameraParamsProvider* camera) 
+void LightGrid::appendLights(const std::vector<Scene::SceneLightData> &light_list, ICameraParamsProvider* camera, float shadowmap_atlas_size)
 {
     OPTICK_EVENT();
 
@@ -210,10 +209,10 @@ void LightGrid::appendLights(const std::vector<SceneLightData> &light_list, ICam
     light_aabb.resize(light_list.size());
     for (int i = 0; i < light_list.size(); i++) 
     {
-	    auto &light = light_list[i];
-	    auto lightData = light.data;
+	    auto& light = light_list[i];
+        auto lightData = light.light->GetShaderStruct(light.position, light.direction, shadowmap_atlas_size);
         lights[0]->Append(lightData);
-        light_aabb[i] = GetNDCAABB(light.transform->GetOBB(), camera->cameraViewMatrix());
+        light_aabb[i] = GetViewSpaceAABB(light.transform->GetOBB(), camera->cameraViewMatrix());
     }
 
     lights[0]->Unmap();

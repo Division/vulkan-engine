@@ -239,6 +239,7 @@ include_directories(./ lib)
 
 find_package(Vulkan REQUIRED)
 
+add_definitions(-DGLM_FORCE_DEPTH_ZERO_TO_ONE)
 set(GLFW_BUILD_DOCS false)
 set(GLFW_BUILD_EXAMPLES false)
 set(GLFW_BUILD_TESTS false)

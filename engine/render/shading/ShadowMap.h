@@ -22,11 +22,14 @@ namespace ECS
 
 namespace render {
 	
+	struct ShadowCasterData;
+
 	class ShadowMap {
 	public:
 		ShadowMap(unsigned int resolutionX, unsigned int resolutionY);
 
-		void SetupShadowCasters(std::vector<std::pair<IShadowCaster*, ECS::systems::CullingSystem>>& shadow_casters);
+		ivec2 GetAtlasSize() const { return ivec2(4024, 4024); }
+		void SetupShadowCasters(std::vector<ShadowCasterData>& shadow_casters);
 	
 	private:
 		uvec2 _resolution;

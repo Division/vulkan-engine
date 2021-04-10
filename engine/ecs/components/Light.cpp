@@ -1,10 +1,34 @@
 #include "Light.h"
 #include "CommonIncludes.h"
-#include "Transform.h"
 
 namespace ECS::components 
 {
-	Device::ShaderBufferStruct::Light Light::GetShaderStruct(vec3 world_position, float shadow_atlas_size) const
+	void DirectionalLight::UpdateMatrices()
+	{
+		const float half_width = orthographic_size.x / 2.0f;
+		const float half_height = orthographic_size.y / 2.0f;
+
+		transform.local_to_world = ComposeMatrix(transform.position, transform.rotation, vec3(1, 1, 1));
+
+		projection_matrix = glm::ortho(-half_width, half_width, -half_height, half_height, zNear, zFar);
+		view_matrix = glm::inverse(transform.local_to_world);
+		view_projection_matrix = projection_matrix * view_matrix;
+		frustum.calcPlanes(view_projection_matrix);
+	}
+
+	Device::ShaderBufferStruct::Light DirectionalLight::GetShaderStruct() const
+	{
+		Device::ShaderBufferStruct::Light result;
+
+		result.direction = glm::normalize(transform.Forward());
+		result.color = color;
+		result.mask = mask;
+		result.projectionMatrix = view_projection_matrix;
+
+		return result;
+	}
+
+	Device::ShaderBufferStruct::Light Light::GetShaderStruct(vec3 world_position, vec3 direction, float shadow_atlas_size) const
 	{
 		Device::ShaderBufferStruct::Light result;
 
@@ -36,7 +60,8 @@ namespace ECS::components
 		// Shadow maps are square, so aspect is 1
 		projection_matrix = glm::perspective(glm::radians(cone_angle), 1.0f, zMin, radius);
 		view_matrix = glm::inverse(transform.local_to_world);
-		frustum.calcPlanes(projection_matrix * view_matrix);
+		view_projection_matrix = projection_matrix * view_matrix;
+		frustum.calcPlanes(view_projection_matrix);
 	}
 
 	Device::ShaderBufferStruct::Projector Projector::GetShaderStruct(vec3 world_position, float shadow_atlas_size) const 
@@ -64,6 +89,14 @@ namespace ECS::components
 		result.projectionMatrix = view_projection_matrix;
 
 		return result;
+	}
+
+	void Projector::UpdateMatrices(Transform& transform)
+	{
+		projection_matrix = GetProjection();
+		view_matrix = glm::inverse(transform.local_to_world);
+		view_projection_matrix = projection_matrix * view_matrix;
+		frustum.calcPlanes(view_projection_matrix);
 	}
 
 	mat4 Projector::GetProjection() const 

@@ -44,17 +44,26 @@ namespace render
     struct DebugSettings;
 }
 
-struct SceneLightData
-{
-    ECS::components::Light* light;
-    ECS::components::Transform* transform;
-    Device::ShaderBufferStruct::Light data;
-    int index;
-};
-
 class Scene 
 {
 public:
+
+    struct SceneLightData
+    {
+        vec3 position;
+        vec3 direction;
+        ECS::components::Light* light;
+        ECS::components::Transform* transform;
+        int index;
+    };
+
+    struct SceneProjectorData
+    {
+        ECS::components::Projector* projector;
+        ECS::components::Transform* transform;
+        Device::ShaderBufferStruct::Projector data;
+        int index;
+    };
 
     Scene(IGame& game, render::DebugSettings* settings);
     ~Scene();
@@ -79,7 +88,7 @@ private:
 private:
     render::DebugSettings* debug_settings;
     std::vector<SceneLightData> visible_lights;
-    std::vector<ECS::components::Projector*> visible_projectors;
+    std::vector<SceneProjectorData> visible_projectors;
     std::unique_ptr<Camera> camera;
     std::unique_ptr<Physics::PhysXManager> physx_manager;
     IGame* game;

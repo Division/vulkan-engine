@@ -9,8 +9,6 @@ namespace ECS { namespace systems {
 	{
 		ComponentFetcher<components::DrawCall> draw_call_fetcher(*chunk);
 
-		auto frustum = camera.GetFrustum();
-
 		for (int i = 0; i < chunk->GetEntityCount(); i++)
 		{
 			auto* draw_call = draw_call_fetcher.GetComponent(i);

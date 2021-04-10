@@ -164,7 +164,8 @@ void Scene::ProcessRendererSystems()
             if (camera->obbVisible(transform->GetOBB()))
             {
                 SceneLightData data;
-                data.data = light->GetShaderStruct(transform->WorldPosition(), 1.0f/*todo: actual value*/);
+                data.position = transform->WorldPosition();
+                data.direction = transform->Forward();
                 data.light = light;
                 data.index = index++;
                 data.transform = transform;
@@ -173,6 +174,37 @@ void Scene::ProcessRendererSystems()
         }
 
     }, *entity_manager, false).ProcessChunks(lights);
+
+    auto projectors = entity_manager->GetChunkListsWithComponents<components::Projector, components::Transform>();
+
+    visible_projectors.clear();
+    index = 0;
+
+    /*CallbackSystem([&](Chunk* chunk) {
+        ComponentFetcher<components::Projector> projector_fetcher(*chunk);
+        ComponentFetcher<components::Transform> transform_fetcher(*chunk);
+
+        for (int i = 0; i < chunk->GetEntityCount(); i++)
+        {
+            auto* projector = projector_fetcher.GetComponent(i);
+            auto* transform = transform_fetcher.GetComponent(i);
+            projector->UpdateMatrices(*transform);
+            //transform->bounds = AABB(transform->WorldPosition() - vec3(projector->radius), transform->WorldPosition() + vec3(projector->radius));
+
+            // TODO: obb from frustum
+
+            if (camera->obbVisible(transform->GetOBB()))
+            {
+                SceneProjectorData data;
+                data.data = projector->GetShaderStruct(transform->WorldPosition(), 1.0f);
+                data.projector = projector;
+                data.index = index++;
+                data.transform = transform;
+                visible_projectors.push_back(data);
+            }
+        }
+
+        }, *entity_manager, false).ProcessChunks(lights);*/
 
     // TODO: add projectors
 

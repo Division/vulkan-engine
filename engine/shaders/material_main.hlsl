@@ -81,7 +81,7 @@ float SrgbToLinear(float value)
 
 float LinearizeDepth(float depth_ndc, float near, float far) 
 {
-    return (2.0 * near * far) / (far + near - depth_ndc * (far - near));
+    return (2.0 * near * far) / (far + near - (depth_ndc * 2.0f - 1.0f) * (far - near));
 }
 
 VS_out vs_main(VS_in input)
@@ -221,14 +221,10 @@ float4 ps_main(VS_out input) : SV_TARGET
             float distanceToLight = length(lightDir);
             lightDir /= distanceToLight; // normalize
             float attenuation = GetAttenuation(distanceToLight, lights[lightIndex].radius);
-            //lightDir = float3(1, 0, 0);
 
-            //vec3 lightValue = calculateFragmentDiffuse(normalizedDistanceToLight, lights[lightIndex].attenuation, normal_worldspace.xyz, lightDir, eyeDir_worldspace, lights[lightIndex].color, materialSpecular);
             float3 radiance = lights[lightIndex].color.rgb * attenuation;
             float3 lightValue = CalculateLighting(albedo, radiance, normal_worldspace_final, eyeDir_worldspace, -lightDir, roughness_final, metalness_final);
-            //float3 lightValue = CalculateLighting(albedo, radiance, normalize(input.normal_worldspace.xyz), eyeDir_worldspace, -lightDir, 0.9f, 0.0f);
-
-            /*
+            
             float3 coneDirection = lights[lightIndex].direction;
             float coneAngle = lights[lightIndex].coneAngle;
             float lightToSurfaceAngle = dot(lightDir, coneDirection);
@@ -237,39 +233,42 @@ float4 ps_main(VS_out input) : SV_TARGET
 
             //[branch]
             if (lightToSurfaceAngle > coneAngle && lights[lightIndex].shadowmapScale.x > 0.0) {
-                vec4 position_lightspace = lights[lightIndex].projectionMatrix * vec4(position_worldspace.xyz, 1.0);
-
-                vec4 position_lightspace_normalized = position_lightspace / position_lightspace.w;
+                float4 position_lightspace = mul(lights[lightIndex].projectionMatrix, float4(input.position_worldspace.xyz, 1.0));
+                float4 position_lightspace_normalized = position_lightspace / position_lightspace.w;
                 position_lightspace_normalized.xy = (position_lightspace_normalized.xy + 1.0) / 2.0;
                 position_lightspace_normalized.y = 1.0 - position_lightspace_normalized.y;
-                vec2 shadowmapUV = position_lightspace_normalized.xy * lights[lightIndex].shadowmapScale + lights[lightIndex].shadowmapOffset;
-                float shadow = calculateFragmentShadow(shadowmapUV, position_lightspace_normalized.z);
+                float2 shadowmapUV = position_lightspace_normalized.xy * lights[lightIndex].shadowmapScale + lights[lightIndex].shadowmapOffset;
+                float shadow = calculateFragmentShadow(shadow_map_atlas, shadowmapUV, position_lightspace_normalized.z);
                 lightValue *= 1.0 - shadow;
             }
-            */
+            
             light_color += float4(lightValue, 0.0);
 
             //light_color += float4(radiance, 0);
         }
     }
 
-    if (environment.direction_light_color.w > 0.5) // enabled
+    if (environment.direction_light_enabled) // enabled
     {
-        light_color += float4(CalculateLighting(albedo, environment.direction_light_color.rgb, normal_worldspace_final, eyeDir_worldspace, -environment.direction_light_direction.xyz, roughness_final, metalness_final), 0);
+        float shadow = 1.0f;
+
+        if (environment.direction_light_cast_shadows)
+        {
+            float4 position_lightspace = mul(environment.direction_light_projection_matrix, float4(input.position_worldspace.xyz, 1.0));
+            float4 position_lightspace_normalized = position_lightspace / position_lightspace.w;
+            position_lightspace_normalized.xy = (position_lightspace_normalized.xy + 1.0) / 2.0;
+            position_lightspace_normalized.y = 1.0 - position_lightspace_normalized.y;
+            float2 shadowmapUV = position_lightspace_normalized.xy;
+            shadow = 1.0f - calculateFragmentShadow(shadow_map, shadowmapUV, position_lightspace_normalized.z);
+        }
+
+        light_color += shadow * float4(CalculateLighting(albedo, environment.direction_light_color, normal_worldspace_final, eyeDir_worldspace, -environment.direction_light_direction, roughness_final, metalness_final), 0);
     }
     
     float ao = 1.0f;
     float3 ambient = CalculateAmbient(albedo, normal_worldspace_final, eyeDir_worldspace, roughness_final, metalness_final, ao) * environment.environment_brightness;
     result_color = light_color + float4(ambient, 0);
     result_color.a = result_alpha;
-    //result_color = result_color * 0.00001 + float4(0.5,0.5,0.5, 1);
-    //result_color = pow((result_color + 0.055) / 1.055, 2.4); 
-
-    // result_color.rgb *= 0.00001;
-    // result_color.rgb += input.normal_worldspace.xyz;
-
-    // result_color.rgb *= 0.001;
-    // result_color.rgb += roughness_final;
 
 #else
     float4 light_color = float4(1.0, 1.0, 1.0, 1.0);
