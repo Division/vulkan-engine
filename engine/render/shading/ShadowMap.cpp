@@ -4,6 +4,8 @@
 #include "render/texture/Texture.h"
 #include "render/device/VulkanRenderState.h"
 #include "ecs/systems/CullingSystem.h"
+#include "ecs/components/Light.h"
+#include "render/renderer/SceneRenderer.h"
 
 namespace render {
 
@@ -18,12 +20,12 @@ namespace render {
 	  _cellSize = vec2(_cellPixelSize) / vec2(_resolution);
 	}
 
-	void ShadowMap::SetupShadowCasters(std::vector<std::pair<IShadowCaster*, ECS::systems::CullingSystem>>& shadow_casters) {
+	void ShadowMap::SetupShadowCasters(std::vector<ShadowCasterData>& shadow_casters) {
 		unsigned int index = 0;
 
 		for (auto& caster : shadow_casters) {
 			vec4 viewport = (vec4)getCellPixelRect(index);
-			caster.first->viewport(viewport);
+			caster.light->viewport = viewport;
 			index++;
 		}
 	}

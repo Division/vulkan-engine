@@ -42,7 +42,7 @@ namespace ECS::components
 
 		void LookAt(const vec3& center, const vec3& up = vec3(0, 1, 0))
 		{
-			SetMatrix(glm::lookAt(position, center, up));
+			SetMatrix(glm::inverse(glm::lookAt(position, center, up)));
 		}
 
 		OBB GetOBB() const { return OBB(local_to_world, bounds.min, bounds.max); }

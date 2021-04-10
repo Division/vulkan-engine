@@ -1,6 +1,7 @@
 #pragma once
 
 #include "render/renderer/IRenderer.h"
+#include "render/shading/IShadowCaster.h"
 #include "render/renderer/ICameraParamsProvider.h"
 #include "render/shader/ShaderBufferStruct.h"
 #include "utils/Frustum.h"
@@ -32,11 +33,12 @@ namespace ECS::components
 
 	struct DirectionalLight : public LightBase
 	{
-		float zNear = 5;
+		float zNear = 0.1;
 		float zFar = 1000;
 		vec2 orthographic_size = vec2(10, 10);
 		Transform transform; // it has it's own transform since used as singleton component
 		bool enabled = false;
+		bool cast_shadows = true;
 
 		virtual vec2 cameraZMinMax() const override { return vec2(zNear, zFar); };
 		void UpdateMatrices();
@@ -52,14 +54,13 @@ namespace ECS::components
 		};
 
 		float radius = 5;
-		vec3 direction;
 		float zMin = 0.05f;
-		float cone_angle = 0;
+		float cone_angle = 45;
 		Type type = Type::Point;
 
-		virtual vec2 cameraZMinMax() const override { return vec2(zMin, radius); };
 		void UpdateMatrices(Transform& transform);
-		Device::ShaderBufferStruct::Light GetShaderStruct(vec3 world_position, float shadow_atlas_size = 1.0f) const;
+		Device::ShaderBufferStruct::Light GetShaderStruct(vec3 world_position, vec3 direction, float shadow_atlas_size = 1.0f) const;
+		vec2 cameraZMinMax() const override { return vec2(zMin, radius); };
 	};
 
 	struct Projector : public LightBase

@@ -213,6 +213,10 @@ namespace render {
 		draw_call_manager->Update();
 
 		auto* entity_manager = scene.GetEntityManager();
+		const bool direction_light_enabled = environment_settings->directional_light && environment_settings->directional_light->enabled;
+		const bool directional_light_cast_shadows = direction_light_enabled && environment_settings->directional_light->cast_shadows;
+		if (direction_light_enabled)
+			environment_settings->directional_light->UpdateMatrices();
 
 		light_grid->UpdateSlices(scene.GetCamera()->cameraProjectionMatrix());
 
@@ -231,20 +235,18 @@ namespace render {
 		
 		auto &visible_lights = scene.GetVisibleLights();
 
-		/*
-		auto visible_objects = scene.visibleObjects(scene.GetCamera());
-
+		
 		// Shadow casters
 		shadow_casters.clear();
-		for (auto &light : visibleLights) {
-			if (light->castShadows()) {
+		for (auto &light : visible_lights) {
+			if (light.light->cast_shadows) {
 				shadow_casters.push_back(
-					std::make_pair(static_cast<IShadowCaster*>(light.get()), systems::CullingSystem(*draw_call_manager, *light))
+					{ light.light, systems::CullingSystem(*draw_call_manager, light.light->GetFrustum()), 0 }
 				);
 			}
 		}
 
-		auto &visibleProjectors = scene.visibleProjectors(scene.GetCamera());
+		/*auto &visibleProjectors = scene.visibleProjectors(scene.GetCamera());
 		for (auto &projector : visibleProjectors) {
 			if (projector->castShadows()) {
 				shadow_casters.push_back(
@@ -274,11 +276,21 @@ namespace render {
 		systems::CullingSystem main_camera_culling_system(*draw_call_manager, scene.GetCamera()->GetFrustum());
 		main_camera_culling_system.ProcessChunks(draw_calls);
 
+		Frustum directional_light_frustum;
+		size_t directional_light_camera_offset = 0;
+		if (directional_light_cast_shadows)
+			directional_light_frustum = environment_settings->directional_light->GetFrustum();
+		systems::CullingSystem directional_light_culling_system(*draw_call_manager, directional_light_frustum);
+		if (directional_light_cast_shadows)
+		{
+			directional_light_culling_system.ProcessChunks(draw_calls);
+			directional_light_camera_offset = camera_buffer->Append(GetCameraData(environment_settings->directional_light, uvec2(0, 0)));
+		}
+
 		for (auto& shadow_caster : shadow_casters)
 		{
-			shadow_caster.second.ProcessChunks(draw_calls); // Cull and fill draw call list
-			auto offset = camera_buffer->Append(GetCameraData(shadow_caster.first, uvec2(0, 0)));
-			//shadow_caster.first->cameraIndex(offset);
+			shadow_caster.culling.ProcessChunks(draw_calls); // Cull and fill draw call list
+			shadow_caster.camera_offset = camera_buffer->Append(GetCameraData(shadow_caster.light, uvec2(0, 0)));
 		}
 
 		camera_buffer->Unmap();
@@ -287,7 +299,7 @@ namespace render {
 		// Light grid setup
 		auto window_size = scene.GetCamera()->cameraViewSize();
 
-		light_grid->appendLights(visible_lights, scene.GetCamera());
+		light_grid->appendLights(visible_lights, scene.GetCamera(), shadow_map->GetAtlasSize().x);
 		//light_grid->appendProjectors(visibleProjectors, scene.GetCamera());
 		light_grid->upload();
 
@@ -311,6 +323,7 @@ namespace render {
 		auto* main_offscreen_color = render_graph->RegisterAttachment(*main_color_attachment);
 		auto* main_depth = render_graph->RegisterAttachment(*main_depth_attachment);
 		auto* shadow_map = render_graph->RegisterAttachment(*shadowmap_attachment);
+		auto* shadow_map_atlas = render_graph->RegisterAttachment(*shadowmap_atlas_attachment);
 		auto* compute_buffer_resource = render_graph->RegisterBuffer(*compute_buffer->GetBuffer());
 		post_process->PrepareRendering(*render_graph);
 
@@ -350,9 +363,38 @@ namespace render {
 		});
 
 		auto shadow_map_info = render_graph->AddPass<PassInfo>("shadow map", ProfilerName::PassShadowmap, [&](graph::IRenderPassBuilder& builder)
+			{
+				PassInfo result;
+				result.depth_output = builder.AddOutput(*shadow_map)->Clear(1.0f);
+				return result;
+			}, [&](VulkanRenderState& state)
+			{
+				RenderMode mode;
+				mode.SetDepthWriteEnabled(true);
+				mode.SetDepthTestEnabled(true);
+				mode.SetDepthFunc(CompareOp::Less);
+				state.SetRenderMode(mode);
+
+				ShaderBindings global_bindings = *global_shader_bindings;
+				global_bindings.GetBufferBindings()[global_shader_binding_camera_index].dynamic_offset = directional_light_camera_offset;
+				global_bindings.UpdateBindings(); // update dynamic offsets
+				state.SetGlobalBindings(global_bindings);
+
+				if (directional_light_cast_shadows)
+				{
+					auto& render_queues = directional_light_culling_system.GetDrawCallList()->queues;
+					for (auto* draw_call : render_queues[(size_t)RenderQueue::DepthOnly])
+					{
+						state.RenderDrawCall(draw_call, true);
+					}
+				}
+
+			});
+		
+		auto shadow_map_atlas_info = render_graph->AddPass<PassInfo>("shadow map atlas", ProfilerName::PassShadowmap, [&](graph::IRenderPassBuilder& builder)
 		{
 			PassInfo result;
-			result.depth_output = builder.AddOutput(*shadow_map)->Clear(1.0f);
+			result.depth_output = builder.AddOutput(*shadow_map_atlas)->Clear(1.0f);
 			return result;
 		}, [&](VulkanRenderState& state)
 		{
@@ -366,18 +408,18 @@ namespace render {
 
 			for (auto& shadow_caster : shadow_casters)
 			{
-				//global_bindings.GetBufferBindings()[global_shader_binding_camera_index].dynamic_offset = shadow_caster.first->cameraIndex();
+				global_bindings.GetBufferBindings()[global_shader_binding_camera_index].dynamic_offset = shadow_caster.camera_offset;
 				global_bindings.UpdateBindings(); // update dynamic offsets
 				state.SetGlobalBindings(global_bindings);
-				//state.SetViewport(shadow_caster.first->cameraViewport()); // TODO: replace
-				auto& render_queues = shadow_caster.second.GetDrawCallList()->queues;
+				state.SetViewport(shadow_caster.light->viewport);
+				auto& render_queues = shadow_caster.culling.GetDrawCallList()->queues;
 				for (auto* draw_call : render_queues[(size_t)RenderQueue::DepthOnly])
 				{
 					state.RenderDrawCall(draw_call, true);
 				}
 			}
-
 		});
+		 
 
 		auto* debug_draw = Engine::Get()->GetDebugDraw();
 		auto& debug_draw_calls_lines = debug_draw->GetLineDrawCalls();
@@ -389,6 +431,7 @@ namespace render {
 			PassInfo result;
 			builder.AddInput(*depth_pre_pass_info.depth_output, graph::InputUsage::DepthAttachment);
 			builder.AddInput(*shadow_map_info.depth_output);
+			builder.AddInput(*shadow_map_atlas_info.depth_output);
 			result.color_output = builder.AddOutput(*main_offscreen_color)->Clear(vec4(0));
 			return result;
 		}, [&](VulkanRenderState& state)

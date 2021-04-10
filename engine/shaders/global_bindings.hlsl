@@ -21,6 +21,7 @@ VS_out vs_main(VS_in input)
 }
 
 [[vk::binding(3,  0)]] Texture2D shadow_map : register(t3);
+[[vk::binding(4,  0)]] Texture2D shadow_map_atlas : register(t4);
 [[vk::binding(11, 0)]] TextureCube radiance_cubemap : register(t11);
 [[vk::binding(12, 0)]] TextureCube irradiance_cubemap : register(t12);
 [[vk::binding(13, 0)]] Texture2D brdf_lut : register(t13);
@@ -65,7 +66,8 @@ float4 ps_main(VS_out input) : SV_TARGET
     float4 skybox_color = radiance_cubemap.Sample(SamplerLinearWrap, float3(1,1,1));
     float4 skybox_color2 = irradiance_cubemap.Sample(SamplerLinearWrap, float3(1,1,1));
     float4 brdf = brdf_lut.Sample(SamplerLinearWrap, float2(1,1));
-    result_color += brdf * skybox_color2 * skybox_color * camera.cameraScreenSize.x * LightIndices[0] * lights[0].mask * environment.exposure;
+    float4 shadow = shadow_map.Sample(SamplerLinearWrap, float2(1,1)) * shadow_map_atlas.Sample(SamplerLinearWrap, float2(1,1));
+    result_color += brdf * skybox_color2 * skybox_color * camera.cameraScreenSize.x * LightIndices[0] * lights[0].mask * environment.exposure * shadow;
 
     LightGridItem cluster = LightGrid[0];
     result_color.x *= cluster.offset;

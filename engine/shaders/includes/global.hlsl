@@ -4,6 +4,7 @@ struct EnvironmentSettingsData
     float3 direction_light_color;
     uint direction_light_enabled;
     float3 direction_light_direction;
+    uint direction_light_cast_shadows;
     float exposure;
     float environment_brightness;
 };

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "scene/Scene.h"
 #include "CommonIncludes.h"
 #include "render/buffer/DynamicBuffer.h"
 #include "render/shader/ShaderBufferStruct.h"
@@ -8,7 +9,6 @@ class ICameraParamsProvider;
 
 class LightObject;
 class Projector;
-struct SceneLightData;
 
 namespace ECS::components
 {
@@ -60,7 +60,7 @@ namespace render {
 		explicit LightGrid();
 		~LightGrid() = default;
 
-		void appendLights(const std::vector<SceneLightData> &lights, ICameraParamsProvider* camera);
+		void appendLights(const std::vector<Scene::SceneLightData> &lights, ICameraParamsProvider* camera, float shadowmap_atlas_size);
 		void upload();
 		Device::DynamicBuffer<Device::ShaderBufferStruct::Light>* GetLightsBuffer() const { return lights[0].get(); };
 		Device::DynamicBuffer<Device::ShaderBufferStruct::Projector>* GetProjectorBuffer() const { return projectors[0].get(); };

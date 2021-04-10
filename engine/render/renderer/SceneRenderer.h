@@ -38,6 +38,7 @@ namespace ECS
 	namespace components
 	{
 		struct DirectionalLight;
+		struct LightBase;
 	}
 
 	class EntityManager;
@@ -53,6 +54,13 @@ namespace render {
 	class DrawCallManager;
 	struct DebugSettings;
 	struct EnvironmentSettings;
+
+	struct ShadowCasterData
+	{
+		ECS::components::LightBase* light;
+		ECS::systems::CullingSystem culling;
+		size_t camera_offset;
+	};
 
 	namespace effects
 	{
@@ -128,7 +136,8 @@ namespace render {
 		std::unique_ptr<Device::VulkanRenderTargetAttachment> main_color_attachment;
 
 		uint32_t depth_only_fragment_shader_hash;
-		std::vector<std::pair<IShadowCaster*, ECS::systems::CullingSystem>> shadow_casters;
+
+		std::vector<ShadowCasterData> shadow_casters;
 
 		std::unique_ptr<EnvironmentSettings> environment_settings;
 		DebugSettings* debug_settings;

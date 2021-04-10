@@ -36,6 +36,7 @@ ECS::EntityID Game::CreateLight(vec3 position, float radius, ECS::components::Li
 	light->type = type;
 	light->color = color;
 	light->radius = radius;
+	light->cast_shadows = true;
 
 	return entity;
 }
@@ -98,12 +99,20 @@ void Game::update(float dt)
 	{
 		auto light_transform = manager->GetComponent<components::Transform>(point_light_id);
 		light_transform->position = Engine::Get()->GetScene()->GetCamera()->cameraPosition();
+		light_transform->LookAt(
+			Engine::Get()->GetScene()->GetCamera()->cameraForward() + light_transform->position,
+			Engine::Get()->GetScene()->GetCamera()->cameraUp()
+		);
 	}
 
 	if (input->keyDown(Key::F))
 	{
 		auto* settings = Engine::Get()->GetSceneRenderer()->GetEnvironmentSettings();
-		settings->directional_light->transform.LookAt(Engine::Get()->GetScene()->GetCamera()->cameraForward() + settings->directional_light->transform.position);
+		settings->directional_light->transform.position = Engine::Get()->GetScene()->GetCamera()->cameraPosition();
+		settings->directional_light->transform.LookAt(
+			Engine::Get()->GetScene()->GetCamera()->cameraForward() + settings->directional_light->transform.position,
+			Engine::Get()->GetScene()->GetCamera()->cameraUp()
+		);
 	}
 }
 

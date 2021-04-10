@@ -9,7 +9,6 @@
 #include "render/buffer/DynamicBuffer.h"
 #include "render/debug/DebugDraw.h"
 #include "ecs/components/Light.h"
-#include "scene/Scene.h"
 
 using namespace Device;
 
@@ -199,7 +198,7 @@ AABB GetViewSpaceAABB(const OBB& src_obb, mat4 view_matrix)
     return aabb;
 }
 
-void LightGrid::appendLights(const std::vector<SceneLightData> &light_list, ICameraParamsProvider* camera) 
+void LightGrid::appendLights(const std::vector<Scene::SceneLightData> &light_list, ICameraParamsProvider* camera, float shadowmap_atlas_size)
 {
     OPTICK_EVENT();
 
@@ -210,8 +209,8 @@ void LightGrid::appendLights(const std::vector<SceneLightData> &light_list, ICam
     light_aabb.resize(light_list.size());
     for (int i = 0; i < light_list.size(); i++) 
     {
-	    auto &light = light_list[i];
-	    auto lightData = light.data;
+	    auto& light = light_list[i];
+        auto lightData = light.light->GetShaderStruct(light.position, light.direction, shadowmap_atlas_size);
         lights[0]->Append(lightData);
         light_aabb[i] = GetViewSpaceAABB(light.transform->GetOBB(), camera->cameraViewMatrix());
     }

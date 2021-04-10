@@ -8,6 +8,8 @@ namespace ECS::components
 		const float half_width = orthographic_size.x / 2.0f;
 		const float half_height = orthographic_size.y / 2.0f;
 
+		transform.local_to_world = ComposeMatrix(transform.position, transform.rotation, vec3(1, 1, 1));
+
 		projection_matrix = glm::ortho(-half_width, half_width, -half_height, half_height, zNear, zFar);
 		view_matrix = glm::inverse(transform.local_to_world);
 		view_projection_matrix = projection_matrix * view_matrix;
@@ -26,7 +28,7 @@ namespace ECS::components
 		return result;
 	}
 
-	Device::ShaderBufferStruct::Light Light::GetShaderStruct(vec3 world_position, float shadow_atlas_size) const
+	Device::ShaderBufferStruct::Light Light::GetShaderStruct(vec3 world_position, vec3 direction, float shadow_atlas_size) const
 	{
 		Device::ShaderBufferStruct::Light result;
 

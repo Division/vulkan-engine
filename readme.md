@@ -1,9 +1,10 @@
 Engine roadmap:
-- [partly done] optimize tiled lighting or implement clustered
 - bone attachments
 - top down shooter demo
 - Proper deletion of entities loaded from resource
-- export default materials from maya (with texture paths)
+- export default materials from fbx (with texture paths)
+- export textures from fbx
+- properly export animations in fbx exporter
 - physics rendering interpolation
 - Fix logging, log from multiple threads
 - Fix and migrate lighting, decals, shadowmaps to ECS
@@ -18,7 +19,7 @@ Check:
 - postprocess, changed HLSL texture binding but C++ side didn't see it changed
 
 -- Completed -----------------------------------
-
++ optimize tiled lighting or implement clustered
 + Image based lighting support
 + additional parameters for resource handles (e.g. texture srgb)
 + HLSL includes must be included in hash
