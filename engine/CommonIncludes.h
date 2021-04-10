@@ -58,4 +58,13 @@
 #include "Configuration.h"
 #include "lib/optick/src/optick.h"
 
+#ifndef _HRESULT_DEFINED
+#define _HRESULT_DEFINED
+#ifdef __midl
+typedef LONG HRESULT;
+#else
+typedef _Return_type_success_(return >= 0) long HRESULT;
+#endif
+#endif
+
 using namespace glm;

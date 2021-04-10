@@ -19,6 +19,7 @@ Check:
 - postprocess, changed HLSL texture binding but C++ side didn't see it changed
 
 -- Completed -----------------------------------
++ DDS loading
 + optimize tiled lighting or implement clustered
 + Image based lighting support
 + additional parameters for resource handles (e.g. texture srgb)

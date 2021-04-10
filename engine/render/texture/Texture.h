@@ -29,7 +29,7 @@ namespace Device {
 		TextureInitializer(uint32_t width, uint32_t height, uint32_t depth, uint32_t array_layers, Format format, uint32_t mip_levels = 1, bool srgb = false)
 			: width(width), height(height), depth(depth), array_layers(array_layers), format(format), mip_levels(mip_levels), sRGB(srgb) {}
 
-		TextureInitializer& TextureInitializer::SetData(void* data, size_t size)
+		TextureInitializer& TextureInitializer::SetData(const void* data, size_t size)
 		{
 			this->data = data;
 			this->data_size = size;
@@ -95,7 +95,7 @@ namespace Device {
 		bool dynamic = false;
 		Mode mode = Default;
 		bool sRGB = false;
-		void* data = nullptr;
+		const void* data = nullptr;
 		bool force_sampled = false;
 		uint32_t channel_count = 0;
 		size_t data_size = 0;

@@ -5,27 +5,25 @@
 #include <lib/ktx/ktxvulkan.h>
 #include <lib/ktx/ktxint.h>
 #include "FileLoader.h"
+#include "image/DDSLoader.h"
 
 using namespace Device;
 
-namespace
+Device::Format loader::GetNoSRGBFormat(Device::Format src_format)
 {
-    Device::Format GetNoSRGBFormat(Device::Format src_format)
+    switch (src_format)
     {
-        switch (src_format)
-        {
-            default: return src_format;
-            case Device::Format::R8_srgb: return Device::Format::R8G8B8A8_unorm;
-            case Device::Format::R8G8_srgb: return Device::Format::R8G8_unorm;
-            case Device::Format::R8G8B8_srgb: return Device::Format::R8G8B8_unorm;
-            case Device::Format::R8G8B8A8_srgb: return Device::Format::R8G8B8A8_unorm;
-            case Device::Format::BC1_RGB_srgb: return Device::Format::BC1_RGB_unorm;
-            case Device::Format::BC1_RGBA_srgb: return Device::Format::BC1_RGBA_unorm;
-            case Device::Format::BC2_srgb: return Device::Format::BC2_unorm;
-            case Device::Format::BC3_srgb: return Device::Format::BC3_unorm;
-            case Device::Format::BC7_srgb: return Device::Format::BC7_unorm;
-            case Device::Format::Undefined: throw std::runtime_error("Unknown format");
-        }
+        default: return src_format;
+        case Device::Format::R8_srgb: return Device::Format::R8G8B8A8_unorm;
+        case Device::Format::R8G8_srgb: return Device::Format::R8G8_unorm;
+        case Device::Format::R8G8B8_srgb: return Device::Format::R8G8B8_unorm;
+        case Device::Format::R8G8B8A8_srgb: return Device::Format::R8G8B8A8_unorm;
+        case Device::Format::BC1_RGB_srgb: return Device::Format::BC1_RGB_unorm;
+        case Device::Format::BC1_RGBA_srgb: return Device::Format::BC1_RGBA_unorm;
+        case Device::Format::BC2_srgb: return Device::Format::BC2_unorm;
+        case Device::Format::BC3_srgb: return Device::Format::BC3_unorm;
+        case Device::Format::BC7_srgb: return Device::Format::BC7_unorm;
+        case Device::Format::Undefined: throw std::runtime_error("Unknown format");
     }
 }
 
@@ -43,7 +41,19 @@ std::unique_ptr<Texture> loader::LoadTexture(const std::wstring &name, bool sRGB
 
     // TODO: check magic, not extension
     ENGLog("Loading texture %s", name.c_str());
-    if (extension == ".ktx")
+
+    if (extension == ".dds")
+    {
+        auto result = LoadDDSFromMemory(file_data, sRGB);
+        if (!result)
+        {
+            ENGLog("Loading texture failed %s", name.c_str());
+            throw std::runtime_error("Error loading texture");
+        }
+
+        return result;
+    }
+    else if (extension == ".ktx")
     {
         ktxTexture* texture;
         KTX_error_code result = ktxTexture_CreateFromMemory(reinterpret_cast<ktx_uint8_t*>(file_data.data()), file_data.size(), KTX_TEXTURE_CREATE_LOAD_IMAGE_DATA_BIT, &texture);

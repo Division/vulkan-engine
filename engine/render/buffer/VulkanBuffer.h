@@ -58,7 +58,7 @@ namespace Device {
 			return *this;
 		}
 
-		VulkanBufferInitializer& Data(void* data)
+		VulkanBufferInitializer& Data(const void* data)
 		{
 			this->data = data;
 			return *this;
@@ -67,7 +67,7 @@ namespace Device {
 		VkBufferUsageFlags usage = VK_BUFFER_USAGE_TRANSFER_DST_BIT;
 		uint32_t size = 0;
 		VmaMemoryUsage memory_usage = VMA_MEMORY_USAGE_UNKNOWN;
-		void* data = nullptr;
+		const void* data = nullptr;
 	};
 
 	class VulkanBuffer : public ::Device::Resource {

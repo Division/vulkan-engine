@@ -215,6 +215,9 @@ set(ENGINE_SOURCES
 	loader/SpritesheetLoader.cpp
 	loader/ModelLoaderUtils.h
 	loader/ModelLoaderUtils.cpp
+	loader/image/DDS.h
+	loader/image/DDSLoader.h
+	loader/image/DDSLoader.cpp
 	system/Logging.h
 	system/Logging.cpp
 	system/utils.h
