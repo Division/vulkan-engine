@@ -30,6 +30,7 @@ namespace render {
 		bool WantCaptureMouse();
 		bool WantCaptureKeyboard();
 
+		void SetEngineStatsVisible(bool visible);
 		void SetMainWidgetVisible(bool visible);
 		void SetEnvironmentWidgetVisible(bool visible);
 

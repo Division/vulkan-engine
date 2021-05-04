@@ -1,0 +1,14 @@
+[
+    {
+        "type": "texture",
+        "filename": "vk_space_crate1_albedo_roughness.png",
+        "uid": "1443f08c713f37e0",
+        "compression_type": "BC7"
+    },
+    {
+        "type": "texture",
+        "filename": "vk_space_crate1_normal_metallness_ogl.png",
+        "uid": "4e33ffee44b3627d",
+        "compression_type": "BC7"
+    }
+]

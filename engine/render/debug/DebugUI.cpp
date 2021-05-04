@@ -33,6 +33,7 @@ namespace render {
 			ShaderProgram* shader = nullptr;
 			vk::DescriptorSet vk_descriptor_set;
 			VertexLayout vertex_layout;
+			bool engine_stats_visible = true;
 			bool main_widget_visible = true;
 			bool environment_widget_visible = true;
 			uint32_t engine_stats_index = 0;
@@ -46,6 +47,11 @@ namespace render {
 
 		void DrawMainWidget(DebugSettings* debug_settings);
 		void DrawEnvironmentEditorWidget(EnvironmentSettings& settings);
+
+		void SetEngineStatsVisible(bool visible)
+		{
+			engine_stats_visible = visible;
+		}
 
 		void SetMainWidgetVisible(bool visible)
 		{
@@ -162,7 +168,7 @@ namespace render {
 
 		void Update(float dt)
 		{
-			if (engine_stats_index != -1)
+			if (engine_stats_visible && engine_stats_index != -1)
 			{
 				(*engine_stats_functions[engine_stats_index])();
 			}

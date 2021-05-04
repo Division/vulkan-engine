@@ -107,27 +107,27 @@ namespace render {
 			color = 0xFFFF00FF;
 		blank_texture = Device::Texture::Create(Device::TextureInitializer(4, 4, 4, colors, false));
 
-		uint32_t colors_cube[4*4*6];
-		memset(colors_cube, 0, sizeof(colors_cube));
+		for (auto& color : colors)
+			color = 0x000000;
 
-		/*TextureInitializer initializer(4, 4, 1, 6, Device::Format::R8G8B8A8_unorm, 1);
-		initializer.SetData(colors_cube, sizeof(colors_cube))
+		TextureInitializer cube_initializer(4, 4, 1, 6, Device::Format::R8G8B8A8_unorm, 1);
+		cube_initializer.SetData(colors, sizeof(colors))
 			.SetArray(false)
 			.SetCube(true)
 			.SetNumDimensions(2);
 
 		for (int i = 0; i < 6; i++)
 		{
-			initializer.AddCopy(
-				vk::BufferImageCopy(offset, 0, 0,
+			cube_initializer.AddCopy(
+				vk::BufferImageCopy(0, 0, 0,
 					vk::ImageSubresourceLayers(vk::ImageAspectFlagBits::eColor, 0, i, 1),
 					vk::Offset3D(0, 0, 0),
-					vk::Extent3D(width, height, depth)
+					vk::Extent3D(4, 4, 1)
 				));
 		}
 
-		blank_cube_texture = Device::Texture::Create(Device::TextureInitializer(4, 4, 4, colors, false));
-		*/
+		blank_cube_texture = Device::Texture::Create(cube_initializer);
+		
 
 		Material material(L"shaders/global_bindings.hlsl");
 		material.LightingEnabled(true); // For now it's enough to get all the global bindings
@@ -605,10 +605,10 @@ namespace render {
 			return environment_cubemap->Get().get();
 		
 		case ShaderTextureName::RadianceCubemap:
-			return radiance_cubemap->Get().get();
+			return radiance_cubemap.IsResolved() ? radiance_cubemap->Get().get() : blank_cube_texture.get();
 		
 		case ShaderTextureName::IrradianceCubemap:
-			return irradiance_cubemap->Get().get();
+			return irradiance_cubemap.IsResolved() ? irradiance_cubemap->Get().get() : blank_cube_texture.get();
 
 		case ShaderTextureName::BrdfLUT:
 			return brdf_lut->Get().get();

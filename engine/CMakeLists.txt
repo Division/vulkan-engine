@@ -143,6 +143,7 @@ set(ENGINE_SOURCES
 	render/debug/DebugDraw.cpp
 	render/debug/DebugUI.h
 	render/debug/DebugUI.cpp
+	render/debug/ImGUIHelper.h
 	render/debug/Profiler.h
 	render/debug/Profiler.cpp
 	render/debug/widgets/EngineStats.h
@@ -225,6 +226,8 @@ set(ENGINE_SOURCES
 	system/Input.cpp
 	system/JobSystem.h
 	system/JobSystem.cpp
+	system/FileSystem.h
+	system/FileSystem.cpp
 	utils/Math.h
 	utils/DataStructures.h
 	utils/StringUtils.h

@@ -1,9 +1,10 @@
 Engine roadmap:
 - bone attachments
 - top down shooter demo
+- asset database and UI
 - Proper deletion of entities loaded from resource
 - export default materials from fbx (with texture paths)
-- export textures from fbx
+- export textures
 - properly export animations in fbx exporter
 - physics rendering interpolation
 - Fix logging, log from multiple threads
