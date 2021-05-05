@@ -16,7 +16,7 @@ void SpriteSheet::addSprite(const std::string &name, float x, float y, float wid
 }
 
 void SpriteSheet::loadFromJSON(const json &jsonData) {
-  _sprites.clear();
+  /*_sprites.clear();
   _spriteNames.clear();
 
   auto size = jsonData["meta"]["size"];
@@ -30,5 +30,5 @@ void SpriteSheet::loadFromJSON(const json &jsonData) {
     auto spriteData = frames.at(i);
     auto frame = spriteData["frame"];
     addSprite(spriteData["filename"], frame["x"], frame["y"], frame["w"], frame["h"]);
-  }
+  }*/
 }

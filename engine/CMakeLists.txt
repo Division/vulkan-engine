@@ -243,6 +243,7 @@ include_directories(./ lib)
 find_package(Vulkan REQUIRED)
 
 add_definitions(-DGLM_FORCE_DEPTH_ZERO_TO_ONE)
+set(GLM_STATIC_LIBRARY_ENABLE, true)
 set(GLFW_BUILD_DOCS false)
 set(GLFW_BUILD_EXAMPLES false)
 set(GLFW_BUILD_TESTS false)
@@ -261,6 +262,8 @@ set(ozz_build_tests false)
 set(ozz_build_simd_ref false)
 set(ozz_build_msvc_rt_dll false)
 set(ozz_build_postfix false)
+
+set(OPTICK_BUILD_CONSOLE_SAMPLE, false)
 
 add_subdirectory(lib/glm)
 add_subdirectory(lib/SPIRV-Cross)
