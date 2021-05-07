@@ -7,16 +7,32 @@
 #include "utils/Dialogs.h"
 #include "AssetCache/AssetCache.h"
 #include "AssetCache/AssetTypes.h"
+#include "utils/SystemPathUtils.h"
+#include "loader/FileLoader.h"
+#include "utils/Dialogs.h"
+#include "rapidjson/prettywriter.h"
 
 namespace fs = std::filesystem;
 using namespace UI;
+
+const char* GetCachedCString(const wchar_t* str)
+{
+	if (!str) return "none";
+	static Asset::UnorderedMapWChar<std::string> map;
+	auto it = map.find(str);
+	if (it != map.end())
+		return it->second.c_str();
+
+	auto inserted = map.insert({ str, utils::WStringToString(str) });
+	return inserted.first->second.c_str();
+}
 
 class ProjectManager : public IGame {
 public:
 	ProjectManager()
 		: asset_tree(cache)
 	{
-		
+
 	}
 
 	~ProjectManager()
@@ -24,9 +40,86 @@ public:
 
 	}
 
+	void LoadConfig()
+	{
+		auto storage_dir = utils::GetDocumentsFolder() / L"vkengine";
+		if (!FileSystem::CreateDirectories(storage_dir))
+			storage_dir = "./";
+
+		config_path = storage_dir / "asset_manager.json";
+
+		auto config_data = loader::LoadFile(config_path);
+		if (config_data.size())
+		{
+			std::wstringstream sstream;
+			sstream.write((wchar_t*)config_data.data(), config_data.size() / sizeof(wchar_t));
+
+			Asset::Types::WDocument json;
+			json.Parse(sstream.str().c_str());
+			if (json.HasParseError() || !json.IsObject())
+			{
+				utils::ShowMessageBox("Error", "Failed loading asset_manager.json");
+			}
+			else
+			{
+				auto object = json.GetObject();
+
+				if (object.HasMember(L"recent") && object[L"recent"].IsArray())
+				{
+					auto arr = object[L"recent"].GetArray();
+
+					for (auto iter = arr.Begin(); iter != arr.End(); iter++)
+					{
+						if (!iter->IsString())
+							continue;
+						
+						recent_projects.push_back(iter->GetString());
+					}
+				}
+			}
+		}
+	}
+
+	void SaveConfig()
+	{
+		Asset::Types::WDocument document;
+		auto& allocator = document.GetAllocator();
+		document.SetObject();
+		auto& object = document.GetObject();
+
+		auto array = Asset::Types::WValue(rapidjson::kArrayType);
+		for (auto& path : recent_projects)
+		{
+			array.PushBack( Asset::Types::WValue().SetString(FileSystem::FormatPath(path).c_str(), allocator), allocator);
+		}
+
+		object.AddMember(L"recent", array, allocator);
+
+		rapidjson::GenericStringBuffer<Asset::Types::WDocument::ValueType::EncodingType> buffer;
+		rapidjson::PrettyWriter<decltype(buffer), Asset::Types::WDocument::ValueType::EncodingType, Asset::Types::WDocument::ValueType::EncodingType> writer(buffer);
+		document.Accept(writer);
+
+		std::wstring str(buffer.GetString());
+
+		try
+		{
+			FileSystem::CreateDirectories(config_path.parent_path());
+			std::ofstream output_stream(config_path, std::ofstream::binary);
+			output_stream.exceptions(std::ofstream::badbit | std::ofstream::failbit);
+			output_stream.write((char*)buffer.GetString(), buffer.GetSize());
+		}
+		catch (std::ofstream::failure e)
+		{
+			utils::ShowMessageBox("Error", ("Can't save config at path " + utils::WStringToString(config_path)).c_str());
+		}
+	}
+
 	void init() override
 	{
-		SetCurrenProjectPath("C:/Users/pmuji/Documents/sources/vulkan-engine/assets/assets");
+		LoadConfig();
+		if (recent_projects.size())
+			SetCurrenProjectPath(recent_projects[0]);
+
 		render::DebugUI::SetEnvironmentWidgetVisible(false);
 		render::DebugUI::SetMainWidgetVisible(false);
 		render::DebugUI::SetEngineStatsVisible(false);
@@ -40,9 +133,23 @@ public:
 		{
 			if (ImGui::MenuItem("Open"))
 			{
-				auto path = utils::BrowseFolder("C:\\games");
+				auto current_path = cache.GetProjectDirectory();
+				utils::ReplaceAll(current_path, L"/", L"\\");
+				auto path = utils::BrowseFolder(utils::WStringToString(current_path));
 				if (!path.empty())
 					SetCurrenProjectPath(path);
+			}
+
+			if (ImGui::BeginMenu("Recent"))
+			{
+				for (auto& dir : recent_projects)
+				{
+					if (ImGui::MenuItem(GetCachedCString(dir.c_str())))
+					{
+						SetCurrenProjectPath(dir);
+					}
+				}
+				ImGui::EndMenu();
 			}
 
 			ImGui::EndMenu();
@@ -83,18 +190,6 @@ public:
 		DrawSelectionInfo();
 	}
 
-	const char* GetExportType(const wchar_t *str)
-	{
-		if (!str) return "none";
-		static Asset::UnorderedMapWChar<std::string> map;
-		auto it = map.find(str);
-		if (it != map.end())
-			return it->second.c_str();
-
-		auto inserted = map.insert({ str, utils::WStringToString(str) });
-		return inserted.first->second.c_str();
-	}
-
 	void DrawSelectionInfo()
 	{
 		ImGui::Begin("Current selection");
@@ -112,7 +207,7 @@ public:
 
 				ImGui::Text("Export type: ");
 				ImGui::SameLine();
-				ImGui::Text(GetExportType(asset->GetType()));
+				ImGui::Text(GetCachedCString(asset->GetType()));
 
 				ImGui::Text("Exported assets");
 				ImGui::BeginChild(ImGui::GetID((void*)(intptr_t)0), ImVec2(ImGui::GetWindowWidth() * 0.9f, 200.0f), true);
@@ -156,13 +251,21 @@ public:
 
 	void SetCurrenProjectPath(fs::path path)
 	{
+		auto it = std::find(recent_projects.begin(), recent_projects.end(), path.wstring());
+		if (it != recent_projects.end())
+			recent_projects.erase(it);
+
+		recent_projects.push_front(path);
+
 		cache.SetProjectDirectory(path);
-		std::cout << "Project path set to: " << path << std::endl;
+		
+		SaveConfig();
 	}
 
 private:
 	ECS::EntityManager* manager = nullptr;
 	ECS::TransformGraph* graph = nullptr;
+	std::deque<std::wstring> recent_projects;
 	
 	enum class Action
 	{
@@ -174,7 +277,7 @@ private:
 	Action action = Action::None;
 	Asset::Cache cache;
 	AssetTree asset_tree;
-	fs::path current_project_path;
+	fs::path config_path;
 };
 
 int main(int argc, char* argv[]) {

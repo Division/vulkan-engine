@@ -108,6 +108,7 @@ namespace Asset
 		~Cache();
 
 		void SetProjectDirectory(const std::wstring& project_dir);
+		const std::wstring& GetProjectDirectory() { return project_directory; }
 		std::wstring GetMetadataPath(const std::filesystem::path& folder);
 		std::wstring GetFolderCachePath(const std::filesystem::path& folder);
 
