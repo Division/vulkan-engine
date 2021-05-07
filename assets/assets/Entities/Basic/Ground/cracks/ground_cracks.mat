@@ -1,0 +1,9 @@
+{
+    "texture0": "assets/Textures/Ground/ground_cracks/ground_cracks_basecolor.dds",
+    "normal_map": "assets/Textures/Ground/ground_cracks/ground_cracks_normal.dds",
+    "lighting_enabled": true,
+    "vertex_color_enabled": false,
+    "roughness": 1.0,
+    "metallness": 0.1,
+    "color": [1, 1, 1, 1]
+}

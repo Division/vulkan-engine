@@ -1,0 +1,9 @@
+{
+    "texture0": "assets/Textures/ground/stilyzed/T_soil_water_albedo_roughness.ktx",
+    "normal_map": "assets/Textures/ground/stilyzed/T_soil_water_normal.ktx",
+    "lighting_enabled": true,
+    "vertex_color_enabled": false,
+    "roughness": -1.0,
+    "metallness": 0.0,
+    "color": [1, 1, 1, 1]
+}

@@ -1,0 +1,23 @@
+[
+    {
+        "components": [
+            {
+                "type": "Transform",
+                "scale": [4, 4, 4]
+            },
+            {
+                "type": "MultiMeshRenderer",
+                "path": "assets/Entities/Basic/sphere.mesh",
+                "materials": [
+                    "assets/Entities/Sphere/sphere_attractor.mat"
+                ]
+            },
+            {
+                "type": "PhysBody",
+                "shape": "sphere",
+                "size": 4,
+                "dynamic": false
+            }
+        ]
+    }
+]

@@ -1,0 +1,17 @@
+[
+    {
+        "type": "copy",
+        "filename": "T_soil_water_albedo_roughness.ktx",
+        "uid": "77eb5e8a40998276"
+    },
+    {
+        "type": "copy",
+        "filename": "T_soil_water_normal.ktx",
+        "uid": "7938e6fd1f0dfd97"
+    },
+    {
+        "type": "copy",
+        "filename": "_T_soil_water_albedo_roughness.ktx",
+        "uid": "d329703db08e428a"
+    }
+]

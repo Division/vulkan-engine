@@ -1,0 +1,17 @@
+[
+    {
+        "components": [
+            {
+                "type": "Transform"
+            },
+            {
+                "type": "MultiMeshRenderer",
+                "path": "assets/Entities/Basic/plane_10.mesh",
+                "materials": [
+                    "assets/Entities/Basic/Ground/stylized/soil_water.mat"
+                ]
+            }
+            
+        ]
+    }
+]

@@ -1,0 +1,12 @@
+[
+    {
+        "type": "copy",
+        "filename": "grace_probe_irradiance_rgba.ktx",
+        "uid": "99b1a7319c589907"
+    },
+    {
+        "type": "copy",
+        "filename": "grace_probe_radiance_rgba.ktx",
+        "uid": "c7b2002de2cd5650"
+    }
+]

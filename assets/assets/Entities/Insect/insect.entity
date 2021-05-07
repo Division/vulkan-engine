@@ -1,0 +1,23 @@
+[
+    {
+        "id":  "test",
+        "components": [
+            {
+                "type": "Transform"
+            },
+            {
+                "type": "MultiMeshRenderer",
+                "path": "assets/Entities/Insect/insect.mesh",
+                "materials": 
+                {
+                    "Wings" : "assets/Entities/Insect/insect2.mat",
+                    "default" : "assets/Entities/Insect/insect.mat"
+                }
+            },
+            {
+                "type": "AnimationController",
+                "skeleton": "assets/Entities/Insect/Insect_mesh.skel"
+            }
+        ]
+    }
+]

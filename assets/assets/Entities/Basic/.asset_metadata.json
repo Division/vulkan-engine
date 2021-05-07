@@ -1,0 +1,18 @@
+[
+    {
+        "type": "copy",
+        "filename": "crate_scifi.entity",
+        "uid": "356ca00fe40685e4"
+    },
+    {
+        "type": "copy",
+        "filename": "crate_scifi.mat",
+        "uid": "13b264ae457d547b"
+    },
+    {
+        "type": "fbx",
+        "filename": "figures.fbx",
+        "uid": "3ee877fe1f012888",
+        "export_type": "Mesh"
+    }
+]

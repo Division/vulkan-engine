@@ -1,0 +1,29 @@
+[
+    {
+        "type": "copy",
+        "filename": "ground_cracks_basecolor.ktx",
+        "uid": "be066d9cc7b7e8e6"
+    },
+    {
+        "type": "texture",
+        "filename": "ground_cracks_basecolor.png",
+        "uid": "cfc45d0885b53c80",
+        "compression_type": "BC7"
+    },
+    {
+        "type": "copy",
+        "filename": "ground_cracks_normal.ktx",
+        "uid": "a1acb1aa2f7640a0"
+    },
+    {
+        "type": "texture",
+        "filename": "ground_cracks_normal.png",
+        "uid": "3ee984804c347e7c",
+        "compression_type": "BC7"
+    },
+    {
+        "type": "copy",
+        "filename": "ground_cracks_normal_bc3.ktx",
+        "uid": "0e4ddfe8bbc7ca13"
+    }
+]

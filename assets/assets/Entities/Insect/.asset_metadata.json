@@ -1,0 +1,23 @@
+[
+    {
+        "type": "fbx",
+        "filename": "Insect_mesh.fbx",
+        "uid": "70ebaf6e2e4acbfc",
+        "export_type": "Mesh"
+    },
+    {
+        "type": "copy",
+        "filename": "insect.entity",
+        "uid": "5704b89b47808b09"
+    },
+    {
+        "type": "copy",
+        "filename": "insect.mat",
+        "uid": "a0b617a5397f1eb6"
+    },
+    {
+        "type": "copy",
+        "filename": "insect2.mat",
+        "uid": "ef463035ab12f2a9"
+    }
+]

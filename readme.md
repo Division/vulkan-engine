@@ -1,9 +1,9 @@
 Engine roadmap:
 - bone attachments
+- properly handle missing textures
 - top down shooter demo
 - Proper deletion of entities loaded from resource
 - export default materials from fbx (with texture paths)
-- export textures from fbx
 - properly export animations in fbx exporter
 - physics rendering interpolation
 - Fix logging, log from multiple threads
@@ -13,12 +13,13 @@ Engine roadmap:
 - Shader reloading
 - Multithreaded rendering
 - GUI library integration
-- effects for action-puzzle demo
 
 Check:
 - postprocess, changed HLSL texture binding but C++ side didn't see it changed
 
 -- Completed -----------------------------------
++ asset database and UI
++ export textures
 + DDS loading
 + optimize tiled lighting or implement clustered
 + Image based lighting support

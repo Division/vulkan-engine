@@ -34,8 +34,6 @@
 #define STBI_ONLY_JPEG
 #include "stb/stb_image.h"
 
-#include "nlohmann/json.hpp"
-
 #include <VulkanMemoryAllocator/vk_mem_alloc.h>
 
 #include "utils/NonCopyable.h"

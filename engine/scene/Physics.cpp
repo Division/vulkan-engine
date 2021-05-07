@@ -76,7 +76,7 @@ namespace Physics
 		PxVehicleSetUpdateMode(PxVehicleUpdateMode::eACCELERATION);
 
 		PxSceneDesc scene_desc(physics->getTolerancesScale());
-		scene_desc.gravity = delegate->GetGravity();
+		scene_desc.gravity = delegate ? delegate->GetGravity() : PxVec3(0,0,0);
 		dispatcher = PxDefaultCpuDispatcherCreate(std::thread::hardware_concurrency());
 		scene_desc.cpuDispatcher = dispatcher.get();
 		scene_desc.filterShader	= delegate ? delegate->GetFilterShader() : PxDefaultSimulationFilterShader;

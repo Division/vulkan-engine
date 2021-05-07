@@ -1,0 +1,17 @@
+[
+    {
+        "components": [
+            {
+                "type": "Transform"
+            },
+            {
+                "type": "MultiMeshRenderer",
+                "path": "assets/Entities/Basic/cube.mesh",
+                "materials": [
+                    "assets/Entities/Basic/Crates/crate_scifi.mat"
+                ]
+            }
+            
+        ]
+    }
+]

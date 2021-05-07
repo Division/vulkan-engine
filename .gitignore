@@ -16,3 +16,4 @@ imgui.ini
 *.pdb
 *.opt
 log.txt
+assets.cache

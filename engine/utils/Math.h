@@ -247,6 +247,16 @@ inline uint32_t FastHash(const void* key, size_t len)
 	return result;
 }
 
+inline uint64_t FastHash64(const void* key, size_t len)
+{
+    return MurmurHash2_x64(key, (int)len, 0xdeadbeef);
+}
+
+inline uint64_t FastHash64(const std::string& str)
+{
+    return MurmurHash2_x64(str.c_str(), (int)str.length(), 0xdeadbeef);
+}
+
 inline uint32_t FastHash(const std::string& str)
 {
 	uint32_t result;

@@ -1,0 +1,8 @@
+[
+    {
+        "type": "texture",
+        "filename": "ibl_brdf_lut.png",
+        "uid": "f8c1894649648729",
+        "compression_type": "BC7"
+    }
+]
