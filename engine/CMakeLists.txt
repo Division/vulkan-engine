@@ -180,8 +180,6 @@ set(ENGINE_SOURCES
 	render/mesh/Mesh.cpp
 	render/texture/Texture.h
 	render/texture/Texture.cpp
-	render/texture/SpriteSheet.h
-	render/texture/SpriteSheet.cpp
 	render/animation/SkeletalAnimation.h
 	render/animation/SkeletalAnimation.cpp
 	scene/Scene.h
@@ -212,10 +210,6 @@ set(ENGINE_SOURCES
 	loader/TextureLoader.cpp
 	loader/FileLoader.h
 	loader/FileLoader.cpp
-	loader/SpritesheetLoader.h
-	loader/SpritesheetLoader.cpp
-	loader/ModelLoaderUtils.h
-	loader/ModelLoaderUtils.cpp
 	loader/image/DDS.h
 	loader/image/DDSLoader.h
 	loader/image/DDSLoader.cpp

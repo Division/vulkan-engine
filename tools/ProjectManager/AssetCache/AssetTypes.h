@@ -5,6 +5,8 @@
 #include "rapidjson/stringbuffer.h"
 
 #include "AssetExport/TextureExport.h"
+#include "AssetExport/FBXExport.h"
+#include "AssetExport/CopyExport.h"
 
 namespace Asset
 {
@@ -46,11 +48,13 @@ namespace Asset::Types
 		uint64_t GetID() const { return id; }
 		virtual bool ShouldSerialize() const { return true; }
 		void SetID(uint64_t value) { id = value; }
-		void Initialize(FolderMetadata* metadata, const std::wstring& relative_path);
+		virtual void Initialize(FolderMetadata* metadata, const std::wstring& relative_path);
 		bool IsMissing() const { return is_missing; }
 		void SetMissing(bool value) { is_missing = value; }
 		void SetHidden(bool hidden) { is_hidden = hidden; }
 		bool GetHidden() const { return is_hidden; }
+		void SetNeedsReexport(bool value) { needs_reexport = value; }
+		bool GetNeedsReexport() const { return needs_reexport; }
 		void SetCacheEntry(SrcEntry* entry) { cache_entry = entry; }
 		SrcEntry* GetCacheEntry() const { return cache_entry; }
 
@@ -72,6 +76,7 @@ namespace Asset::Types
 		std::string str_filename;
 		bool is_missing = false;
 		bool is_hidden = false;
+		bool needs_reexport = true;
 	};
 
 	class Texture : public AssetEntry
@@ -84,7 +89,26 @@ namespace Asset::Types
 
 	private:
 		Asset::Export::Texture::CompressionType compression_type = Asset::Export::Texture::CompressionType::BC7;
+	};
 
+	class FBX : public AssetEntry
+	{
+	public:
+		void Initialize(FolderMetadata* metadata, const std::wstring& relative_path) override;
+		void Deserialize(WValue& json) override;
+		WValue Serialize(WDocument& document) override;
+		const wchar_t* GetType() const override { return L"fbx"; };
+		std::unique_ptr<Export::Base> GetExporter() override;
+
+	private:
+		Asset::Export::FBX::ExportType export_type = Asset::Export::FBX::ExportType::Mesh;
+	};
+
+	class PlainCopy : public AssetEntry
+	{
+	public:
+		const wchar_t* GetType() const override { return L"copy"; };
+		std::unique_ptr<Export::Base> GetExporter() override;
 	};
 
 	class IgnoredEntry : public AssetEntry

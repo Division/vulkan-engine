@@ -97,6 +97,7 @@ namespace Physics
 		void DrawDebug();
 		physx::PxPhysics* GetPhysX() { return physics.get(); };
 		physx::PxCooking* GetCooking() { return cooking.get(); };
+		physx::PxFoundation* GetFoundation() { return foundation.get(); };
 		physx::PxScene* GetScene() { return default_scene.get(); };
 		physx::PxAllocatorCallback* GetAllocator() { return &allocator; };
 		// Utility functions

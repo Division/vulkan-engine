@@ -44,6 +44,7 @@ public:
 	ECS::EntityManager* GetEntityManager() const;
 	ECS::TransformGraph* GetTransformGraph() const;
 
+	GLFWwindow* GetWindow() const { return window; }
 	Device::VulkanContext* GetContext() const { return vulkan_context.get(); }
 	Scene* GetScene() const { return scene.get(); }
 	System::Input* GetInput() const { return input.get(); }

@@ -1,1 +1,26 @@
-[]
+[
+    {
+        "type": "fbx",
+        "filename": "Insect@Death.fbx",
+        "uid": "834e737504afc2a6",
+        "export_type": "Animation"
+    },
+    {
+        "type": "fbx",
+        "filename": "Insect@Flying.fbx",
+        "uid": "f46623e895b4584d",
+        "export_type": "Animation"
+    },
+    {
+        "type": "fbx",
+        "filename": "Insect@GetHit.fbx",
+        "uid": "5f7a23d773f7b067",
+        "export_type": "Animation"
+    },
+    {
+        "type": "fbx",
+        "filename": "Insect@Idle.fbx",
+        "uid": "0414fd921f6d3194",
+        "export_type": "Animation"
+    }
+]

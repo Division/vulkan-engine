@@ -1,1 +1,8 @@
-[]
+[
+    {
+        "type": "fbx",
+        "filename": "figures.fbx",
+        "uid": "3ee877fe1f012888",
+        "export_type": "Mesh"
+    }
+]

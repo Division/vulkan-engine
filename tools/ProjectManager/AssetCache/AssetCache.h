@@ -21,9 +21,17 @@ namespace Asset
 
 	struct OutputEntry
 	{
+		OutputEntry(uint64_t hash, uint64_t timestamp, std::wstring filename)
+			: hash(hash)
+			, timestamp(timestamp)
+			, filename(std::move(filename))
+			, filename_str(utils::WStringToString(this->filename))
+		{}
+
 		uint64_t hash = 0;
 		uint64_t timestamp = 0;
 		std::wstring filename;
+		std::string filename_str;
 	};
 
 	struct SrcEntry
@@ -34,11 +42,13 @@ namespace Asset
 		UnorderedMapWChar<std::unique_ptr<OutputEntry>> outputs;
 	};
 
+	class FolderMetadata;
+
 	class FolderCache
 	{
 	public:
 
-		FolderCache(const std::filesystem::path& path);
+		FolderCache(std::filesystem::path path, FolderMetadata* folder_metadata, const wchar_t* asset_root, const wchar_t* cache_root);
 		bool Save();
 
 		SrcEntry* GetInputFile(const wchar_t* input_filename);
@@ -50,6 +60,9 @@ namespace Asset
 	private:
 		UnorderedMapWChar<std::unique_ptr<SrcEntry>> input_entries;
 		std::wstring path;
+		const wchar_t* asset_root;
+		const wchar_t* cache_root;
+		const FolderMetadata* folder_metadata;
 	};
 
 	struct FolderMetadata
@@ -102,7 +115,7 @@ namespace Asset
 
 		void ExportPending();
 
-		void Reload();
+		bool Reload();
 
 		class TaskManager;
 
@@ -113,7 +126,7 @@ namespace Asset
 
 		bool LoadFolderMetadata(std::wstring folder, FolderMetadata& out_result);
 		AssetEntryCreateFunction GetAssetCreateFunction(const std::wstring filename);
-		void ReexportFolder(FolderMetadata& metadata);
+		void ReexportFolder(FolderMetadata& metadata, std::vector<Types::AssetEntry*>& failed_assets);
 		bool ExportAsset(Types::AssetEntry& asset);
 
 	private:

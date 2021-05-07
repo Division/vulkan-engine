@@ -6,7 +6,6 @@
 #include "utils/Math.h"
 #include <chrono>
 #include "AssetCache/AssetCache.h"
-#include "AssetExport/TextureExport.h"
 
 using namespace rapidjson;
 namespace fs = std::filesystem;
@@ -88,6 +87,8 @@ namespace Asset::Types
 		id = utils::ReadHexString(utils::WStringToString(json[L"uid"].GetString()));
 	}
 
+	/////////////////////////////////////////////////////////////
+
 	void Texture::Deserialize(WValue& json)
 	{
 		AssetEntry::Deserialize(json);
@@ -114,4 +115,40 @@ namespace Asset::Types
 		return std::make_unique<Export::Texture::TextureExport>();
 	}
 
+	/////////////////////////////////////////////////////////////
+
+	void FBX::Initialize(FolderMetadata* metadata, const std::wstring& relative_path)
+	{
+		AssetEntry::Initialize(metadata, relative_path);
+		if (relative_path.find(L"@") != std::wstring::npos)
+			export_type = Export::FBX::ExportType::Animation;
+	}
+
+	void FBX::Deserialize(WValue& json)
+	{
+		AssetEntry::Deserialize(json);
+
+		ReadEnum(L"export_type", json, Asset::Export::FBX::ExportType::Mesh, export_type);
+	}
+
+	WValue FBX::Serialize(WDocument& document)
+	{
+		auto result = AssetEntry::Serialize(document);
+
+		WriteEnum(L"export_type", result, export_type, document.GetAllocator());
+
+		return result;
+	}
+
+	std::unique_ptr<Export::Base> FBX::GetExporter()
+	{
+		return std::make_unique<Export::FBX::FBXExport>(export_type);
+	}
+
+	/////////////////////////////////////////////////////////////
+
+	std::unique_ptr<Export::Base> PlainCopy::GetExporter()
+	{
+		return std::make_unique<Export::Copy::CopyExport>();
+	}
 }

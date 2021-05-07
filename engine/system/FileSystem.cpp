@@ -2,6 +2,7 @@
 #include "utils/StringUtils.h"
 #include "loader/FileLoader.h"
 #include <chrono>
+#include <optick/src/optick.h>
 
 #if defined ( _WIN32 )
 #include <sys/stat.h>
@@ -19,8 +20,14 @@ namespace FileSystem
 		return result;
 	}
 
+	std::wstring GetRelativePath(const std::filesystem::path& full_path, const std::filesystem::path& base_path)
+	{
+		return FormatPath(full_path.lexically_relative(base_path));
+	}
+
 	uint64_t GetFileHash(const std::filesystem::path& path)
 	{
+		OPTICK_EVENT();
 		auto data = loader::LoadFile(path);
 		if (!data.size())
 			return 0;
@@ -62,6 +69,16 @@ namespace FileSystem
 			return false;
 
 		fs::remove(path, error);
+		return !error;
+	}
+
+	bool CopyFile(const std::filesystem::path& src, const std::filesystem::path& dst)
+	{
+		std::error_code error;
+		if (fs::is_directory(src, error) || error)
+			return false;
+
+		fs::copy(src, dst, error);
 		return !error;
 	}
 
@@ -165,7 +182,7 @@ namespace FileSystem
 			root_node.Clear();
 	}
 
-	void FileTree::ForEachDirectory(std::function<void(DirectoryNode * node)> callback, DirectoryNode* node)
+	void FileTree::ForEachDirectory(std::function<void(DirectoryNode* node)> callback, DirectoryNode* node)
 	{
 		if (!node) node = &root_node;
 

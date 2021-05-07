@@ -36,21 +36,31 @@ namespace Exporter
 		bool loaded = false;
 	};
 
+	struct ExportedSceneAssets
+	{
+		std::vector<std::wstring> filenames;
+	};
+
 	class SceneExporter
 	{
 	public:
-		SceneExporter(FBXExporterSetting settings);
+		SceneExporter(FBXExporterSetting settings, physx::PxFoundation* foundation = nullptr);
 		~SceneExporter();
 
 		bool Export();
+		bool ExportFBXFile(const std::filesystem::path& path, ExportedSceneAssets* exported_assets = nullptr);
+		bool ExportFBXAnimationFile(const std::filesystem::path& path, ExportedSceneAssets* exported_assets = nullptr);
 
 	private:
-		bool ExportFBXFile(const std::filesystem::path& path);
 		FileMetadata GetMetadataForFile(const std::filesystem::path& path);
-		bool ExportRootNode(FbxScene* scene, const std::filesystem::path& path);
+		bool ExportRootNode(FbxScene* scene, const std::filesystem::path& path, ExportedSceneAssets* exported_assets);
+		bool ExportAnimation(const std::filesystem::path& path, ExportedSceneAssets* exported_assets);
 		std::unordered_map<std::string, MeshExportData> GetMeshesToExport(FbxScene* scene);
 		std::wstring GetMeshOutputPath(const std::string& mesh_name, const std::filesystem::path& fbx_path);
+		std::wstring GetSkeletonOutputPath(const std::filesystem::path& fbx_path);
+		std::filesystem::path GetAnimationOutputPath(const std::filesystem::path& fbx_path);
 		std::filesystem::path GetOutputPath(const std::filesystem::path& src_path);
+		bool WriteSkeletonToFile(const std::filesystem::path& path, ozz::animation::Skeleton& skeleton);
 
 		Physics::Handle<physx::PxFoundation> foundation;
 		Physics::Handle<physx::PxCooking> cooking;

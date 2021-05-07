@@ -1,1 +1,8 @@
-[]
+[
+    {
+        "type": "fbx",
+        "filename": "Idle1.fbx",
+        "uid": "3ff8426435cab5a9",
+        "export_type": "Mesh"
+    }
+]

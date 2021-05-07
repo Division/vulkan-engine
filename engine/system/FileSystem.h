@@ -13,6 +13,8 @@ namespace FileSystem
 
 	std::wstring FormatPath(const std::filesystem::path& path);
 
+	std::wstring GetRelativePath(const std::filesystem::path& full_path, const std::filesystem::path& base_path);
+
 	uint64_t GetFileHash(const std::filesystem::path& path);
 
 	uint64_t GetFileTimestamp(const std::filesystem::path& path);
@@ -20,6 +22,8 @@ namespace FileSystem
 	bool CreateDirectories(const std::filesystem::path& path);
 	
 	bool DeleteFile(const std::filesystem::path& path);
+
+	bool CopyFile(const std::filesystem::path& src, const std::filesystem::path& dst);
 
 	class FileTree
 	{

@@ -1,1 +1,8 @@
-[]
+[
+    {
+        "type": "fbx",
+        "filename": "sphere.fbx",
+        "uid": "591fca67573f2f6a",
+        "export_type": "Mesh"
+    }
+]

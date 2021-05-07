@@ -1,1 +1,12 @@
-[]
+[
+    {
+        "type": "copy",
+        "filename": "irradiance3.ktx",
+        "uid": "124815fd27a9a463"
+    },
+    {
+        "type": "copy",
+        "filename": "radiance3.ktx",
+        "uid": "a139858faa4ce916"
+    }
+]

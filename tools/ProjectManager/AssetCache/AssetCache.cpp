@@ -5,6 +5,7 @@
 #include "loader/FileLoader.h"
 #include "rapidjson/prettywriter.h"
 #include "utils/StringUtils.h"
+#include "utils/Dialogs.h"
 
 namespace fs = std::filesystem;
 using namespace rapidjson;
@@ -15,8 +16,11 @@ namespace Asset
 	constexpr auto ASSET_CACHE_NAME = L".asset_cache.txt";
 	constexpr auto ASSET_CACHE_FOLDER_SUFFIX = L".cache";
 
-	FolderCache::FolderCache(const fs::path& path)
-		: path(path)
+	FolderCache::FolderCache(fs::path path, FolderMetadata* folder_metadata, const wchar_t* asset_root, const wchar_t* cache_root)
+		: path(std::move(path))
+		, folder_metadata(folder_metadata)
+		, asset_root(asset_root)
+		, cache_root(cache_root)
 	{
 		const fs::path cache_file_path = path / ASSET_CACHE_NAME;
 		std::wifstream stream(cache_file_path);
@@ -61,9 +65,6 @@ namespace Asset
 
 				if (token == L"in:")
 				{
-					if (current_input)
-						throw std::runtime_error("Parsing error: unexpected in:");
-
 					parse_file(filename, hash, timestamp);
 					current_input = AddInputFile(filename.c_str(), hash, timestamp);
 				}
@@ -119,11 +120,11 @@ namespace Asset
 			for (auto& input_it : input_entries)
 			{
 				auto* input = input_it.second.get();
-				if (input->outputs.empty())
-					continue;
 
 				stream << L"in:\n";
 				stream << L"\t\"" << input->filename << L"\" " << utils::StringToWString(utils::WriteHexString(input->hash)) << L" " << input->timestamp << L"\n";
+				if (input->outputs.empty())
+					continue;
 
 				stream << L"out:\n";
 				if (input->outputs.size())
@@ -185,10 +186,7 @@ namespace Asset
 		if (output_hash == 0 || timestamp == 0)
 			return;
 
-		auto entry = std::make_unique<OutputEntry>();
-		entry->filename = std::move(output_filename);
-		entry->hash = output_hash;
-		entry->timestamp = timestamp;
+		auto entry = std::make_unique<OutputEntry>(output_hash, timestamp, std::move(output_filename));
 		it->second->outputs.insert({ entry->filename.c_str(), std::move(entry) });
 	}
 
@@ -201,8 +199,20 @@ namespace Asset
 		SrcEntry* entry = it->second.get();
 		assert(entry);
 
-		// TODO: check timestamp
-		// TODO: check file hash
+		const auto full_src_path = fs::path(asset_root) / entry->filename;
+
+		//if (entry->timestamp != FileSystem::GetFileTimestamp(full_src_path))
+			if (entry->hash != FileSystem::GetFileHash(full_src_path))
+				return true;
+
+		for (auto& output : entry->outputs)
+		{
+			OutputEntry* output_entry = output.second.get();
+			const auto full_output_path = fs::path(cache_root) / output_entry->filename;
+			//if (output_entry->timestamp != FileSystem::GetFileTimestamp(full_output_path))
+				if (output_entry->hash != FileSystem::GetFileHash(full_output_path))
+					return true;
+		}
 
 		return false;
 	}
@@ -220,10 +230,6 @@ namespace Asset
 				continue;
 
 			if (folder_cache->HasModifications(GetAssetPath(entry.second->GetFilename()).c_str()))
-				return true;
-
-			auto* cache = entry.second->GetCacheEntry();
-			if (!cache)
 				return true;
 		}
 
@@ -283,6 +289,20 @@ namespace Asset
 				utils::EndsWith(filename, std::wstring(L".png")) || 
 				utils::EndsWith(filename, std::wstring(L".jpg"));
 		}, [] { return std::make_unique<Asset::Types::Texture>(); } });
+
+		create_functions.push_back({ [](const std::wstring& filename)
+		{
+			return filename == L"fbx" || utils::EndsWith(filename, std::wstring(L".fbx"));
+		}, [] { return std::make_unique<Asset::Types::FBX>(); } });
+
+		create_functions.push_back({ [](const std::wstring& filename)
+		{
+			return filename == L"copy" 
+				|| utils::EndsWith(filename, std::wstring(L".dds")) 
+				|| utils::EndsWith(filename, std::wstring(L".ktx"))
+				|| utils::EndsWith(filename, std::wstring(L".mat"))
+				|| utils::EndsWith(filename, std::wstring(L".entity"));
+		}, [] { return std::make_unique<Asset::Types::PlainCopy>(); } });
 
 		// Should go last
 		create_functions.push_back({ [](const std::wstring& filename) { return true; }, [] { return std::make_unique<Asset::Types::IgnoredEntry>(); } });
@@ -375,6 +395,8 @@ namespace Asset
 
 			out.entries.insert({ relative_filename, std::move(entry) });
 		}
+
+		return true;
 	}
 
 	bool Cache::WriteMetadata(const FolderMetadata& metadata, const std::filesystem::path& folder)
@@ -425,13 +447,27 @@ namespace Asset
 		auto data = loader::LoadFile(path);
 
 		out_result.path = FileSystem::FormatPath(folder);
-		out_result.folder_cache = std::make_unique<FolderCache>(fs::path(cache_directory) / folder);
+		out_result.folder_cache = std::make_unique<FolderCache>(fs::path(cache_directory) / folder, &out_result, project_directory.c_str(), cache_directory.c_str());
 
-		if (!data.size() || !ParseMetadata(out_result, data, folder))
+		if (!data.size())
+			return true;
+
+		if (!ParseMetadata(out_result, data, folder))
 		{
 			out_result.entries.clear();
 			out_result.hash = 0;
 			return false;
+		}
+
+		for (auto& entry : out_result.entries)
+		{
+			auto* asset = entry.second.get();
+			auto* cache_src_file = out_result.folder_cache->GetInputFile(out_result.GetAssetPath(asset->GetFilename()).c_str());
+			asset->SetCacheEntry(cache_src_file);
+			if (cache_src_file)
+				asset->SetNeedsReexport(out_result.folder_cache->HasModifications(cache_src_file->filename.c_str()));
+			else
+				asset->SetNeedsReexport(true);
 		}
 
 		return true;
@@ -454,7 +490,7 @@ namespace Asset
 		return result;
 	}
 
-	void Cache::Reload()
+	bool Cache::Reload()
 	{
 		task_manager->Wait();
 		file_tree.UpdateTree();
@@ -468,13 +504,15 @@ namespace Asset
 		std::vector<Types::AssetEntry*> missing_assets;
 		std::vector<Types::AssetEntry*> added_assets;
 		std::vector<Types::AssetEntry*> reexport_assets;
+		std::vector<FolderMetadata*> failed_metadata;
 
 		for (auto* dir : all_dirs)
 		{
 			// Loading metadata
 			const fs::path fs_folder = fs::path(dir->full_path).lexically_relative(project_directory);
 			auto it = asset_folder_entries.insert({ FileSystem::FormatPath(fs_folder), FolderMetadata() });
-			LoadFolderMetadata(fs_folder, it.first->second);
+			if (!LoadFolderMetadata(fs_folder, it.first->second))
+				failed_metadata.push_back(&it.first->second);
 			auto& metadata = it.first->second;
 			dir->user_data = &metadata;
 			assert(metadata.path == it.first->first);
@@ -507,6 +545,15 @@ namespace Asset
 
 		}
 
+		if (failed_metadata.size())
+		{
+			std::stringstream stream;
+			stream << "Failed reading metadata for folders:\n";
+			for (auto metadata : failed_metadata)
+				stream << "    " << utils::WStringToString(metadata->path) << "\n";
+			utils::ShowMessageBox("Metadata error", stream.str().c_str());
+		}
+
 		// Re-saving metadata with added assets
 		std::unordered_set<FolderMetadata*> metadata_to_resave;
 		for (auto* asset : added_assets)
@@ -516,6 +563,8 @@ namespace Asset
 		{
 			WriteMetadata(*metadata, metadata->path);
 		}
+
+		return true;
 	}
 
 	void Cache::ExportPending()
@@ -531,11 +580,25 @@ namespace Asset
 			//}
 		}
 
+		std::vector<Types::AssetEntry*> failed_assets;
+
 		for (auto* metadata : folders_to_reexport)
-			ReexportFolder(*metadata);
+			ReexportFolder(*metadata, failed_assets);
+
+		if (failed_assets.size())
+		{
+			std::stringstream stream;
+			stream << "Failed to export the following assets:\n";
+			for (auto* asset : failed_assets)
+			{
+				stream << "    " << utils::WStringToString(asset->GetFolderMetadata()->path) << "/" << asset->GetStrFilename() << "\n";
+			}
+
+			utils::ShowMessageBox("Export error", stream.str().c_str());
+		}
 	}
 
-	void Cache::ReexportFolder(FolderMetadata& metadata)
+	void Cache::ReexportFolder(FolderMetadata& metadata, std::vector<Types::AssetEntry*>& failed_assets)
 	{
 		auto* folder_cache = metadata.folder_cache.get();
 
@@ -543,7 +606,11 @@ namespace Asset
 		{
 			Types::AssetEntry* asset = entry.second.get();
 			if (folder_cache->HasModifications(metadata.GetAssetPath(asset->GetFilename()).c_str()))
-				ExportAsset(*asset);
+			{
+				const bool success = ExportAsset(*asset);
+				if (!success)
+					failed_assets.push_back(asset);
+			}
 		}
 	}
 
@@ -567,6 +634,9 @@ namespace Asset
 			folder_cache->Save();
 		}
 
+		if (!FileSystem::CreateDirectories(cache_directory / fs::path(asset_path).parent_path()))
+			return false;
+
 		exporter->Initialize(asset_path, project_directory, cache_directory);
 		auto result = exporter->Export();
 
@@ -577,7 +647,7 @@ namespace Asset
 			folder_cache->AddInputFile(asset_path.c_str(), FileSystem::GetFileHash(src_path), FileSystem::GetFileTimestamp(src_path));
 			for (auto& exported_asset : result.exported_assets)
 			{
-				auto output_path = fs::path(cache_directory) / exported_asset.path;
+				auto output_path = FileSystem::FormatPath(fs::path(cache_directory) / exported_asset.path);
 				folder_cache->AddOutputFile(asset_path.c_str(), exported_asset.path, FileSystem::GetFileHash(output_path), FileSystem::GetFileTimestamp(output_path));
 			}
 			folder_cache->Save();
