@@ -41,6 +41,9 @@ namespace UI
 
 		auto* metadata = static_cast<FolderMetadata*>(node->user_data);
 
+		if (!metadata)
+			return;
+
 		for (auto& item : metadata->entries)
 		{
 			auto& entry = *item.second;

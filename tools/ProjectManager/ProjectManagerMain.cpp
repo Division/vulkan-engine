@@ -73,7 +73,7 @@ public:
 						if (!iter->IsString())
 							continue;
 						
-						recent_projects.push_back(iter->GetString());
+						recent_projects.push_back({ iter->GetString(), utils::WStringToString(iter->GetString()) });
 					}
 				}
 			}
@@ -90,7 +90,7 @@ public:
 		auto array = Asset::Types::WValue(rapidjson::kArrayType);
 		for (auto& path : recent_projects)
 		{
-			array.PushBack( Asset::Types::WValue().SetString(FileSystem::FormatPath(path).c_str(), allocator), allocator);
+			array.PushBack( Asset::Types::WValue().SetString(FileSystem::FormatPath(path.first).c_str(), allocator), allocator);
 		}
 
 		object.AddMember(L"recent", array, allocator);
@@ -118,7 +118,7 @@ public:
 	{
 		LoadConfig();
 		if (recent_projects.size())
-			SetCurrenProjectPath(recent_projects[0]);
+			SetCurrenProjectPath(recent_projects[0].first);
 
 		render::DebugUI::SetEnvironmentWidgetVisible(false);
 		render::DebugUI::SetMainWidgetVisible(false);
@@ -144,9 +144,9 @@ public:
 			{
 				for (auto& dir : recent_projects)
 				{
-					if (ImGui::MenuItem(GetCachedCString(dir.c_str())))
+					if (ImGui::MenuItem(dir.second.c_str()))
 					{
-						SetCurrenProjectPath(dir);
+						SetCurrenProjectPath(dir.first);
 					}
 				}
 				ImGui::EndMenu();
@@ -251,11 +251,11 @@ public:
 
 	void SetCurrenProjectPath(fs::path path)
 	{
-		auto it = std::find(recent_projects.begin(), recent_projects.end(), path.wstring());
+		auto it = std::find_if(recent_projects.begin(), recent_projects.end(), [&path](auto& a) { return a.first == path; });
 		if (it != recent_projects.end())
 			recent_projects.erase(it);
 
-		recent_projects.push_front(path);
+		recent_projects.push_front({ path, utils::WStringToString(path.wstring()) });
 
 		cache.SetProjectDirectory(path);
 		
@@ -265,7 +265,7 @@ public:
 private:
 	ECS::EntityManager* manager = nullptr;
 	ECS::TransformGraph* graph = nullptr;
-	std::deque<std::wstring> recent_projects;
+	std::deque<std::pair<std::wstring, std::string>> recent_projects;
 	
 	enum class Action
 	{
