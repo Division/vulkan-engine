@@ -1,8 +1,28 @@
 [
     {
+        "type": "copy",
+        "filename": "sphere.entity",
+        "uid": "358e4616816a3395"
+    },
+    {
         "type": "fbx",
         "filename": "sphere.fbx",
         "uid": "591fca67573f2f6a",
         "export_type": "Mesh"
+    },
+    {
+        "type": "copy",
+        "filename": "sphere.mat",
+        "uid": "33929175e5df3073"
+    },
+    {
+        "type": "copy",
+        "filename": "sphere_attractor.entity",
+        "uid": "f5c6fe73c7a418c6"
+    },
+    {
+        "type": "copy",
+        "filename": "sphere_attractor.mat",
+        "uid": "e7dcda34ff021f0f"
     }
 ]

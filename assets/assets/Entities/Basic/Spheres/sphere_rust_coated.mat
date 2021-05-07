@@ -1,0 +1,9 @@
+{
+  "texture0": "assets/Textures/environment/MavenBG.dds",
+  "normal_map": "assets/Entities/Basic/Metal/rust_coated_normal_metallic.dds",
+  "lighting_enabled": true,
+  "vertex_color_enabled": false,
+  "roughness": -1.0,
+  "metallness": -1.0,
+  "color": [ 1, 1, 1, 1 ]
+}

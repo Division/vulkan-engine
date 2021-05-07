@@ -1,0 +1,42 @@
+[
+    {
+        "type": "copy",
+        "filename": "sphere.entity",
+        "uid": "4b25cf422b895f90"
+    },
+    {
+        "type": "copy",
+        "filename": "sphere.mat",
+        "uid": "b0a032f020a179dc"
+    },
+    {
+        "type": "copy",
+        "filename": "sphere_attractor.entity",
+        "uid": "c087d57cc603082a"
+    },
+    {
+        "type": "copy",
+        "filename": "sphere_attractor.mat",
+        "uid": "658a5ee214da4c94"
+    },
+    {
+        "type": "copy",
+        "filename": "sphere_mirror.entity",
+        "uid": "4e4f3a31d34a8444"
+    },
+    {
+        "type": "copy",
+        "filename": "sphere_mirror.mat",
+        "uid": "c30b49245ada6f30"
+    },
+    {
+        "type": "copy",
+        "filename": "sphere_rust_coated.entity",
+        "uid": "5437e533538312f1"
+    },
+    {
+        "type": "copy",
+        "filename": "sphere_rust_coated.mat",
+        "uid": "a374902242369902"
+    }
+]

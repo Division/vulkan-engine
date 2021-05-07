@@ -55,7 +55,7 @@ namespace Exporter
 		manager = FbxManager::Create();
 		FbxIOSettings *ios = FbxIOSettings::Create(manager, IOSROOT);
 		manager->SetIOSettings(ios);
-		input_is_in_assets = utils::BeginsWith(FileSystem::FormatPath(settings.input_path.wstring()), FileSystem::FormatPath(settings.assets_path.wstring()));
+		input_is_in_assets = utils::BeginsWith(FileSystem::FormatPath(settings.input_path), FileSystem::FormatPath(settings.assets_path));
 
 		static PxDefaultAllocator DefaultAllocator;
 		static ErrorCallback ErrorCallback;

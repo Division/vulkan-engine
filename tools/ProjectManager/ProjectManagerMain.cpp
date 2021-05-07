@@ -240,6 +240,7 @@ public:
 	void ExportPendingAssets()
 	{
 		asset_tree.DeselectAll();
+		cache.Reload();
 		cache.ExportPending();
 		cache.Reload();
 	}

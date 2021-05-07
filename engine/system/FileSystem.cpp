@@ -5,7 +5,11 @@
 #include <optick/src/optick.h>
 
 #if defined ( _WIN32 )
+#include <Windows.h>
 #include <sys/stat.h>
+#include <Winbase.h>
+#undef CopyFile
+#undef DeleteFile
 #endif
 
 namespace fs = std::filesystem;
@@ -38,20 +42,16 @@ namespace FileSystem
 	uint64_t GetFileTimestamp(const std::filesystem::path& path)
 	{
 #if defined ( _WIN32 )
-		{
-			struct _stat64 fileInfo;
-			if (_wstati64(path.wstring().c_str(), &fileInfo) != 0)
-				return 0;
-			return fileInfo.st_mtime;
-		}
+		struct _stat64 fileInfo;
+		if (_wstati64(path.wstring().c_str(), &fileInfo) != 0)
+			return 0;
+		return fileInfo.st_mtime;
 #else
-		{
-			std::error_code error;
-			auto fsTime = std::filesystem::last_write_time(path, error);
-			if (error)
-				return 0;
-			return decltype (fsTime)::clock::to_time_t(fsTime);
-		}
+		std::error_code error;
+		auto fsTime = std::filesystem::last_write_time(path, error);
+		if (error)
+			return 0;
+		return decltype (fsTime)::clock::to_time_t(fsTime);
 #endif
 	}
 
@@ -72,14 +72,19 @@ namespace FileSystem
 		return !error;
 	}
 
+
 	bool CopyFile(const std::filesystem::path& src, const std::filesystem::path& dst)
 	{
+#if defined(_WIN32)
+		return CopyFileW(src.wstring().c_str(), dst.wstring().c_str(), false);
+#else
 		std::error_code error;
 		if (fs::is_directory(src, error) || error)
 			return false;
 
 		fs::copy(src, dst, error);
 		return !error;
+#endif
 	}
 
 	bool CreateDirectorySymlink(const std::filesystem::path& symlink_path, const std::filesystem::path& target_path)
@@ -87,9 +92,6 @@ namespace FileSystem
 		std::error_code error;
 		if (!fs::is_directory(target_path, error) || error)
 			return false;
-
-		if (fs::is_symlink(symlink_path, error) && !error)
-			fs::remove(symlink_path);
 
 		fs::create_directory_symlink(target_path, symlink_path, error);
 		return !error;

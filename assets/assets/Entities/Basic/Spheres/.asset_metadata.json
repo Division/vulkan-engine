@@ -1,0 +1,22 @@
+[
+    {
+        "type": "copy",
+        "filename": "sphere_mirror.entity",
+        "uid": "5bd7519d13c712c6"
+    },
+    {
+        "type": "copy",
+        "filename": "sphere_mirror.mat",
+        "uid": "a8a5279e467d09a7"
+    },
+    {
+        "type": "copy",
+        "filename": "sphere_rust_coated.entity",
+        "uid": "61f104915cef07b6"
+    },
+    {
+        "type": "copy",
+        "filename": "sphere_rust_coated.mat",
+        "uid": "efbc1b07775d2737"
+    }
+]

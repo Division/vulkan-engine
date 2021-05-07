@@ -1,0 +1,9 @@
+{
+    "texture0": "assets/Textures/props/crates/vk_space_crate1_albedo_roughness.dds",
+    "normal_map": "assets/Textures/props/crates/vk_space_crate1_normal_metallness_dx.dds",
+    "lighting_enabled": true,
+    "vertex_color_enabled": false,
+    "roughness": -1.0,
+    "metallness": -1.0,
+    "color": [1, 1, 1, 1]
+}

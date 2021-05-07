@@ -1,0 +1,24 @@
+[
+    {
+        "type": "copy",
+        "filename": "brdf_lut.ktx",
+        "uid": "6a90cf1eb7e8ceac"
+    },
+    {
+        "type": "copy",
+        "filename": "environment_ggx.dds",
+        "uid": "5d7f9c98ae22a94e"
+    },
+    {
+        "type": "texture",
+        "filename": "ibl_brdf_lut.png",
+        "uid": "d4877d26fd16b752",
+        "compression_type": "BC7"
+    },
+    {
+        "type": "texture",
+        "filename": "ibl_brdf_poe.png",
+        "uid": "22bfde5d8f41bcdf",
+        "compression_type": "BC7"
+    }
+]
