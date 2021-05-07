@@ -129,6 +129,7 @@ namespace Asset
 		AssetEntryCreateFunction GetAssetCreateFunction(const std::wstring filename);
 		void ReexportFolder(FolderMetadata& metadata, std::vector<Types::AssetEntry*>& failed_assets);
 		bool ExportAsset(Types::AssetEntry& asset);
+		void SetupSymlinks();
 
 	private:
 		std::unordered_map<ID, Types::AssetEntry*> entries; // complete map of assets

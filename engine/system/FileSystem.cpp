@@ -82,6 +82,19 @@ namespace FileSystem
 		return !error;
 	}
 
+	bool CreateDirectorySymlink(const std::filesystem::path& symlink_path, const std::filesystem::path& target_path)
+	{
+		std::error_code error;
+		if (!fs::is_directory(target_path, error) || error)
+			return false;
+
+		if (fs::is_symlink(symlink_path, error) && !error)
+			fs::remove(symlink_path);
+
+		fs::create_directory_symlink(target_path, symlink_path, error);
+		return !error;
+	}
+
 	bool IterateFilesInDirectory(const std::wstring& path, bool recursive, bool include_directories, DirectoryIteratorCallback callback)
 	{
 		try

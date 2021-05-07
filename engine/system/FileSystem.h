@@ -25,6 +25,8 @@ namespace FileSystem
 
 	bool CopyFile(const std::filesystem::path& src, const std::filesystem::path& dst);
 
+	bool CreateDirectorySymlink(const std::filesystem::path& symlink_path, const std::filesystem::path& target_path);
+
 	class FileTree
 	{
 	public:

@@ -319,6 +319,11 @@ namespace Asset
 		return nullptr;
 	}
 
+	void Cache::SetupSymlinks()
+	{
+		FileSystem::CreateDirectorySymlink(L"./assets", cache_directory);
+	}
+
 	void Cache::SetProjectDirectory(const std::wstring& dir)
 	{
 		try {
@@ -330,6 +335,7 @@ namespace Asset
 			cache_directory = project_directory + ASSET_CACHE_FOLDER_SUFFIX;
 
 			file_tree.SetPath(project_directory, project_directory);
+			SetupSymlinks();
 		}
 		catch (fs::filesystem_error)
 		{
