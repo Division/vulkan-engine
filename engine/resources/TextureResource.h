@@ -23,7 +23,7 @@ namespace Resources
 			Initializer(const std::wstring& filename) : filename(filename) {}
 			Initializer(const Initializer&) = default;
 
-			const std::wstring& GetPath() const { return filename; }
+			const wchar_t* GetPath() const { return filename.c_str(); }
 			const uint32_t GetHash() const 
 			{
 				uint32_t hashes[] = { FastHash(filename), flags };

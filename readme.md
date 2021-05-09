@@ -1,4 +1,5 @@
 Engine roadmap:
+- fix deadlock: resource loading exception during main thread resolve()
 - bone attachments
 - properly handle missing textures
 - top down shooter demo

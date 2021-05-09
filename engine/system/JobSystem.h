@@ -115,6 +115,7 @@ namespace Thread {
 		bool HasJobs(Job::Priority priority);
 		void AddException(std::exception_ptr exception);
 		void RethrowExceptions();
+		int GetTotalJobCount() const { return all_job_count.load(); }
 
 	private:
 		JobSystemAllocator& allocator;
@@ -124,6 +125,7 @@ namespace Thread {
 
 		std::mutex exception_mutex;
 		std::list<std::exception_ptr> exceptions;
+		std::atomic_int all_job_count = 0;
 	};
 
 	class WorkerThread
@@ -165,6 +167,7 @@ namespace Thread {
 		}
 
 		void Wait(Job::Priority priority);
+		void WaitAll();
 		void RethrowExceptions();
 
 		Scheduler(uint32_t thread_number);

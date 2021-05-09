@@ -210,6 +210,31 @@ struct Rect {
   operator vec4() const { return vec4(x, y, width, height); }
 };
 
+struct Plane
+{
+    vec3 center;
+    vec3 normal;
+
+    bool IntersectRay(vec3 ray_origin, vec3 ray_direction, vec3* out_position)
+    {
+        vec3 diff = ray_origin - center;
+        float prod1 = glm::dot(diff, normal);
+        float prod2 = glm::dot(ray_direction, normal);
+
+        if (std::abs(prod2) < 1e-6f)
+            return false;
+
+        float prod3 = prod1 / prod2;
+        if (prod3 > 0)
+            return false;
+
+        if (out_position)
+            *out_position = ray_origin - ray_direction * prod3;
+
+        return true;
+    }
+};
+
 inline int32_t getPowerOfTwo(int32_t value) {
 	float result = log2((float)value);
 	return pow(2, (int)ceilf(result));
@@ -269,6 +294,20 @@ inline uint32_t FastHash(const std::wstring& str)
 	uint32_t result;
 	MurmurHash3_x86_32(str.data(), (int)str.length() * 2, 0xdeadbeef, &result);
 	return result;
+}
+
+inline uint32_t FastHash(const wchar_t* str)
+{
+    const auto length = wcslen(str);
+    uint32_t result;
+    MurmurHash3_x86_32(str, (int)length * sizeof(wchar_t), 0xdeadbeef, &result);
+    return result;
+}
+
+inline uint64_t FastHash64(const wchar_t* str)
+{
+    const auto length = wcslen(str);
+    return MurmurHash2_x64(str, (int)length * sizeof(wchar_t), 0xdeadbeef);
 }
 
 inline float LogBase(float num, float base)

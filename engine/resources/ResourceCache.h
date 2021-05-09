@@ -8,6 +8,8 @@
 #include <fstream>
 #include "system/JobSystem.h"
 #include <optick/src/optick.h>
+#include <mutex>
+#include "utils/NonCopyable.h"
 
 namespace Resources
 {
@@ -15,6 +17,7 @@ namespace Resources
 	{
 	public:
 		template<typename> friend class Handle;
+		friend class Cache;
 
 		enum class State : int
 		{
@@ -27,7 +30,7 @@ namespace Resources
 		typedef std::unique_ptr<void, std::function<void(void*)>> ParamPtr;
 		typedef void (*CreateCallback)(void*, void*);
 
-		ResourceBase(const std::wstring& path, uint32_t hash, ParamPtr param, CreateCallback create_callback)
+		explicit ResourceBase(const wchar_t* path, uint32_t hash, ParamPtr param, CreateCallback create_callback)
 			: filename(path)
 			, hash(hash)
 			, resource_memory(nullptr)
@@ -47,7 +50,16 @@ namespace Resources
 		const std::wstring& GetFilename() const { return filename; }
 
 	protected:
-		
+		struct WCharInitializer
+		{
+			explicit WCharInitializer(const wchar_t* str) : value(str) {};
+			uint32_t GetHash() const { return FastHash(value); }
+			const wchar_t* GetPath() const { return value; }
+
+		private:
+			const wchar_t* value;
+		};
+
 		bool TransitionState(State old_state, State new_state)
 		{
 			return state.compare_exchange_strong(old_state, new_state);
@@ -101,6 +113,7 @@ namespace Resources
 
 	private:
 		template<typename T> friend class Handle;
+		friend class Cache;
 
 		void Load()
 		{
@@ -142,9 +155,10 @@ namespace Resources
 				Wait(State::Unloaded);
 		}
 
+
 	public:
-		Resource(const std::wstring& path) : ResourceBase(path, FastHash(path)
-			, ResourceBase::ParamPtr(new std::wstring(path), [](void* ptr) { delete reinterpret_cast<std::wstring*>(ptr); })
+		Resource(const ResourceBase::WCharInitializer& initializer) : ResourceBase(initializer.GetPath(), initializer.GetHash()
+			, ResourceBase::ParamPtr(new std::wstring(initializer.GetPath()), [](void* ptr) { delete reinterpret_cast<std::wstring*>(ptr); })
 			, [](void* resource, void* param) { new (resource) T(*reinterpret_cast<std::wstring*>(param)); }
 		) {}
 
@@ -192,40 +206,18 @@ namespace Resources
 	class Handle
 	{
 	public:
+
 		Handle() : resource(nullptr) {}
 		Handle(nullptr_t) : resource(nullptr) {}
 
 		template<typename HI>
 		Handle(const HI& initializer)
 		{
-			resource = static_cast<Resource<T>*>(Cache::Get().GetResource(initializer.GetHash()));
-			if (!resource)
-			{
-				auto unique_resource = std::make_unique<Resource<T>>(initializer);
-				resource = unique_resource.get();
-				Cache::Get().SetResource(resource->GetHash(), std::move(unique_resource));
-			}
-
-			resource->AddRef();
-			if (!resource->IsResolved())
-				resource->Load();
+			resource = static_cast<Resource<T>*>(Cache::Get().GetOrCreateResource<T>(initializer));
 		}
 
-		explicit Handle(const std::wstring& filename)
-		{
-			resource = static_cast<Resource<T>*>(Cache::Get().GetResource(FastHash(filename)));
-			if (!resource)
-			{
-				auto unique_resource = std::make_unique<Resource<T>>(filename);
-				resource = unique_resource.get();
-				Cache::Get().SetResource(resource->GetHash(), std::move(unique_resource));
-			}
-
-			resource->AddRef();
-			if (!resource->IsResolved())
-				resource->Load();
-		}
-		explicit Handle(const wchar_t* filename) : Handle(std::wstring(filename)) {}
+		explicit Handle(const std::wstring& filename) : Handle(ResourceBase::WCharInitializer(filename.c_str())) {}
+		explicit Handle(const wchar_t* filename) : Handle(ResourceBase::WCharInitializer(filename)) {}
 
 		Handle(const Handle& other)
 		{
@@ -297,7 +289,7 @@ namespace Resources
 		Resource<T>* resource;
 	};
 
-	class Cache
+	class Cache : public NonCopyable
 	{
 	public:
 		template<typename> friend class Handle;
@@ -307,8 +299,31 @@ namespace Resources
 		void Destroy();
 
 	private:
+		template<typename T, typename I>
+		ResourceBase* GetOrCreateResource(I initializer)
+		{
+			std::scoped_lock<std::recursive_mutex> lock(mutex);
+
+			auto* resource = static_cast<Resource<T>*>(GetResource(initializer.GetHash()));
+			if (!resource)
+			{
+				auto unique_resource = std::make_unique<Resource<T>>(initializer);
+				resource = unique_resource.get();
+				SetResource(resource->GetHash(), std::move(unique_resource));
+			}
+
+			resource->AddRef();
+			if (!resource->IsResolved())
+				resource->Load();
+
+			return resource;
+		}
+
 		ResourceBase* GetResource(uint32_t key);
 		void SetResource(uint32_t key, std::unique_ptr<ResourceBase> resource);
+	
+	private:
+		std::recursive_mutex mutex;
 		std::unordered_map<uint32_t, std::unique_ptr<ResourceBase>> resources;
 	};
 
