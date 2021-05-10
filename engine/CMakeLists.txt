@@ -1,6 +1,7 @@
-cmake_minimum_required(VERSION 3.15)
+cmake_minimum_required(VERSION 3.15 FATAL_ERROR)
 cmake_policy(SET CMP0079 NEW)
 cmake_policy(SET CMP0002 NEW)
+set(CMAKE_POLICY_DEFAULT_CMP0077 NEW)
 project(vk_engine)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "cmake")
@@ -235,8 +236,6 @@ set(ENGINE_SOURCES
 	utils/JsonUtils.h
 )
 
-include_directories(./ lib)
-
 find_package(Vulkan REQUIRED)
 
 add_definitions(-DGLM_FORCE_DEPTH_ZERO_TO_ONE)
@@ -245,8 +244,10 @@ set(GLFW_BUILD_DOCS false)
 set(GLFW_BUILD_EXAMPLES false)
 set(GLFW_BUILD_TESTS false)
 set(GLFW_INSTALL false)
+
 add_subdirectory(lib/glfw-3.3)
-set(EXPORT_TARGETS ${EXPORT_TARGETS} glfw)
+set(EXPORT_TARGETS ${EXPORT_TARGETS} glfw) # remove?
+
 set(OPTICK_ENABLED true)
 set(OPTICK_USE_VULKAN false)
 set(ozz_build_tools false)
@@ -269,6 +270,7 @@ add_subdirectory(lib/ozz-animation)
 
 add_library(vk_engine ${ENGINE_SOURCES})
 target_compile_definitions(vk_engine PUBLIC VK_USE_PLATFORM_WIN32_KHR)
+target_include_directories(vk_engine PUBLIC ./ lib)
 target_include_directories(vk_engine PUBLIC Vulkan::Vulkan)
 target_include_directories(vk_engine PUBLIC ozz_animation)
 target_link_libraries(vk_engine glfw)
