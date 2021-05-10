@@ -5,6 +5,7 @@ set(CMAKE_POLICY_DEFAULT_CMP0077 NEW)
 option(VK_ENGINE_AUTO_SETUP_BUILD "Auto setup build" ON)
 option(VK_ENGINE_BUILD_DEMOS "Build demos" ON)
 option(VK_ENGINE_BUILD_TOOLS "Build tools" ON)
+option(VK_ENGINE_BUILD_TESTS "Build tests" ON)
 
 if (VK_ENGINE_AUTO_SETUP_BUILD)
 	include("engine/cmake/Configuration.cmake")

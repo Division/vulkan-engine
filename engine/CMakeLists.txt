@@ -5,7 +5,6 @@ set(CMAKE_POLICY_DEFAULT_CMP0077 NEW)
 project(vk_engine)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "cmake")
-#SET(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} -M)
 
 set(ENGINE_SOURCES 
 	lib/VulkanMemoryAllocator/vk_mem_alloc.h
@@ -312,5 +311,7 @@ set(TEST_SOURCES
 	tests/test_ktx.cpp
 )
 
-add_executable(engine_tests ${TEST_SOURCES})
-target_link_libraries(engine_tests vk_engine)
+if (VK_ENGINE_BUILD_TESTS)
+	add_executable(engine_tests ${TEST_SOURCES})
+	target_link_libraries(engine_tests vk_engine)
+endif()
