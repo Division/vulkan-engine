@@ -25,6 +25,7 @@ namespace Resources
 			Loaded,
 			Unloading,
 			Unloaded,
+			Failed
 		};
 
 		typedef std::unique_ptr<void, std::function<void(void*)>> ParamPtr;
@@ -100,11 +101,18 @@ namespace Resources
 
 			virtual void Execute() override
 			{
-				Allocator allocator;
-				resource->resource_memory = allocator.allocate(1);
-				resource->create_callback(resource->resource_memory, resource->param.get());
-
-				resource->state = State::Loaded;
+				try
+				{
+					Allocator allocator;
+					resource->resource_memory = allocator.allocate(1);
+					resource->create_callback(resource->resource_memory, resource->param.get());
+					resource->state = State::Loaded;
+				}
+				catch (...)
+				{
+					resource->state = State::Failed;
+					throw;
+				}
 			}
 
 		private:
@@ -187,6 +195,9 @@ namespace Resources
 
 			if (state == State::Loading)
 				Wait(State::Loaded);
+
+			if (state == State::Failed)
+				throw MessageException(filename);
 		}
 
 		T& operator*()
@@ -339,6 +350,19 @@ namespace Resources
 		Exception& operator<<(const T& item) { message_stream << item; return *this; }
 
 		virtual const char* what() const override { error = message_stream.str(); return error.c_str(); }
+
+	private:
+		mutable std::string error;
+		std::stringstream message_stream;
+	};
+
+	class MessageException : public Exception
+	{
+	public:
+		MessageException() : Exception() {}
+		MessageException(const std::wstring& filename);
+		MessageException(const MessageException& other);
+		virtual ~MessageException() = default;
 
 	private:
 		mutable std::string error;

@@ -2,6 +2,7 @@
 #include <vector>
 #include "utils/StringUtils.h"
 #include "Handle.h"
+#include "system/Dialogs.h"
 
 namespace Resources
 {
@@ -99,6 +100,15 @@ namespace Resources
 	Exception::Exception(const Exception& other)
 	{
 		message_stream << other.message_stream.str();
+	}
+
+	MessageException::MessageException(const std::wstring& filename) : Exception(filename)
+	{
+		System::ShowMessageBox("Resource loading failed", utils::WStringToString(filename).c_str());
+	}
+
+	MessageException::MessageException(const MessageException& other) : MessageException(utils::StringToWString(other.message_stream.str()))
+	{
 	}
 
 }
