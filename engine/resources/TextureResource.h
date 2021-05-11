@@ -64,6 +64,9 @@ namespace Resources
 		const Device::Handle<Device::Texture>& Get() const { return texture; }
 
 	private:
+		void HandleLoadingError(const wchar_t* path);
+
+	private:
 		Device::Handle<Device::Texture> texture;
 	};
 

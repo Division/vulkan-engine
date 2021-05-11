@@ -222,6 +222,8 @@ set(ENGINE_SOURCES
 	system/JobSystem.cpp
 	system/FileSystem.h
 	system/FileSystem.cpp
+	system/Dialogs.h
+	system/Dialogs.cpp
 	utils/Math.h
 	utils/DataStructures.h
 	utils/StringUtils.h

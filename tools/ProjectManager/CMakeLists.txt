@@ -24,8 +24,6 @@ set(SOURCE_LIST
 	AssetExport/CopyExport.cpp
 	AssetExport/FBXExport.h
 	AssetExport/FBXExport.cpp
-	utils/Dialogs.h
-	utils/Dialogs.cpp
 	utils/SystemPathUtils.h
 	utils/SystemPathUtils.cpp
 	${FBX_EXPORTER_DIR}SceneExporter.h

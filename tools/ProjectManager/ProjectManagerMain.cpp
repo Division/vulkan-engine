@@ -4,12 +4,11 @@
 #include "UI/AssetTree.h"
 #include "lib/imgui/imgui.h"
 #include <filesystem>
-#include "utils/Dialogs.h"
+#include "system/Dialogs.h"
 #include "AssetCache/AssetCache.h"
 #include "AssetCache/AssetTypes.h"
 #include "utils/SystemPathUtils.h"
 #include "loader/FileLoader.h"
-#include "utils/Dialogs.h"
 #include "rapidjson/prettywriter.h"
 
 namespace fs = std::filesystem;
@@ -58,7 +57,7 @@ public:
 			json.Parse(sstream.str().c_str());
 			if (json.HasParseError() || !json.IsObject())
 			{
-				utils::ShowMessageBox("Error", "Failed loading asset_manager.json");
+				System::ShowMessageBox("Error", "Failed loading asset_manager.json");
 			}
 			else
 			{
@@ -110,7 +109,7 @@ public:
 		}
 		catch (std::ofstream::failure e)
 		{
-			utils::ShowMessageBox("Error", ("Can't save config at path " + utils::WStringToString(config_path)).c_str());
+			System::ShowMessageBox("Error", ("Can't save config at path " + utils::WStringToString(config_path)).c_str());
 		}
 	}
 
@@ -135,7 +134,7 @@ public:
 			{
 				auto current_path = cache.GetProjectDirectory();
 				utils::ReplaceAll(current_path, L"/", L"\\");
-				auto path = utils::BrowseFolder(utils::WStringToString(current_path));
+				auto path = System::BrowseFolder(utils::WStringToString(current_path));
 				if (!path.empty())
 					SetCurrenProjectPath(path);
 			}

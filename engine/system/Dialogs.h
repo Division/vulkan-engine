@@ -6,7 +6,7 @@
 #include <sstream>
 
 
-namespace utils
+namespace System
 {
     enum class MessageBoxStyle {
         OK,
@@ -17,4 +17,6 @@ namespace utils
 
     std::string BrowseFolder(std::string saved_path);
     
+    void EnqueueMessage(const char* title, const char* text, MessageBoxStyle style = MessageBoxStyle::OK);
+    bool DequeueAndShowMessage();
 }
