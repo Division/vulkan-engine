@@ -7,6 +7,8 @@ namespace System {
 		{ (int)Key::Right, GLFW_KEY_RIGHT },
 		{ (int)Key::Down, GLFW_KEY_DOWN},
 		{ (int)Key::Up, GLFW_KEY_UP },
+		{ (int)Key::Number_1, GLFW_KEY_1 },
+		{ (int)Key::Number_2, GLFW_KEY_2 },
 		{ (int)Key::A, GLFW_KEY_A },
 		{ (int)Key::W, GLFW_KEY_W },
 		{ (int)Key::S, GLFW_KEY_S },
@@ -26,6 +28,8 @@ namespace System {
 		{ (int)Key::Esc, GLFW_KEY_ESCAPE },
 		{ (int)Key::Equal, GLFW_KEY_EQUAL},
 		{ (int)Key::Tab, GLFW_KEY_TAB},
+		{ (int)Key::CtrlLeft, GLFW_KEY_LEFT_CONTROL},
+		{ (int)Key::AltLeft, GLFW_KEY_LEFT_ALT},
 		{ (int)Key::MouseLeft, GLFW_MOUSE_BUTTON_1 },
 		{ (int)Key::MouseRight, GLFW_MOUSE_BUTTON_2 }
 	};

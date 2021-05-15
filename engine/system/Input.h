@@ -10,6 +10,8 @@ namespace System {
 		Up,
 		Left,
 		Right,
+		Number_1,
+		Number_2,
 		A,
 		D,
 		W,
@@ -29,6 +31,8 @@ namespace System {
 		Esc,
 		Equal,
 		Tab,
+		CtrlLeft,
+		AltLeft,
 
 		MouseLeft,
 		MouseRight,
