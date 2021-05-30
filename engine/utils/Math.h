@@ -9,6 +9,7 @@
 #include <cstdlib>
 #include <algorithm>
 #include <half/half.h>
+#include <ctime>
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
@@ -323,6 +324,11 @@ inline vec4 RGBAFromUint(uint32_t color)
                  ((color >>  8) & 0xff) / 255.0f,
                  ((color      ) & 0xff) / 255.0f
                );
+}
+
+inline void Randomize()
+{
+    std::srand(std::time(nullptr));
 }
 
 inline float Random()
