@@ -23,7 +23,7 @@ namespace Resources
 			Initializer(const std::wstring& filename) : filename(filename) {}
 			Initializer(const Initializer&) = default;
 
-			const std::wstring& GetPath() const { return filename; }
+			const wchar_t* GetPath() const { return filename.c_str(); }
 			const uint32_t GetHash() const 
 			{
 				uint32_t hashes[] = { FastHash(filename), flags };
@@ -62,6 +62,9 @@ namespace Resources
 		}
 
 		const Device::Handle<Device::Texture>& Get() const { return texture; }
+
+	private:
+		void HandleLoadingError(const wchar_t* path);
 
 	private:
 		Device::Handle<Device::Texture> texture;

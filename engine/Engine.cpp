@@ -16,6 +16,7 @@
 #include "render/debug/DebugSettings.h"
 #include "Handle.h"
 #include "system/JobSystem.h"
+#include "system/Dialogs.h"
 
 Engine* Engine::instance;
 
@@ -178,6 +179,8 @@ void Engine::MainLoop()
 		::Device::GetReleaser().Swap();
 		Common::GetReleaser().Swap();
 
+		while (System::DequeueAndShowMessage()) {}
+
 		try
 		{
 			Thread::Scheduler::Get().RethrowExceptions();
@@ -186,6 +189,8 @@ void Engine::MainLoop()
 		{
 			ENGLog("Thread exception: %s", e.what());
 			std::cout << "Thread exception: " << e.what() << std::endl;
+			System::ShowMessageBox("Thread exception", e.what());
+
 			throw e;
 		}
 

@@ -5,7 +5,7 @@
 #include "loader/FileLoader.h"
 #include "rapidjson/prettywriter.h"
 #include "utils/StringUtils.h"
-#include "utils/Dialogs.h"
+#include "System/Dialogs.h"
 
 namespace fs = std::filesystem;
 using namespace rapidjson;
@@ -557,7 +557,7 @@ namespace Asset
 			stream << "Failed reading metadata for folders:\n";
 			for (auto metadata : failed_metadata)
 				stream << "    " << utils::WStringToString(metadata->path) << "\n";
-			utils::ShowMessageBox("Metadata error", stream.str().c_str());
+			System::ShowMessageBox("Metadata error", stream.str().c_str());
 		}
 
 		// Re-saving metadata with added assets
@@ -600,7 +600,7 @@ namespace Asset
 				stream << "    " << utils::WStringToString(asset->GetFolderMetadata()->path) << "/" << asset->GetStrFilename() << "\n";
 			}
 
-			utils::ShowMessageBox("Export error", stream.str().c_str());
+			System::ShowMessageBox("Export error", stream.str().c_str());
 		}
 	}
 

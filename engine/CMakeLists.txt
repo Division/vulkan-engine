@@ -1,10 +1,10 @@
-cmake_minimum_required(VERSION 3.15)
+cmake_minimum_required(VERSION 3.15 FATAL_ERROR)
 cmake_policy(SET CMP0079 NEW)
 cmake_policy(SET CMP0002 NEW)
+set(CMAKE_POLICY_DEFAULT_CMP0077 NEW)
 project(vk_engine)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "cmake")
-#SET(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} -M)
 
 set(ENGINE_SOURCES 
 	lib/VulkanMemoryAllocator/vk_mem_alloc.h
@@ -222,6 +222,8 @@ set(ENGINE_SOURCES
 	system/JobSystem.cpp
 	system/FileSystem.h
 	system/FileSystem.cpp
+	system/Dialogs.h
+	system/Dialogs.cpp
 	utils/Math.h
 	utils/DataStructures.h
 	utils/StringUtils.h
@@ -235,8 +237,6 @@ set(ENGINE_SOURCES
 	utils/JsonUtils.h
 )
 
-include_directories(./ lib)
-
 find_package(Vulkan REQUIRED)
 
 add_definitions(-DGLM_FORCE_DEPTH_ZERO_TO_ONE)
@@ -245,8 +245,10 @@ set(GLFW_BUILD_DOCS false)
 set(GLFW_BUILD_EXAMPLES false)
 set(GLFW_BUILD_TESTS false)
 set(GLFW_INSTALL false)
+
 add_subdirectory(lib/glfw-3.3)
-set(EXPORT_TARGETS ${EXPORT_TARGETS} glfw)
+set(EXPORT_TARGETS ${EXPORT_TARGETS} glfw) # remove?
+
 set(OPTICK_ENABLED true)
 set(OPTICK_USE_VULKAN false)
 set(ozz_build_tools false)
@@ -268,8 +270,9 @@ add_subdirectory(lib/optick)
 add_subdirectory(lib/ozz-animation)
 
 add_library(vk_engine ${ENGINE_SOURCES})
-target_compile_definitions(vk_engine PRIVATE VK_USE_PLATFORM_WIN32_KHR)
-target_include_directories(vk_engine PRIVATE Vulkan::Vulkan)
+target_compile_definitions(vk_engine PUBLIC VK_USE_PLATFORM_WIN32_KHR)
+target_include_directories(vk_engine PUBLIC ./ lib)
+target_include_directories(vk_engine PUBLIC Vulkan::Vulkan)
 target_include_directories(vk_engine PUBLIC ozz_animation)
 target_link_libraries(vk_engine glfw)
 target_link_libraries(vk_engine Vulkan::Vulkan)
@@ -310,5 +313,7 @@ set(TEST_SOURCES
 	tests/test_ktx.cpp
 )
 
-add_executable(engine_tests ${TEST_SOURCES})
-target_link_libraries(engine_tests vk_engine)
+if (VK_ENGINE_BUILD_TESTS)
+	add_executable(engine_tests ${TEST_SOURCES})
+	target_link_libraries(engine_tests vk_engine)
+endif()

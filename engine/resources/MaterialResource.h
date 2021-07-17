@@ -25,7 +25,7 @@ namespace Resources
 
 namespace render
 {
-	class MaterialResourceList : public std::vector<Resources::MaterialResource::Handle>, public Common::Resource
+	class MaterialResourceList : public std::vector<Resources::MaterialResource::Handle>//, public Common::Resource
 	{
 	public:
 		using Handle = std::shared_ptr<MaterialResourceList>;

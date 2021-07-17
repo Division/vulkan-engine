@@ -46,6 +46,8 @@ namespace Thread {
 		workloads[static_cast<size_t>(job->priority)]->JobCompleted(job);
 		job->~Job();
 		allocator.Deallocate(job);
+
+		all_job_count -= 1;
 	}
 
 	bool WorkloadSet::HasJobs(Job::Priority priority)
@@ -66,6 +68,7 @@ namespace Thread {
 
 	void WorkloadSet::Add(Job* job, Job::Priority priority)
 	{
+		all_job_count += 1;
 		job->priority = priority;
 		workloads[static_cast<size_t>(priority)]->Add(job);
 		condition.notify_one();
@@ -185,6 +188,14 @@ namespace Thread {
 	{
 		while (workload_set.HasJobs(priority))
 			std::this_thread::yield();
+	}
+
+	void Scheduler::WaitAll()
+	{
+		while (workload_set.GetTotalJobCount() > 0)
+		{
+			std::this_thread::yield();
+		}
 	}
 
 	void Scheduler::RethrowExceptions()

@@ -1,10 +1,8 @@
 Engine roadmap:
 - bone attachments
-- properly handle missing textures
 - top down shooter demo
 - Proper deletion of entities loaded from resource
 - export default materials from fbx (with texture paths)
-- properly export animations in fbx exporter
 - physics rendering interpolation
 - Fix logging, log from multiple threads
 - Fix and migrate lighting, decals, shadowmaps to ECS
@@ -18,6 +16,9 @@ Check:
 - postprocess, changed HLSL texture binding but C++ side didn't see it changed
 
 -- Completed -----------------------------------
+- fix deadlock: resource loading exception during main thread resolve()
++ properly handle missing textures
++ properly export animations in fbx exporter
 + asset database and UI
 + export textures
 + DDS loading
