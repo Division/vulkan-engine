@@ -13,6 +13,7 @@ Engine roadmap:
 - Shader reloading
 - Multithreaded rendering
 - GUI library integration
+- bone attachment
 
 Check:
 - postprocess, changed HLSL texture binding but C++ side didn't see it changed

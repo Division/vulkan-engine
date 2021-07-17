@@ -9,6 +9,7 @@ bin/shaders_compiled
 bin/*.obj
 bin/*.manifest
 bin/*.opt
+bin/shaders
 *.mayaSwatches
 *.exe
 *.ilk

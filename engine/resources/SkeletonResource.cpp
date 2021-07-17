@@ -57,6 +57,9 @@ namespace Resources
 			bindpose_matrices[i] = (mat4x4&)model_matrices[i];
 			inv_bindpose_matrices[i] = glm::inverse((mat4x4&)model_matrices[i]);
 		}
+
+		for (uint32_t i = 0; i < skeleton->num_joints(); i++)
+			bone_name_to_index_map[skeleton->joint_names()[i]] = i;
 	}
 	
 	SkeletonResource::~SkeletonResource()

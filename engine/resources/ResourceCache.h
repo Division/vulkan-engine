@@ -90,6 +90,7 @@ namespace Resources
 			{
 				Allocator allocator;
 				resource->resource_memory = allocator.allocate(1);
+				resource->resource_ptr = reinterpret_cast<volatile T*>(resource->resource_memory);
 				resource->create_callback(resource->resource_memory, resource->param.get());
 
 				resource->state = State::Loaded;
@@ -141,6 +142,9 @@ namespace Resources
 			if (state == State::Unloading)
 				Wait(State::Unloaded);
 		}
+
+	private:
+		volatile T* resource_ptr = nullptr;
 
 	public:
 		Resource(const std::wstring& path) : ResourceBase(path, FastHash(path)

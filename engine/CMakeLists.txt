@@ -74,6 +74,7 @@ set(ENGINE_SOURCES
 	ecs/components/Light.cpp
 	ecs/components/Physics.h
 	ecs/components/AnimationController.h
+	ecs/components/BoneAttachment.h
 	ecs/systems/TransformSystem.h
 	ecs/systems/TransformSystem.cpp
 	ecs/systems/RendererSystem.h

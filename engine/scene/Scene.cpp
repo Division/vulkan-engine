@@ -12,6 +12,7 @@
 #include "ecs/components/Light.h"
 #include "ecs/components/Physics.h"
 #include "ecs/components/AnimationController.h"
+#include "ecs/components/BoneAttachment.h"
 #include "render/renderer/DrawCallManager.h"
 #include "render/debug/DebugSettings.h"
 #include "render/debug/DebugDraw.h"
@@ -45,6 +46,7 @@ Scene::Scene(IGame& game, render::DebugSettings* settings)
     physics_post_update_system = std::make_unique<systems::PhysicsPostUpdateSystem>(*entity_manager);
     physx_manager = std::make_unique<Physics::PhysXManager>(game.GetPhysicsDelegate(), delta_time_static.get());
     skinning_system = std::make_unique<systems::SkinningSystem>(*entity_manager);
+    bone_attachment_system = std::make_unique<systems::BoneAttachmentSystem>(*entity_manager);
 }
 
 void Scene::Update(IGame& game, float dt)
@@ -130,17 +132,21 @@ void Scene::ProcessPhysicsSystems()
 void Scene::ProcessTransformSystems()
 {
     // List of objects with top level transforms both with and without children
-    auto top_level_list = entity_manager->GetChunkLists([](ChunkList* chunk_list) {
+
+    auto transform_list = entity_manager->GetChunkListsWithComponent<components::Transform>();
+    auto top_level_list = ECS::ExtractChunkList(transform_list, [](ECS::ChunkList* chunk_list) {
         auto child_hash = GetComponentHash<components::ChildTransform>();
-        auto transform_hash = GetComponentHash<components::Transform>();
-        return !chunk_list->HasComponent(child_hash) && chunk_list->HasComponent(transform_hash);
+        return !chunk_list->HasComponent(child_hash);
     });
 
     // List of objects with top level transforms that have children
     auto root_list = entity_manager->GetChunkListsWithComponents<components::RootTransform, components::Transform>();
 
+    auto bone_attachment_list = entity_manager->GetChunkListsWithComponents<components::BoneAttachment, components::Transform>();
+
     no_child_system->ProcessChunks(top_level_list);
     root_transform_system->ProcessChunks(root_list);
+    bone_attachment_system->ProcessChunks(bone_attachment_list);
 }
 
 void Scene::ProcessRendererSystems()

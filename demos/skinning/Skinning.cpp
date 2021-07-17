@@ -4,6 +4,7 @@
 #include "system/Input.h"
 #include "ecs/components/Static.h"
 #include "ecs/components/AnimationController.h"
+#include "ecs/components/BoneAttachment.h"
 #include "scene/Scene.h"
 #include "render/debug/DebugDraw.h"
 #include "render/texture/Texture.h"
@@ -66,8 +67,9 @@ void Game::init()
 	auto plane_handle = Resources::EntityResource::Handle(L"assets/Entities/Basic/Ground/stylized/plane10_soil_water.entity");
 	plane_handle->Spawn(vec3(0));
 
-	//auto scifi_box_handle = Resources::EntityResource::Handle(L"assets/Entities/Basic/Crates/crate_scifi.entity");
-	//auto scifi_box_id = scifi_box_handle->Spawn(vec3(1, 2, 3));
+	auto scifi_box_handle = Resources::EntityResource::Handle(L"assets/Entities/Cube/cube.entity");
+	auto scifi_box_id = scifi_box_handle->Spawn(vec3(0, 0, 0));
+	manager->GetComponent<components::Transform>(scifi_box_id)->scale = vec3(0.2);
 	//manager->GetComponent<components::Transform>(scifi_box_id)->rotation = glm::angleAxis((float)M_PI * 4.8f, vec3(0, 1, 0)) * glm::angleAxis((float)M_PI * 4.8f, vec3(1, 0, 0));
 
 	//auto sphere_mirror_handle = Resources::EntityResource::Handle(L"assets/Entities/Basic/Spheres/sphere_mirror.entity");
@@ -80,7 +82,12 @@ void Game::init()
 
 	animated_entity_id = animated_entity->Spawn(vec3(5, 0, 0));
 	controller = manager->GetComponent<components::AnimationController>(animated_entity_id);
-	controller->mixer->PlayAnimation(animation, SkeletalAnimation::PlaybackMode::Loop);
+	auto anim_handle = controller->mixer->PlayAnimation(animation, SkeletalAnimation::PlaybackMode::Loop);
+	anim_handle.SetSpeed(0.1f);
+
+	auto bone_attachment = manager->AddComponent<components::BoneAttachment>(scifi_box_id);
+	bone_attachment->entity_id = animated_entity_id;
+	bone_attachment->joint_index = controller->mixer->GetSkeleton()->GetJointIndex("Wing2_L");
 }
 
 void Game::UpdatePhysics(float dt)
