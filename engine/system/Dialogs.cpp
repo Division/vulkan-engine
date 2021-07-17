@@ -105,4 +105,37 @@ namespace System {
 #endif
         return "";
     }
+
+    std::wstring BrowseFile(std::wstring initial_dir, bool path_must_exist)
+    {
+#if defined(_WIN32)
+        OPENFILENAMEW ofn;       // common dialog box structure
+        wchar_t szFile[260];       // buffer for file name
+        HWND hwnd = glfwGetWin32Window(Engine::Get()->GetWindow());
+
+        // Initialize OPENFILENAME
+        ZeroMemory(&ofn, sizeof(ofn));
+        ofn.lStructSize = sizeof(ofn);
+        ofn.hwndOwner = hwnd;
+        ofn.lpstrFile = szFile;
+        // Set lpstrFile[0] to '\0' so that GetOpenFileName does not 
+        // use the contents of szFile to initialize itself.
+        ofn.lpstrFile[0] = '\0';
+        ofn.lpstrFileTitle = L"Test title";
+        ofn.nMaxFile = sizeof(szFile);
+        ofn.lpstrFilter = L"All\0*.*\0Map json\0*.json\0";
+        ofn.nFilterIndex = 1;
+        ofn.lpstrFileTitle = NULL;
+        ofn.nMaxFileTitle = 0;
+        ofn.lpstrInitialDir = initial_dir.c_str();
+        if (path_must_exist)
+            ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
+
+        // Display the Open dialog box. 
+
+        if (GetOpenFileNameW(&ofn) == TRUE)
+            return ofn.lpstrFile;
+#endif
+        return L"";
+    }
 }
