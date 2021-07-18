@@ -249,7 +249,7 @@ set(GLFW_INSTALL false)
 add_subdirectory(lib/glfw-3.3)
 set(EXPORT_TARGETS ${EXPORT_TARGETS} glfw) # remove?
 
-set(OPTICK_ENABLED true)
+set(OPTICK_ENABLED false)
 set(OPTICK_USE_VULKAN false)
 set(ozz_build_tools false)
 set(ozz_build_fbx false)
