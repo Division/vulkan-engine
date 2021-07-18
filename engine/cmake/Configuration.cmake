@@ -2,8 +2,10 @@ set(vk_engine_bin_dir ${CMAKE_CURRENT_LIST_DIR}/../../bin)
 
 function(vk_engine_set_build_params)
 	set(CMAKE_CXX_STANDARD 17 PARENT_SCOPE)
+	set(CMAKE_POLICY_DEFAULT_CMP0077 NEW PARENT_SCOPE)
 
 	if (MSVC)
+		cmake_policy(SET CMP0091 NEW)
 		set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>" PARENT_SCOPE)
 	endif()
 
