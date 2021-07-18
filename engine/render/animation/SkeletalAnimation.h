@@ -81,6 +81,16 @@ namespace SkeletalAnimation
 				return true;
 			}
 
+			bool SetSpeed(float speed)
+			{
+				if (auto instance = weak_reference.lock())
+					instance->SetSpeed(speed);
+				else
+					return false;
+
+				return true;
+			}
+
 		private:
 			std::weak_ptr<AnimationInstance> weak_reference;
 		};

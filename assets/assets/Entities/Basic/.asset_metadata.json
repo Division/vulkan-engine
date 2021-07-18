@@ -10,9 +10,19 @@
         "uid": "13b264ae457d547b"
     },
     {
+        "type": "copy",
+        "filename": "cube.entity",
+        "uid": "30ed4f87b317bfb5"
+    },
+    {
         "type": "fbx",
         "filename": "figures.fbx",
         "uid": "3ee877fe1f012888",
         "export_type": "Mesh"
+    },
+    {
+        "type": "copy",
+        "filename": "white.mat",
+        "uid": "97e5e14e4cd3b3ab"
     }
 ]

@@ -1,0 +1,9 @@
+{
+    "texture0": null,
+    "normal_map": null,
+    "lighting_enabled": true,
+    "vertex_color_enabled": false,
+    "roughness": 0.4,
+    "metallness": 0.6,
+    "color": [1, 1, 1, 1]
+}

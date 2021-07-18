@@ -349,6 +349,28 @@ namespace ECS {
 		std::unique_ptr<Chunk> first;
 	};
 
+	inline ChunkList::List ExtractChunkList(ChunkList::List& inout_list, std::function<bool(ChunkList*)> predicate, bool delete_from_src = false)
+	{
+		ChunkList::List result;
+
+		auto iterator = inout_list.begin();
+		while (iterator != inout_list.end())
+		{
+			if (predicate(*iterator))
+			{
+				result.push_back(*iterator);
+				if (delete_from_src)
+					iterator = result.erase(iterator);
+				else
+					iterator++;
+			}
+			else
+				iterator++;
+		}
+
+		return result;
+	}
+
 	// For cache-friendly component fetching
 	template <typename T>
 	class ComponentFetcher

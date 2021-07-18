@@ -14,6 +14,12 @@ namespace utils
 		bool operator()(const wchar_t* a, const wchar_t* b) const { return wcscmp(a, b) == 0; }
 	};
 
+	struct HasherChar
+	{
+		size_t operator()(const char* key) const { return (size_t)FastHash64((void*)key, strlen(key) * sizeof(char)); }
+		bool operator()(const char* a, const char* b) const { return strcmp(a, b) == 0; }
+	};
+
 	void ReplaceAll(std::wstring& src, const std::wstring& search, const std::wstring& replacement);
 
 	template <typename T>

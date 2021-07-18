@@ -15,6 +15,15 @@ namespace ECS::systems {
 
 	};
 
+	class BoneAttachmentSystem : public System
+	{
+	public:
+		BoneAttachmentSystem(EntityManager& manager)
+			: System(manager, false)
+		{}
+
+		void Process(Chunk* chunk) override;
+	};
 
 	class DebugDrawSkinningSystem : public System
 	{

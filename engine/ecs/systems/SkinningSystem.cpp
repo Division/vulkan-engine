@@ -1,6 +1,7 @@
 #include "SkinningSystem.h"
 #include "Engine.h"
 #include "ecs/components/AnimationController.h"
+#include "ecs/components/BoneAttachment.h"
 #include "ecs/components/Static.h"
 #include "ecs/components/Transform.h"
 #include "ecs/components/DrawCall.h"
@@ -62,6 +63,33 @@ namespace ECS::systems {
 		}
 	}
 
+	void BoneAttachmentSystem::Process(Chunk* chunk)
+	{
+		ComponentFetcher<components::Transform> transform_fetcher(*chunk);
+		ComponentFetcher<components::BoneAttachment> bone_attachment_fetcher(*chunk);
+
+		for (int i = 0; i < chunk->GetEntityCount(); i++)
+		{
+			auto* transform = transform_fetcher.GetComponent(i);
+			auto* bone_attachment = bone_attachment_fetcher.GetComponent(i);
+
+			auto* parent_transform = manager.GetComponent<components::Transform>(bone_attachment->entity_id);
+			auto* parent_animation_controller = manager.GetComponent<components::AnimationController>(bone_attachment->entity_id);
+
+			assert(parent_transform && parent_animation_controller);
+			if (!parent_transform || !parent_animation_controller)
+				continue;
+
+			auto model_matrices = parent_animation_controller->mixer->GetModelMatrices();
+			assert(model_matrices.size() > bone_attachment->joint_index);
+			if (model_matrices.size() <= bone_attachment->joint_index)
+				continue;
+
+			auto child_matrix = ComposeMatrix(transform->position, transform->rotation, transform->scale);
+			auto parent_matrix = parent_transform->local_to_world * (mat4&)model_matrices[bone_attachment->joint_index];
+			transform->local_to_world = parent_matrix * child_matrix;
+		}
+	}
 	
 	void DebugDrawSkinningSystem::Process(Chunk* chunk)
 	{

@@ -106,6 +106,7 @@ namespace Resources
 					Allocator allocator;
 					resource->resource_memory = allocator.allocate(1);
 					resource->create_callback(resource->resource_memory, resource->param.get());
+					resource->resource_ptr = reinterpret_cast<volatile T*>(resource->resource_memory);
 					resource->state = State::Loaded;
 				}
 				catch (...)
@@ -163,6 +164,8 @@ namespace Resources
 				Wait(State::Unloaded);
 		}
 
+	private:
+		volatile T* resource_ptr = nullptr;
 
 	public:
 		Resource(const ResourceBase::WCharInitializer& initializer) : ResourceBase(initializer.GetPath(), initializer.GetHash()
