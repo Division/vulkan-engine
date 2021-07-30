@@ -17,6 +17,7 @@
 #include "Handle.h"
 #include "system/JobSystem.h"
 #include "system/Dialogs.h"
+#include "GUI/GUI.h"
 
 Engine* Engine::instance;
 
@@ -85,6 +86,7 @@ Engine::Engine(std::unique_ptr<IGame> game) : game(std::move(game))
 
 	render::DebugUI::Initialize(window, shader_cache.get(), *scene_renderer->GetEnvironmentSettings(), *debug_settings);
 
+	GUI::Initialize();
 	this->game->init();
 
 	Thread::Scheduler::Get().Wait(Thread::Job::Priority::Low);
@@ -96,6 +98,7 @@ Engine::Engine(std::unique_ptr<IGame> game) : game(std::move(game))
 Engine::~Engine()
 {
 	render::DebugUI::Deinitialize();
+	GUI::Deinitialize();
 
 	game->cleanup();
 	game = nullptr;
@@ -165,7 +168,7 @@ void Engine::MainLoop()
 		glfwPollEvents();
 			
 		render::DebugUI::NewFrame();
-
+		GUI::Update(dt);
 		input->update();
 		scene->Update(*game, dt);
 		debug_draw->Update();

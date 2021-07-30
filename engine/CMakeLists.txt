@@ -87,6 +87,8 @@ set(ENGINE_SOURCES
 	ecs/systems/UpdateDrawCallsSystem.cpp
 	ecs/systems/SkinningSystem.h
 	ecs/systems/SkinningSystem.cpp
+	GUI/GUI.h
+	GUI/GUI.cpp
 	memory/Profiler.h
 	memory/Profiler.cpp
 	memory/Allocator.h
@@ -265,16 +267,21 @@ set(ozz_build_postfix false)
 
 set(OPTICK_BUILD_CONSOLE_SAMPLE, false)
 
+set(FREETYPE_LIBRARY ${CMAKE_CURRENT_SOURCE_DIR}/lib/static/freetype/freetype.lib)
+set(FREETYPE_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/lib)
+
 add_subdirectory(lib/glm)
 add_subdirectory(lib/SPIRV-Cross)
 add_subdirectory(lib/optick)
 add_subdirectory(lib/ozz-animation)
+add_subdirectory(lib/RmlUi)
 
 add_library(vk_engine ${ENGINE_SOURCES})
 target_compile_definitions(vk_engine PUBLIC VK_USE_PLATFORM_WIN32_KHR)
 target_include_directories(vk_engine PUBLIC ./ lib)
 target_include_directories(vk_engine PUBLIC Vulkan::Vulkan)
 target_include_directories(vk_engine PUBLIC ozz_animation)
+target_include_directories(vk_engine PUBLIC RmlCore)
 target_link_libraries(vk_engine glfw)
 target_link_libraries(vk_engine Vulkan::Vulkan)
 target_link_libraries(vk_engine spirv-cross-core)
@@ -283,12 +290,15 @@ target_link_libraries(vk_engine spirv-cross-cpp)
 target_link_libraries(vk_engine spirv-cross-reflect)
 target_link_libraries(vk_engine OptickCore)
 target_link_libraries(vk_engine ozz_animation)
+target_link_libraries(vk_engine RmlCore)
+
 # dll .lib files
 target_link_libraries(vk_engine ${CMAKE_CURRENT_SOURCE_DIR}/lib/static/dxc/dxcompiler.lib)
 target_link_libraries(vk_engine ${CMAKE_CURRENT_SOURCE_DIR}/lib/static/physx/PhysX_64.lib)
 target_link_libraries(vk_engine ${CMAKE_CURRENT_SOURCE_DIR}/lib/static/physx/PhysXCommon_64.lib)
 target_link_libraries(vk_engine ${CMAKE_CURRENT_SOURCE_DIR}/lib/static/physx/PhysXFoundation_64.lib)
 target_link_libraries(vk_engine ${CMAKE_CURRENT_SOURCE_DIR}/lib/static/physx/PhysXCooking_64.lib)
+target_link_libraries(vk_engine ${FREETYPE_LIBRARY})
 
 # static .lib files
 if (${CMAKE_BUILD_TYPE} STREQUAL "Debug")
