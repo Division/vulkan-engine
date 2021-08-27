@@ -1,0 +1,22 @@
+[
+    {
+        "id":  "test",
+        "components": [
+            {
+                "type": "Transform"
+            },
+            {
+                "type": "MultiMeshRenderer",
+                "path": "assets/top-down-shooter/characters/uetest/manequin.mesh",
+                "materials": 
+                {
+                    "default" : "assets/top-down-shooter/characters/uetest/player.mat"
+                }
+            },
+            {
+                "type": "AnimationController",
+                "skeleton": "assets/top-down-shooter/characters/uetest/ManequinMesh.skel"
+            }
+        ]
+    }
+]
