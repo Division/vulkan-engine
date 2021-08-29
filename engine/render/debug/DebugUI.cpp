@@ -31,7 +31,7 @@ namespace render {
 			std::unique_ptr<DynamicBuffer<char>> index_buffers[2];
 			uint32_t current_buffer = 0;
 			ShaderProgram* shader = nullptr;
-			vk::DescriptorSet vk_descriptor_set;
+			DescriptorSet* descriptor_set = nullptr;
 			VertexLayout vertex_layout;
 			bool engine_stats_visible = true;
 			bool main_widget_visible = true;
@@ -100,14 +100,10 @@ namespace render {
 			vertex_buffers[0] = std::make_unique<DynamicBuffer<char>>(256, BufferType::Vertex, false);
 			index_buffers[0] = std::make_unique<DynamicBuffer<char>>(256, BufferType::Index, false);
 
-			ShaderBindings bindings;
-			auto* descriptor_set = shader->GetDescriptorSet(0);
-			assert(descriptor_set);
-			auto& binding = descriptor_set->bindings[0];
-			assert(binding.type == ShaderProgram::BindingType::SampledImage);
-			bindings.AddTextureBinding(binding.address.binding, font_texture.get());
+			ResourceBindings resource_bindings;
+			resource_bindings.AddTextureBinding("font_texture", font_texture.get());
 			auto descriptor_cache = Engine::GetVulkanContext()->GetDescriptorCache();
-			vk_descriptor_set = descriptor_cache->GetDescriptorSet(bindings, *descriptor_set);
+			descriptor_set = descriptor_cache->GetDescriptorSet(DescriptorSetBindings(resource_bindings, *shader->GetDescriptorSetLayout(0)));
 
 			vertex_layout = VertexLayout();
 			vertex_layout.AddAttrib(VertexAttrib::Position, Format::R32G32_float, sizeof(vec2));
@@ -224,7 +220,7 @@ namespace render {
 
 			state.PushConstants(ShaderProgram::Stage::Vertex, sizeof(float) * 0, sizeof(float) * 2, scale);
 			state.PushConstants(ShaderProgram::Stage::Vertex, sizeof(float) * 2, sizeof(float) * 2, translate);
-			state.SetDescriptorSet(vk_descriptor_set, 0, 0, nullptr);
+			state.SetDescriptorSet(*descriptor_set, 0, 0, nullptr);
 		}
 
 		void Render(VulkanRenderState& state)

@@ -57,7 +57,9 @@ Engine::Engine(std::unique_ptr<IGame> game) : game(std::move(game))
 	std::cout << "working directory: " << working_dir << std::endl;
 
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-	window = glfwCreateWindow(800, 600, "Vulkan engine", NULL, NULL);
+
+	const auto params = this->game->GetInitParams();
+	window = glfwCreateWindow(params.width, params.height, "Vulkan engine", NULL, NULL);
 
 	glfwSetWindowUserPointer(window, this);
 
