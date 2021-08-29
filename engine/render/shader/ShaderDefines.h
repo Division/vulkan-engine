@@ -7,7 +7,7 @@
 
 namespace Device {
 
-	enum DescriptorSet : int
+	enum DescriptorSetType : int
 	{
 		Global,
 		Object

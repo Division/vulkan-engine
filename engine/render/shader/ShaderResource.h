@@ -48,3 +48,11 @@ extern const std::map<std::string, ShaderTextureName> SHADER_TEXTURE_NAMES;
 extern const std::map<std::string, ShaderBufferName> SHADER_BUFFER_NAMES;
 extern const std::map<std::string, ShaderSamplerName> SHADER_SAMPLER_NAMES;
 extern const std::set<ShaderBufferName> SHADER_DYNAMIC_OFFSET_BUFFERS;
+
+namespace Device
+{
+	uint32_t GetShaderTextureNameHash(ShaderTextureName name);
+	uint32_t GetShaderBufferNameHash(ShaderBufferName name);
+	uint32_t GetShaderBufferHasDynamicOffset(uint32_t name_hash);
+
+}

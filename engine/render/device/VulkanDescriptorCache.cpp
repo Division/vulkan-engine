@@ -31,11 +31,13 @@ namespace Device {
 		descriptor_pool = device.createDescriptorPoolUnique(descriptor_pool_info);
 	}
 
-	vk::DescriptorSet VulkanDescriptorCache::GetDescriptorSet(const ShaderBindings& bindings, const ShaderProgram::DescriptorSet& descriptor_set)
+	DescriptorSet* VulkanDescriptorCache::GetDescriptorSet(const DescriptorSetBindings& bindings)
 	{
 		static thread_local DescriptorSetData set_data;
 
-		assert(descriptor_set.layout);
+		const auto& descriptor_set_layout = bindings.GetDescriptorSetLayout();
+
+		assert(descriptor_set_layout.layout);
 
 		memset(set_data.texture_bindings.data(), 0, sizeof(set_data.texture_bindings));
 		memset(set_data.buffer_bindings.data(), 0, sizeof(set_data.buffer_bindings));
@@ -59,7 +61,7 @@ namespace Device {
 		{
 			FastHash(set_data.texture_bindings.data(), sizeof(set_data.texture_bindings)),
 			FastHash(set_data.buffer_bindings.data(), sizeof(set_data.buffer_bindings)),
-			FastHash(&descriptor_set.layout.get(), sizeof(descriptor_set.layout.get())) // include layout into the hash
+			FastHash(&descriptor_set_layout.layout.get(), sizeof(descriptor_set_layout.layout.get())) // include layout into the hash
 		};
 
 		uint32_t hash = FastHash(hashes, sizeof(hashes));
@@ -68,15 +70,18 @@ namespace Device {
 			std::lock_guard<std::mutex> lock(mutex);
 			auto iter = set_map.find(hash);
 			if (iter != set_map.end())
-				return iter->second;
+				return iter->second.get();
 		}
 
-		vk::DescriptorSet result = CreateDescriptorSet(set_data, hash, descriptor_set);
-		set_map.insert(std::make_pair(hash, result));
-		return result;
+		auto vk_descriptor_set = CreateDescriptorSet(set_data, hash, descriptor_set_layout);
+		{
+			std::lock_guard<std::mutex> lock(mutex);
+			auto it = set_map.insert(std::make_pair(hash, std::make_unique<DescriptorSet>(bindings, &descriptor_set_layout, vk_descriptor_set)));
+			return it.first->second.get();
+		}
 	}
 
-	vk::DescriptorSet VulkanDescriptorCache::CreateDescriptorSet(DescriptorSetData& data, uint32_t hash, const ShaderProgram::DescriptorSet& descriptor_set)
+	vk::DescriptorSet VulkanDescriptorCache::CreateDescriptorSet(DescriptorSetData& data, uint32_t hash, const ShaderProgram::DescriptorSetLayout& descriptor_set)
 	{
 		auto& layout = descriptor_set.layout.get();
 
@@ -156,11 +161,6 @@ namespace Device {
 		}
 
 		device.updateDescriptorSets(writes.size(), writes.data(), 0, nullptr);
-
-		{
-			std::lock_guard<std::mutex> lock(mutex);
-			set_map.insert(std::make_pair(hash, result));
-		}
 
 		return result;
 	}

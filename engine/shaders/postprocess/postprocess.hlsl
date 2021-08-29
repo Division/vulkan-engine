@@ -29,7 +29,7 @@ VS_out vs_main(VS_in input)
 
 SamplerState SamplerLinearClamp;
 
-[[vk::binding(0, 1)]] Texture2D src_texture : register(t0);
+Texture2D src_texture : register(t0);
 
 /*
 struct Pixel

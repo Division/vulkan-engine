@@ -45,7 +45,7 @@ namespace Device {
 		{
 			UniformBufferData data;
 			data.id = ubo.id;
-			data.name = ubo.name;
+			data.name = ConvertHLSLName(ubo.name);
 			data.set = compiler.get_decoration(ubo.id, spv::DecorationDescriptorSet);
 			data.binding = compiler.get_decoration(ubo.id, spv::DecorationBinding);
 			data.shader_buffer = SHADER_BUFFER_NAMES.at(ConvertHLSLName(ubo.name)); // TODO: support for Unknown arbitrary buffer / sampler names
@@ -97,7 +97,7 @@ namespace Device {
 		{
 			StorageBufferData data;
 			data.id = storage_buffer.id;
-			data.name = storage_buffer.name;
+			data.name = ConvertHLSLName(storage_buffer.name);
 			data.set = compiler.get_decoration(storage_buffer.id, spv::DecorationDescriptorSet);
 			data.binding = compiler.get_decoration(storage_buffer.id, spv::DecorationBinding);
 			auto iter = SHADER_BUFFER_NAMES.find(ConvertHLSLName(storage_buffer.name));

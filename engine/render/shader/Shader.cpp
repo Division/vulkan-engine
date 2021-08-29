@@ -7,7 +7,7 @@
 
 namespace Device {
 	
-	uint32_t ShaderProgram::DescriptorSet::GetBindingIndexByName(std::string name)
+	uint32_t ShaderProgram::DescriptorSetLayout::GetBindingIndexByName(std::string name)
 	{
 		for (uint32_t i = 0; i < bindings.size(); i++)
 			if (bindings[i].name == name)
@@ -121,6 +121,7 @@ namespace Device {
 				existing_bindings[std::make_pair(set, binding)] = descriptor_set.bindings.size() - 1;
 				binding_data = &descriptor_set.bindings.back();
 				binding_data->name = name;
+				binding_data->name_hash = GetParameterNameHash(name);
 				binding_data->address = { set, binding };
 				binding_data->stage_flags = (unsigned)stage;
 				binding_data->id = id;
@@ -268,6 +269,11 @@ namespace Device {
 	{
 		std::array<uint32_t, 3> combined = { vertex_hash, fragment_hash, compute_hash };
 		return FastHash(combined.data(), sizeof(combined));
+	}
+
+	uint32_t ShaderProgram::GetParameterNameHash(const std::string& name)
+	{
+		return FastHash(name);
 	}
 
 	const char* ShaderProgram::GetEntryPoint(Stage stage) const

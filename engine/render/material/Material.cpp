@@ -28,9 +28,19 @@ void Material::SetDirty()
 	caps_dirty = true;
 }
 
-void Material::Texture0(Device::Handle<Device::Texture> texture) {
-	texture0 = texture;
-	texture0_resource = TextureResource::Handle();
+void Material::SetBindingsDirty()
+{
+	bindings_dirty = true;
+}
+
+void Material::Texture0(Device::Handle<Device::Texture> texture) 
+{
+	if (texture0 != texture)
+	{
+		texture0 = texture;
+		texture0_resource = TextureResource::Handle();
+		SetBindingsDirty();
+	}
 
 	if ((bool)texture != has_texture0) {
 		has_texture0 = (bool)texture;
@@ -38,10 +48,24 @@ void Material::Texture0(Device::Handle<Device::Texture> texture) {
 	}
 }
 
+Texture* Material::GetTexture0() const
+{
+	if (!has_texture0) return nullptr;
+
+	if (!GetTexture0Resource() && Texture0())
+		return Texture0().get();
+	else
+		return GetTexture0Resource()->Get().get();
+}
+
 void Material::NormalMap(Device::Handle<Device::Texture> normal_map) 
 {
-	this->normal_map = normal_map;
-	normal_map_resource = TextureResource::Handle();
+	if (this->normal_map != normal_map)
+	{
+		this->normal_map = normal_map;
+		normal_map_resource = TextureResource::Handle();
+		SetBindingsDirty();
+	}
 
 	if ((bool)normal_map != has_normal_map) {
 		has_normal_map = (bool)normal_map;
@@ -49,10 +73,24 @@ void Material::NormalMap(Device::Handle<Device::Texture> normal_map)
 	}
 }
 
+Device::Texture* Material::GetNormalMap() const
+{
+	if (!has_normal_map) return nullptr;
+
+	if (!GetNormalMapResource() && NormalMap())
+		return NormalMap().get();
+	else
+		return GetNormalMapResource()->Get().get();
+}
+
 void Material::SetTexture0Resource(TextureResource::Handle texture)
 {
-	texture0_resource = texture;
-	this->texture0.Reset();
+	if (texture0_resource != texture)
+	{
+		texture0_resource = texture;
+		this->texture0.Reset();
+		SetBindingsDirty();
+	}
 
 	if ((bool)texture0_resource != has_texture0) {
 		has_texture0 = (bool)texture;
@@ -62,8 +100,12 @@ void Material::SetTexture0Resource(TextureResource::Handle texture)
 
 void Material::SetNormalMapResource(Resources::TextureResource::Handle normal_map)
 {
-	this->normal_map_resource = normal_map;
-	this->normal_map.Reset();
+	if (this->normal_map_resource != normal_map)
+	{
+		this->normal_map_resource = normal_map;
+		this->normal_map.Reset();
+		SetBindingsDirty();
+	}
 
 	if ((bool)normal_map_resource != has_normal_map) {
 		has_normal_map = (bool)normal_map;
@@ -71,21 +113,24 @@ void Material::SetNormalMapResource(Resources::TextureResource::Handle normal_ma
 	}
 }
 
-void Material::LightingEnabled(bool lighting_enabled_) {
+void Material::LightingEnabled(bool lighting_enabled_)
+{
 	if (lighting_enabled_ != lighting_enabled) {
 		lighting_enabled = lighting_enabled_;
 		SetDirty();
 	}
 }
 
-void Material::VertexColorEnabled(bool vertex_color_enabled_) {
+void Material::VertexColorEnabled(bool vertex_color_enabled_)
+{
 	if (vertex_color_enabled_ != vertex_color_enabled) {
 		vertex_color_enabled = vertex_color_enabled_;
 		SetDirty();
 	}
 }
 
-void Material::UpdateCaps() const {
+void Material::UpdateCaps() const
+{
 	if (!caps_dirty) return;
 
 	if (has_texture0) {
@@ -151,6 +196,21 @@ void Material::UpdateShaderHash() const
 	depth_only_shader_info_skinning.AddShader(ShaderProgramInfo::ShaderData(fragment_depth_only_data));
 
 	shader_hash_dirty = false;
+}
+
+void Material::UpdateBindings() const
+{
+	if (!bindings_dirty)
+		return;
+
+	resource_bindings.Clear();
+	if (has_texture0)
+		resource_bindings.AddTextureBinding(Device::GetShaderTextureNameHash(ShaderTextureName::Texture0), GetTexture0());
+
+	if (has_normal_map)
+		resource_bindings.AddTextureBinding(Device::GetShaderTextureNameHash(ShaderTextureName::NormalMap), GetNormalMap());
+
+	bindings_dirty = false;
 }
 
 uint32_t Material::GetHash() const

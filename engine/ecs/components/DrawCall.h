@@ -8,6 +8,7 @@
 namespace Device
 {
 	class ShaderProgram;
+	class DescriptorSet;
 }
 
 namespace ECS::components {
@@ -21,9 +22,9 @@ namespace ECS::components {
 		OBB obb;
 		Device::ShaderBufferStruct::ObjectParams object_params;
 		Device::ShaderProgram* shader = nullptr;
-		vk::DescriptorSet descriptor_set;
+		Device::DescriptorSet* descriptor_set = nullptr;
 		Device::ShaderProgram* depth_only_shader = nullptr;
-		vk::DescriptorSet depth_only_descriptor_set;
+		Device::DescriptorSet* depth_only_descriptor_set = nullptr;
 		uint32_t dynamic_offset = 0;
 		uint32_t skinning_dynamic_offset = -1;
 		uint32_t visible = 0;

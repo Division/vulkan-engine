@@ -44,6 +44,11 @@ public:
 		return resource == other.resource;
 	}
 
+	bool operator!=(const Handle& other)
+	{
+		return !(*this == other);
+	}
+
 	~Handle()
 	{
 		AddToReleaser(resource);
