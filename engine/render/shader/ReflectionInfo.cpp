@@ -2,6 +2,8 @@
 #include "ShaderDefines.h"
 #include "ShaderResource.h"
 #include "utils/StringUtils.h"
+#include "Shader.h"
+#include <optional>
 
 namespace Device {
 
@@ -18,6 +20,36 @@ namespace Device {
 		}
 
 		return str;
+	}
+
+	ReflectionInfo::UniformBufferData ReflectionInfo::GetUniformBufferData(spirv_cross::Resource& ubo, spirv_cross::CompilerGLSL& compiler)
+	{
+		UniformBufferData data;
+		data.id = ubo.id;
+		data.name = ConvertHLSLName(ubo.name);
+		data.name_hash = ShaderProgram::GetParameterNameHash(data.name);
+		data.set = compiler.get_decoration(ubo.id, spv::DecorationDescriptorSet);
+		data.binding = compiler.get_decoration(ubo.id, spv::DecorationBinding);
+		auto it = SHADER_BUFFER_NAMES.find(ConvertHLSLName(ubo.name));
+		data.shader_buffer = it == SHADER_BUFFER_NAMES.end() ? ShaderBufferName::Default : it->second;
+
+		const auto& type = compiler.get_type(ubo.base_type_id);
+		data.size = (uint32_t)compiler.get_declared_struct_size(type);
+
+		unsigned member_count = type.member_types.size();
+		for (unsigned i = 0; i < member_count; i++)
+		{
+			BufferMember member;
+
+			member.name = compiler.get_member_name(type.self, i);
+			member.size = compiler.get_declared_struct_member_size(type, i);
+			member.offset = compiler.type_struct_member_offset(type, i);
+			member.name_hash = ShaderProgram::GetParameterNameHash(member.name);
+
+			data.members.emplace_back(std::move(member));
+		}
+
+		return data;
 	}
 
 	ReflectionInfo::ReflectionInfo(uint32_t* spirv_data, size_t count)
@@ -43,14 +75,7 @@ namespace Device {
 
 		for (auto& ubo : resources.uniform_buffers)
 		{
-			UniformBufferData data;
-			data.id = ubo.id;
-			data.name = ConvertHLSLName(ubo.name);
-			data.set = compiler.get_decoration(ubo.id, spv::DecorationDescriptorSet);
-			data.binding = compiler.get_decoration(ubo.id, spv::DecorationBinding);
-			data.shader_buffer = SHADER_BUFFER_NAMES.at(ConvertHLSLName(ubo.name)); // TODO: support for Unknown arbitrary buffer / sampler names
-
-			uniform_buffers.push_back(data);
+			uniform_buffers.push_back(GetUniformBufferData(ubo, compiler));
 		}
 
 		for (auto& input : resources.stage_inputs)

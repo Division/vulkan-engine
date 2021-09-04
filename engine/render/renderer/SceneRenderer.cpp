@@ -99,6 +99,7 @@ namespace render {
 		shadowmap_attachment = std::make_unique<VulkanRenderTargetAttachment>("Shadowmap", VulkanRenderTargetAttachment::Type::Depth, ShadowAtlasSize(), ShadowAtlasSize(), Format::D24_unorm_S8_uint);
 
 		global_resource_bindings = std::make_unique<Device::ResourceBindings>();
+		global_constant_bindings = std::make_unique<Device::ConstantBindings>();
 
 		brdf_lut = TextureResource::Linear(L"assets/Textures/LUT/brdf_lut.ktx");
 
@@ -130,11 +131,6 @@ namespace render {
 
 		blank_cube_texture = Device::Texture::Create(cube_initializer);
 		
-
-		Material material(L"shaders/global_bindings.hlsl");
-		material.LightingEnabled(true); // For now it's enough to get all the global bindings
-		global_bindings_program = shader_cache->GetShaderProgram(material.GetShaderInfo());
-
 		/*auto compute_shader_info = ShaderProgramInfo()
 			.AddShader(ShaderProgram::Stage::Compute, L"shaders/test.comp");
 		compute_program = shader_cache->GetShaderProgram(compute_shader_info);
@@ -258,44 +254,37 @@ namespace render {
 		}
 		*/
 
-		auto* object_params_buffer = scene_buffers->GetObjectParamsBuffer();
-		auto* skinning_matrices_buffer = scene_buffers->GetSkinningMatricesBuffer();
-		object_params_buffer->Map();
-		skinning_matrices_buffer->Map();
-
 		UploadDrawCalls();
 
-		auto* env_settings_buffer = scene_buffers->GetEnvironmentSettingsBuffer();
-		env_settings_buffer->Map();
-		env_settings_buffer->Append(GetEnvSettings(*environment_settings));
-		env_settings_buffer->Unmap();
+		auto main_camera = GetCameraData(scene.GetCamera(), scene.GetCamera()->cameraViewSize());
+		global_constant_bindings->AddDataBinding(&main_camera, sizeof(main_camera), "camera");
 
-		auto* camera_buffer = scene_buffers->GetCameraBuffer();
-		camera_buffer->Map();
-		camera_buffer->Append(GetCameraData(scene.GetCamera(), scene.GetCamera()->cameraViewSize()));
+		auto environment_data = GetEnvSettings(*environment_settings);
+		global_constant_bindings->AddDataBinding(&environment_data, sizeof(environment_data), "environment");
+
 		auto draw_calls = draw_call_manager->GetDrawCallChunks();
 
 		systems::CullingSystem main_camera_culling_system(*draw_call_manager, scene.GetCamera()->GetFrustum());
 		main_camera_culling_system.ProcessChunks(draw_calls);
 
 		Frustum directional_light_frustum;
-		size_t directional_light_camera_offset = 0;
+		ShaderBufferStruct::Camera directional_light_camera = {};
 		if (directional_light_cast_shadows)
 			directional_light_frustum = environment_settings->directional_light->GetFrustum();
+
 		systems::CullingSystem directional_light_culling_system(*draw_call_manager, directional_light_frustum);
+
 		if (directional_light_cast_shadows)
 		{
+			directional_light_camera = GetCameraData(environment_settings->directional_light, uvec2(0, 0));
 			directional_light_culling_system.ProcessChunks(draw_calls);
-			directional_light_camera_offset = camera_buffer->Append(GetCameraData(environment_settings->directional_light, uvec2(0, 0)));
 		}
 
 		for (auto& shadow_caster : shadow_casters)
 		{
 			shadow_caster.culling.ProcessChunks(draw_calls); // Cull and fill draw call list
-			shadow_caster.camera_offset = camera_buffer->Append(GetCameraData(shadow_caster.light, uvec2(0, 0)));
 		}
 
-		camera_buffer->Unmap();
 		shadow_map->SetupShadowCasters(shadow_casters);
 
 		// Light grid setup
@@ -306,9 +295,6 @@ namespace render {
 		light_grid->upload();
 
 		UpdateGlobalBindings();
-
-		object_params_buffer->Unmap();
-		skinning_matrices_buffer->Unmap();
 
 		// Render Graph
 		render_graph->Clear();
@@ -355,7 +341,7 @@ namespace render {
 			mode.SetDepthFunc(CompareOp::Less);
 
 			state.SetRenderMode(mode);
-			state.SetGlobalBindings(GetGlobalResourceBindings());
+			state.SetGlobalBindings(GetGlobalResourceBindings(), *global_constant_bindings);
 
 			auto& render_queues = main_camera_culling_system.GetDrawCallList()->queues;
 			for (auto* draw_call : render_queues[(size_t)RenderQueue::DepthOnly])
@@ -377,9 +363,11 @@ namespace render {
 				mode.SetDepthFunc(CompareOp::Less);
 				state.SetRenderMode(mode);
 
-				ResourceBindings global_bindings = GetGlobalResourceBindings();
-				global_bindings.AddBufferBinding(GetShaderBufferNameHash(ShaderBufferName::Camera), scene_buffers->GetCameraBuffer()->GetBuffer(), scene_buffers->GetCameraBuffer()->GetElementSize(), directional_light_camera_offset);
-				state.SetGlobalBindings(global_bindings);
+				const ResourceBindings& global_bindings = GetGlobalResourceBindings();
+				auto constants = *global_constant_bindings;
+				constants.AddDataBinding(&directional_light_camera, sizeof(directional_light_camera), "camera");
+
+				state.SetGlobalBindings(global_bindings, constants);
 
 				if (directional_light_cast_shadows)
 				{
@@ -405,13 +393,15 @@ namespace render {
 			mode.SetDepthFunc(CompareOp::Less);
 			state.SetRenderMode(mode);
 			state.SetScissor(vec4(0, 0, ShadowAtlasSize(), ShadowAtlasSize()));
-			ResourceBindings global_bindings = GetGlobalResourceBindings();
+			const ResourceBindings& global_bindings = GetGlobalResourceBindings();
+			ConstantBindings constants = *global_constant_bindings;
 
 			for (auto& shadow_caster : shadow_casters)
 			{
-				global_bindings.AddBufferBinding(GetShaderBufferNameHash(ShaderBufferName::Camera), scene_buffers->GetCameraBuffer()->GetBuffer(), scene_buffers->GetCameraBuffer()->GetElementSize(), shadow_caster.camera_offset);
+				auto camera_data = GetCameraData(shadow_caster.light, uvec2(0, 0));
+				constants.AddDataBinding(&camera_data, sizeof(camera_data), "camera");
 				state.RemoveGlobalBindings();
-				state.SetGlobalBindings(global_bindings);
+				state.SetGlobalBindings(global_bindings, constants);
 				state.SetViewport(shadow_caster.light->viewport);
 				auto& render_queues = shadow_caster.culling.GetDrawCallList()->queues;
 				for (auto* draw_call : render_queues[(size_t)RenderQueue::DepthOnly])
@@ -435,7 +425,7 @@ namespace render {
 			return result;
 		}, [&](VulkanRenderState& state)
 		{
-			state.SetGlobalBindings(GetGlobalResourceBindings());
+			state.SetGlobalBindings(GetGlobalResourceBindings(), *global_constant_bindings);
 			skybox->Render(state);
 
 			state.SetRenderMode(GetRenderModeForQueue(RenderQueue::Opaque));
@@ -474,7 +464,7 @@ namespace render {
 
 		});
 
-		auto post_process_result = post_process->AddPostProcess(*render_graph, *main_pass_info.color_output, *main_color, *compute_buffer_resource, GetGlobalResourceBindings());
+		auto post_process_result = post_process->AddPostProcess(*render_graph, *main_pass_info.color_output, *main_color, *compute_buffer_resource, GetGlobalResourceBindings(), *global_constant_bindings);
 
 		auto ui_pass_info = render_graph->AddPass<PassInfo>("Debug UI", ProfilerName::PassDebugUI, [&](graph::IRenderPassBuilder& builder)
 			{
@@ -489,6 +479,10 @@ namespace render {
 
 		render_graph->Prepare();
 		render_graph->Render();
+
+		scene_buffers->GetConstantBuffer()->Upload();
+		scene_buffers->GetSkinningMatricesBuffer()->Upload();
+
 	}
 
 	Device::Texture* SceneRenderer::GetBlankTexture() const
@@ -510,14 +504,12 @@ namespace render {
 			global_resource_bindings->AddTextureBinding(Device::GetShaderTextureNameHash(ShaderTextureName::IrradianceCubemap), irradiance_cubemap ? irradiance_cubemap->Get().get() : blank_cube_texture.get());
 			global_resource_bindings->AddTextureBinding(Device::GetShaderTextureNameHash(ShaderTextureName::BrdfLUT), brdf_lut->Get().get());
 
-			global_resource_bindings->AddBufferBinding(Device::GetShaderBufferNameHash(ShaderBufferName::ObjectParams), scene_buffers->GetObjectParamsBuffer()->GetBuffer(), scene_buffers->GetObjectParamsBuffer()->GetElementSize());
-			global_resource_bindings->AddBufferBinding(Device::GetShaderBufferNameHash(ShaderBufferName::Camera), scene_buffers->GetCameraBuffer()->GetBuffer(), scene_buffers->GetCameraBuffer()->GetElementSize());
-			global_resource_bindings->AddBufferBinding(Device::GetShaderBufferNameHash(ShaderBufferName::EnvironmentSettings), scene_buffers->GetEnvironmentSettingsBuffer()->GetBuffer(), scene_buffers->GetEnvironmentSettingsBuffer()->GetElementSize());
-			global_resource_bindings->AddBufferBinding(Device::GetShaderBufferNameHash(ShaderBufferName::SkinningMatrices), scene_buffers->GetSkinningMatricesBuffer()->GetBuffer(), scene_buffers->GetSkinningMatricesBuffer()->GetElementSize());
 			global_resource_bindings->AddBufferBinding(Device::GetShaderBufferNameHash(ShaderBufferName::Projector), light_grid->GetProjectorBuffer()->GetBuffer(), light_grid->GetProjectorBuffer()->GetSize());
 			global_resource_bindings->AddBufferBinding(Device::GetShaderBufferNameHash(ShaderBufferName::Light), light_grid->GetLightsBuffer()->GetBuffer(), light_grid->GetLightsBuffer()->GetSize());
 			global_resource_bindings->AddBufferBinding(Device::GetShaderBufferNameHash(ShaderBufferName::LightIndices), light_grid->GetLightIndexBuffer()->GetBuffer(), light_grid->GetLightIndexBuffer()->GetSize());
 			global_resource_bindings->AddBufferBinding(Device::GetShaderBufferNameHash(ShaderBufferName::LightGrid), light_grid->GetLightGridBuffer()->GetBuffer(), light_grid->GetLightGridBuffer()->GetSize());
+
+			global_resource_bindings->AddDynamicBufferBinding(Device::GetShaderBufferNameHash(ShaderBufferName::SkinningMatrices), scene_buffers->GetSkinningMatricesBuffer());
 
 			global_bindings_dirty = false;
 		}

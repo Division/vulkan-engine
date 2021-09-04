@@ -45,7 +45,7 @@ namespace render::effects
 		attachment_wrappers[1] = graph.RegisterAttachment(*attachments[1]);
 	}
 
-	graph::DependencyNode* PostProcess::AddPostProcess(RenderGraph& graph, DependencyNode& node, ResourceWrapper& destination_target, ResourceWrapper& hdr_buffer, const Device::ResourceBindings& global_bindings)
+	graph::DependencyNode* PostProcess::AddPostProcess(RenderGraph& graph, DependencyNode& node, ResourceWrapper& destination_target, ResourceWrapper& hdr_buffer, const Device::ResourceBindings& global_bindings, const ConstantBindings& global_constants)
 	{
 		auto* destination_render_target = destination_target.GetAttachment();
 
@@ -77,15 +77,16 @@ namespace render::effects
 				//bindings.AddBufferBindingSafe(hdr_buffer_address.binding, 0, buffer->Size(), buffer->Buffer());
 				auto command_buffer = state.GetCurrentCommandBuffer()->GetCommandBuffer();
 
-				state.SetGlobalBindings(global_bindings);
+				ConstantBindings constants = global_constants;
+				constants.AddFloatBinding(&environment_settings.exposure, "exposure");
+				state.SetGlobalBindings(global_bindings, constants);
 
 				state.SetRenderMode(mode);
 				state.SetShader(*shader);
 				state.SetVertexLayout(full_screen_quad_mesh->GetVertexLayout());
 				state.UpdateState();
 
-				state.PushConstants(ShaderProgram::Stage::Fragment, 0, sizeof(float), &environment_settings.exposure);
-				state.SetDescriptorSetBindings(bindings);
+				state.SetDescriptorSetBindings(bindings, constants);
 				state.Draw(*full_screen_quad_mesh->vertexBuffer(), full_screen_quad_mesh->indexCount(), 0);
 			});
 

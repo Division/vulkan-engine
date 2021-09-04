@@ -70,6 +70,7 @@ public:
 
 	const ShaderCapsSet& ShaderCaps() const { if (caps_dirty) UpdateCaps(); return shader_caps; }
 	const Device::ResourceBindings& GetResourceBindings() const { if (bindings_dirty) UpdateBindings(); return resource_bindings; }
+	const Device::ConstantBindings& GetConstantBindings() const { if (constants_dirty) UpdateConstants(); return constant_bindings; }
 
 	const Device::ShaderProgramInfo& GetShaderInfo() const { UpdateShaderHash(); return shader_info; }
 	const Device::ShaderProgramInfo& GetDepthOnlyShaderInfo() const { UpdateShaderHash(); return depth_only_shader_info; }
@@ -81,9 +82,11 @@ public:
 protected:
 	void UpdateCaps() const;
 	void UpdateBindings() const;
+	void UpdateConstants() const;
 	void UpdateShaderHash() const;
 	void SetDirty();
 	void SetBindingsDirty();
+	void SetConstantsDirty();
 
 protected:
 	mutable bool caps_dirty = true;
@@ -93,6 +96,9 @@ protected:
 
 	mutable bool bindings_dirty = true;
 	mutable Device::ResourceBindings resource_bindings;
+
+	mutable bool constants_dirty = true;
+	mutable Device::ConstantBindings constant_bindings;
 
 	vec4 color = vec4(1,1,1,1);
 	float roughness = 0.5;

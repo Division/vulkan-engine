@@ -5,6 +5,7 @@
 #include "utils/Math.h"
 #include "render/mesh/Mesh.h"
 #include "render/buffer/VulkanBuffer.h"
+#include "render/buffer/ConstantBuffer.h"
 #include "render/device/VulkanRenderPass.h"
 #include "render/device/VulkanPipeline.h"
 #include "render/device/VulkanRenderTarget.h"
@@ -175,10 +176,10 @@ namespace Device {
 	void VulkanRenderState::UpdateGlobalDescriptorSet()
 	{
 		const auto new_layout_hash = current_shader->GetDescriptorSetLayout(DescriptorSetType::Global)->layout_hash;
-		if (!global_bindings || new_layout_hash == global_layout_hash) return;
+		if (!global_bindings || !global_constants || new_layout_hash == global_layout_hash) return;
 
 		const DescriptorSetBindings global_shader_bindings(*global_bindings, *current_shader->GetDescriptorSetLayout(DescriptorSetType::Global));
-		SetDescriptorSetBindings(global_shader_bindings);
+		SetDescriptorSetBindings(global_shader_bindings, *global_constants);
 		
 		global_layout_hash = new_layout_hash;
 	}
@@ -344,9 +345,10 @@ namespace Device {
 		return result;
 	}
 
-	void VulkanRenderState::SetGlobalBindings(const ResourceBindings& bindings)
+	void VulkanRenderState::SetGlobalBindings(const ResourceBindings& bindings, const ConstantBindings& constants)
 	{
 		global_bindings = bindings;
+		global_constants = constants;
 		global_layout_hash = 0;
 		dirty_flags |= (int)DirtyFlags::GlobalDescriptorSet;
 	}
@@ -355,18 +357,27 @@ namespace Device {
 	{
 		global_layout_hash = 0;
 		global_bindings = std::nullopt;
+		global_constants = std::nullopt;
 	}
 
-	void VulkanRenderState::SetDescriptorSetBindings(const DescriptorSetBindings& bindings)
+	void VulkanRenderState::SetDescriptorSetBindings(const DescriptorSetBindings& bindings, const ConstantBindings& constant_bindings)
 	{
 		assert(current_pipeline);
 		auto descriptor_cache = Engine::GetVulkanContext()->GetDescriptorCache();
 		auto descriptor_set = descriptor_cache->GetDescriptorSet(bindings);
-		auto& dynamic_offsets = bindings.GetDynamicOffsets();
-
 		auto command_buffer = GetCurrentCommandBuffer()->GetCommandBuffer();
-		auto& descriptor_set_layout = bindings.GetDescriptorSetLayout();
-		command_buffer.bindDescriptorSets((vk::PipelineBindPoint)pipeline_bind_point, current_pipeline->GetPipelineLayout(), descriptor_set_layout.set_index, 1u, &descriptor_set->GetVKDescriptorSet(), dynamic_offsets.size(), dynamic_offsets.data());
+		const auto descriptor_set_index = bindings.GetDescriptorSetLayout().set_index;
+
+		auto& dynamic_buffer_bindings = bindings.GetDynamicBufferBindings();
+		utils::SmallVector<uint32_t, 10> dynamic_offsets;
+
+		for (auto& dynamic_binding : dynamic_buffer_bindings)
+		{
+			const auto offset = dynamic_binding.FlushConstantBuffer(constant_bindings);
+			dynamic_offsets.push_back(offset);
+		}
+
+		command_buffer.bindDescriptorSets((vk::PipelineBindPoint)pipeline_bind_point, current_pipeline->GetPipelineLayout(), descriptor_set_index, 1u, &descriptor_set->GetVKDescriptorSet(), dynamic_offsets.size(), dynamic_offsets.data());
 	}
 
 	void VulkanRenderState::SetDescriptorSet(const DescriptorSet& descriptor_set, uint32_t index, uint32_t dynamic_offset_count, const uint32_t* dynamic_offsets)
@@ -417,14 +428,17 @@ namespace Device {
 		auto command_buffer = GetCurrentCommandBuffer()->GetCommandBuffer();
 		if (draw_call->descriptor_set)
 		{
-			utils::SmallVector<uint32_t, 4> dynamic_offsets;
-			if (draw_call->skinning_dynamic_offset == -1 || !is_depth)
-				dynamic_offsets.push_back(draw_call->dynamic_offset);
-
-			if (draw_call->skinning_dynamic_offset != -1)
-				dynamic_offsets.push_back(draw_call->skinning_dynamic_offset);
-
 			auto descriptor_set = is_depth ? draw_call->depth_only_descriptor_set : draw_call->descriptor_set;
+			auto& bindings = descriptor_set->GetBindings();
+			auto& dynamic_buffer_bindings = bindings.GetDynamicBufferBindings();
+			utils::SmallVector<uint32_t, 10> dynamic_offsets;
+
+			for (auto& dynamic_binding : dynamic_buffer_bindings)
+			{
+				const auto offset = dynamic_binding.FlushConstantBuffer(draw_call->constants);
+				dynamic_offsets.push_back(offset);
+			}
+
 			SetDescriptorSet(*descriptor_set, DescriptorSetType::Object, dynamic_offsets.size(), dynamic_offsets.data());
 		}
 

@@ -59,6 +59,7 @@ namespace Device {
 			UniformBuffer,
 			UniformBufferDynamic,
 			StorageBuffer,
+			StorageBufferDynamic,
 			Count
 		};
 
@@ -66,6 +67,15 @@ namespace Device {
 		{
 			unsigned set;
 			unsigned binding; //register
+			friend bool operator<(const BindingAddress& a, const BindingAddress& b) { return std::tie(a.set, a.binding) < std::tie(b.set, b.binding); }
+		};
+
+		struct BufferMember
+		{
+			std::string name;
+			uint32_t name_hash;
+			uint32_t offset;
+			uint32_t size;
 		};
 
 		struct BindingData
@@ -76,6 +86,10 @@ namespace Device {
 			std::string name;
 			uint32_t name_hash;
 			BindingAddress address;
+			uint32_t size = 0;
+
+			std::vector<BufferMember> members;
+			friend bool operator<(const BindingData& a, const BindingData& b) { return a.address < b.address; }
 		};
 
 		struct DescriptorSetLayout
@@ -102,6 +116,7 @@ namespace Device {
 
 		static uint32_t CalculateHash(uint32_t fragment_hash, uint32_t vertex_hash, uint32_t compute_hash = 0);
 		static uint32_t GetParameterNameHash(const std::string& name);
+		static uint32_t GetParameterNameHash(const char* name);
 
 		ShaderProgram();
 		void AddModule(ShaderModule* shader_module, Stage stage);

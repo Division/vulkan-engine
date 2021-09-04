@@ -136,6 +136,7 @@ namespace render {
 		draw_call->depth_only_descriptor_set = descriptor_cache->GetDescriptorSet(depth_bindings);
 		draw_call->descriptor_set = descriptor_cache->GetDescriptorSet(bindings);
 		draw_call->visible = true;
+		draw_call->material = &initializer.material;
 
 		return std::make_pair(entity, draw_call);
 	}

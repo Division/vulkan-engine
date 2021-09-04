@@ -24,6 +24,14 @@ namespace Device {
 			unsigned binding;
 		};
 
+		struct BufferMember
+		{
+			std::string name;
+			uint32_t name_hash = 0;
+			uint32_t offset = 0;
+			uint32_t size = 0;
+		};
+
 		struct UniformBufferData
 		{
 			uint32_t id;
@@ -31,6 +39,9 @@ namespace Device {
 			unsigned set;
 			unsigned binding;
 			ShaderBufferName shader_buffer;
+			uint32_t name_hash;
+			uint32_t size;
+			std::vector<BufferMember> members;
 		};
 
 		struct VertexAttribData
@@ -89,6 +100,8 @@ namespace Device {
 		const std::vector<SeparateImageData>& SeparateImages() const { return separate_images; }
 
 	private:
+		UniformBufferData GetUniformBufferData(spirv_cross::Resource& ubo, spirv_cross::CompilerGLSL& compiler);
+
 		spirv_cross::CompilerGLSL compiler;
 		std::vector<UniformBufferData> uniform_buffers;
 		std::vector<VertexAttribData> vertex_attribs;

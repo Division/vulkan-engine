@@ -22,6 +22,7 @@ namespace Device
 	class ShaderProgram;
 	class DescriptorSetBindings;
 	class ResourceBindings;
+	class ConstantBindings;
 	class ShaderCache;
 	class Texture;
 	template<typename T> class DynamicBuffer;
@@ -122,13 +123,13 @@ namespace render {
 		std::unique_ptr<LightGrid> light_grid;
 		std::unique_ptr<ShadowMap> shadow_map;
 		std::unique_ptr<Device::ResourceBindings> global_resource_bindings;
+		std::unique_ptr<Device::ConstantBindings> global_constant_bindings;
 		bool global_bindings_dirty = true;
 		uint32_t global_shader_binding_camera_index;
 		std::mutex global_bindings_mutex;
 
 		std::unique_ptr<graph::RenderGraph> render_graph;
 		
-		Device::ShaderProgram* global_bindings_program;
 		Device::ShaderProgram* compute_program;
 		std::unique_ptr<Device::DescriptorSetBindings> compute_bindings;
 		std::unique_ptr<Device::DynamicBuffer<unsigned char>> compute_buffer;

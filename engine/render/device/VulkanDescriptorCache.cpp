@@ -132,6 +132,7 @@ namespace Device {
 			case ShaderProgram::BindingType::UniformBuffer:
 			case ShaderProgram::BindingType::UniformBufferDynamic:
 			case ShaderProgram::BindingType::StorageBuffer:
+			case ShaderProgram::BindingType::StorageBufferDynamic:
 			{
 				assert(data.buffer_bindings[binding_index].buffer);
 				
