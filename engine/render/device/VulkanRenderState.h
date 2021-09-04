@@ -212,8 +212,8 @@ namespace Device {
 		void SetScissor(vec4 scissor);
 		void SetShader(const ShaderProgram& program);
 		void SetVertexLayout(const VertexLayout& layout);
-		void SetGlobalBindings(const ResourceBindings& global_bindings);
-		void SetDescriptorSetBindings(const DescriptorSetBindings& bindings);
+		void SetGlobalBindings(const ResourceBindings& global_bindings, const ConstantBindings& global_constants = {});
+		void SetDescriptorSetBindings(const DescriptorSetBindings& bindings, const ConstantBindings& constant_bindings = {});
 		void SetDescriptorSet(const DescriptorSet& descriptor_set, uint32_t index, uint32_t dynamic_offset_count, const uint32_t* dynamic_offsets);
 		void RemoveGlobalBindings();
 		void SetClearValue(uint32_t index, vk::ClearValue value);
@@ -241,6 +241,8 @@ namespace Device {
 		vk::Sampler GetSampler(const SamplerMode& sampler_mode);
 
 		std::optional<ResourceBindings> global_bindings;
+		std::optional<ConstantBindings> global_constants;
+
 		uint32_t global_layout_hash = 0;
 		PipelineBindPoint pipeline_bind_point = PipelineBindPoint::Graphics;
 

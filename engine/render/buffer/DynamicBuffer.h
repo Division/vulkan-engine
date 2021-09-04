@@ -56,7 +56,6 @@ namespace Device {
 
 		void Unmap()
 		{
-			assert(upload_data_size || sizeof(T) > 1);
 			staging_buffers[current_staging_buffer]->Unmap();
 
 			if (upload_data_size)
@@ -95,7 +94,7 @@ namespace Device {
 			upload_data_size = std::min(data_size, size);
 		}
 
-	private:
+	protected:
 		void* mapped_pointer = nullptr;
 		size_t upload_data_size = 0;
 		size_t size = 0;

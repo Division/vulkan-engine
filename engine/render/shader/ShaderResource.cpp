@@ -22,13 +22,12 @@ const std::map<std::string, ShaderTextureName> SHADER_TEXTURE_NAMES =
 const std::map<std::string, ShaderBufferName> SHADER_BUFFER_NAMES = 
 {
 	{ "ObjectParams", ShaderBufferName::ObjectParams },
-	{ "Camera", ShaderBufferName::Camera },
-	{ "EnvironmentSettings", ShaderBufferName::EnvironmentSettings },
 	{ "SkinningMatrices", ShaderBufferName::SkinningMatrices },
 	{ "Lights", ShaderBufferName::Light },
 	{ "Projectors", ShaderBufferName::Projector },
 	{ "LightGrid", ShaderBufferName::LightGrid },
-	{ "LightIndices", ShaderBufferName::LightIndices }
+	{ "LightIndices", ShaderBufferName::LightIndices },
+	{ "Default", ShaderBufferName::Default }
 };
 
 const std::map<std::string, ShaderSamplerName> SHADER_SAMPLER_NAMES = 
@@ -42,8 +41,8 @@ const std::map<std::string, ShaderSamplerName> SHADER_SAMPLER_NAMES =
 const std::set<ShaderBufferName> SHADER_DYNAMIC_OFFSET_BUFFERS =
 {
 	ShaderBufferName::ObjectParams,
-	ShaderBufferName::Camera,
-	ShaderBufferName::SkinningMatrices
+	ShaderBufferName::SkinningMatrices,
+	ShaderBufferName::Default
 };
 
 namespace Device

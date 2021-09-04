@@ -80,6 +80,7 @@ namespace Device {
 		{ ShaderProgram::BindingType::UniformBuffer, vk::DescriptorType::eUniformBuffer },
 		{ ShaderProgram::BindingType::UniformBufferDynamic, vk::DescriptorType::eUniformBufferDynamic },
 		{ ShaderProgram::BindingType::StorageBuffer, vk::DescriptorType::eStorageBuffer },
+		{ ShaderProgram::BindingType::StorageBufferDynamic, vk::DescriptorType::eStorageBufferDynamic },
 		{ ShaderProgram::BindingType::SampledImage, vk::DescriptorType::eSampledImage },
 		{ ShaderProgram::BindingType::Sampler, vk::DescriptorType::eSampler },
 	};
@@ -129,6 +130,7 @@ namespace Device {
 				name_binding_map[name] = binding_data->address;
 			}
 
+			return binding_data;
 		};
 
 		for (auto& sampler : reflection->CombinedImageSamplers())
@@ -138,16 +140,23 @@ namespace Device {
 
 		for (auto& ubo : reflection->UniformBuffers())
 		{
-			auto binding_type = SHADER_DYNAMIC_OFFSET_BUFFERS.find(ubo.shader_buffer) == SHADER_DYNAMIC_OFFSET_BUFFERS.end()
+			const auto binding_type = SHADER_DYNAMIC_OFFSET_BUFFERS.find(ubo.shader_buffer) == SHADER_DYNAMIC_OFFSET_BUFFERS.end()
 				? BindingType::UniformBuffer
 				: BindingType::UniformBufferDynamic;
 
-			append_binding_internal(binding_type, (uint32_t)ubo.shader_buffer, ubo.name, ubo.set, ubo.binding);
+			auto* binding = append_binding_internal(binding_type, (uint32_t)ubo.shader_buffer, ubo.name, ubo.set, ubo.binding);
+			binding->size = ubo.size;
+			for (auto& member : ubo.members)
+				binding->members.emplace_back(BufferMember{ member.name, member.name_hash, member.offset, member.size } );
 		}
 
 		for (auto& storage_buffer : reflection->StorageBuffers())
 		{
-			append_binding_internal(BindingType::StorageBuffer, (uint32_t)storage_buffer.storage_buffer_name, storage_buffer.name, storage_buffer.set, storage_buffer.binding);
+			const auto binding_type = SHADER_DYNAMIC_OFFSET_BUFFERS.find(storage_buffer.storage_buffer_name) == SHADER_DYNAMIC_OFFSET_BUFFERS.end()
+				? BindingType::StorageBuffer
+				: BindingType::StorageBufferDynamic;
+
+			append_binding_internal(binding_type, (uint32_t)storage_buffer.storage_buffer_name, storage_buffer.name, storage_buffer.set, storage_buffer.binding);
 		}
 
 		for (auto& image : reflection->SeparateImages())
@@ -159,6 +168,9 @@ namespace Device {
 		{
 			append_binding_internal(BindingType::Sampler, (uint32_t)sampler.sampler_name, sampler.name, sampler.set, sampler.binding);
 		}
+
+		for (auto& set : descriptor_sets)
+			std::sort(set.bindings.begin(), set.bindings.end());
 	}
 
 	void ShaderProgram::AppendPushConstants(const ShaderModule& module, ShaderProgram::Stage stage)
@@ -272,6 +284,11 @@ namespace Device {
 	}
 
 	uint32_t ShaderProgram::GetParameterNameHash(const std::string& name)
+	{
+		return FastHash(name);
+	}
+
+	uint32_t ShaderProgram::GetParameterNameHash(const char* name)
 	{
 		return FastHash(name);
 	}
