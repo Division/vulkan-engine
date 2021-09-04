@@ -145,13 +145,14 @@ namespace Device {
 		const unsigned max_count = 10000;
 		const unsigned SamplerSlotCount = 20;
 		
-		std::array<vk::DescriptorPoolSize, 7> pool_sizes = {
+		std::array<vk::DescriptorPoolSize, 8> pool_sizes = {
 			vk::DescriptorPoolSize(vk::DescriptorType::eUniformBufferDynamic, (int)ShaderBufferName::Count * max_count),
 			vk::DescriptorPoolSize(vk::DescriptorType::eUniformTexelBuffer, (int)ShaderTextureName::Count * max_count),
 			vk::DescriptorPoolSize(vk::DescriptorType::eUniformBuffer, SamplerSlotCount * max_count),
 			vk::DescriptorPoolSize(vk::DescriptorType::eSampler, SamplerSlotCount * max_count),
 			vk::DescriptorPoolSize(vk::DescriptorType::eSampledImage, (int)ShaderSamplerName::Count * max_count),
 			vk::DescriptorPoolSize(vk::DescriptorType::eCombinedImageSampler, (int)ShaderTextureName::Count * max_count),
+			vk::DescriptorPoolSize(vk::DescriptorType::eStorageBuffer, (int)ShaderTextureName::Count * max_count),
 			vk::DescriptorPoolSize(vk::DescriptorType::eStorageBufferDynamic, (int)ShaderBufferName::Count * max_count)
 		};
 

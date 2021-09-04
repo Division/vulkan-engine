@@ -74,7 +74,6 @@ namespace render::effects
 				const DescriptorSetBindings bindings(resource_bindings, *descriptor_set_layout);
 				
 				auto* buffer = hdr_buffer.GetBuffer();
-				//bindings.AddBufferBindingSafe(hdr_buffer_address.binding, 0, buffer->Size(), buffer->Buffer());
 				auto command_buffer = state.GetCurrentCommandBuffer()->GetCommandBuffer();
 
 				ConstantBindings constants = global_constants;

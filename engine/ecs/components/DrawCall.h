@@ -6,6 +6,7 @@
 #include "render/shader/ShaderBindings.h"
 #include "render/material/Material.h"
 #include "utils/Math.h"
+#include "utils/DataStructures.h"
 
 namespace Device
 {
@@ -35,7 +36,8 @@ namespace ECS::components {
 
 	struct SkinningData
 	{
-		Device::ShaderBufferStruct::SkinningMatrices bone_matrices;
+		utils::SmallVector<mat4, 40> bone_matrices;
+		uint32_t matrices_offset = 0;
 	};
 
 }

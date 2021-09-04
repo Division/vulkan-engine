@@ -257,10 +257,10 @@ namespace render {
 		UploadDrawCalls();
 
 		auto main_camera = GetCameraData(scene.GetCamera(), scene.GetCamera()->cameraViewSize());
-		global_constant_bindings->AddDataBinding(&main_camera, sizeof(main_camera), "camera");
+		global_constant_bindings->AddDataBinding(&main_camera, sizeof(main_camera), Device::GetBufferMemberHash(BufferMemberName::Camera));
 
 		auto environment_data = GetEnvSettings(*environment_settings);
-		global_constant_bindings->AddDataBinding(&environment_data, sizeof(environment_data), "environment");
+		global_constant_bindings->AddDataBinding(&environment_data, sizeof(environment_data), Device::GetBufferMemberHash(BufferMemberName::Environment));
 
 		auto draw_calls = draw_call_manager->GetDrawCallChunks();
 
@@ -365,7 +365,7 @@ namespace render {
 
 				const ResourceBindings& global_bindings = GetGlobalResourceBindings();
 				auto constants = *global_constant_bindings;
-				constants.AddDataBinding(&directional_light_camera, sizeof(directional_light_camera), "camera");
+				constants.AddDataBinding(&directional_light_camera, sizeof(directional_light_camera), Device::GetBufferMemberHash(BufferMemberName::Camera));
 
 				state.SetGlobalBindings(global_bindings, constants);
 
@@ -399,7 +399,7 @@ namespace render {
 			for (auto& shadow_caster : shadow_casters)
 			{
 				auto camera_data = GetCameraData(shadow_caster.light, uvec2(0, 0));
-				constants.AddDataBinding(&camera_data, sizeof(camera_data), "camera");
+				constants.AddDataBinding(&camera_data, sizeof(camera_data), Device::GetBufferMemberHash(BufferMemberName::Camera));
 				state.RemoveGlobalBindings();
 				state.SetGlobalBindings(global_bindings, constants);
 				state.SetViewport(shadow_caster.light->viewport);
@@ -509,7 +509,7 @@ namespace render {
 			global_resource_bindings->AddBufferBinding(Device::GetShaderBufferNameHash(ShaderBufferName::LightIndices), light_grid->GetLightIndexBuffer()->GetBuffer(), light_grid->GetLightIndexBuffer()->GetSize());
 			global_resource_bindings->AddBufferBinding(Device::GetShaderBufferNameHash(ShaderBufferName::LightGrid), light_grid->GetLightGridBuffer()->GetBuffer(), light_grid->GetLightGridBuffer()->GetSize());
 
-			global_resource_bindings->AddDynamicBufferBinding(Device::GetShaderBufferNameHash(ShaderBufferName::SkinningMatrices), scene_buffers->GetSkinningMatricesBuffer());
+			global_resource_bindings->AddBufferBinding(Device::GetShaderBufferNameHash(ShaderBufferName::SkinningMatrices), scene_buffers->GetSkinningMatricesBuffer()->GetBuffer(), scene_buffers->GetSkinningMatricesBuffer()->GetSize());
 
 			global_bindings_dirty = false;
 		}

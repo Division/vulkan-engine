@@ -4,6 +4,17 @@
 #include "Shader.h"
 #include "lib/magic_enum/magic_enum.hpp"
 
+const std::map<std::string, BufferMemberName> SHADER_BUFFER_MEMBER_NAMES =
+{
+	{ "objectModelMatrix", BufferMemberName::ModelMatrix },
+	{ "color", BufferMemberName::Color },
+	{ "roughness", BufferMemberName::Roughness },
+	{ "metalness", BufferMemberName::Metalness },
+	{ "skinning_offset", BufferMemberName::SkinningOffset },
+	{ "camera", BufferMemberName::Camera },
+	{ "environment", BufferMemberName::Environment }
+};
+
 const std::map<std::string, ShaderTextureName> SHADER_TEXTURE_NAMES = 
 {
 	{ "texture0", ShaderTextureName::Texture0 },
@@ -26,7 +37,8 @@ const std::map<std::string, ShaderBufferName> SHADER_BUFFER_NAMES =
 	{ "Projectors", ShaderBufferName::Projector },
 	{ "LightGrid", ShaderBufferName::LightGrid },
 	{ "LightIndices", ShaderBufferName::LightIndices },
-	{ "Default", ShaderBufferName::Default }
+	{ "Default", ShaderBufferName::Default },
+	{ "DefaultStorage", ShaderBufferName::DefaultStorage }
 };
 
 const std::map<std::string, ShaderSamplerName> SHADER_SAMPLER_NAMES = 
@@ -39,7 +51,6 @@ const std::map<std::string, ShaderSamplerName> SHADER_SAMPLER_NAMES =
 
 const std::set<ShaderBufferName> SHADER_DYNAMIC_OFFSET_BUFFERS =
 {
-	ShaderBufferName::SkinningMatrices,
 	ShaderBufferName::Default
 };
 
@@ -60,6 +71,12 @@ namespace Device
 					hashes[(size_t)pair.second] = Device::ShaderProgram::GetParameterNameHash(pair.first);
 			}
 		};
+	}
+
+	uint32_t GetBufferMemberHash(BufferMemberName name)
+	{
+		static NameMap<BufferMemberName> map(SHADER_BUFFER_MEMBER_NAMES);
+		return map.hashes.at((size_t)name);
 	}
 
 	uint32_t GetShaderTextureNameHash(ShaderTextureName name)

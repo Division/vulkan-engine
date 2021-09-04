@@ -78,6 +78,9 @@ namespace Device {
 			unsigned set;
 			unsigned binding;
 			ShaderBufferName storage_buffer_name = ShaderBufferName::Unknown;
+			uint32_t name_hash;
+			uint32_t size;
+			std::vector<BufferMember> members;
 		};
 
 		struct PushConstantsData
@@ -101,6 +104,7 @@ namespace Device {
 
 	private:
 		UniformBufferData GetUniformBufferData(spirv_cross::Resource& ubo, spirv_cross::CompilerGLSL& compiler);
+		StorageBufferData GetStorageBufferData(spirv_cross::Resource& ssbo, spirv_cross::CompilerGLSL& compiler);
 
 		spirv_cross::CompilerGLSL compiler;
 		std::vector<UniformBufferData> uniform_buffers;

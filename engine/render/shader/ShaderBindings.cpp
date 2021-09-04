@@ -95,7 +95,7 @@ namespace Device {
 
 	std::optional<ResourceBindings::DynamicBufferResourceBinding> ResourceBindings::GetDynamicBufferBinding(uint32_t name_hash) const
 	{
-		auto index = GetBufferBindingIndex(name_hash);
+		auto index = GetDynamicBufferBindingIndex(name_hash);
 
 		if (index >= dynamic_buffer_bindings.size())
 			return std::nullopt;
@@ -269,6 +269,7 @@ namespace Device {
 		case ShaderProgram::BindingType::StorageBuffer:
 		case ShaderProgram::BindingType::UniformBuffer:
 		case ShaderProgram::BindingType::UniformBufferDynamic:
+		case ShaderProgram::BindingType::StorageBufferDynamic:
 			{
 				auto it = std::find_if(buffer_bindings.begin(), buffer_bindings.end(), predicate);
 				return it != buffer_bindings.end() ? it - buffer_bindings.begin() : -1;
@@ -304,7 +305,6 @@ namespace Device {
 			if (it == constant_bindings.end())
 				continue;
 
-			// TODO: member.size may be zero in case of arbitrary size arrays
 			memcpy(data.pointer + member.offset, it->data, std::min(member.size, it->size));
 		}
 
