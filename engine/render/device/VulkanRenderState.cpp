@@ -369,7 +369,7 @@ namespace Device {
 		const auto descriptor_set_index = bindings.GetDescriptorSetLayout().set_index;
 
 		auto& dynamic_buffer_bindings = bindings.GetDynamicBufferBindings();
-		std::vector<uint32_t> dynamic_offsets;
+		utils::SmallVector<uint32_t, 10> dynamic_offsets;
 
 		for (auto& dynamic_binding : dynamic_buffer_bindings)
 		{
@@ -428,14 +428,17 @@ namespace Device {
 		auto command_buffer = GetCurrentCommandBuffer()->GetCommandBuffer();
 		if (draw_call->descriptor_set)
 		{
-			utils::SmallVector<uint32_t, 4> dynamic_offsets;
-			if (draw_call->skinning_dynamic_offset == -1 || !is_depth)
-				dynamic_offsets.push_back(draw_call->dynamic_offset);
-
-			if (draw_call->skinning_dynamic_offset != -1)
-				dynamic_offsets.push_back(draw_call->skinning_dynamic_offset);
-
 			auto descriptor_set = is_depth ? draw_call->depth_only_descriptor_set : draw_call->descriptor_set;
+			auto& bindings = descriptor_set->GetBindings();
+			auto& dynamic_buffer_bindings = bindings.GetDynamicBufferBindings();
+			utils::SmallVector<uint32_t, 10> dynamic_offsets;
+
+			for (auto& dynamic_binding : dynamic_buffer_bindings)
+			{
+				const auto offset = dynamic_binding.FlushConstantBuffer(draw_call->constants);
+				dynamic_offsets.push_back(offset);
+			}
+
 			SetDescriptorSet(*descriptor_set, DescriptorSetType::Object, dynamic_offsets.size(), dynamic_offsets.data());
 		}
 

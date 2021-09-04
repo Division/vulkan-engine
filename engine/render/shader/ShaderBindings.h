@@ -36,6 +36,11 @@ namespace Device {
 			uint32_t size = 0;
 			uint32_t dynamic_offset = 0;
 		};
+
+		struct DynamicBufferResourceBinding : public Base
+		{
+			ConstantBuffer* constant_buffer = nullptr;
+		};
 		
 		void AddTextureBinding(const std::string& name, Texture* texture);
 		void AddTextureBinding(uint32_t name_hash, Texture* texture);
@@ -45,18 +50,24 @@ namespace Device {
 		void AddBufferBinding(uint32_t name_hash, VulkanBuffer* buffer, uint32_t size, uint32_t dynamic_offset = 0);
 		std::optional<BufferResourceBinding> GetBufferBinding(uint32_t name_hash) const;
 
+		void AddDynamicBufferBinding(const std::string& name, ConstantBuffer* buffer);
+		void AddDynamicBufferBinding(uint32_t name_hash, ConstantBuffer* buffer);
+		std::optional<DynamicBufferResourceBinding> GetDynamicBufferBinding(uint32_t name_hash) const;
+
 		void Clear();
 		void Merge(const ResourceBindings& other);
 
 	private:
 		uint32_t GetTextureBindingIndex(uint32_t name_hash) const;
 		uint32_t GetBufferBindingIndex(uint32_t name_hash) const;
+		uint32_t GetDynamicBufferBindingIndex(uint32_t name_hash) const;
 
 		//std::vector<TextureResourceBinding> texture_bindings;
 		//std::vector<BufferResourceBinding> buffer_bindings;
 
 		utils::SmallVector<TextureResourceBinding, 32> texture_bindings;
 		utils::SmallVector<BufferResourceBinding, 16> buffer_bindings;
+		utils::SmallVector<DynamicBufferResourceBinding, 16> dynamic_buffer_bindings;
 	};
 
 	class ConstantBindings
@@ -64,7 +75,7 @@ namespace Device {
 	public:
 		struct Binding
 		{
-			void* data = nullptr;
+			const void* data = nullptr;
 			uint32_t size = 0;
 			uint32_t name_hash = 0;
 		};
@@ -80,7 +91,7 @@ namespace Device {
 			AddDataBinding(data, size, ShaderProgram::GetParameterNameHash(name));
 		}
 
-		void AddDataBinding(void* data, uint32_t size, uint32_t name_hash)
+		void AddDataBinding(const void* data, uint32_t size, uint32_t name_hash)
 		{
 			Binding* binding = GetBinding(name_hash);
 			if (!binding)
@@ -101,18 +112,23 @@ namespace Device {
 				AddDataBinding(binding.data, binding.size, binding.name_hash);
 		}
 
-		void AddFloat4Binding(vec4* data, uint32_t name_hash) { AddDataBinding(data, sizeof(*data), name_hash); }
-		void AddFloat4Binding(vec4* data, const char* name) { AddFloat4Binding(data, ShaderProgram::GetParameterNameHash(name)); }
-		void AddFloat3Binding(vec3* data, uint32_t name_hash) { AddDataBinding(data, sizeof(*data), name_hash); }
-		void AddFloat3Binding(vec3* data, const char* name) { AddFloat3Binding(data, ShaderProgram::GetParameterNameHash(name)); }
-		void AddFloat2Binding(vec2* data, uint32_t name_hash) { AddDataBinding(data, sizeof(*data), name_hash); }
-		void AddFloat2Binding(vec2* data, const char* name) { AddFloat2Binding(data, ShaderProgram::GetParameterNameHash(name)); }
-		void AddFloatBinding(float* data, uint32_t name_hash) { AddDataBinding(data, sizeof(*data), name_hash); }
-		void AddFloatBinding(float* data, const char* name) { AddFloatBinding(data, ShaderProgram::GetParameterNameHash(name)); }
-		void AddFloat4x4Binding(mat4* data, uint32_t name_hash) { AddDataBinding(data, sizeof(*data), name_hash); }
-		void AddFloat4x4Binding(mat4* data, const char* name) { AddFloat4x4Binding(data, ShaderProgram::GetParameterNameHash(name)); }
-		void AddFloat3x3Binding(mat3* data, uint32_t name_hash) { AddDataBinding(data, sizeof(*data), name_hash); }
-		void AddFloat3x3Binding(mat3* data, const char* name) { AddFloat3x3Binding(data, ShaderProgram::GetParameterNameHash(name)); }
+		void Clear()
+		{
+			bindings.clear();
+		}
+
+		void AddFloat4Binding(const vec4* data, uint32_t name_hash) { AddDataBinding(data, sizeof(*data), name_hash); }
+		void AddFloat4Binding(const vec4* data, const char* name) { AddFloat4Binding(data, ShaderProgram::GetParameterNameHash(name)); }
+		void AddFloat3Binding(const vec3* data, uint32_t name_hash) { AddDataBinding(data, sizeof(*data), name_hash); }
+		void AddFloat3Binding(const vec3* data, const char* name) { AddFloat3Binding(data, ShaderProgram::GetParameterNameHash(name)); }
+		void AddFloat2Binding(const vec2* data, uint32_t name_hash) { AddDataBinding(data, sizeof(*data), name_hash); }
+		void AddFloat2Binding(const vec2* data, const char* name) { AddFloat2Binding(data, ShaderProgram::GetParameterNameHash(name)); }
+		void AddFloatBinding(const float* data, uint32_t name_hash) { AddDataBinding(data, sizeof(*data), name_hash); }
+		void AddFloatBinding(const float* data, const char* name) { AddFloatBinding(data, ShaderProgram::GetParameterNameHash(name)); }
+		void AddFloat4x4Binding(const mat4* data, uint32_t name_hash) { AddDataBinding(data, sizeof(*data), name_hash); }
+		void AddFloat4x4Binding(const mat4* data, const char* name) { AddFloat4x4Binding(data, ShaderProgram::GetParameterNameHash(name)); }
+		void AddFloat3x3Binding(const mat3* data, uint32_t name_hash) { AddDataBinding(data, sizeof(*data), name_hash); }
+		void AddFloat3x3Binding(const mat3* data, const char* name) { AddFloat3x3Binding(data, ShaderProgram::GetParameterNameHash(name)); }
 
 
 	private:

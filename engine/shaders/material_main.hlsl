@@ -1,17 +1,5 @@
 #include "includes/global.hlsl"
 
-struct ObjectParamsData 
-{
-    float4x4 objectModelMatrix;
-    float4x4 objectNormalMatrix;
-    float4 color;
-    float2 uvScale;
-    float2 uvOffset;
-    uint layer;
-    float roughness;
-    float metalness;
-};
-
 struct SkinningMatricesData
 {
     float4x4 matrices[70];
@@ -20,7 +8,10 @@ struct SkinningMatricesData
 [[vk::binding(1, 1)]]
 cbuffer ObjectParams : register(b1) 
 {
-    ObjectParamsData object_params;
+    float4x4 objectModelMatrix;
+    float4 color;
+    float roughness;
+    float metalness;
 };
 
 #if defined(SKINNING)
@@ -87,7 +78,7 @@ float LinearizeDepth(float depth_ndc, float near, float far)
 VS_out vs_main(VS_in input)
 {
     VS_out result;
-    float4x4 model_matrix = object_params.objectModelMatrix;
+    float4x4 model_matrix = objectModelMatrix;
 #if defined(SKINNING)
     model_matrix = float4x4(0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0);
     [unroll]
@@ -149,8 +140,8 @@ float LogBase(float x, float base)
 
 float4 ps_main(VS_out input) : SV_TARGET
 {
-    float result_alpha = object_params.color.a;
-    float4 result_color = object_params.color;
+    float result_alpha = color.a;
+    float4 result_color = color;
     
 #if defined(TEXTURE0)
     float4 texture0_color = texture0.Sample(SamplerLinearWrap, input.texcoord0);
@@ -159,8 +150,8 @@ float4 ps_main(VS_out input) : SV_TARGET
 #endif
  
 #if defined(LIGHTING)
-    float roughness_final = object_params.roughness;
-    float metalness_final = object_params.metalness;
+    float roughness_final = roughness;
+    float metalness_final = metalness;
     float3 normal_worldspace_final = normalize(input.normal_worldspace.xyz);
     
     #if defined (NORMAL_MAP)

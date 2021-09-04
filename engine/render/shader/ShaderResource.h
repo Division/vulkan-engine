@@ -23,7 +23,6 @@ enum class ShaderTextureName : uint32_t
 
 enum class ShaderBufferName : uint32_t 
 {
-	ObjectParams,
 	SkinningMatrices,
 	Light,
 	Projector,

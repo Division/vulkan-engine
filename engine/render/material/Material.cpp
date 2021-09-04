@@ -33,6 +33,11 @@ void Material::SetBindingsDirty()
 	bindings_dirty = true;
 }
 
+void Material::SetConstantsDirty()
+{
+	constants_dirty = true;
+}
+
 void Material::Texture0(Device::Handle<Device::Texture> texture) 
 {
 	if (texture0 != texture)
@@ -211,6 +216,19 @@ void Material::UpdateBindings() const
 		resource_bindings.AddTextureBinding(Device::GetShaderTextureNameHash(ShaderTextureName::NormalMap), GetNormalMap());
 
 	bindings_dirty = false;
+}
+
+void Material::UpdateConstants() const
+{
+	if (!constants_dirty)
+		return;
+
+	constant_bindings.Clear();
+	constant_bindings.AddFloat4Binding(&color, "color");
+	constant_bindings.AddFloatBinding(&roughness, "roughness");
+	constant_bindings.AddFloatBinding(&metalness, "metalness");
+
+	constants_dirty = false;
 }
 
 uint32_t Material::GetHash() const

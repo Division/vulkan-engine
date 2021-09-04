@@ -35,12 +35,6 @@ namespace ECS { namespace systems {
 			if (mesh_renderer->draw_calls)
 				continue;
 
-			if (mesh_renderer->object_params.size() == 0)
-				continue;
-
-			if (mesh_renderer->object_params.size() != mesh_renderer->multi_mesh->GetMeshCount())
-				continue;
-
 			assert((bool)mesh_renderer->material_resources ^ (bool)mesh_renderer->materials);
 
 			auto handle = draw_call_manager.CreateHandle();
@@ -60,7 +54,7 @@ namespace ECS { namespace systems {
 				auto draw_call = handle.AddDrawCall(initializer);
 					
 				draw_call->queue = material->GetRenderQueue();
-				draw_call->object_params = mesh_renderer->object_params[j]; // TODO: move to AddDrawCall
+				draw_call->transform = transform->local_to_world; // TODO: move to AddDrawCall
 				draw_call->obb = obb;
 			}
 
@@ -74,13 +68,12 @@ namespace ECS { namespace systems {
 	{
 		OPTICK_EVENT();
 		ComponentFetcher<DrawCall> draw_call_fetcher(*chunk);
-		auto* buffer = scene_buffers.GetObjectParamsBuffer();
 
 		for (int i = 0; i < chunk->GetEntityCount(); i++)
 		{
 			auto* draw_call = draw_call_fetcher.GetComponent(i);
-			const auto offset = buffer->Append(draw_call->object_params);
-			draw_call->dynamic_offset = offset;
+			draw_call->constants.AddFloat4x4Binding(&draw_call->transform, "objectModelMatrix");
+			draw_call->constants.Merge(draw_call->material->GetConstantBindings());
 		}
 	}
 
@@ -89,14 +82,12 @@ namespace ECS { namespace systems {
 		OPTICK_EVENT();
 		ComponentFetcher<DrawCall> draw_call_fetcher(*chunk);
 		ComponentFetcher<SkinningData> skinning_data_fetcher(*chunk);
-		auto* buffer = scene_buffers.GetSkinningMatricesBuffer();
 
 		for (int i = 0; i < chunk->GetEntityCount(); i++)
 		{
 			auto* draw_call = draw_call_fetcher.GetComponent(i);
 			auto* skinning_data = skinning_data_fetcher.GetComponent(i);
-			const auto offset = buffer->Append(skinning_data->bone_matrices);
-			draw_call->skinning_dynamic_offset = offset;
+			draw_call->constants.AddDataBinding(&skinning_data->bone_matrices, sizeof(skinning_data->bone_matrices), "skinning_matrices");
 		}
 	}
 

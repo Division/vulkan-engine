@@ -8,6 +8,8 @@ namespace Device {
 
 	class ConstantBuffer : protected DynamicBuffer<uint8_t>
 	{
+		std::mutex mutex;
+
 	public:
 		struct Allocation
 		{
@@ -31,6 +33,8 @@ namespace Device {
 
 		void Upload()
 		{
+			std::scoped_lock lock(mutex);
+
 			if (upload_data_size)
 			{
 				DynamicBuffer::Unmap();
@@ -42,6 +46,9 @@ namespace Device {
 
 		Allocation Allocate(uint32_t allocation_size)
 		{
+			// May be a lot of contention here. Consider spinlock if need to render a lot.
+			std::scoped_lock lock(mutex);
+
 			assert(mapped_pointer);
 			size_t pointer = AlignMemory((size_t)mapped_pointer + upload_data_size, 256);
 			upload_data_size = pointer - (size_t)mapped_pointer + allocation_size;
@@ -49,28 +56,6 @@ namespace Device {
 				throw std::runtime_error("Constant buffer overflow");
 
 			return { (uint8_t*)pointer, (uint32_t)((size_t)pointer - (size_t)mapped_pointer), allocation_size };
-		}
-
-	};
-
-	class DynamicParameters
-	{
-		ConstantBuffer& constant_buffer;
-		uint32_t size;
-		ConstantBuffer::Allocation allocation;
-
-	public:
-		DynamicParameters(ConstantBuffer& constant_buffer, uint32_t size)
-			: constant_buffer(constant_buffer)
-			, size(size)
-		{}
-
-		void Patch(void* src, uint32_t patching_size)
-		{
-			if (patching_size > size)
-				throw std::runtime_error("constant bufer size is too low");
-			allocation = constant_buffer.Allocate(size);
-			memcpy(allocation.pointer, src, patching_size);
 		}
 
 	};

@@ -21,7 +21,6 @@ const std::map<std::string, ShaderTextureName> SHADER_TEXTURE_NAMES =
 
 const std::map<std::string, ShaderBufferName> SHADER_BUFFER_NAMES = 
 {
-	{ "ObjectParams", ShaderBufferName::ObjectParams },
 	{ "SkinningMatrices", ShaderBufferName::SkinningMatrices },
 	{ "Lights", ShaderBufferName::Light },
 	{ "Projectors", ShaderBufferName::Projector },
@@ -40,7 +39,6 @@ const std::map<std::string, ShaderSamplerName> SHADER_SAMPLER_NAMES =
 
 const std::set<ShaderBufferName> SHADER_DYNAMIC_OFFSET_BUFFERS =
 {
-	ShaderBufferName::ObjectParams,
 	ShaderBufferName::SkinningMatrices,
 	ShaderBufferName::Default
 };

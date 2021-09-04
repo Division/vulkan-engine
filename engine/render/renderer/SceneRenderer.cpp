@@ -254,11 +254,6 @@ namespace render {
 		}
 		*/
 
-		auto* object_params_buffer = scene_buffers->GetObjectParamsBuffer();
-		auto* skinning_matrices_buffer = scene_buffers->GetSkinningMatricesBuffer();
-		object_params_buffer->Map();
-		skinning_matrices_buffer->Map();
-
 		UploadDrawCalls();
 
 		auto main_camera = GetCameraData(scene.GetCamera(), scene.GetCamera()->cameraViewSize());
@@ -300,9 +295,6 @@ namespace render {
 		light_grid->upload();
 
 		UpdateGlobalBindings();
-
-		object_params_buffer->Unmap();
-		skinning_matrices_buffer->Unmap();
 
 		// Render Graph
 		render_graph->Clear();
@@ -489,6 +481,8 @@ namespace render {
 		render_graph->Render();
 
 		scene_buffers->GetConstantBuffer()->Upload();
+		scene_buffers->GetSkinningMatricesBuffer()->Upload();
+
 	}
 
 	Device::Texture* SceneRenderer::GetBlankTexture() const
@@ -510,12 +504,12 @@ namespace render {
 			global_resource_bindings->AddTextureBinding(Device::GetShaderTextureNameHash(ShaderTextureName::IrradianceCubemap), irradiance_cubemap ? irradiance_cubemap->Get().get() : blank_cube_texture.get());
 			global_resource_bindings->AddTextureBinding(Device::GetShaderTextureNameHash(ShaderTextureName::BrdfLUT), brdf_lut->Get().get());
 
-			global_resource_bindings->AddBufferBinding(Device::GetShaderBufferNameHash(ShaderBufferName::ObjectParams), scene_buffers->GetObjectParamsBuffer()->GetBuffer(), scene_buffers->GetObjectParamsBuffer()->GetElementSize());
-			global_resource_bindings->AddBufferBinding(Device::GetShaderBufferNameHash(ShaderBufferName::SkinningMatrices), scene_buffers->GetSkinningMatricesBuffer()->GetBuffer(), scene_buffers->GetSkinningMatricesBuffer()->GetElementSize());
 			global_resource_bindings->AddBufferBinding(Device::GetShaderBufferNameHash(ShaderBufferName::Projector), light_grid->GetProjectorBuffer()->GetBuffer(), light_grid->GetProjectorBuffer()->GetSize());
 			global_resource_bindings->AddBufferBinding(Device::GetShaderBufferNameHash(ShaderBufferName::Light), light_grid->GetLightsBuffer()->GetBuffer(), light_grid->GetLightsBuffer()->GetSize());
 			global_resource_bindings->AddBufferBinding(Device::GetShaderBufferNameHash(ShaderBufferName::LightIndices), light_grid->GetLightIndexBuffer()->GetBuffer(), light_grid->GetLightIndexBuffer()->GetSize());
 			global_resource_bindings->AddBufferBinding(Device::GetShaderBufferNameHash(ShaderBufferName::LightGrid), light_grid->GetLightGridBuffer()->GetBuffer(), light_grid->GetLightGridBuffer()->GetSize());
+
+			global_resource_bindings->AddDynamicBufferBinding(Device::GetShaderBufferNameHash(ShaderBufferName::SkinningMatrices), scene_buffers->GetSkinningMatricesBuffer());
 
 			global_bindings_dirty = false;
 		}

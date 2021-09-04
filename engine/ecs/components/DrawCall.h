@@ -3,6 +3,8 @@
 #include "CommonIncludes.h"
 #include "render/renderer/IRenderer.h"
 #include "render/shader/ShaderBufferStruct.h"
+#include "render/shader/ShaderBindings.h"
+#include "render/material/Material.h"
 #include "utils/Math.h"
 
 namespace Device
@@ -20,13 +22,13 @@ namespace ECS::components {
 		// TODO: remove mesh from draw call
 		const Mesh* mesh = nullptr;
 		OBB obb;
-		Device::ShaderBufferStruct::ObjectParams object_params;
+		mat4 transform;
 		Device::ShaderProgram* shader = nullptr;
 		Device::DescriptorSet* descriptor_set = nullptr;
 		Device::ShaderProgram* depth_only_shader = nullptr;
 		Device::DescriptorSet* depth_only_descriptor_set = nullptr;
-		uint32_t dynamic_offset = 0;
-		uint32_t skinning_dynamic_offset = -1;
+		Device::ConstantBindings constants;
+		const Material* material = nullptr;
 		uint32_t visible = 0;
 		RenderQueue queue = RenderQueue::Opaque;
 	};
