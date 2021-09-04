@@ -52,6 +52,49 @@ namespace Device {
 		return data;
 	}
 
+	ReflectionInfo::StorageBufferData ReflectionInfo::GetStorageBufferData(spirv_cross::Resource& ssbo, spirv_cross::CompilerGLSL& compiler)
+	{
+		StorageBufferData data;
+		data.id = ssbo.id;
+		data.name = ConvertHLSLName(ssbo.name);
+		data.name_hash = ShaderProgram::GetParameterNameHash(data.name);
+		data.set = compiler.get_decoration(ssbo.id, spv::DecorationDescriptorSet);
+		data.binding = compiler.get_decoration(ssbo.id, spv::DecorationBinding);
+		auto it = SHADER_BUFFER_NAMES.find(ConvertHLSLName(ssbo.name));
+		data.storage_buffer_name = it == SHADER_BUFFER_NAMES.end() ? ShaderBufferName::DefaultStorage : it->second;
+
+		const auto& type = compiler.get_type(ssbo.base_type_id);
+		data.size = (uint32_t)compiler.get_declared_struct_size(type);
+		
+		// Can't know size for sure, go with maximum
+		if (data.size == 0)
+			data.size = 65535;
+
+		unsigned member_count = type.member_types.size();
+		for (unsigned i = 0; i < member_count; i++)
+		{
+			BufferMember member;
+
+			member.name = compiler.get_member_name(type.self, i);
+			if (member.name == "")
+			{
+				assert(member_count == 1); // Unnamed member, assuming default member name to be the buffer name
+				member.name = data.name;
+			}
+
+			member.size = compiler.get_declared_struct_member_size(type, i);
+			if (member.size == 0)
+				member.size = 65535;
+
+			member.offset = compiler.type_struct_member_offset(type, i);
+			member.name_hash = ShaderProgram::GetParameterNameHash(member.name);
+
+			data.members.emplace_back(std::move(member));
+		}
+
+		return data;
+	}
+
 	ReflectionInfo::ReflectionInfo(uint32_t* spirv_data, size_t count)
 		: compiler(spirv_data, count)
 	{
@@ -120,16 +163,7 @@ namespace Device {
 
 		for (auto& storage_buffer : resources.storage_buffers)
 		{
-			StorageBufferData data;
-			data.id = storage_buffer.id;
-			data.name = ConvertHLSLName(storage_buffer.name);
-			data.set = compiler.get_decoration(storage_buffer.id, spv::DecorationDescriptorSet);
-			data.binding = compiler.get_decoration(storage_buffer.id, spv::DecorationBinding);
-			auto iter = SHADER_BUFFER_NAMES.find(ConvertHLSLName(storage_buffer.name));
-			if (iter != SHADER_BUFFER_NAMES.end())
-				data.storage_buffer_name = iter->second;
-
-			storage_buffers.push_back(data);
+			storage_buffers.push_back(GetStorageBufferData(storage_buffer, compiler));
 		}
 
 		for (auto& push_constant_buffer : resources.push_constant_buffers)

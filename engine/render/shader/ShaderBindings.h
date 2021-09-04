@@ -129,7 +129,8 @@ namespace Device {
 		void AddFloat4x4Binding(const mat4* data, const char* name) { AddFloat4x4Binding(data, ShaderProgram::GetParameterNameHash(name)); }
 		void AddFloat3x3Binding(const mat3* data, uint32_t name_hash) { AddDataBinding(data, sizeof(*data), name_hash); }
 		void AddFloat3x3Binding(const mat3* data, const char* name) { AddFloat3x3Binding(data, ShaderProgram::GetParameterNameHash(name)); }
-
+		void AddUIntBinding(const uint32_t* data, uint32_t name_hash) { AddDataBinding(data, sizeof(*data), name_hash); }
+		void AddUIntBinding(const uint32_t* data, const char* name) { AddUIntBinding(data, ShaderProgram::GetParameterNameHash(name)); }
 
 	private:
 		//std::vector<Binding> bindings;

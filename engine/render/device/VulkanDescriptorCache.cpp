@@ -143,6 +143,8 @@ namespace Device {
 					buffer_descriptor_type = vk::DescriptorType::eUniformBufferDynamic;
 				else if (binding.type == ShaderProgram::BindingType::StorageBuffer)
 					buffer_descriptor_type = vk::DescriptorType::eStorageBuffer;
+				else if (binding.type == ShaderProgram::BindingType::StorageBufferDynamic)
+					buffer_descriptor_type = vk::DescriptorType::eStorageBufferDynamic;
 				else
 					assert(false);
 

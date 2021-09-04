@@ -37,7 +37,6 @@ namespace ECS::systems {
 			for (int j = 0; j < multi_mesh->multi_mesh->GetMeshCount(); j++)
 			{
 				if (!multi_mesh->draw_calls) continue;
-				
 
 				auto* skinning_data = multi_mesh->draw_calls.GetSkinningData(j);
 				if (!skinning_data) continue;
@@ -47,11 +46,12 @@ namespace ECS::systems {
 				const AABB mesh_bounds = mesh->aabb();
 				bounds.expand(mesh_bounds.min);
 				bounds.expand(mesh_bounds.max);
+				skinning_data->bone_matrices.resize(mesh->GetBoneCount());
 
 				for (uint16_t k = 0; k < mesh->GetBoneCount(); k++)
 				{
 					const auto remap_index = mesh->GetBoneRemapIndex(k);
-					skinning_data->bone_matrices.matrices[k] = transform->local_to_world * (mat4&)model_matrices[remap_index] * inv_bind_pose[k];
+					skinning_data->bone_matrices[k] = transform->local_to_world * (mat4&)model_matrices[remap_index] * inv_bind_pose[k];
 				}
 			}
 

@@ -3,6 +3,7 @@
 #include "ecs/components/Transform.h"
 #include "ecs/components/Entity.h"
 #include "ecs/components/AnimationController.h"
+#include "render/renderer/SceneRenderer.h"
 #include "render/renderer/SceneBuffers.h"
 #include "Engine.h"
 
@@ -72,7 +73,7 @@ namespace ECS { namespace systems {
 		for (int i = 0; i < chunk->GetEntityCount(); i++)
 		{
 			auto* draw_call = draw_call_fetcher.GetComponent(i);
-			draw_call->constants.AddFloat4x4Binding(&draw_call->transform, "objectModelMatrix");
+			draw_call->constants.AddFloat4x4Binding(&draw_call->transform, Device::GetBufferMemberHash(BufferMemberName::ModelMatrix));
 			draw_call->constants.Merge(draw_call->material->GetConstantBindings());
 		}
 	}
@@ -83,11 +84,17 @@ namespace ECS { namespace systems {
 		ComponentFetcher<DrawCall> draw_call_fetcher(*chunk);
 		ComponentFetcher<SkinningData> skinning_data_fetcher(*chunk);
 
+		auto skinning_matrices = Engine::Get()->GetSceneRenderer()->GetSceneBuffers()->GetSkinningMatricesBuffer();
 		for (int i = 0; i < chunk->GetEntityCount(); i++)
 		{
 			auto* draw_call = draw_call_fetcher.GetComponent(i);
 			auto* skinning_data = skinning_data_fetcher.GetComponent(i);
-			draw_call->constants.AddDataBinding(&skinning_data->bone_matrices, sizeof(skinning_data->bone_matrices), "skinning_matrices");
+
+			const auto allocation = skinning_matrices->Allocate(sizeof(mat4) * skinning_data->bone_matrices.size());
+			memcpy(allocation.pointer, skinning_data->bone_matrices.data(), allocation.size);
+			skinning_data->matrices_offset = allocation.offset / (uint32_t)sizeof(mat4);
+
+			draw_call->constants.AddUIntBinding(&skinning_data->matrices_offset, Device::GetBufferMemberHash(BufferMemberName::SkinningOffset));
 		}
 	}
 

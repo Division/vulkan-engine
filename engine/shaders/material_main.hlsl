@@ -1,10 +1,5 @@
 #include "includes/global.hlsl"
 
-struct SkinningMatricesData
-{
-    float4x4 matrices[70];
-};
-
 [[vk::binding(1, 1)]]
 cbuffer ObjectParams : register(b1) 
 {
@@ -16,9 +11,12 @@ cbuffer ObjectParams : register(b1)
 
 #if defined(SKINNING)
 [[vk::binding(3, 1)]]
-cbuffer SkinningMatrices : register(b3) 
+StructuredBuffer<float4x4> SkinningMatrices;
+
+[[vk::binding(4, 1)]]
+cbuffer SkinningOffset : register(b4)
 {
-    SkinningMatricesData skinning_matrices;
+    uint skinning_offset;
 };
 
 #endif
@@ -86,7 +84,7 @@ VS_out vs_main(VS_in input)
     {
         uint joint_index = input.joint_indices[i];
         float joint_weight = input.joint_weights[i];
-        model_matrix += skinning_matrices.matrices[joint_index] * joint_weight;
+        model_matrix += SkinningMatrices[skinning_offset + joint_index] * joint_weight;
     }
 #endif
 
