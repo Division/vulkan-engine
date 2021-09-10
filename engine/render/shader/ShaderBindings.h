@@ -171,38 +171,27 @@ namespace Device {
 		};
 
 		DescriptorSetBindings(const Device::ResourceBindings& resource_bindings, const ShaderProgram::DescriptorSetLayout& descriptor_set_layout);
-		DescriptorSetBindings(const ShaderProgram::DescriptorSetLayout& descriptor_set_layout);
 
 		const auto& GetTextureBindings() const { return texture_bindings; }
-		auto& GetTextureBindings() { return texture_bindings; }
 		const auto& GetBufferBindings() const { return buffer_bindings; }
-		auto& GetBufferBindings() { return buffer_bindings; }
 		const auto& GetDynamicBufferBindings() const { return dynamic_buffer_bindings; }
-		auto& GetDynamicBufferBindings() { return dynamic_buffer_bindings; }
-		const auto& GetDynamicOffsets() const { return dynamic_offsets; }
+		
+		const ShaderProgram::DescriptorSetLayout& GetDescriptorSetLayout() const { return descriptor_set_layout; };
 
-		void SetupWithResourceBindings(const Device::ResourceBindings& resource_bindings, const ShaderProgram::DescriptorSetLayout& descriptor_set_layout);
-
+	private:
 		void AddTextureBindingSafe(unsigned index, const Texture* texture);
 		void AddBufferBindingSafe(unsigned index, size_t offset, size_t size, vk::Buffer buffer);
 		void AddTextureBinding(unsigned index, const Texture* texture);
 		void AddBufferBinding(unsigned index, size_t offset, size_t size, vk::Buffer buffer, size_t dynamic_offset = -1);
 		void AddDynamicBufferBinding(unsigned index, uint32_t name_hash, size_t size, const ShaderProgram::BindingData* binding_data, ConstantBuffer* constant_buffer);
-		void Clear();
-		void UpdateBindings();
-		
-		const ShaderProgram::DescriptorSetLayout& GetDescriptorSetLayout() const { return descriptor_set_layout; };
-
-	private:
 		int GetBindingIndex(uint32_t index, ShaderProgram::BindingType type);
 
 		const ShaderProgram::DescriptorSetLayout& descriptor_set_layout;
-		/*std::vector<uint32_t> dynamic_offsets;
-		std::vector<TextureBinding> texture_bindings;
+		
+		/*std::vector<TextureBinding> texture_bindings;
 		std::vector<BufferBinding> buffer_bindings;
 		std::vector<DynamicBufferBinding> dynamic_buffer_bindings;*/
 
-		utils::SmallVector<uint32_t, 8> dynamic_offsets;
 		utils::SmallVector<TextureBinding, 32> texture_bindings;
 		utils::SmallVector<BufferBinding, 16> buffer_bindings;
 		utils::SmallVector<DynamicBufferBinding, 16> dynamic_buffer_bindings;

@@ -131,18 +131,6 @@ namespace Device {
 	DescriptorSetBindings::DescriptorSetBindings(const Device::ResourceBindings& resource_bindings, const ShaderProgram::DescriptorSetLayout& descriptor_set_layout)
 		: descriptor_set_layout(descriptor_set_layout)
 	{
-		SetupWithResourceBindings(resource_bindings, descriptor_set_layout);
-	}
-
-	DescriptorSetBindings::DescriptorSetBindings(const ShaderProgram::DescriptorSetLayout& descriptor_set_layout)
-		: descriptor_set_layout(descriptor_set_layout)
-	{
-	}
-
-	void DescriptorSetBindings::SetupWithResourceBindings(const Device::ResourceBindings& resource_bindings, const ShaderProgram::DescriptorSetLayout& descriptor_set_layout)
-	{
-		Clear();
-
 		for (auto& binding : descriptor_set_layout.bindings)
 		{
 			auto& address = binding.address;
@@ -205,7 +193,7 @@ namespace Device {
 			}
 		}
 
-		UpdateBindings();
+		std::sort(buffer_bindings.begin(), buffer_bindings.end());
 	}
 
 	void DescriptorSetBindings::AddTextureBindingSafe(unsigned index, const Texture* texture)
@@ -232,22 +220,11 @@ namespace Device {
 	void DescriptorSetBindings::AddBufferBinding(unsigned index, size_t offset, size_t size, vk::Buffer buffer, size_t dynamic_offset)
 	{
 		buffer_bindings.push_back(BufferBinding{ (unsigned char)index, (unsigned)offset, (unsigned)dynamic_offset, (unsigned)size, buffer });
-		UpdateBindings();
 	}
 
 	void DescriptorSetBindings::AddDynamicBufferBinding(unsigned index, uint32_t name_hash, size_t size, const ShaderProgram::BindingData* binding_data, ConstantBuffer* constant_buffer)
 	{
 		dynamic_buffer_bindings.push_back(DynamicBufferBinding{ index, name_hash, (uint32_t)size, binding_data, constant_buffer });
-	}
-
-	void DescriptorSetBindings::UpdateBindings()
-	{
-		std::sort(buffer_bindings.begin(), buffer_bindings.end());
-		
-		dynamic_offsets.clear();
-		for (auto& binding : buffer_bindings)
-			if (binding.dynamic_offset != -1)
-				dynamic_offsets.push_back(binding.dynamic_offset);
 	}
 
 	int DescriptorSetBindings::GetBindingIndex(uint32_t index, ShaderProgram::BindingType type)
@@ -282,13 +259,6 @@ namespace Device {
 			assert(false);
 			return -1;
 		}
-	}
-
-	void DescriptorSetBindings::Clear()
-	{
-		texture_bindings.clear();
-		buffer_bindings.clear();
-		dynamic_offsets.clear();
 	}
 
 	uint32_t DescriptorSetBindings::DynamicBufferBinding::FlushConstantBuffer(const ConstantBindings& constants) const

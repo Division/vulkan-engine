@@ -39,6 +39,8 @@
 #include "objects/Camera.h"
 #include "render/effects/Skybox.h"
 #include "render/effects/PostProcess.h"
+#include "render/effects/Bloom.h"
+#include "render/effects/Blur.h"
 #include "resources/TextureResource.h"
 #include "render/debug/DebugSettings.h"
 #include "RenderModeUtils.h"
@@ -101,7 +103,7 @@ namespace render {
 		global_resource_bindings = std::make_unique<Device::ResourceBindings>();
 		global_constant_bindings = std::make_unique<Device::ConstantBindings>();
 
-		brdf_lut = TextureResource::Linear(L"assets/Textures/LUT/brdf_lut.ktx");
+		brdf_lut = TextureResource::Linear(L"assets/Textures/LUT/ibl_brdf_lut.dds");
 
 		compute_buffer = std::make_unique<DynamicBuffer<unsigned char>>(128 * 128 * sizeof(vec4), BufferType::Storage);
 
@@ -149,14 +151,18 @@ namespace render {
 		//skybox->SetTexture(environment_cubemap->Get().get());
 
 		post_process = std::make_unique<effects::PostProcess>(*shader_cache, *environment_settings);
+		blur = std::make_unique<Blur>(*shader_cache);
+		bloom = std::make_unique<Bloom>(*shader_cache, *blur, *environment_settings);
 	}
 
 	void SceneRenderer::OnRecreateSwapchain(int32_t width, int32_t height)
 	{
 		render_graph->ClearCache();
 		main_depth_attachment = std::make_unique<VulkanRenderTargetAttachment>("Main Depth", VulkanRenderTargetAttachment::Type::Depth, width, height, Format::D24_unorm_S8_uint);
-		main_color_attachment = std::make_unique<VulkanRenderTargetAttachment>("Main Color", VulkanRenderTargetAttachment::Type::Color, width, height, Format::R16G16B16A16_float);
+		main_color_attachment[0] = std::make_unique<VulkanRenderTargetAttachment>("Main Color 0", VulkanRenderTargetAttachment::Type::Color, width, height, Format::R16G16B16A16_float);
+		main_color_attachment[1] = std::make_unique<VulkanRenderTargetAttachment>("Main Color 1", VulkanRenderTargetAttachment::Type::Color, width, height, Format::R16G16B16A16_float);
 		post_process->OnRecreateSwapchain(width, height);
+		bloom->OnRecreateSwapchain(width, height);
 	}
 
 	void SceneRenderer::CreateDrawCalls()
@@ -308,12 +314,17 @@ namespace render {
 
 		auto* swapchain = context->GetSwapchain();
 		auto* main_color = render_graph->RegisterAttachment(*swapchain->GetColorAttachment(context->GetCurrentFrame()));
-		auto* main_offscreen_color = render_graph->RegisterAttachment(*main_color_attachment);
+		std::array<graph::ResourceWrapper*, 2> main_offscreen_color;
+		main_offscreen_color[0] = render_graph->RegisterAttachment(*main_color_attachment[0]);
+		main_offscreen_color[1] = render_graph->RegisterAttachment(*main_color_attachment[1]);
 		auto* main_depth = render_graph->RegisterAttachment(*main_depth_attachment);
 		auto* shadow_map = render_graph->RegisterAttachment(*shadowmap_attachment);
 		auto* shadow_map_atlas = render_graph->RegisterAttachment(*shadowmap_atlas_attachment);
 		auto* compute_buffer_resource = render_graph->RegisterBuffer(*compute_buffer->GetBuffer());
 		post_process->PrepareRendering(*render_graph);
+
+		if (environment_settings->bloom_enabled)
+			bloom->PrepareRendering(*render_graph);
 
 		/*auto compute_pass_info = render_graph->AddPass<PassInfo>("compute pass", ProfilerName::PassCompute, [&](graph::IRenderPassBuilder& builder)
 		{
@@ -421,7 +432,7 @@ namespace render {
 			builder.AddInput(*depth_pre_pass_info.depth_output, graph::InputUsage::DepthAttachment);
 			builder.AddInput(*shadow_map_info.depth_output);
 			builder.AddInput(*shadow_map_atlas_info.depth_output);
-			result.color_output = builder.AddOutput(*main_offscreen_color)->Clear(vec4(0));
+			result.color_output = builder.AddOutput(*main_offscreen_color[0])->Clear(vec4(0));
 			return result;
 		}, [&](VulkanRenderState& state)
 		{
@@ -464,7 +475,12 @@ namespace render {
 
 		});
 
-		auto post_process_result = post_process->AddPostProcess(*render_graph, *main_pass_info.color_output, *main_color, *compute_buffer_resource, GetGlobalResourceBindings(), *global_constant_bindings);
+		auto post_process_src = main_pass_info.color_output;
+
+		if (environment_settings->bloom_enabled)
+			post_process_src = bloom->AddBloom(*render_graph, *post_process_src, *main_offscreen_color[1]);
+
+		auto post_process_result = post_process->AddPostProcess(*render_graph, *post_process_src, *main_color, *compute_buffer_resource, GetGlobalResourceBindings(), *global_constant_bindings);
 
 		auto ui_pass_info = render_graph->AddPass<PassInfo>("Debug UI", ProfilerName::PassDebugUI, [&](graph::IRenderPassBuilder& builder)
 			{
