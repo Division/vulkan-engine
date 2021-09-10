@@ -1,5 +1,4 @@
 Engine roadmap:
-- bone attachments
 - top down shooter demo
 - Proper deletion of entities loaded from resource
 - export default materials from fbx (with texture paths)
@@ -12,11 +11,11 @@ Engine roadmap:
 - Multithreaded rendering
 - GUI library integration
 
-Check:
-- postprocess, changed HLSL texture binding but C++ side didn't see it changed
-
 -- Completed -----------------------------------
-- fix deadlock: resource loading exception during main thread resolve()
++ bloom
++ Refactored resource and constants binding
++ bone attachments
++ fix deadlock: resource loading exception during main thread resolve()
 + properly handle missing textures
 + properly export animations in fbx exporter
 + asset database and UI

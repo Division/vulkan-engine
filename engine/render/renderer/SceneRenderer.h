@@ -56,6 +56,8 @@ namespace render {
 	class DrawCallManager;
 	struct DebugSettings;
 	struct EnvironmentSettings;
+	class Bloom;
+	class Blur;
 
 	struct ShadowCasterData
 	{
@@ -137,7 +139,7 @@ namespace render {
 		std::unique_ptr<Device::VulkanRenderTargetAttachment> main_depth_attachment;
 		std::unique_ptr<Device::VulkanRenderTargetAttachment> shadowmap_atlas_attachment;
 		std::unique_ptr<Device::VulkanRenderTargetAttachment> shadowmap_attachment;
-		std::unique_ptr<Device::VulkanRenderTargetAttachment> main_color_attachment;
+		std::unique_ptr<Device::VulkanRenderTargetAttachment> main_color_attachment[2];
 
 		uint32_t depth_only_fragment_shader_hash;
 
@@ -147,6 +149,8 @@ namespace render {
 		DebugSettings* debug_settings;
 		std::unique_ptr<effects::Skybox> skybox;
 		std::unique_ptr<effects::PostProcess> post_process;
+		std::unique_ptr<Bloom> bloom;
+		std::unique_ptr<Blur> blur;
 	};
 
 }

@@ -236,7 +236,8 @@ namespace render { namespace graph {
 						if (prev_operation)
 						{
 							load_op = output->should_clear ? AttachmentLoadOp::Clear : AttachmentLoadOp::Load;
-							initial_layout = GetImageAccessDst(prev_operation->type).layout;
+							if (!output->should_clear)
+								initial_layout = GetImageAccessDst(prev_operation->type).layout;
 						}
 						else
 							load_op = output->should_clear ? AttachmentLoadOp::Clear : AttachmentLoadOp::DontCare;

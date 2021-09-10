@@ -178,6 +178,10 @@ set(ENGINE_SOURCES
 	render/effects/Skybox.cpp
 	render/effects/PostProcess.h
 	render/effects/PostProcess.cpp
+	render/effects/Bloom.h
+	render/effects/Bloom.cpp
+	render/effects/Blur.h
+	render/effects/Blur.cpp
 	render/mesh/Mesh.h
 	render/mesh/Mesh.cpp
 	render/texture/Texture.h

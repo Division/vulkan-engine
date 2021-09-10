@@ -24,7 +24,6 @@ VS_out vs_main(VS_in input)
 
 SamplerState SamplerLinearWrap;
  
-[[vk::binding(11, 0)]]
 TextureCube radiance_cubemap : register(t11);
 
 float4 ps_main(VS_out input) : SV_TARGET

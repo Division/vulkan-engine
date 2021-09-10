@@ -232,8 +232,6 @@ float4 ps_main(VS_out input) : SV_TARGET
             }
             
             light_color += float4(lightValue, 0.0);
-
-            //light_color += float4(radiance, 0);
         }
     }
 
@@ -254,8 +252,7 @@ float4 ps_main(VS_out input) : SV_TARGET
         light_color += shadow * float4(CalculateLighting(albedo, environment.direction_light_color, normal_worldspace_final, eyeDir_worldspace, -environment.direction_light_direction, roughness_final, metalness_final), 0);
     }
     
-    float ao = 1.0f;
-    float3 ambient = CalculateAmbient(albedo, normal_worldspace_final, eyeDir_worldspace, roughness_final, metalness_final, ao) * environment.environment_brightness;
+    float3 ambient = CalculateAmbient(albedo, normal_worldspace_final, eyeDir_worldspace, roughness_final, metalness_final) * environment.environment_brightness;
     result_color = light_color + float4(ambient, 0);
     result_color.a = result_alpha;
 
