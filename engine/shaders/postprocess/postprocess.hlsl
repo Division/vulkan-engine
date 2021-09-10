@@ -1,9 +1,15 @@
-struct PushConstants
+/*struct PushConstants
 {
     float exposure;
 };
 
-[[vk::push_constant]] PushConstants push_constants;
+[[vk::push_constant]] PushConstants push_constants;*/
+
+[[vk::binding(1, 0)]]
+cbuffer parameters : register(b0) {
+    float exposure;
+};
+
 
 struct VS_in
 {
@@ -29,7 +35,7 @@ VS_out vs_main(VS_in input)
 
 SamplerState SamplerLinearClamp;
 
-[[vk::binding(0, 1)]] Texture2D src_texture : register(t0);
+Texture2D src_texture : register(t0);
 
 /*
 struct Pixel
@@ -127,5 +133,5 @@ float4 ps_main(VS_out input) : SV_TARGET
     src_sample *= light_color;
     */
 
-    return ToneMap(src_sample, push_constants.exposure)/* * image_data[0].value*/;
+    return ToneMap(src_sample, exposure)/* * image_data[0].value*/;
 }

@@ -1,33 +1,22 @@
 #include "includes/global.hlsl"
 
-struct ObjectParamsData 
+[[vk::binding(1, 1)]]
+cbuffer ObjectParams : register(b1) 
 {
     float4x4 objectModelMatrix;
-    float4x4 objectNormalMatrix;
     float4 color;
-    float2 uvScale;
-    float2 uvOffset;
-    uint layer;
     float roughness;
     float metalness;
 };
 
-struct SkinningMatricesData
-{
-    float4x4 matrices[70];
-};
-
-[[vk::binding(1, 1)]]
-cbuffer ObjectParams : register(b1) 
-{
-    ObjectParamsData object_params;
-};
-
 #if defined(SKINNING)
 [[vk::binding(3, 1)]]
-cbuffer SkinningMatrices : register(b3) 
+StructuredBuffer<float4x4> SkinningMatrices;
+
+[[vk::binding(4, 1)]]
+cbuffer SkinningOffset : register(b4)
 {
-    SkinningMatricesData skinning_matrices;
+    uint skinning_offset;
 };
 
 #endif
@@ -87,7 +76,7 @@ float LinearizeDepth(float depth_ndc, float near, float far)
 VS_out vs_main(VS_in input)
 {
     VS_out result;
-    float4x4 model_matrix = object_params.objectModelMatrix;
+    float4x4 model_matrix = objectModelMatrix;
 #if defined(SKINNING)
     model_matrix = float4x4(0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0);
     [unroll]
@@ -95,7 +84,7 @@ VS_out vs_main(VS_in input)
     {
         uint joint_index = input.joint_indices[i];
         float joint_weight = input.joint_weights[i];
-        model_matrix += skinning_matrices.matrices[joint_index] * joint_weight;
+        model_matrix += SkinningMatrices[skinning_offset + joint_index] * joint_weight;
     }
 #endif
 
@@ -149,8 +138,8 @@ float LogBase(float x, float base)
 
 float4 ps_main(VS_out input) : SV_TARGET
 {
-    float result_alpha = object_params.color.a;
-    float4 result_color = object_params.color;
+    float result_alpha = color.a;
+    float4 result_color = color;
     
 #if defined(TEXTURE0)
     float4 texture0_color = texture0.Sample(SamplerLinearWrap, input.texcoord0);
@@ -159,8 +148,8 @@ float4 ps_main(VS_out input) : SV_TARGET
 #endif
  
 #if defined(LIGHTING)
-    float roughness_final = object_params.roughness;
-    float metalness_final = object_params.metalness;
+    float roughness_final = roughness;
+    float metalness_final = metalness;
     float3 normal_worldspace_final = normalize(input.normal_worldspace.xyz);
     
     #if defined (NORMAL_MAP)
@@ -243,8 +232,6 @@ float4 ps_main(VS_out input) : SV_TARGET
             }
             
             light_color += float4(lightValue, 0.0);
-
-            //light_color += float4(radiance, 0);
         }
     }
 
@@ -265,8 +252,7 @@ float4 ps_main(VS_out input) : SV_TARGET
         light_color += shadow * float4(CalculateLighting(albedo, environment.direction_light_color, normal_worldspace_final, eyeDir_worldspace, -environment.direction_light_direction, roughness_final, metalness_final), 0);
     }
     
-    float ao = 1.0f;
-    float3 ambient = CalculateAmbient(albedo, normal_worldspace_final, eyeDir_worldspace, roughness_final, metalness_final, ao) * environment.environment_brightness;
+    float3 ambient = CalculateAmbient(albedo, normal_worldspace_final, eyeDir_worldspace, roughness_final, metalness_final) * environment.environment_brightness;
     result_color = light_color + float4(ambient, 0);
     result_color.a = result_alpha;
 

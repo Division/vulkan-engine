@@ -181,7 +181,7 @@ namespace Device {
 		if (!initializer.name.empty())
 		{
 			Engine::GetVulkanContext()->AssignDebugName((uint64_t)(VkImage)image, vk::DebugReportObjectTypeEXT::eImage, ("[Image] " + initializer.name).c_str());
-			Engine::GetVulkanContext()->AssignDebugName((uint64_t)(VkImageView)image_view.get(), vk::DebugReportObjectTypeEXT::eImage, ("[ImageView] " + initializer.name).c_str());
+			Engine::GetVulkanContext()->AssignDebugName((uint64_t)(VkImageView)image_view.get(), vk::DebugReportObjectTypeEXT::eImageView, ("[ImageView] " + initializer.name).c_str());
 		}
 	}
 

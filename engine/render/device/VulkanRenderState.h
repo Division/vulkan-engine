@@ -171,6 +171,21 @@ namespace Device {
 		UINT32 = VK_INDEX_TYPE_UINT32,
 	};
 
+	class DescriptorSet
+	{
+		const ShaderProgram::DescriptorSetLayout* layout;
+		DescriptorSetBindings bindings;
+		vk::DescriptorSet vulkan_descriptor_set;
+
+	public:
+		DescriptorSet(const DescriptorSetBindings& bindings, const ShaderProgram::DescriptorSetLayout* layout, vk::DescriptorSet vk_descriptor_set)
+			: layout(layout), bindings(bindings), vulkan_descriptor_set(vk_descriptor_set) {}
+
+		vk::DescriptorSet GetVKDescriptorSet() const { return vulkan_descriptor_set; }
+		const DescriptorSetBindings& GetBindings() const { return bindings; };
+		const ShaderProgram::DescriptorSetLayout& GetLayout() const { return *layout; }
+	};
+
 	class VulkanRenderState : NonCopyable
 	{
 	public:
@@ -197,9 +212,9 @@ namespace Device {
 		void SetScissor(vec4 scissor);
 		void SetShader(const ShaderProgram& program);
 		void SetVertexLayout(const VertexLayout& layout);
-		void SetGlobalBindings(const ShaderBindings& global_bindings);
-		void SetDescriptorSetBindings(const ShaderBindings& bindings, const ShaderProgram::DescriptorSet& descriptor_set_data);
-		void SetDescriptorSet(vk::DescriptorSet descriptor_set, uint32_t index, uint32_t dynamic_offset_count, const uint32_t* dynamic_offsets);
+		void SetGlobalBindings(const ResourceBindings& global_bindings, const ConstantBindings& global_constants = {});
+		void SetDescriptorSetBindings(const DescriptorSetBindings& bindings, const ConstantBindings& constant_bindings = {});
+		void SetDescriptorSet(const DescriptorSet& descriptor_set, uint32_t index, uint32_t dynamic_offset_count, const uint32_t* dynamic_offsets);
 		void RemoveGlobalBindings();
 		void SetClearValue(uint32_t index, vk::ClearValue value);
 		void PushConstants(ShaderProgram::Stage stage, uint32_t offset, uint32_t size, void* data);
@@ -216,7 +231,7 @@ namespace Device {
 		VulkanCommandBuffer* BeginRendering(const VulkanRenderTarget& render_target, const VulkanRenderPass& render_pass);
 		void EndRendering();
 
-		void RecordCompute(const ShaderProgram& program, ShaderBindings& bindings, uvec3 group_size);
+		void RecordCompute(const ShaderProgram& program, DescriptorSetBindings& bindings, uvec3 group_size);
 
 		void BeginRecording(PipelineBindPoint bind_point);
 		void EndRecording();
@@ -225,9 +240,10 @@ namespace Device {
 		VulkanPipeline* GetPipeline(const VulkanPipelineInitializer& initializer);
 		vk::Sampler GetSampler(const SamplerMode& sampler_mode);
 
-		ShaderBindings global_bindings;
+		std::optional<ResourceBindings> global_bindings;
+		std::optional<ConstantBindings> global_constants;
+
 		uint32_t global_layout_hash = 0;
-		bool global_bindings_set = false;
 		PipelineBindPoint pipeline_bind_point = PipelineBindPoint::Graphics;
 
 		uint32_t dirty_flags = 0;

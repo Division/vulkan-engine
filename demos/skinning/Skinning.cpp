@@ -50,8 +50,6 @@ void Game::init()
 	manager = engine->GetEntityManager();
 	graph = engine->GetTransformGraph();
 
-	Resources::TextureResource::Handle(L"assets/Textures/LUT/environment_ggx.dds");
-
 	engine->GetSceneRenderer()->SetIrradianceCubemap(Resources::TextureResource::Handle(L"assets/Textures/environment/IBL/irradiance3.ktx"));
 	engine->GetSceneRenderer()->SetRadianceCubemap(Resources::TextureResource::Handle(L"assets/Textures/environment/IBL/radiance3.ktx"));
 

@@ -8,7 +8,7 @@
 namespace Device {
 	
 	class ReflectionInfo;
-	class ShaderBindings;
+	class DescriptorSetBindings;
 	class Texture;
 
 	class ShaderModule
@@ -59,13 +59,23 @@ namespace Device {
 			UniformBuffer,
 			UniformBufferDynamic,
 			StorageBuffer,
+			StorageBufferDynamic,
 			Count
 		};
 
 		struct BindingAddress
 		{
 			unsigned set;
-			unsigned binding;
+			unsigned binding; //register
+			friend bool operator<(const BindingAddress& a, const BindingAddress& b) { return std::tie(a.set, a.binding) < std::tie(b.set, b.binding); }
+		};
+
+		struct BufferMember
+		{
+			std::string name;
+			uint32_t name_hash;
+			uint32_t offset;
+			uint32_t size;
 		};
 
 		struct BindingData
@@ -74,10 +84,15 @@ namespace Device {
 			uint32_t id; // Engine internal identifier for texture/buffer
 			unsigned stage_flags;
 			std::string name;
+			uint32_t name_hash;
 			BindingAddress address;
+			uint32_t size = 0;
+
+			std::vector<BufferMember> members;
+			friend bool operator<(const BindingData& a, const BindingData& b) { return a.address < b.address; }
 		};
 
-		struct DescriptorSet
+		struct DescriptorSetLayout
 		{
 			unsigned set_index = -1;
 			std::vector<vk::DescriptorSetLayoutBinding> layout_bindings;
@@ -100,6 +115,8 @@ namespace Device {
 		static const unsigned max_descriptor_sets = 4;
 
 		static uint32_t CalculateHash(uint32_t fragment_hash, uint32_t vertex_hash, uint32_t compute_hash = 0);
+		static uint32_t GetParameterNameHash(const std::string& name);
+		static uint32_t GetParameterNameHash(const char* name);
 
 		ShaderProgram();
 		void AddModule(ShaderModule* shader_module, Stage stage);
@@ -111,7 +128,7 @@ namespace Device {
 		const ShaderModule* ComputeModule() const { WaitLoaded(); return compute_module; }
 		
 		const auto& GetDescriptorSets() const { WaitLoaded(); return descriptor_sets; }
-		const DescriptorSet* GetDescriptorSet(unsigned set) const { WaitLoaded(); return &descriptor_sets[set]; }
+		const DescriptorSetLayout* GetDescriptorSetLayout(unsigned set) const { WaitLoaded(); return &descriptor_sets[set]; }
 		const BindingData* GetBinding(unsigned set, unsigned binding) const;
 		const BindingData* GetBindingByName(const std::string& name) const;
 		const utils::SmallVectorBase<PushConstants>* GetPushConstants() const { WaitLoaded(); return &push_constants; }
@@ -146,7 +163,7 @@ namespace Device {
 		uint32_t hash;
 
 		std::unordered_map<std::string, BindingAddress> name_binding_map;
-		std::array<DescriptorSet, max_descriptor_sets> descriptor_sets;
+		std::array<DescriptorSetLayout, max_descriptor_sets> descriptor_sets;
 		utils::SmallVector<PushConstants, 1> push_constants;
 	};
 

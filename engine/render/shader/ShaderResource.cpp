@@ -1,5 +1,19 @@
 ﻿#include "ShaderResource.h"
 #include <map>
+#include <array>
+#include "Shader.h"
+#include "lib/magic_enum/magic_enum.hpp"
+
+const std::map<std::string, BufferMemberName> SHADER_BUFFER_MEMBER_NAMES =
+{
+	{ "objectModelMatrix", BufferMemberName::ModelMatrix },
+	{ "color", BufferMemberName::Color },
+	{ "roughness", BufferMemberName::Roughness },
+	{ "metalness", BufferMemberName::Metalness },
+	{ "skinning_offset", BufferMemberName::SkinningOffset },
+	{ "camera", BufferMemberName::Camera },
+	{ "environment", BufferMemberName::Environment }
+};
 
 const std::map<std::string, ShaderTextureName> SHADER_TEXTURE_NAMES = 
 {
@@ -18,14 +32,13 @@ const std::map<std::string, ShaderTextureName> SHADER_TEXTURE_NAMES =
 
 const std::map<std::string, ShaderBufferName> SHADER_BUFFER_NAMES = 
 {
-	{ "ObjectParams", ShaderBufferName::ObjectParams },
-	{ "Camera", ShaderBufferName::Camera },
-	{ "EnvironmentSettings", ShaderBufferName::EnvironmentSettings },
 	{ "SkinningMatrices", ShaderBufferName::SkinningMatrices },
 	{ "Lights", ShaderBufferName::Light },
 	{ "Projectors", ShaderBufferName::Projector },
 	{ "LightGrid", ShaderBufferName::LightGrid },
-	{ "LightIndices", ShaderBufferName::LightIndices }
+	{ "LightIndices", ShaderBufferName::LightIndices },
+	{ "Default", ShaderBufferName::Default },
+	{ "DefaultStorage", ShaderBufferName::DefaultStorage }
 };
 
 const std::map<std::string, ShaderSamplerName> SHADER_SAMPLER_NAMES = 
@@ -38,7 +51,53 @@ const std::map<std::string, ShaderSamplerName> SHADER_SAMPLER_NAMES =
 
 const std::set<ShaderBufferName> SHADER_DYNAMIC_OFFSET_BUFFERS =
 {
-	ShaderBufferName::ObjectParams,
-	ShaderBufferName::Camera,
-	ShaderBufferName::SkinningMatrices
+	ShaderBufferName::Default
 };
+
+namespace Device
+{
+
+	namespace
+	{
+		template<typename T>
+		struct NameMap
+		{
+			std::array<uint32_t, magic_enum::enum_count<T>()> hashes;
+
+			NameMap(const std::map<std::string, T>& name_map)
+			{
+				hashes.fill(0);
+				for (auto& pair : name_map)
+					hashes[(size_t)pair.second] = Device::ShaderProgram::GetParameterNameHash(pair.first);
+			}
+		};
+	}
+
+	uint32_t GetBufferMemberHash(BufferMemberName name)
+	{
+		static NameMap<BufferMemberName> map(SHADER_BUFFER_MEMBER_NAMES);
+		return map.hashes.at((size_t)name);
+	}
+
+	uint32_t GetShaderTextureNameHash(ShaderTextureName name)
+	{
+		static NameMap<ShaderTextureName> map(SHADER_TEXTURE_NAMES);
+		return map.hashes.at((size_t)name);
+	}
+
+	uint32_t GetShaderBufferNameHash(ShaderBufferName name)
+	{
+		static NameMap<ShaderBufferName> map(SHADER_BUFFER_NAMES);
+		return map.hashes.at((size_t)name);
+	}
+
+	uint32_t GetShaderBufferHasDynamicOffset(uint32_t name_hash)
+	{
+		for (auto name : SHADER_DYNAMIC_OFFSET_BUFFERS)
+			if (GetShaderBufferNameHash(name) == name_hash)
+				return true;
+
+		return false;
+	}
+}
+

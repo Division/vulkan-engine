@@ -124,16 +124,19 @@ namespace render {
 		assert(draw_call->shader);
 		assert(draw_call->depth_only_shader);
 
-		auto* depth_descriptor_set = draw_call->depth_only_shader->GetDescriptorSet(DescriptorSet::Object);
-		auto* descriptor_set = draw_call->shader->GetDescriptorSet(DescriptorSet::Object);
-		ShaderBindings depth_bindings;
-		ShaderBindings bindings;
-		scene_renderer.SetupShaderBindings(initializer.material, *depth_descriptor_set, depth_bindings);
-		scene_renderer.SetupShaderBindings(initializer.material, *descriptor_set, bindings);
+		auto* depth_descriptor_set = draw_call->depth_only_shader->GetDescriptorSetLayout(DescriptorSetType::Object);
+		auto* descriptor_set = draw_call->shader->GetDescriptorSetLayout(DescriptorSetType::Object);
+
+		auto material_resource_bindings = initializer.material.GetResourceBindings();
+		material_resource_bindings.Merge(scene_renderer.GetGlobalResourceBindings());
+
+		const DescriptorSetBindings depth_bindings(material_resource_bindings, *depth_descriptor_set);
+		const DescriptorSetBindings bindings(material_resource_bindings, *descriptor_set);
 		
-		draw_call->depth_only_descriptor_set = descriptor_cache->GetDescriptorSet(depth_bindings, *depth_descriptor_set);
-		draw_call->descriptor_set = descriptor_cache->GetDescriptorSet(bindings, *descriptor_set);
+		draw_call->depth_only_descriptor_set = descriptor_cache->GetDescriptorSet(depth_bindings);
+		draw_call->descriptor_set = descriptor_cache->GetDescriptorSet(bindings);
 		draw_call->visible = true;
+		draw_call->material = &initializer.material;
 
 		return std::make_pair(entity, draw_call);
 	}

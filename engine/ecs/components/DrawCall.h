@@ -3,11 +3,15 @@
 #include "CommonIncludes.h"
 #include "render/renderer/IRenderer.h"
 #include "render/shader/ShaderBufferStruct.h"
+#include "render/shader/ShaderBindings.h"
+#include "render/material/Material.h"
 #include "utils/Math.h"
+#include "utils/DataStructures.h"
 
 namespace Device
 {
 	class ShaderProgram;
+	class DescriptorSet;
 }
 
 namespace ECS::components {
@@ -19,20 +23,21 @@ namespace ECS::components {
 		// TODO: remove mesh from draw call
 		const Mesh* mesh = nullptr;
 		OBB obb;
-		Device::ShaderBufferStruct::ObjectParams object_params;
+		mat4 transform;
 		Device::ShaderProgram* shader = nullptr;
-		vk::DescriptorSet descriptor_set;
+		Device::DescriptorSet* descriptor_set = nullptr;
 		Device::ShaderProgram* depth_only_shader = nullptr;
-		vk::DescriptorSet depth_only_descriptor_set;
-		uint32_t dynamic_offset = 0;
-		uint32_t skinning_dynamic_offset = -1;
+		Device::DescriptorSet* depth_only_descriptor_set = nullptr;
+		Device::ConstantBindings constants;
+		const Material* material = nullptr;
 		uint32_t visible = 0;
 		RenderQueue queue = RenderQueue::Opaque;
 	};
 
 	struct SkinningData
 	{
-		Device::ShaderBufferStruct::SkinningMatrices bone_matrices;
+		utils::SmallVector<mat4, 40> bone_matrices;
+		uint32_t matrices_offset = 0;
 	};
 
 }

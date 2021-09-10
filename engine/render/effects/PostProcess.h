@@ -15,6 +15,8 @@ namespace Device
 	class VulkanRenderTargetAttachment;
 	class Texture;
 	class ShaderCache;
+	class ResourceBindings;
+	class ConstantBindings;
 }
 
 namespace render
@@ -37,7 +39,8 @@ namespace render { namespace effects {
 			render::graph::DependencyNode& src_target_node, 
 			render::graph::ResourceWrapper& destination_target, 
 			render::graph::ResourceWrapper& hdr_buffer,
-			Device::ShaderBindings& global_bindings
+			const Device::ResourceBindings& global_bindings,
+			const Device::ConstantBindings& global_constants
 		);
 		void OnRecreateSwapchain(int32_t width, int32_t height);
 

@@ -252,7 +252,7 @@ inline uint32_t NextPowerOfTwo(uint32_t n)
     return n + 1;
 }
 
-inline uint32_t AlignMemory(size_t ptr, size_t alignment)
+inline size_t AlignMemory(size_t ptr, size_t alignment)
 {
     return (((ptr)+((alignment)-1)) & ~((alignment)-1));
 }
@@ -295,6 +295,14 @@ inline uint32_t FastHash(const std::wstring& str)
 	uint32_t result;
 	MurmurHash3_x86_32(str.data(), (int)str.length() * 2, 0xdeadbeef, &result);
 	return result;
+}
+
+inline uint32_t FastHash(const char* str)
+{
+    const auto length = strlen(str);
+    uint32_t result;
+    MurmurHash3_x86_32(str, (int)length * sizeof(char), 0xdeadbeef, &result);
+    return result;
 }
 
 inline uint32_t FastHash(const wchar_t* str)

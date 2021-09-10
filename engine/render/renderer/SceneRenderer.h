@@ -20,7 +20,9 @@ namespace Device
 	class VulkanRenderTargetAttachment;
 	class VulkanRenderPass;
 	class ShaderProgram;
-	class ShaderBindings;
+	class DescriptorSetBindings;
+	class ResourceBindings;
+	class ConstantBindings;
 	class ShaderCache;
 	class Texture;
 	template<typename T> class DynamicBuffer;
@@ -54,6 +56,8 @@ namespace render {
 	class DrawCallManager;
 	struct DebugSettings;
 	struct EnvironmentSettings;
+	class Bloom;
+	class Blur;
 
 	struct ShadowCasterData
 	{
@@ -84,14 +88,14 @@ namespace render {
 
 		void RenderScene();
 		SceneBuffers* GetSceneBuffers() const { return scene_buffers.get(); }
-		std::tuple<vk::Buffer, size_t> SceneRenderer::GetBufferData(ShaderBufferName buffer_name);
-		Device::Texture* SceneRenderer::GetTexture(ShaderTextureName texture_name, const Material& material);
+		const Device::ResourceBindings& GetGlobalResourceBindings();
 		Device::ShaderCache* GetShaderCache() const { return shader_cache; }
-		void SetupShaderBindings(const Material& material, const Device::ShaderProgram::DescriptorSet& descriptor_set, Device::ShaderBindings& bindings);
 		auto* GetEnvironmentSettings() const { return environment_settings.get(); }
 		LightGrid& GetLightGrid() { return *light_grid; }
 		void SetRadianceCubemap(Resources::Handle<Resources::TextureResource> cubemap);
 		void SetIrradianceCubemap(Resources::Handle<Resources::TextureResource> cubemap);
+
+		Device::Texture* GetBlankTexture() const;
 
 	private:
 		void CreateDrawCalls();
@@ -120,20 +124,22 @@ namespace render {
 		std::unique_ptr<SceneBuffers> scene_buffers;
 		std::unique_ptr<LightGrid> light_grid;
 		std::unique_ptr<ShadowMap> shadow_map;
-		std::unique_ptr<Device::ShaderBindings> global_shader_bindings;
+		std::unique_ptr<Device::ResourceBindings> global_resource_bindings;
+		std::unique_ptr<Device::ConstantBindings> global_constant_bindings;
+		bool global_bindings_dirty = true;
 		uint32_t global_shader_binding_camera_index;
+		std::mutex global_bindings_mutex;
 
 		std::unique_ptr<graph::RenderGraph> render_graph;
 		
-		Device::ShaderProgram* global_bindings_program;
 		Device::ShaderProgram* compute_program;
-		std::unique_ptr<Device::ShaderBindings> compute_bindings;
+		std::unique_ptr<Device::DescriptorSetBindings> compute_bindings;
 		std::unique_ptr<Device::DynamicBuffer<unsigned char>> compute_buffer;
 
 		std::unique_ptr<Device::VulkanRenderTargetAttachment> main_depth_attachment;
 		std::unique_ptr<Device::VulkanRenderTargetAttachment> shadowmap_atlas_attachment;
 		std::unique_ptr<Device::VulkanRenderTargetAttachment> shadowmap_attachment;
-		std::unique_ptr<Device::VulkanRenderTargetAttachment> main_color_attachment;
+		std::unique_ptr<Device::VulkanRenderTargetAttachment> main_color_attachment[2];
 
 		uint32_t depth_only_fragment_shader_hash;
 
@@ -143,6 +149,8 @@ namespace render {
 		DebugSettings* debug_settings;
 		std::unique_ptr<effects::Skybox> skybox;
 		std::unique_ptr<effects::PostProcess> post_process;
+		std::unique_ptr<Bloom> bloom;
+		std::unique_ptr<Blur> blur;
 	};
 
 }

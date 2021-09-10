@@ -32,9 +32,9 @@ VS_out vs_main(VS_in input)
 
 
 SamplerState SamplerLinearWrap;
-[[vk::binding(0, 0)]] Texture2D texture0 : register(t0);
+[[vk::binding(0, 0)]] Texture2D font_texture : register(t0);
 
 float4 ps_main(VS_out input) : SV_TARGET
 {
-    return input.color * texture0.Sample(SamplerLinearWrap, input.texcoord.xy);
+    return input.color * font_texture.Sample(SamplerLinearWrap, input.texcoord.xy);
 }

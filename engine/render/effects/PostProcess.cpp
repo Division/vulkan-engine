@@ -35,7 +35,7 @@ namespace render::effects
 		MeshGeneration::generateFullScreenQuad(full_screen_quad_mesh.get());
 		full_screen_quad_mesh->createBuffer();
 
-		src_texture_address = shader->GetBindingAddress("src_texture");
+		//src_texture_address = shader->GetBindingAddress("src_texture");
 		//hdr_buffer_address = shader->GetBindingAddress("hdr_data");
 	}
 
@@ -45,7 +45,7 @@ namespace render::effects
 		attachment_wrappers[1] = graph.RegisterAttachment(*attachments[1]);
 	}
 
-	graph::DependencyNode* PostProcess::AddPostProcess(RenderGraph& graph, DependencyNode& node, ResourceWrapper& destination_target, ResourceWrapper& hdr_buffer, Device::ShaderBindings& global_bindings)
+	graph::DependencyNode* PostProcess::AddPostProcess(RenderGraph& graph, DependencyNode& node, ResourceWrapper& destination_target, ResourceWrapper& hdr_buffer, const Device::ResourceBindings& global_bindings, const ConstantBindings& global_constants)
 	{
 		auto* destination_render_target = destination_target.GetAttachment();
 
@@ -68,23 +68,24 @@ namespace render::effects
 				mode.SetPolygonMode(PolygonMode::Fill);
 				mode.SetPrimitiveTopology(PrimitiveTopology::TriangleList);
 
-				ShaderBindings bindings;
-				bindings.AddTextureBindingSafe(src_texture_address.binding, node.resource->GetAttachment()->GetTexture().get());
-
+				ResourceBindings resource_bindings;
+				resource_bindings.AddTextureBinding("src_texture", node.resource->GetAttachment()->GetTexture().get());
+				const auto* descriptor_set_layout = shader->GetDescriptorSetLayout(0);
+				const DescriptorSetBindings bindings(resource_bindings, *descriptor_set_layout);
+				
 				auto* buffer = hdr_buffer.GetBuffer();
-				//bindings.AddBufferBindingSafe(hdr_buffer_address.binding, 0, buffer->Size(), buffer->Buffer());
-				auto* descriptor_set_info = shader->GetDescriptorSet(src_texture_address.set);
 				auto command_buffer = state.GetCurrentCommandBuffer()->GetCommandBuffer();
 
-				state.SetGlobalBindings(global_bindings);
+				ConstantBindings constants = global_constants;
+				constants.AddFloatBinding(&environment_settings.exposure, "exposure");
+				state.SetGlobalBindings(global_bindings, constants);
 
 				state.SetRenderMode(mode);
 				state.SetShader(*shader);
 				state.SetVertexLayout(full_screen_quad_mesh->GetVertexLayout());
 				state.UpdateState();
 
-				state.PushConstants(ShaderProgram::Stage::Fragment, 0, sizeof(float), &environment_settings.exposure);
-				state.SetDescriptorSetBindings(bindings, *descriptor_set_info);
+				state.SetDescriptorSetBindings(bindings, constants);
 				state.Draw(*full_screen_quad_mesh->vertexBuffer(), full_screen_quad_mesh->indexCount(), 0);
 			});
 

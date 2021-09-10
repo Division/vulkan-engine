@@ -122,6 +122,7 @@ set(ENGINE_SOURCES
 	render/buffer/VulkanBuffer.h
 	render/buffer/VulkanBuffer.cpp
 	render/buffer/DynamicBuffer.h
+	render/buffer/ConstantBuffer.h
 	render/material/Material.h
 	render/material/Material.cpp
 	render/renderer/RenderModeUtils.h
@@ -177,6 +178,10 @@ set(ENGINE_SOURCES
 	render/effects/Skybox.cpp
 	render/effects/PostProcess.h
 	render/effects/PostProcess.cpp
+	render/effects/Bloom.h
+	render/effects/Bloom.cpp
+	render/effects/Blur.h
+	render/effects/Blur.cpp
 	render/mesh/Mesh.h
 	render/mesh/Mesh.cpp
 	render/texture/Texture.h

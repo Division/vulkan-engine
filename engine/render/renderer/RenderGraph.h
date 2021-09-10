@@ -172,7 +172,7 @@ namespace render { namespace graph {
 		ResourceWrapper* RegisterBuffer(Device::VulkanBuffer& buffer);
 
 		template<typename T>
-		T AddPass(char* name, profiler::ProfilerName profiler_name, std::function<T(IRenderPassBuilder& builder)> init_callback, Pass::RecordCallback record_callback)
+		T AddPass(const char* name, profiler::ProfilerName profiler_name, std::function<T(IRenderPassBuilder& builder)> init_callback, Pass::RecordCallback record_callback)
 		{
 			render_passes.push_back(std::make_unique<Pass>(name, profiler_name, record_callback));
 			current_render_pass = render_passes.back().get();
