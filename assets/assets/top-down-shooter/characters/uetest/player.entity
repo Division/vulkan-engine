@@ -15,7 +15,7 @@
             },
             {
                 "type": "AnimationController",
-                "skeleton": "assets/top-down-shooter/characters/uetest/ManequinMesh.skel"
+                "skeleton": "assets/top-down-shooter/characters/uetest/ManequinModel.skel"
             }
         ]
     }

@@ -1,8 +1,56 @@
 [
     {
         "type": "fbx",
+        "filename": "Half.fbx",
+        "uid": "5e8eaffc009393d8",
+        "export_type": "Mesh"
+    },
+    {
+        "type": "fbx",
+        "filename": "Half@RunFwdLoop.fbx",
+        "uid": "e161a5ef87d7989e",
+        "export_type": "Animation"
+    },
+    {
+        "type": "fbx",
+        "filename": "Half@WalkFwdLoop.fbx",
+        "uid": "b28dfaed6ae2d149",
+        "export_type": "Animation"
+    },
+    {
+        "type": "fbx",
+        "filename": "Insect.fbx",
+        "uid": "b281fef7f99daa7f",
+        "export_type": "Mesh"
+    },
+    {
+        "type": "fbx",
+        "filename": "Insect@Idle.fbx",
+        "uid": "3280415b688da5c9",
+        "export_type": "Animation"
+    },
+    {
+        "type": "fbx",
         "filename": "ManequinMesh.fbx",
         "uid": "f4776d49395c4198",
+        "export_type": "Mesh"
+    },
+    {
+        "type": "fbx",
+        "filename": "ManequinMesh_TPOSE.fbx",
+        "uid": "35eea8110b7faaea",
+        "export_type": "Mesh"
+    },
+    {
+        "type": "fbx",
+        "filename": "ManequinModel.fbx",
+        "uid": "4f2c193435f84704",
+        "export_type": "Mesh"
+    },
+    {
+        "type": "fbx",
+        "filename": "ManequinRun.fbx",
+        "uid": "2eae6810015f3711",
         "export_type": "Mesh"
     },
     {
@@ -46,6 +94,18 @@
         "filename": "SK_Jacket.fbx",
         "uid": "6de6c83fb888086c",
         "export_type": "Mesh"
+    },
+    {
+        "type": "fbx",
+        "filename": "WalkFwdLoop.fbx",
+        "uid": "dc35371b37695b5d",
+        "export_type": "Mesh"
+    },
+    {
+        "type": "fbx",
+        "filename": "_Rifle@RunFwdLoop.fbx",
+        "uid": "b0f2f3b932db4f29",
+        "export_type": "Animation"
     },
     {
         "type": "copy",

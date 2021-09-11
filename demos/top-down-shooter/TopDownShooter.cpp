@@ -55,8 +55,6 @@ void Game::init()
 	manager = engine->GetEntityManager();
 	graph = engine->GetTransformGraph();
 
-	Resources::TextureResource::Handle(L"assets/Textures/LUT/environment_ggx.dds");
-
 	engine->GetSceneRenderer()->SetIrradianceCubemap(Resources::TextureResource::Handle(L"assets/Textures/environment/IBL/irradiance3.ktx"));
 	engine->GetSceneRenderer()->SetRadianceCubemap(Resources::TextureResource::Handle(L"assets/Textures/environment/IBL/radiance3.ktx"));
 
@@ -66,8 +64,9 @@ void Game::init()
 
 	camera = std::make_unique<ViewerCamera>();
 
-	animated_entity = Resources::EntityResource::Handle(L"assets/top-down-shooter/characters/uetest/player2.entity");
+	animated_entity = Resources::EntityResource::Handle(L"assets/top-down-shooter/characters/uetest/player.entity");
 	animation = Resources::SkeletalAnimationResource::Handle(L"assets/top-down-shooter/characters/uetest/Rifle@WalkFwdLoop.anim");
+	//animation = Resources::SkeletalAnimationResource::Handle(L"assets/top-down-shooter/characters/uetest/Rifle@RunFwdLoop.anim");
 	//auto plane_handle = Resources::EntityResource::Handle(L"assets/Entities/Basic/Ground/cracks/plane10_ground_cracks.entity");
 	auto plane_handle = Resources::EntityResource::Handle(L"assets/Entities/Basic/Ground/stylized/plane10_soil_water.entity");
 	plane_handle->Spawn(vec3(0));
@@ -87,9 +86,10 @@ void Game::init()
 	auto* controller = manager->GetComponent<components::AnimationController>(animated_entity_id);
 	auto anim_instance = controller->mixer->PlayAnimation(animation, SkeletalAnimation::PlaybackMode::Loop);
 
-	animated_entity_id = animated_entity->Spawn(vec3(5, 0, 0));
+	animated_entity_id = Resources::EntityResource::Handle(L"assets/top-down-shooter/characters/uetest/player.entity")->Spawn(vec3(5, 0, 0));
+	//animated_entity_id = animated_entity->Spawn(vec3(5, 0, 0));
 	controller = manager->GetComponent<components::AnimationController>(animated_entity_id);
-	animation = Resources::SkeletalAnimationResource::Handle(L"assets/top-down-shooter/characters/uetest/Rifle@WalkFwdLoop.anim");
+	animation = Resources::SkeletalAnimationResource::Handle(L"assets/top-down-shooter/characters/uetest/Rifle@Prone.anim");
 	auto anim_handle = controller->mixer->PlayAnimation(animation, SkeletalAnimation::PlaybackMode::Loop);
 	anim_handle.SetSpeed(0.1f);
 

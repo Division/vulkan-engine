@@ -122,14 +122,6 @@ namespace Exporter
 		// Get the current scene units (incoming from FBX file)
 		FbxSystemUnit SceneSystemUnit = scene->GetGlobalSettings().GetSystemUnit();
 
-		if (SceneSystemUnit.GetScaleFactor() != 1.0)
-			FbxSystemUnit::cm.ConvertScene(scene);
-
-		//FbxSystemUnit::ConversionOptions lOptions;
-		//lOptions.mConvertRrsNodes = false;
-		//FbxSystemUnit::m.ConvertScene(scene, lOptions);
-		
-
 		FbxGeometryConverter converter(manager);
 		if (!converter.Triangulate(scene, true))
 			std::wcout << L"[Warning] triangulation finished with errors.\n";
