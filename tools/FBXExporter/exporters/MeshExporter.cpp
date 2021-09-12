@@ -178,7 +178,6 @@ namespace Exporter
 
 				for (auto& vertices : skinning_data[ctrl_point])
 					vertices.weights.push_back(bone_weight);
-
 			}
 		}
 

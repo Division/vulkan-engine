@@ -19,7 +19,7 @@ namespace Resources
 		size_t GetTemplateCount() const { return templates.size(); }
 		const ECS::EntityTemplate* GetTemplate(size_t index) const { return templates[index].get(); }
 
-		ECS::EntityID Spawn(vec3 position) const;
+		ECS::EntityID Spawn(vec3 position = vec3()) const;
 
 	private:
 		std::vector<std::unique_ptr<ECS::EntityTemplate>> templates;

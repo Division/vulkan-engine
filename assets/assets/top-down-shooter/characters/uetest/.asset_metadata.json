@@ -55,8 +55,26 @@
     },
     {
         "type": "fbx",
+        "filename": "Mannequin.fbx",
+        "uid": "fe888f71b20e0df6",
+        "export_type": "Mesh"
+    },
+    {
+        "type": "fbx",
+        "filename": "MannequinSkeleton.fbx",
+        "uid": "089002b6734c1a72",
+        "export_type": "Mesh"
+    },
+    {
+        "type": "fbx",
         "filename": "Rifle@Idle.fbx",
         "uid": "b9b3215bd4987f81",
+        "export_type": "Animation"
+    },
+    {
+        "type": "fbx",
+        "filename": "Rifle@Idle_GunDown.fbx",
+        "uid": "36e24cbae083829b",
         "export_type": "Animation"
     },
     {
@@ -67,8 +85,50 @@
     },
     {
         "type": "fbx",
+        "filename": "Rifle@RunBwdLoop.fbx",
+        "uid": "2cfb66ca5deafa5c",
+        "export_type": "Animation"
+    },
+    {
+        "type": "fbx",
         "filename": "Rifle@RunFwdLoop.fbx",
         "uid": "da9ec0b1dcb75cd5",
+        "export_type": "Animation"
+    },
+    {
+        "type": "fbx",
+        "filename": "Rifle@StrafeRun135LeftLoop.fbx",
+        "uid": "c9f3c1ef0e5be541",
+        "export_type": "Animation"
+    },
+    {
+        "type": "fbx",
+        "filename": "Rifle@StrafeRun135RightLoop.fbx",
+        "uid": "89df6bf9a01ddfdc",
+        "export_type": "Animation"
+    },
+    {
+        "type": "fbx",
+        "filename": "Rifle@StrafeRun45LeftLoop.fbx",
+        "uid": "e7a82c7fa532e40a",
+        "export_type": "Animation"
+    },
+    {
+        "type": "fbx",
+        "filename": "Rifle@StrafeRun45RightLoop.fbx",
+        "uid": "b6ccd1365675adb2",
+        "export_type": "Animation"
+    },
+    {
+        "type": "fbx",
+        "filename": "Rifle@StrafeRunLeftLoop.fbx",
+        "uid": "ec0eceb8d85f6df8",
+        "export_type": "Animation"
+    },
+    {
+        "type": "fbx",
+        "filename": "Rifle@StrafeRunRightLoop.fbx",
+        "uid": "0e909ad2429c5abf",
         "export_type": "Animation"
     },
     {
@@ -94,6 +154,18 @@
         "filename": "SK_Jacket.fbx",
         "uid": "6de6c83fb888086c",
         "export_type": "Mesh"
+    },
+    {
+        "type": "texture",
+        "filename": "UE4_Mannequin__normals.png",
+        "uid": "721c02995d8e950b",
+        "compression_type": "BC7"
+    },
+    {
+        "type": "texture",
+        "filename": "UE4_Mannequin_occlusion.png",
+        "uid": "8ef6251b0b89a141",
+        "compression_type": "BC7"
     },
     {
         "type": "fbx",

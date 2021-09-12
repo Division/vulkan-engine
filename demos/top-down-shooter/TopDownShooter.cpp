@@ -17,6 +17,7 @@
 #include "objects/Camera.h"
 #include "utils/Math.h"
 #include "render/renderer/EnvironmentSettings.h"
+#include "controller/Controller.h"
 
 Game::Game() = default;
 Game::~Game() = default;
@@ -25,6 +26,12 @@ using namespace System;
 using namespace ECS;
 using namespace ECS::systems;
 using namespace physx;
+using namespace Resources;
+
+IGame::InitParams Game::GetInitParams() const
+{
+	return { 1600, 1000, "Top Down Shooter demo" };
+}
 
 ECS::EntityID Game::CreateLight(vec3 position, float radius, ECS::components::Light::Type type, vec3 color)
 {
@@ -42,9 +49,32 @@ ECS::EntityID Game::CreateLight(vec3 position, float radius, ECS::components::Li
 	return entity;
 }
 
-IGame::InitParams Game::GetInitParams() const
+ECS::EntityID Game::CreatePlayer()
 {
-	return { 1600, 1000, "Top Down Shooter demo" };
+	auto player_template = Resources::EntityResource::Handle(L"assets/top-down-shooter/characters/uetest/player.entity");
+	auto player_id = player_template->Spawn();
+
+	typedef components::CharacterController::MoveAnimationType MoveAnimationType;
+	typedef components::CharacterController::StationaryAnimationType StationaryAnimationType;
+
+	auto character_controller = manager->GetComponent<components::CharacterController>(player_id);
+	character_controller->stationary_animations[StationaryAnimationType::Idle]		= SkeletalAnimationResource::Handle(L"assets/top-down-shooter/characters/uetest/Rifle@Idle.anim");
+	character_controller->stationary_animations[StationaryAnimationType::IdleAim]	= SkeletalAnimationResource::Handle(L"assets/top-down-shooter/characters/uetest/Rifle@Idle_GunDown.anim");
+	character_controller->move_animations[MoveAnimationType::RunForward]			= SkeletalAnimationResource::Handle(L"assets/top-down-shooter/characters/uetest/Rifle@RunFwdLoop.anim");
+	character_controller->move_animations[MoveAnimationType::WalkForward]			= SkeletalAnimationResource::Handle(L"assets/top-down-shooter/characters/uetest/Rifle@WalkFwdLoop.anim");
+	character_controller->move_animations[MoveAnimationType::RunBackward]			= SkeletalAnimationResource::Handle(L"assets/top-down-shooter/characters/uetest/Rifle@RunBwdLoop.anim");
+	character_controller->move_animations[MoveAnimationType::RunLeft]				= SkeletalAnimationResource::Handle(L"assets/top-down-shooter/characters/uetest/Rifle@StrafeRunLeftLoop.anim");
+	character_controller->move_animations[MoveAnimationType::RunRight]				= SkeletalAnimationResource::Handle(L"assets/top-down-shooter/characters/uetest/Rifle@StrafeRunRightLoop.anim");
+	character_controller->move_animations[MoveAnimationType::RunBackwardRight]		= SkeletalAnimationResource::Handle(L"assets/top-down-shooter/characters/uetest/Rifle@StrafeRun135RightLoop.anim");
+	character_controller->move_animations[MoveAnimationType::RunForwardRight]		= SkeletalAnimationResource::Handle(L"assets/top-down-shooter/characters/uetest/Rifle@StrafeRun45RightLoop.anim");
+	character_controller->move_animations[MoveAnimationType::RunBackwardLeft]		= SkeletalAnimationResource::Handle(L"assets/top-down-shooter/characters/uetest/Rifle@StrafeRun135LeftLoop.anim");
+	character_controller->move_animations[MoveAnimationType::RunForwardLeft]		= SkeletalAnimationResource::Handle(L"assets/top-down-shooter/characters/uetest/Rifle@StrafeRun45LeftLoop.anim");
+
+	auto animation_controller = manager->GetComponent<components::AnimationController>(player_id);
+	animation_controller->mixer->SetRootMotionEnabled(true);
+	character_controller->Startup(animation_controller);
+
+	return player_id;
 }
 
 void Game::init()
@@ -55,8 +85,12 @@ void Game::init()
 	manager = engine->GetEntityManager();
 	graph = engine->GetTransformGraph();
 
+	manager->RegisterComponentTemplate<ECS::components::CharacterControllerTemplate>("CharacterController");
+
 	engine->GetSceneRenderer()->SetIrradianceCubemap(Resources::TextureResource::Handle(L"assets/Textures/environment/IBL/irradiance3.ktx"));
 	engine->GetSceneRenderer()->SetRadianceCubemap(Resources::TextureResource::Handle(L"assets/Textures/environment/IBL/radiance3.ktx"));
+
+	player_id = CreatePlayer();
 
 	manager->AddStaticComponent(graph);
 
@@ -65,9 +99,8 @@ void Game::init()
 	camera = std::make_unique<ViewerCamera>();
 
 	animated_entity = Resources::EntityResource::Handle(L"assets/top-down-shooter/characters/uetest/player.entity");
-	animation = Resources::SkeletalAnimationResource::Handle(L"assets/top-down-shooter/characters/uetest/Rifle@WalkFwdLoop.anim");
-	//animation = Resources::SkeletalAnimationResource::Handle(L"assets/top-down-shooter/characters/uetest/Rifle@RunFwdLoop.anim");
-	//auto plane_handle = Resources::EntityResource::Handle(L"assets/Entities/Basic/Ground/cracks/plane10_ground_cracks.entity");
+	animation = Resources::SkeletalAnimationResource::Handle(L"assets/top-down-shooter/characters/uetest/Rifle@RunFwdLoop.anim");
+
 	auto plane_handle = Resources::EntityResource::Handle(L"assets/Entities/Basic/Ground/stylized/plane10_soil_water.entity");
 	plane_handle->Spawn(vec3(0));
 
@@ -76,22 +109,6 @@ void Game::init()
 	auto box_transform = manager->GetComponent<components::Transform>(scifi_box_id);
 	box_transform->scale = vec3(0.2);
 	box_transform->position = vec3(-0.3, 0, 0);
-	//manager->GetComponent<components::Transform>(scifi_box_id)->rotation = glm::angleAxis((float)M_PI * 4.8f, vec3(0, 1, 0)) * glm::angleAxis((float)M_PI * 4.8f, vec3(1, 0, 0));
-
-	//auto sphere_mirror_handle = Resources::EntityResource::Handle(L"assets/Entities/Basic/Spheres/sphere_mirror.entity");
-	//auto sphere_mirror_handle = Resources::EntityResource::Handle(L"assets/Entities/Basic/Spheres/sphere_rust_coated.entity");
-	//sphere_mirror_handle->Spawn(vec3(4, 2, 1));
-
-	animated_entity_id = animated_entity->Spawn(vec3(0, 0, 0));
-	auto* controller = manager->GetComponent<components::AnimationController>(animated_entity_id);
-	auto anim_instance = controller->mixer->PlayAnimation(animation, SkeletalAnimation::PlaybackMode::Loop);
-
-	animated_entity_id = Resources::EntityResource::Handle(L"assets/top-down-shooter/characters/uetest/player.entity")->Spawn(vec3(5, 0, 0));
-	//animated_entity_id = animated_entity->Spawn(vec3(5, 0, 0));
-	controller = manager->GetComponent<components::AnimationController>(animated_entity_id);
-	animation = Resources::SkeletalAnimationResource::Handle(L"assets/top-down-shooter/characters/uetest/Rifle@Prone.anim");
-	auto anim_handle = controller->mixer->PlayAnimation(animation, SkeletalAnimation::PlaybackMode::Loop);
-	anim_handle.SetSpeed(0.1f);
 
 	/*auto bone_attachment = manager->AddComponent<components::BoneAttachment>(scifi_box_id);
 	bone_attachment->entity_id = animated_entity_id;
@@ -102,10 +119,79 @@ void Game::UpdatePhysics(float dt)
 {
 }
 
+std::optional<vec3> Game::GetMouseTarget()
+{
+	auto input = Engine::Get()->GetInput();
+	auto camera = Engine::Get()->GetScene()->GetCamera();
+	auto ray = camera->GetMouseRay(input->mousePosition());
+
+	Plane plane{ vec3(0,0,0), vec3(0,1,0) };
+	vec3 intersection;
+	if (plane.IntersectRay(ray.first, ray.second, &intersection))
+		return intersection;
+
+	return std::nullopt;
+}
+
+void Game::UpdatePlayer(float dt)
+{
+	auto input = Engine::Get()->GetInput();
+
+	auto character_controller = manager->GetComponent<components::CharacterController>(player_id);
+	auto transform = manager->GetComponent<components::Transform>(player_id);
+	auto& character_input = character_controller->input;
+	character_input.aim_direction = vec2(0);
+	character_input.move_direction = vec2(0);
+
+	auto target = GetMouseTarget();
+	if (target)
+	{
+		auto dir = *target - transform->position;
+		float length = glm::length(dir);
+		if (length > 0.001f)
+		{
+			dir /= length;
+			character_input.aim_direction = vec2(dir.x, dir.z);
+		}
+	}
+
+	if (input->keyDown(Key::Up))
+		character_input.move_direction.y = -1;
+	else if (input->keyDown(Key::Down))
+		character_input.move_direction.y = 1;
+	if (input->keyDown(Key::Left))
+		character_input.move_direction.x = -1;
+	else if (input->keyDown(Key::Right))
+		character_input.move_direction.x = 1;
+
+	float length = glm::length(character_input.move_direction);
+	if (length > 0.001f)
+		character_input.move_direction /= length;
+}
+
+void Game::UpdateFollowCamera()
+{
+	auto camera = Engine::Get()->GetScene()->GetCamera();
+
+	auto player_transform = manager->GetComponent<components::Transform>(player_id);
+
+	camera->Transform().position = player_transform->position + vec3(0, 10, 5);
+	camera->Transform().LookAt(player_transform->position);
+}
+
 void Game::update(float dt)
 {
 	Resources::Cache::Get().GCCollect();
-	camera->Update(dt);
+
+	auto controllers = manager->GetChunkListsWithComponents<components::CharacterController, components::AnimationController>();
+	CharacterControllerSystem(*manager).ProcessChunks(controllers);
+
+	UpdatePlayer(dt);
+
+	if (camera_control)
+		camera->Update(dt);
+	else
+		UpdateFollowCamera();
 
 	Engine::Get()->GetDebugDraw()->DrawLine(vec3(), vec3(1, 0, 0), vec4(1, 0, 0, 1));
 	Engine::Get()->GetDebugDraw()->DrawLine(vec3(), vec3(0, 1, 0), vec4(0, 1, 0, 1));

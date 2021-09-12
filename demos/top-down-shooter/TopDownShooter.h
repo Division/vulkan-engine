@@ -62,6 +62,11 @@ public:
 
 private:
 	ECS::EntityID CreateLight(vec3 position, float radius, ECS::components::Light::Type type, vec3 color);
+	ECS::EntityID CreatePlayer();
+
+	void UpdatePlayer(float dt);
+	void UpdateFollowCamera();
+	std::optional<vec3> GetMouseTarget();
 
 private:
 	std::unique_ptr<ViewerCamera> camera;
@@ -69,9 +74,11 @@ private:
 	ECS::EntityManager* manager = nullptr;
 	ECS::TransformGraph* graph = nullptr;
 
+	ECS::EntityID player_id;
+	ECS::EntityID point_light_id;
+
 	Resources::Handle<Resources::EntityResource> animated_entity;
 	ECS::EntityID animated_entity_id;
-	ECS::EntityID point_light_id;
 
 	Resources::Handle<Resources::SkeletalAnimationResource> animation;
 

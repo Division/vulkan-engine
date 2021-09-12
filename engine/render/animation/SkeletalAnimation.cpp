@@ -29,6 +29,10 @@ namespace SkeletalAnimation
 				if (progress >= 1.0f)
 				{
 					progress = fmod(progress, 1.0f);
+					if (GetRootMotionEnabled())
+					{
+						last_root_position = vec3(0);
+					}
 				}
 				break;
 			}
@@ -148,6 +152,7 @@ namespace SkeletalAnimation
 	AnimationInstance::Handle AnimationMixer::BlendAnimation(Resources::SkeletalAnimationResource::Handle animation, PlaybackMode playback_mode, float fade_duration, uint32_t layer)
 	{
 		auto instance = std::make_shared<AnimationInstance>(skeleton, animation, playback_mode, layer);
+		instance->SetWeight(0);
 		instance->FadeIn(fade_duration);
 
 		if (playback_mode == PlaybackMode::Once)
@@ -158,14 +163,46 @@ namespace SkeletalAnimation
 			instance->AddBlendEvent(AnimationInstance::BlendEvent::Type::Finish, 1.0f);
 		}
 
+		if (root_motion)
+			instance->SetRootMotionEnabled(true);
+
 		instances.push_back(instance);
 		return AnimationInstance::Handle(instance);
 	}
 
+	vec3 RemoveTranslation(uint32_t _index, const ozz::span<ozz::math::SoaTransform>& _transforms) {
+		assert(_index < _transforms.size() * 4 && "joint index out of bound.");
+
+		ozz::math::SimdFloat4 translations[4];
+		ozz::math::SoaTransform& bind_pose = _transforms[_index / 4];
+		ozz::math::Transpose3x4(&bind_pose.translation.x, translations);
+		ozz::math::SimdFloat4& translation = translations[_index & 3];
+		const vec4 v_translation = (vec4&)translation;
+		const vec3 result(v_translation.x, 0, v_translation.z);
+		translation = ozz::math::simd_float4::Load(0, v_translation.y, 0, 1); // remove xz translation from the transform
+		ozz::math::Transpose4x3(translations, &bind_pose.translation.x);
+
+		return result;
+	}
+
 	void AnimationMixer::ProcessBlending()
 	{
+		blend_layers.clear();
+
+		root_offset = vec3(0);
+
+		float total_weight = 0.0001f;
+		for (auto& instance : instances)
+			total_weight += instance->GetWeight();
+
 		for (auto& instance : instances)
 		{
+			if (instance->GetWeight() < 0.001f)
+			{
+				instance->SetShouldSkipRootUpdate(true);
+				continue;
+			}
+
 			ozz::animation::SamplingJob sampling_job;
 			sampling_job.animation = &instance->GetAnimation();
 			sampling_job.cache = &instance->GetCache();
@@ -174,13 +211,21 @@ namespace SkeletalAnimation
 
 			if (!sampling_job.Run())
 				throw std::runtime_error("Error sampling animation");
-		}
 
-		blend_layers.resize(instances.size());
-		for (int i = 0; i < instances.size(); i++)
-		{
-			blend_layers[i].transform = ozz::make_span(instances[i]->GetLocals());
-			blend_layers[i].weight = instances[i]->GetWeight();
+			auto& layer = blend_layers.emplace_back();
+			layer.transform = ozz::make_span(instance->GetLocals());
+			layer.weight = instance->GetWeight() / total_weight;
+			if (instance->GetRootMotionEnabled())
+			{
+				const auto offset = RemoveTranslation(root_motion_bone, make_span(sampling_job.output));
+				if (!instance->GetShouldSkipRootUpdate())
+				{
+					root_offset += (offset - instance->GetLastRootPosition()) * instance->GetWeight() / total_weight;
+				}
+
+				instance->SetShouldSkipRootUpdate(false);
+				instance->SetLastRootPosition(offset);
+			}
 		}
 
 		// Setups blending job.
