@@ -31,6 +31,12 @@
     },
     {
         "type": "fbx",
+        "filename": "M4_Rifle_01.fbx",
+        "uid": "021947a74b027e68",
+        "export_type": "Mesh"
+    },
+    {
+        "type": "fbx",
         "filename": "ManequinMesh.fbx",
         "uid": "f4776d49395c4198",
         "export_type": "Mesh"
@@ -178,6 +184,16 @@
         "filename": "_Rifle@RunFwdLoop.fbx",
         "uid": "b0f2f3b932db4f29",
         "export_type": "Animation"
+    },
+    {
+        "type": "copy",
+        "filename": "m4_rifle.entity",
+        "uid": "1cc94e503e1d5abc"
+    },
+    {
+        "type": "copy",
+        "filename": "m4_rifle.mat",
+        "uid": "bee4355623a67801"
     },
     {
         "type": "copy",

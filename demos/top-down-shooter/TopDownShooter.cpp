@@ -74,6 +74,18 @@ ECS::EntityID Game::CreatePlayer()
 	animation_controller->mixer->SetRootMotionEnabled(true);
 	character_controller->Startup(animation_controller);
 
+	auto rifle_handle = Resources::EntityResource::Handle(L"assets/top-down-shooter/characters/uetest/m4_rifle.entity");
+	rifle_id = rifle_handle->Spawn(vec3(0, 0, 0));
+	auto rifle_transform = manager->GetComponent<components::Transform>(rifle_id);
+	rifle_transform->scale = vec3(1);
+	rifle_transform->position = vec3(0, -0.01, 0);
+	rifle_transform->rotation = glm::angleAxis(-(float)M_PI / 2, vec3(1, 0, 0));
+
+	auto bone_attachment = manager->AddComponent<components::BoneAttachment>(rifle_id);
+	bone_attachment->entity_id = player_id;
+	bone_attachment->joint_index = animation_controller->mixer->GetSkeleton()->GetJointIndex("ik_hand_gun");
+
+
 	return player_id;
 }
 
@@ -98,21 +110,8 @@ void Game::init()
 
 	camera = std::make_unique<ViewerCamera>();
 
-	animated_entity = Resources::EntityResource::Handle(L"assets/top-down-shooter/characters/uetest/player.entity");
-	animation = Resources::SkeletalAnimationResource::Handle(L"assets/top-down-shooter/characters/uetest/Rifle@RunFwdLoop.anim");
-
 	auto plane_handle = Resources::EntityResource::Handle(L"assets/Entities/Basic/Ground/stylized/plane10_soil_water.entity");
 	plane_handle->Spawn(vec3(0));
-
-	auto scifi_box_handle = Resources::EntityResource::Handle(L"assets/Entities/Basic/cube.entity");
-	auto scifi_box_id = scifi_box_handle->Spawn(vec3(0, 0, 0));
-	auto box_transform = manager->GetComponent<components::Transform>(scifi_box_id);
-	box_transform->scale = vec3(0.2);
-	box_transform->position = vec3(-0.3, 0, 0);
-
-	/*auto bone_attachment = manager->AddComponent<components::BoneAttachment>(scifi_box_id);
-	bone_attachment->entity_id = animated_entity_id;
-	bone_attachment->joint_index = controller->mixer->GetSkeleton()->GetJointIndex("Wing2_L");*/
 }
 
 void Game::UpdatePhysics(float dt)
@@ -137,11 +136,15 @@ void Game::UpdatePlayer(float dt)
 {
 	auto input = Engine::Get()->GetInput();
 
+
 	auto character_controller = manager->GetComponent<components::CharacterController>(player_id);
 	auto transform = manager->GetComponent<components::Transform>(player_id);
 	auto& character_input = character_controller->input;
 	character_input.aim_direction = vec2(0);
 	character_input.move_direction = vec2(0);
+	
+	if (camera_control)
+		return;
 
 	auto target = GetMouseTarget();
 	if (target)
@@ -155,13 +158,13 @@ void Game::UpdatePlayer(float dt)
 		}
 	}
 
-	if (input->keyDown(Key::Up))
+	if (input->keyDown(Key::Up) || input->keyDown(Key::W))
 		character_input.move_direction.y = -1;
-	else if (input->keyDown(Key::Down))
+	else if (input->keyDown(Key::Down) || input->keyDown(Key::S))
 		character_input.move_direction.y = 1;
-	if (input->keyDown(Key::Left))
+	if (input->keyDown(Key::Left) || input->keyDown(Key::A))
 		character_input.move_direction.x = -1;
-	else if (input->keyDown(Key::Right))
+	else if (input->keyDown(Key::Right) || input->keyDown(Key::D))
 		character_input.move_direction.x = 1;
 
 	float length = glm::length(character_input.move_direction);
@@ -188,6 +191,10 @@ void Game::update(float dt)
 
 	UpdatePlayer(dt);
 
+	auto input = Engine::Get()->GetInput();
+	if (input->FirstKeyDown(Key::Tab))
+		camera_control = !camera_control;
+
 	if (camera_control)
 		camera->Update(dt);
 	else
@@ -197,7 +204,6 @@ void Game::update(float dt)
 	Engine::Get()->GetDebugDraw()->DrawLine(vec3(), vec3(0, 1, 0), vec4(0, 1, 0, 1));
 	Engine::Get()->GetDebugDraw()->DrawLine(vec3(), vec3(0, 0, 1), vec4(0, 0, 1, 1));
 
-	auto input = Engine::Get()->GetInput();
 	if (input->keyDown(Key::Space))
 	{
 		auto light_transform = manager->GetComponent<components::Transform>(point_light_id);

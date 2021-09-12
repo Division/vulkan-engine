@@ -75,10 +75,8 @@ private:
 	ECS::TransformGraph* graph = nullptr;
 
 	ECS::EntityID player_id;
+	ECS::EntityID rifle_id;
 	ECS::EntityID point_light_id;
-
-	Resources::Handle<Resources::EntityResource> animated_entity;
-	ECS::EntityID animated_entity_id;
 
 	Resources::Handle<Resources::SkeletalAnimationResource> animation;
 
