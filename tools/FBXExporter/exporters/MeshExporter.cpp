@@ -224,8 +224,8 @@ namespace Exporter
 		// Maps material id to triangle list
 		std::unordered_map<FbxGeometryElementMaterial*, std::vector<MeshTriangle>> material_triangles;
 
-		auto root_node_inv_transform = parent_node ? parent_node->EvaluateGlobalTransform() : fbxsdk::FbxAMatrix();
-		root_node_inv_transform = fbxsdk::FbxAMatrix(-root_node_inv_transform.GetT(), FbxVector4(), FbxVector4(1,1,1,1)); // Inverse translation only
+		auto root_node_transform = parent_node ? parent_node->EvaluateGlobalTransform() : fbxsdk::FbxAMatrix();
+		root_node_transform = fbxsdk::FbxAMatrix(FbxVector4(), root_node_transform.GetR(), root_node_transform.GetS());
 
 		for (auto& mesh_pair : meshes)
 		{
@@ -240,7 +240,7 @@ namespace Exporter
 			memcpy(control_points.data(), &mesh->GetControlPoints()[0], sizeof(FbxVector4) * mesh->GetControlPointsCount());
 
 			// Transformation related to root node
-			auto mesh_transform = mesh_pair.first->EvaluateLocalTransform().Inverse();
+			const auto mesh_transform = root_node_transform * mesh_pair.first->EvaluateLocalTransform();
 			FbxAMatrix mesh_rotation(FbxVector4(), mesh_transform.GetR(), FbxVector4(1, 1, 1, 1));
 
 			if (!mesh->IsTriangleMesh())

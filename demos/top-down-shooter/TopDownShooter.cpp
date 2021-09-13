@@ -77,14 +77,11 @@ ECS::EntityID Game::CreatePlayer()
 	auto rifle_handle = Resources::EntityResource::Handle(L"assets/top-down-shooter/characters/uetest/m4_rifle.entity");
 	rifle_id = rifle_handle->Spawn(vec3(0, 0, 0));
 	auto rifle_transform = manager->GetComponent<components::Transform>(rifle_id);
-	rifle_transform->scale = vec3(1);
 	rifle_transform->position = vec3(0, -0.01, 0);
-	rifle_transform->rotation = glm::angleAxis(-(float)M_PI / 2, vec3(1, 0, 0));
 
 	auto bone_attachment = manager->AddComponent<components::BoneAttachment>(rifle_id);
 	bone_attachment->entity_id = player_id;
 	bone_attachment->joint_index = animation_controller->mixer->GetSkeleton()->GetJointIndex("ik_hand_gun");
-
 
 	return player_id;
 }
