@@ -444,7 +444,7 @@ namespace Device {
 		}
 
 		if (mesh->hasIndices())
-			DrawIndexed(*mesh->vertexBuffer(), *mesh->indexBuffer(), 0, mesh->indexCount(), 0, IndexType::UINT16);
+			DrawIndexed(*mesh->vertexBuffer(), *mesh->indexBuffer(), 0, mesh->indexCount(), 0, Mesh::IsShortIndexCount(mesh->indexCount()) ? IndexType::UINT16 : IndexType::UINT32);
 		else
 			Draw(*mesh->vertexBuffer(), mesh->indexCount(), 0);
 	}

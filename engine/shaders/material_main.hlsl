@@ -24,7 +24,7 @@ cbuffer SkinningOffset : register(b4)
 struct VS_in
 {
     float4 position : POSITION;
-#if defined(TEXTURE0)
+#if defined(TEXTURE0) || defined(NORMAL_MAP)
     float2 texcoord0 : TEXCOORD;
 #endif
 
@@ -45,7 +45,7 @@ struct VS_out
 {
     float4 position : SV_POSITION;
 
-#if defined(TEXTURE0)
+#if defined(TEXTURE0) || defined(NORMAL_MAP)
     float2 texcoord0 : TEXCOORD;
 #endif
 
@@ -105,7 +105,7 @@ VS_out vs_main(VS_in input)
     result.linear_depth = LinearizeDepth(result.position.z / result.position.w, camera.zMin, camera.zMax);
 #endif
 
-#if defined(TEXTURE0)
+#if defined(TEXTURE0) || defined(NORMAL_MAP)
     result.texcoord0 = input.texcoord0;
 #endif
 
@@ -115,11 +115,11 @@ VS_out vs_main(VS_in input)
 #define PI 3.1415926535
 
 #if defined(TEXTURE0)
-[[vk::binding(2, 1)]] Texture2D texture0 : register(t2);
+Texture2D texture0 : register(t2, space1);
 #endif
 
 #if defined(NORMAL_MAP)
-[[vk::binding(4, 1)]] Texture2D normal_map : register(t4);
+Texture2D normal_map : register(t5, space1);
 #endif
 
 SamplerState SamplerLinearWrap;

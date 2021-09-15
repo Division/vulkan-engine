@@ -1,0 +1,8 @@
+{
+  "texture0": "assets/top-down-shooter/characters/uetest/UE4_Mannequin_occlusion.dds",
+  "normal_map": "assets/top-down-shooter/characters/uetest/UE4_Mannequin__normals.dds",
+  "lighting_enabled": true,
+  "vertex_color_enabled": false,
+  "roughness": 0.0,
+  "metallness": 0.0
+}

@@ -38,6 +38,8 @@ namespace SkeletalAnimation
 			Handle() = default;
 			Handle(const Handle&) = default;
 			Handle(Handle&&) = default;
+			Handle& operator=(Handle&&) = default;
+			Handle& operator=(const Handle&) = default;
 
 			operator bool() const { return !weak_reference.expired(); }
 
@@ -81,6 +83,14 @@ namespace SkeletalAnimation
 				return true;
 			}
 
+			float GetWeight()
+			{
+				if (auto instance = weak_reference.lock())
+					return instance->GetWeight();
+				else
+					return 0;
+			}
+
 			bool SetSpeed(float speed)
 			{
 				if (auto instance = weak_reference.lock())
@@ -122,6 +132,8 @@ namespace SkeletalAnimation
 		void SetProgress(float progress)
 		{
 			this->progress = std::min(std::max(0.0f, progress), 1.0f);
+			if (root_motion_enabled)
+				should_skip_root_update = true;
 		}
 
 		float GetProgress() const { return progress; }
@@ -154,6 +166,13 @@ namespace SkeletalAnimation
 
 		auto& GetCache() { return cache; }
 		auto& GetLocals() { return locals; }
+		vec3 GetLastRootPosition() const { return last_root_position; }
+		void SetLastRootPosition(vec3 value) { last_root_position = value; }
+		bool GetShouldSkipRootUpdate() const { return should_skip_root_update; }
+		void SetShouldSkipRootUpdate(bool value) { should_skip_root_update = value; }
+
+		bool GetRootMotionEnabled() const { return root_motion_enabled; }
+		void SetRootMotionEnabled(bool value) { root_motion_enabled = value; }
 
 	private:
 		void UpdateBlendEvents(float progress);
@@ -177,6 +196,11 @@ namespace SkeletalAnimation
 		float speed = 1.0f;
 		bool finished = false;
 		uint32_t layer = 0;
+
+		bool should_skip_root_update = true;
+		bool root_motion_enabled = false;
+		uint32_t root_motion_bone_index = 0;
+		vec3 last_root_position = vec3(0);
 		utils::SmallVector<BlendEvent, 4> blend_events;
 	};
 
@@ -194,6 +218,9 @@ namespace SkeletalAnimation
 		Resources::SkeletonResource::Handle GetSkeleton() const { return skeleton; }
 
 		const ozz::span<const ozz::math::Float4x4> GetModelMatrices() const { return ozz::make_span(model_matrices); }
+		const vec3& GetRootOffset() const { return root_offset; };
+		void SetRootMotionEnabled(bool value) { root_motion = value; }
+		bool GetRootMotionEnabled() const { return root_motion; }
 
 	private:
 		Resources::SkeletonResource::Handle skeleton;
@@ -206,5 +233,9 @@ namespace SkeletalAnimation
 		// Buffer of model space matrices. These are computed by the local-to-model
 		// job after the blending stage.
 		ozz::vector<ozz::math::Float4x4> model_matrices;
+
+		bool root_motion = false;
+		uint32_t root_motion_bone = 0;
+		vec3 root_offset = vec3(0);
 	};
 }

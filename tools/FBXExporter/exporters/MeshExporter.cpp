@@ -100,7 +100,7 @@ namespace Exporter
 		std::vector<BoneWeight> weights;
 	};
 
-	void AddSkinningWeights(FbxScene* scene, SubMesh& sub_mesh, FbxMesh *mesh, FbxSkin* deformer, ozz::animation::Skeleton* skeleton, std::vector<MeshTriangle>& triangles)
+	void AddSkinningWeights(FbxScene* scene, SubMesh& sub_mesh, FbxMesh *mesh, FbxAMatrix node_transform, FbxSkin* deformer, ozz::animation::Skeleton* skeleton, std::vector<MeshTriangle>& triangles)
 	{
 		std::vector<std::vector<VertexSkinningData>> skinning_data;
 		skinning_data.resize(mesh->GetControlPointsCount());
@@ -158,7 +158,7 @@ namespace Exporter
 			FbxAMatrix transform_link_matrix;
 			cluster->GetTransformLinkMatrix(transform_link_matrix);
 
-			const FbxAMatrix inverse_bind_pose = transform_link_matrix.Inverse() * transform_matrix;
+			const FbxAMatrix inverse_bind_pose = transform_link_matrix.Inverse() * transform_matrix * node_transform.Inverse();
 
 			// Stores inverse transformation.
 			sub_mesh.inv_bindpose[joint] = (mat4&)converter.ConvertMatrix(inverse_bind_pose);
@@ -178,7 +178,6 @@ namespace Exporter
 
 				for (auto& vertices : skinning_data[ctrl_point])
 					vertices.weights.push_back(bone_weight);
-
 			}
 		}
 
@@ -225,8 +224,8 @@ namespace Exporter
 		// Maps material id to triangle list
 		std::unordered_map<FbxGeometryElementMaterial*, std::vector<MeshTriangle>> material_triangles;
 
-		auto root_node_inv_transform = parent_node ? parent_node->EvaluateGlobalTransform() : fbxsdk::FbxAMatrix();
-		root_node_inv_transform = fbxsdk::FbxAMatrix(-root_node_inv_transform.GetT(), FbxVector4(), FbxVector4(1,1,1,1)); // Inverse translation only
+		auto root_node_transform = parent_node ? parent_node->EvaluateGlobalTransform() : fbxsdk::FbxAMatrix();
+		root_node_transform = fbxsdk::FbxAMatrix(FbxVector4(), root_node_transform.GetR(), root_node_transform.GetS());
 
 		for (auto& mesh_pair : meshes)
 		{
@@ -240,11 +239,9 @@ namespace Exporter
 			control_points.resize(mesh->GetControlPointsCount());
 			memcpy(control_points.data(), &mesh->GetControlPoints()[0], sizeof(FbxVector4) * mesh->GetControlPointsCount());
 
-			FbxAMatrix identity; identity.SetIdentity();
-			//ComputeLinearDeformation(identity, mesh, FbxTime(), control_points.data(), nullptr);
-
 			// Transformation related to root node
-			auto mesh_transform = root_node_inv_transform * mesh_pair.first->EvaluateGlobalTransform();
+			const auto mesh_transform = root_node_transform * mesh_pair.first->EvaluateLocalTransform();
+			FbxAMatrix mesh_rotation(FbxVector4(), mesh_transform.GetR(), FbxVector4(1, 1, 1, 1));
 
 			if (!mesh->IsTriangleMesh())
 				throw std::runtime_error("Mesh has non-triangle polygons: " + std::string(mesh->GetName()));
@@ -316,7 +313,7 @@ namespace Exporter
 						FbxVector4 fbx_normal;
 						mesh->GetPolygonVertexNormal(i, v, fbx_normal);
 						fbx_normal[3] = 0;
-						fbx_normal = mesh_transform.MultT(fbx_normal);
+						fbx_normal = mesh_rotation.MultT(fbx_normal);
 						triangle.vertices[v].normal = vec3(fbx_normal[0], fbx_normal[1], fbx_normal[2]);
 					}
 				}
@@ -356,7 +353,7 @@ namespace Exporter
 						}
 
 						fbx_binormal[3] = 0;
-						fbx_binormal = mesh_transform.MultT(fbx_binormal);
+						fbx_binormal = mesh_rotation.MultT(fbx_binormal);
 						triangle.vertices[v].binormal = vec3(fbx_binormal[0], fbx_binormal[1], fbx_binormal[2]);
 					}
 				}
@@ -383,7 +380,7 @@ namespace Exporter
 						}
 
 						fbx_tangent[3] = 0;
-						fbx_tangent = mesh_transform.MultT(fbx_tangent);
+						fbx_tangent = mesh_rotation.MultT(fbx_tangent);
 						triangle.vertices[v].tangent = vec3(fbx_tangent[0], fbx_tangent[1], fbx_tangent[2]);
 					}
 				}
@@ -396,7 +393,7 @@ namespace Exporter
 				if (skinning_type != FbxSkin::eRigid && skinning_type != FbxSkin::eLinear)
 					throw std::runtime_error("Unsupported skinning type");
 				
-				AddSkinningWeights(scene, sub_mesh, mesh, deformer, skeleton, triangles);
+				AddSkinningWeights(scene, sub_mesh, mesh, mesh_transform, deformer, skeleton, triangles);
 			}
 
 			AddVertices(sub_mesh, triangles);

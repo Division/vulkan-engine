@@ -30,6 +30,11 @@ namespace ECS::systems {
 			auto* multi_mesh = multi_mesh_fetcher.GetComponent(i);
 			auto* transform = transform_fetcher.GetComponent(i);
 
+			if (animation_controller->mixer->GetRootMotionEnabled())
+			{
+				transform->position += transform->rotation * animation_controller->mixer->GetRootOffset();
+			}
+
 			auto model_matrices = animation_controller->mixer->GetModelMatrices();
 
 			auto bounds = multi_mesh->multi_mesh->GetMesh(0)->aabb();

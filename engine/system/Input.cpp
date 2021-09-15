@@ -1,4 +1,5 @@
 #include "Input.h"
+#include <magic_enum/magic_enum.hpp>
 
 namespace System {
 
@@ -34,6 +35,14 @@ namespace System {
 		{ (int)Key::MouseRight, GLFW_MOUSE_BUTTON_2 }
 	};
 
+	Input::Input(GLFWwindow* window) : window(window)
+	{
+		down_state.resize(magic_enum::enum_count<Key>());
+		std::fill(down_state.begin(), down_state.end(), false);
+		last_down_state.resize(magic_enum::enum_count<Key>());
+		std::fill(last_down_state.begin(), last_down_state.end(), false);
+	}
+
 	int Input::keyDown(Key key) const {
 		switch (key) {
 		case Key::MouseLeft:
@@ -51,6 +60,12 @@ namespace System {
 		_prevMousePos = _mousePos;
 		_mousePos = vec2(x, y);
 		_mouseDelta = _mousePos - _prevMousePos;
+
+		for (uint32_t i = 0; i < down_state.size(); i++)
+		{
+			down_state[i] = !last_down_state[i] && keyDown((Key)i);
+			last_down_state[i] = keyDown((Key)i);
+		}
 	}
 
 }
