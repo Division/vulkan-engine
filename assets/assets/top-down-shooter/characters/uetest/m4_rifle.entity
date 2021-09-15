@@ -1,0 +1,18 @@
+[
+    {
+        "id":  "test",
+        "components": [
+            {
+                "type": "Transform"
+            },
+            {
+                "type": "MultiMeshRenderer",
+                "path": "assets/top-down-shooter/characters/uetest/m4_rifle.mesh",
+                "materials": 
+                {
+                    "default" : "assets/top-down-shooter/characters/uetest/m4_rifle.mat"
+                }
+            }
+        ]
+    }
+]

@@ -29,6 +29,13 @@ namespace Resources
 				return it->second;
 		}
 
+		const char* GetJointName(uint32_t index) const 
+		{
+			if (index >= skeleton->num_joints())
+				return nullptr;
+			return skeleton->joint_names()[index];
+		}
+
 	private:
 		std::unordered_map<const char*, uint32_t, utils::HasherChar, utils::HasherChar> bone_name_to_index_map;
 		std::unique_ptr<ozz::animation::Skeleton> skeleton;

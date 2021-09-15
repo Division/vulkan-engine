@@ -1,0 +1,25 @@
+[
+    {
+        "id":  "player",
+        "components": [
+            {
+                "type": "Transform"
+            },
+            {
+                "type": "MultiMeshRenderer",
+                "path": "assets/top-down-shooter/characters/uetest/mannequin.mesh",
+                "materials": 
+                {
+                    "default" : "assets/top-down-shooter/characters/uetest/player.mat"
+                }
+            },
+          {
+            "type": "AnimationController",
+            "skeleton": "assets/top-down-shooter/characters/uetest/MannequinSkeleton.skel"
+          },
+          {
+            "type": "CharacterController"
+          }
+        ]
+    }
+]

@@ -1,0 +1,213 @@
+[
+    {
+        "type": "fbx",
+        "filename": "Half.fbx",
+        "uid": "5e8eaffc009393d8",
+        "export_type": "Mesh"
+    },
+    {
+        "type": "fbx",
+        "filename": "Half@RunFwdLoop.fbx",
+        "uid": "e161a5ef87d7989e",
+        "export_type": "Animation"
+    },
+    {
+        "type": "fbx",
+        "filename": "Half@WalkFwdLoop.fbx",
+        "uid": "b28dfaed6ae2d149",
+        "export_type": "Animation"
+    },
+    {
+        "type": "fbx",
+        "filename": "Insect.fbx",
+        "uid": "b281fef7f99daa7f",
+        "export_type": "Mesh"
+    },
+    {
+        "type": "fbx",
+        "filename": "Insect@Idle.fbx",
+        "uid": "3280415b688da5c9",
+        "export_type": "Animation"
+    },
+    {
+        "type": "fbx",
+        "filename": "M4_Rifle_01.fbx",
+        "uid": "021947a74b027e68",
+        "export_type": "Mesh"
+    },
+    {
+        "type": "fbx",
+        "filename": "ManequinMesh.fbx",
+        "uid": "f4776d49395c4198",
+        "export_type": "Mesh"
+    },
+    {
+        "type": "fbx",
+        "filename": "ManequinMesh_TPOSE.fbx",
+        "uid": "35eea8110b7faaea",
+        "export_type": "Mesh"
+    },
+    {
+        "type": "fbx",
+        "filename": "ManequinModel.fbx",
+        "uid": "4f2c193435f84704",
+        "export_type": "Mesh"
+    },
+    {
+        "type": "fbx",
+        "filename": "ManequinRun.fbx",
+        "uid": "2eae6810015f3711",
+        "export_type": "Mesh"
+    },
+    {
+        "type": "fbx",
+        "filename": "Mannequin.fbx",
+        "uid": "fe888f71b20e0df6",
+        "export_type": "Mesh"
+    },
+    {
+        "type": "fbx",
+        "filename": "MannequinSkeleton.fbx",
+        "uid": "089002b6734c1a72",
+        "export_type": "Mesh"
+    },
+    {
+        "type": "fbx",
+        "filename": "Rifle@Idle.fbx",
+        "uid": "b9b3215bd4987f81",
+        "export_type": "Animation"
+    },
+    {
+        "type": "fbx",
+        "filename": "Rifle@Idle_GunDown.fbx",
+        "uid": "36e24cbae083829b",
+        "export_type": "Animation"
+    },
+    {
+        "type": "fbx",
+        "filename": "Rifle@Prone.fbx",
+        "uid": "d31d564e78801f13",
+        "export_type": "Animation"
+    },
+    {
+        "type": "fbx",
+        "filename": "Rifle@RunBwdLoop.fbx",
+        "uid": "2cfb66ca5deafa5c",
+        "export_type": "Animation"
+    },
+    {
+        "type": "fbx",
+        "filename": "Rifle@RunFwdLoop.fbx",
+        "uid": "da9ec0b1dcb75cd5",
+        "export_type": "Animation"
+    },
+    {
+        "type": "fbx",
+        "filename": "Rifle@StrafeRun135LeftLoop.fbx",
+        "uid": "c9f3c1ef0e5be541",
+        "export_type": "Animation"
+    },
+    {
+        "type": "fbx",
+        "filename": "Rifle@StrafeRun135RightLoop.fbx",
+        "uid": "89df6bf9a01ddfdc",
+        "export_type": "Animation"
+    },
+    {
+        "type": "fbx",
+        "filename": "Rifle@StrafeRun45LeftLoop.fbx",
+        "uid": "e7a82c7fa532e40a",
+        "export_type": "Animation"
+    },
+    {
+        "type": "fbx",
+        "filename": "Rifle@StrafeRun45RightLoop.fbx",
+        "uid": "b6ccd1365675adb2",
+        "export_type": "Animation"
+    },
+    {
+        "type": "fbx",
+        "filename": "Rifle@StrafeRunLeftLoop.fbx",
+        "uid": "ec0eceb8d85f6df8",
+        "export_type": "Animation"
+    },
+    {
+        "type": "fbx",
+        "filename": "Rifle@StrafeRunRightLoop.fbx",
+        "uid": "0e909ad2429c5abf",
+        "export_type": "Animation"
+    },
+    {
+        "type": "fbx",
+        "filename": "Rifle@WalkFwdLoop.fbx",
+        "uid": "7b3b100db51f8e1d",
+        "export_type": "Animation"
+    },
+    {
+        "type": "fbx",
+        "filename": "SK_Cyberman.fbx",
+        "uid": "2ffddcc6b4196db9",
+        "export_type": "Mesh"
+    },
+    {
+        "type": "fbx",
+        "filename": "SK_Cyberman2.fbx",
+        "uid": "60fe03db8f41c878",
+        "export_type": "Mesh"
+    },
+    {
+        "type": "fbx",
+        "filename": "SK_Jacket.fbx",
+        "uid": "6de6c83fb888086c",
+        "export_type": "Mesh"
+    },
+    {
+        "type": "texture",
+        "filename": "UE4_Mannequin__normals.png",
+        "uid": "721c02995d8e950b",
+        "compression_type": "BC7"
+    },
+    {
+        "type": "texture",
+        "filename": "UE4_Mannequin_occlusion.png",
+        "uid": "8ef6251b0b89a141",
+        "compression_type": "BC7"
+    },
+    {
+        "type": "fbx",
+        "filename": "WalkFwdLoop.fbx",
+        "uid": "dc35371b37695b5d",
+        "export_type": "Mesh"
+    },
+    {
+        "type": "fbx",
+        "filename": "_Rifle@RunFwdLoop.fbx",
+        "uid": "b0f2f3b932db4f29",
+        "export_type": "Animation"
+    },
+    {
+        "type": "copy",
+        "filename": "m4_rifle.entity",
+        "uid": "1cc94e503e1d5abc"
+    },
+    {
+        "type": "copy",
+        "filename": "m4_rifle.mat",
+        "uid": "bee4355623a67801"
+    },
+    {
+        "type": "copy",
+        "filename": "player.entity",
+        "uid": "5de66fefbef9b49c"
+    },
+    {
+        "type": "copy",
+        "filename": "player.mat",
+        "uid": "ad2ceb69d79dafe7"
+    },
+    {
+        "type": "copy",
+        "filename": "player2.entity",
+        "uid": "2b7ae32e27073e7d"
+    }
+]

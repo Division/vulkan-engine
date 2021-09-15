@@ -17,6 +17,7 @@ add_subdirectory(engine)
 if (VK_ENGINE_BUILD_DEMOS)
 	add_subdirectory(demos/action-puzzle)
 	add_subdirectory(demos/skinning)
+	add_subdirectory(demos/top-down-shooter)
 endif()
 
 if (VK_ENGINE_BUILD_TOOLS)

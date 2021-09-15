@@ -40,7 +40,7 @@ namespace System {
 
 	class Input {
 	public:
-		Input(GLFWwindow* window) : window(window) {};
+		Input(GLFWwindow* window);
 		int keyDown(Key key) const;
 		int keyDown(int key) const 
 		{ 
@@ -49,12 +49,17 @@ namespace System {
 
 			return glfwGetKey(window, key); 
 		}
+
+		bool FirstKeyDown(Key key) { return down_state[(uint32_t)key]; }
+
 		int mouseDown(int key) const { return glfwGetMouseButton(window, key) && !render::DebugUI::WantCaptureMouse(); }
 		const vec2 mousePosition() const { return _mousePos; }
 		const vec2 mouseDelta() const { return _mouseDelta; }
 		void update();
 
 	private:
+		std::vector<bool> down_state;
+		std::vector<bool> last_down_state;
 		GLFWwindow* window;
 		vec2 _mousePos;
 		vec2 _prevMousePos;
