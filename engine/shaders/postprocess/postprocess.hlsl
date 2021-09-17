@@ -1,13 +1,9 @@
-/*struct PushConstants
-{
-    float exposure;
-};
+#include "../includes/sampling.hlsl"
 
-[[vk::push_constant]] PushConstants push_constants;*/
-
-[[vk::binding(1, 0)]]
-cbuffer parameters : register(b0) {
+cbuffer parameters : register(b1) {
     float exposure;
+    float bloom_strength;
+    float4 bloom_tex_size;
 };
 
 
@@ -36,6 +32,10 @@ VS_out vs_main(VS_in input)
 SamplerState SamplerLinearClamp;
 
 Texture2D src_texture : register(t0);
+
+#if defined(BLOOM_ENABLED)
+Texture2D bloom_texture : register(t2);
+#endif
 
 /*
 struct Pixel
@@ -72,7 +72,6 @@ struct CameraData
     float4x4 cameraProjectionMatrix;
 };
 
-[[vk::binding(0, 0)]]
 cbuffer Camera : register(b0) 
 {
     CameraData camera;
@@ -96,6 +95,11 @@ struct LightGridItem
 float4 ps_main(VS_out input) : SV_TARGET
 {
     float4 src_sample = src_texture.Sample(SamplerLinearClamp, input.texcoord);
+#if defined(BLOOM_ENABLED)
+    float4 bloom_sample = SampleTexture2DBicubic(bloom_texture, SamplerLinearClamp, input.texcoord, bloom_tex_size, 1.0);
+    //float4 bloom_sample = bloom_texture.Sample(SamplerLinearClamp, input.texcoord);
+    src_sample += bloom_sample * bloom_strength;
+#endif
 
     float4 light_color = float4(0, 0, 0, 0);
     float2 screenSize = float2(camera.cameraScreenSize);
@@ -106,7 +110,7 @@ float4 ps_main(VS_out input) : SV_TARGET
     uint tileSlice = 1;//(uint)GetSliceIndex(input.linear_depth);
 
     uint pointLightCount = 0;
-    for (uint t = 0; t < CLUSTER_COUNT_DEPTH; t++)
+    /*for (uint t = 0; t < CLUSTER_COUNT_DEPTH; t++)
     {
         uint cluster_index = tileX + CLUSTER_COUNT_X * tileY + CLUSTER_COUNT_X * CLUSTER_COUNT_Y * t;
         LightGridItem cluster = LightGrid[cluster_index];
@@ -117,7 +121,7 @@ float4 ps_main(VS_out input) : SV_TARGET
 
         uint projectorCount = cluster.projectorsCount & 0x000fffu;
         uint decalCount = cluster.projectorsCount >> 16;
-    }
+    }*/
 
     /*if (tileX < 3 && tileY < 3)
         light_color.x = v;

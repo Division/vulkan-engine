@@ -476,11 +476,15 @@ namespace render {
 		});
 
 		auto post_process_src = main_pass_info.color_output;
+		graph::DependencyNode* bloom_texture = nullptr;
 
 		if (environment_settings->bloom_enabled)
-			post_process_src = bloom->AddBloom(*render_graph, *post_process_src, *main_offscreen_color[1]);
+			bloom_texture = bloom->AddBloom(*render_graph, *post_process_src, *main_offscreen_color[1]);
 
-		auto post_process_result = post_process->AddPostProcess(*render_graph, *post_process_src, *main_color, *compute_buffer_resource, GetGlobalResourceBindings(), *global_constant_bindings);
+		effects::PostProcess::Input post_process_input = {};
+		post_process_input.src_texture = post_process_src;
+		post_process_input.bloom_texture = bloom_texture;
+		auto post_process_result = post_process->AddPostProcess(*render_graph, post_process_input, *main_color, *compute_buffer_resource, GetGlobalResourceBindings(), *global_constant_bindings);
 
 		auto ui_pass_info = render_graph->AddPass<PassInfo>("Debug UI", ProfilerName::PassDebugUI, [&](graph::IRenderPassBuilder& builder)
 			{

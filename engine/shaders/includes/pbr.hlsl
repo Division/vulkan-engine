@@ -66,7 +66,7 @@ float3 CalculateLighting(float3 albedo, float3 radiance, float3 N, float3 V, flo
 	// Calculate Fresnel term for direct lighting. 
 	float3 F = fresnelSchlick(F0, max(0.0, dot(Lh, Lo)));
 	// Calculate normal distribution for specular BRDF.
-	float D = clamp(ndfGGX(cosLh, roughness), -100, 100);
+	float D = clamp(ndfGGX(cosLh, roughness), -10000, 10000);
 	// Calculate geometric attenuation for specular BRDF.
 	float G = gaSchlickGGX(cosLi, cosLo, roughness);
 

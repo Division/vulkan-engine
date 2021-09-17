@@ -21,9 +21,10 @@ namespace render {
 			ImGui::Checkbox("Bloom enabled", &settings.bloom_enabled);
 			if (settings.bloom_enabled)
 			{
-				ImGui::SliderFloat("Bloom sigma", &settings.bloom_sigma, 0.5, 4.0);
 				ImGui::SliderFloat("Bloom strength", &settings.bloom_strength, 0.0, 1.0);
 				ImGui::SliderFloat("Bloom threshold", &settings.bloom_threshold, 0.0, 1.0);
+				ImGui::SliderFloat("Bloom scatter", &settings.bloom_scatter, 0.0, 1.0);
+				ImGui::SliderFloat("Bloom clamp", &settings.bloom_clamp_max, 0.0, 30000.0);
 			}
 
 			ImGui::End();

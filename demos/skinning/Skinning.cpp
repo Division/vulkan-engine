@@ -5,6 +5,7 @@
 #include "ecs/components/Static.h"
 #include "ecs/components/AnimationController.h"
 #include "ecs/components/BoneAttachment.h"
+#include "ecs/components/MultiMeshRenderer.h"
 #include "scene/Scene.h"
 #include "render/debug/DebugDraw.h"
 #include "render/texture/Texture.h"
@@ -70,6 +71,12 @@ void Game::init()
 	auto box_transform = manager->GetComponent<components::Transform>(scifi_box_id);
 	box_transform->scale = vec3(0.2);
 	box_transform->position = vec3(-0.3, 0, 0);
+	auto box_renderer = manager->GetComponent<components::MultiMeshRenderer>(scifi_box_id);
+	box_renderer->material_resources = nullptr;
+	box_renderer->materials = render::MaterialList::Create();
+	box_renderer->materials->push_back(Material::Create());
+	box_renderer->materials->at(0)->SetColor(vec4(32, 2.25, 1.3125, 1.0f));
+	box_renderer->materials->at(0)->LightingEnabled(false);
 	//manager->GetComponent<components::Transform>(scifi_box_id)->rotation = glm::angleAxis((float)M_PI * 4.8f, vec3(0, 1, 0)) * glm::angleAxis((float)M_PI * 4.8f, vec3(1, 0, 0));
 
 	//auto sphere_mirror_handle = Resources::EntityResource::Handle(L"assets/Entities/Basic/Spheres/sphere_mirror.entity");

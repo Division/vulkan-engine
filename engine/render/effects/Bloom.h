@@ -40,14 +40,28 @@ namespace render
 		void OnRecreateSwapchain(int32_t width, int32_t height);
 
 	private:
+		graph::DependencyNode* AddPass(const char* name, Device::ShaderProgram& shader, graph::RenderGraph& graph, graph::DependencyNode& src_target_node, graph::DependencyNode* src_low_res_node, graph::ResourceWrapper& destination_target);
+
+	private:
+
 		Blur& blur;
 
-		std::array<std::unique_ptr<Device::VulkanRenderTargetAttachment>, 2> attachments;
-		std::array<render::graph::ResourceWrapper*, 2> attachment_wrappers;
+		struct Mip
+		{
+			std::unique_ptr<Device::VulkanRenderTargetAttachment> downsamle;
+			std::unique_ptr<Device::VulkanRenderTargetAttachment> upsample;
+			render::graph::ResourceWrapper* downsamle_wrapper;
+			render::graph::ResourceWrapper* upsamle_wrapper;
+			graph::DependencyNode* downsample_node;
+			graph::DependencyNode* upsample_node;
+		};
 
+		std::vector<Mip> mips;
 		std::unique_ptr<Mesh> full_screen_quad_mesh;
-		Device::ShaderProgram* shader_resample;
-		Device::ShaderProgram* shader_blend;
+		Device::ShaderProgram* shader_prefilter;
+		Device::ShaderProgram* shader_blur_h;
+		Device::ShaderProgram* shader_blur_v;
+		Device::ShaderProgram* shader_upsample;
 
 		EnvironmentSettings& environment_settings;
 	};

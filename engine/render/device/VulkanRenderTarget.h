@@ -40,6 +40,7 @@ namespace Device {
 		Type GetType() const { return type; }
 		uint32_t GetWidth() const { return width; }
 		uint32_t GetHeight() const { return height; }
+		vec4 GetTexSize() const { return vec4(1.0f / width, 1.0 / height, width, height); } // xy texel size, zw width height
 
 	private:
 		Type type;

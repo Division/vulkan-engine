@@ -10,7 +10,6 @@
 #include "render/buffer/VulkanBuffer.h"
 #include "render/texture/Texture.h"
 #include "render/mesh/Mesh.h"
-#include "render/shader/ShaderCache.h"
 #include "render/renderer/EnvironmentSettings.h"
 #include "utils/MeshGeneration.h"
 #include "ecs/components/DrawCall.h"
@@ -24,13 +23,38 @@ namespace render::effects
 	using namespace ECS;
 	using namespace profiler;
 
+	Device::ShaderProgramInfo PostProcess::GetShaderInfo(const PostProcessSettings& settings)
+	{
+		std::vector<ShaderProgramInfo::Macro> defines;
+
+		if (settings.bloom_enabled)
+			defines.push_back({ "BLOOM_ENABLED", "" });
+
+		return ShaderProgramInfo()
+			.AddShader(ShaderProgram::Stage::Vertex, L"shaders/postprocess/postprocess.hlsl", "vs_main", defines)
+			.AddShader(ShaderProgram::Stage::Fragment, L"shaders/postprocess/postprocess.hlsl", "ps_main", defines);
+	}
+
+	Device::ShaderProgram* PostProcess::GetShader(const PostProcessSettings& settings)
+	{
+		auto it = shaders.find(settings);
+		if (it == shaders.end())
+			it = shaders.insert({ settings, shader_cache.GetShaderProgram(GetShaderInfo(settings)) }).first;
+
+		return it->second;
+	}
+
 	PostProcess::PostProcess(ShaderCache& shader_cache, EnvironmentSettings& environment_settings)
 		: environment_settings(environment_settings)
+		, shader_cache(shader_cache)
 	{
-		auto shader_info = ShaderProgramInfo()
+		const auto shader_info_base = ShaderProgramInfo()
 			.AddShader(ShaderProgram::Stage::Vertex, L"shaders/postprocess/postprocess.hlsl", "vs_main")
 			.AddShader(ShaderProgram::Stage::Fragment, L"shaders/postprocess/postprocess.hlsl", "ps_main");
-		shader = shader_cache.GetShaderProgram(shader_info);
+
+		PostProcessSettings base;
+
+		//shader = shader_cache.GetShaderProgram(shader_info_base);
 		full_screen_quad_mesh = std::make_unique<Mesh>(false);
 		MeshGeneration::generateFullScreenQuad(full_screen_quad_mesh.get());
 		full_screen_quad_mesh->createBuffer();
@@ -45,7 +69,7 @@ namespace render::effects
 		attachment_wrappers[1] = graph.RegisterAttachment(*attachments[1]);
 	}
 
-	graph::DependencyNode* PostProcess::AddPostProcess(RenderGraph& graph, DependencyNode& node, ResourceWrapper& destination_target, ResourceWrapper& hdr_buffer, const Device::ResourceBindings& global_bindings, const ConstantBindings& global_constants)
+	graph::DependencyNode* PostProcess::AddPostProcess(RenderGraph& graph, const Input& input, ResourceWrapper& destination_target, ResourceWrapper& hdr_buffer, const Device::ResourceBindings& global_bindings, const ConstantBindings& global_constants)
 	{
 		auto* destination_render_target = destination_target.GetAttachment();
 
@@ -54,13 +78,20 @@ namespace render::effects
 			graph::DependencyNode* color_output = nullptr;
 		};
 
+		PostProcessSettings settings;
+		settings.bloom_enabled = (bool)input.bloom_texture;
+		auto* shader = GetShader(settings);
+
 		auto post_process_info = graph.AddPass<PassInfo>("Post Process", ProfilerName::PassPostProcess, [&](graph::IRenderPassBuilder& builder)
 			{
 				PassInfo result;
-				builder.AddInput(node);
+				builder.AddInput(*input.src_texture);
+				if (input.bloom_texture)
+					builder.AddInput(*input.bloom_texture);
+
 				result.color_output = builder.AddOutput(destination_target);
 				return result;
-			}, [&](VulkanRenderState& state)
+			}, [&, shader](VulkanRenderState& state)
 			{
 				RenderMode mode;
 				mode.SetDepthWriteEnabled(false);
@@ -69,7 +100,11 @@ namespace render::effects
 				mode.SetPrimitiveTopology(PrimitiveTopology::TriangleList);
 
 				ResourceBindings resource_bindings;
-				resource_bindings.AddTextureBinding("src_texture", node.resource->GetAttachment()->GetTexture().get());
+				resource_bindings.AddTextureBinding("src_texture", input.src_texture->resource->GetAttachment()->GetTexture().get());
+				if (input.bloom_texture)
+					resource_bindings.AddTextureBinding("bloom_texture", input.bloom_texture->resource->GetAttachment()->GetTexture().get());
+
+
 				const auto* descriptor_set_layout = shader->GetDescriptorSetLayout(0);
 				const DescriptorSetBindings bindings(resource_bindings, *descriptor_set_layout);
 				
@@ -78,6 +113,9 @@ namespace render::effects
 
 				ConstantBindings constants = global_constants;
 				constants.AddFloatBinding(&environment_settings.exposure, "exposure");
+				constants.AddFloatBinding(&environment_settings.bloom_strength, "bloom_strength"); 
+				const vec4 bloom_tex_size = input.bloom_texture ? input.bloom_texture->resource->GetAttachment()->GetTexSize() : vec4(0);
+				constants.AddFloat4Binding(&bloom_tex_size, "bloom_tex_size");
 				state.SetGlobalBindings(global_bindings, constants);
 
 				state.SetRenderMode(mode);
