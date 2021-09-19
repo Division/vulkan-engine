@@ -300,10 +300,13 @@ if (${CMAKE_BUILD_TYPE} STREQUAL "Debug")
 	target_link_libraries(vk_engine ${CMAKE_CURRENT_SOURCE_DIR}/lib/static/physx/PhysXPvdSDK_static_debug_64.lib)
 	target_link_libraries(vk_engine ${CMAKE_CURRENT_SOURCE_DIR}/lib/static/physx/PhysXExtensions_static_debug_64.lib)
 	target_link_libraries(vk_engine ${CMAKE_CURRENT_SOURCE_DIR}/lib/static/physx/PhysXVehicle_static_debug_64.lib)
+	target_link_libraries(vk_engine ${CMAKE_CURRENT_SOURCE_DIR}/lib/static/physx/PhysXCharacterKinematic_static_debug_64.lib)
+	
 else (${CMAKE_BUILD_TYPE} STREQUAL "Debug")
 	target_link_libraries(vk_engine ${CMAKE_CURRENT_SOURCE_DIR}/lib/static/physx/PhysXPvdSDK_static_64.lib)
 	target_link_libraries(vk_engine ${CMAKE_CURRENT_SOURCE_DIR}/lib/static/physx/PhysXExtensions_static_64.lib)
 	target_link_libraries(vk_engine ${CMAKE_CURRENT_SOURCE_DIR}/lib/static/physx/PhysXVehicle_static_64.lib)
+	target_link_libraries(vk_engine ${CMAKE_CURRENT_SOURCE_DIR}/lib/static/physx/PhysXCharacterKinematic_static_64.lib)
 endif (${CMAKE_BUILD_TYPE} STREQUAL "Debug")
 
 # Tests

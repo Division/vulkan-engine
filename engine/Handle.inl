@@ -32,6 +32,13 @@ public:
 		return *this;
 	}
 
+	Handle& operator=(std::nullptr_t)
+	{
+		AddToReleaser(resource);
+		resource = nullptr;
+		return *this;
+	}
+
 	Handle& operator=(Handle&& other)
 	{
 		AddToReleaser(resource);
@@ -69,5 +76,5 @@ public:
 
 
 private:
-	std::shared_ptr<T> resource;
+	mutable std::shared_ptr<T> resource;
 };

@@ -37,17 +37,17 @@ namespace ECS::systems {
 
 			auto model_matrices = animation_controller->mixer->GetModelMatrices();
 
-			auto bounds = multi_mesh->multi_mesh->GetMesh(0)->aabb();
+			auto bounds = multi_mesh->GetMultiMesh()->GetMesh(0)->aabb();
 
-			for (int j = 0; j < multi_mesh->multi_mesh->GetMeshCount(); j++)
+			for (int j = 0; j < multi_mesh->GetMultiMesh()->GetMeshCount(); j++)
 			{
 				if (!multi_mesh->draw_calls) continue;
 
 				auto* skinning_data = multi_mesh->draw_calls.GetSkinningData(j);
 				if (!skinning_data) continue;
 
-				auto& mesh = multi_mesh->multi_mesh->GetMesh(j);
-				auto& inv_bind_pose = multi_mesh->multi_mesh->GetInvBindPose(j);
+				auto& mesh = multi_mesh->GetMultiMesh()->GetMesh(j);
+				auto& inv_bind_pose = multi_mesh->GetMultiMesh()->GetInvBindPose(j);
 				const AABB mesh_bounds = mesh->aabb();
 				bounds.expand(mesh_bounds.min);
 				bounds.expand(mesh_bounds.max);
@@ -56,7 +56,7 @@ namespace ECS::systems {
 				for (uint16_t k = 0; k < mesh->GetBoneCount(); k++)
 				{
 					const auto remap_index = mesh->GetBoneRemapIndex(k);
-					skinning_data->bone_matrices[k] = transform->local_to_world * (mat4&)model_matrices[remap_index] * inv_bind_pose[k];
+					skinning_data->bone_matrices[k] = transform->GetLocalToWorld() * (mat4&)model_matrices[remap_index] * inv_bind_pose[k];
 				}
 			}
 
@@ -91,8 +91,9 @@ namespace ECS::systems {
 				continue;
 
 			auto child_matrix = ComposeMatrix(transform->position, transform->rotation, transform->scale);
-			auto parent_matrix = parent_transform->local_to_world * (mat4&)model_matrices[bone_attachment->joint_index];
-			transform->local_to_world = parent_matrix * child_matrix;
+			auto parent_matrix = parent_transform->GetLocalToWorld() * (mat4&)model_matrices[bone_attachment->joint_index];
+
+			transform->SetLocalToWorld(parent_matrix * child_matrix);
 		}
 	}
 	
@@ -112,14 +113,14 @@ namespace ECS::systems {
 			for (int i = 0; i < model_matrices.size(); i++)
 			{
 				glm::mat4x4& m = (glm::mat4x4&)model_matrices[i];
-				vec4 p = transform->local_to_world * m * vec4(0, 0, 0, 1);
+				vec4 p = transform->GetLocalToWorld() * m * vec4(0, 0, 0, 1);
 				Engine::Get()->GetDebugDraw()->DrawPoint(glm::vec3(p), vec3(0.2, 0.2, 1), 8);
 
 				const auto parent_id = skeleton->Get()->joint_parents()[i];
 				if (parent_id != ozz::animation::Skeleton::kNoParent)
 				{
 					glm::mat4x4& m = (glm::mat4x4&)model_matrices[parent_id];
-					vec4 parent = transform->local_to_world * m * vec4(0, 0, 0, 1);
+					vec4 parent = transform->GetLocalToWorld() * m * vec4(0, 0, 0, 1);
 					Engine::Get()->GetDebugDraw()->DrawLine(glm::vec3(p), vec3(parent), vec4(0, 0, 1, 1));
 				}
 			}
@@ -144,11 +145,11 @@ namespace ECS::systems {
 
 			//auto& inv_bind_poses = animation_controller->mixer->GetSkeleton()->GetInverseBindposeMatrices();
 
-			auto mesh_count = multi_mesh_renderer->multi_mesh->GetMeshCount();
+			auto mesh_count = multi_mesh_renderer->GetMultiMesh()->GetMeshCount();
 			for (int k = 0; k < mesh_count; k++)
 			{
-				auto& mesh = multi_mesh_renderer->multi_mesh->GetMesh(k);
-				auto& inv_bind_poses = multi_mesh_renderer->multi_mesh->GetInvBindPose(k);
+				auto& mesh = multi_mesh_renderer->GetMultiMesh()->GetMesh(k);
+				auto& inv_bind_poses = multi_mesh_renderer->GetMultiMesh()->GetInvBindPose(k);
 
 				for (int v = 0; v < mesh->vertexCount(); v++)
 				{
@@ -163,7 +164,7 @@ namespace ECS::systems {
 						glm::mat4x4& m = (glm::mat4x4&)model_matrices[indexes[j]];
 						auto ibp = inv_bind_poses[unmapped_indexes.data[j]];
 						auto pos = vec4(p, 1);
-						result += vec3(transform->local_to_world * m * ibp * pos) * weights[j];
+						result += vec3(transform->GetLocalToWorld() * m * ibp * pos) * weights[j];
 					}
 
 					Engine::Get()->GetDebugDraw()->DrawPoint(glm::vec3(result), vec3(1, 1, 1), 4);

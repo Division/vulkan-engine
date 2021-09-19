@@ -15,17 +15,20 @@ namespace ECS::components
 	{
 		static constexpr uint32_t STATIONARY_ANIM_LAYER = 4;
 		static constexpr uint32_t MOVE_ANIM_LAYER = 5;
+		static constexpr uint32_t ADDITIVE_LAYER = 6;
 
 		struct Input
 		{
 			vec2 move_direction = vec2(0);
 			vec2 aim_direction = vec2(0);
+			bool shoot = false;
 		};
 
 		enum StationaryAnimationType
 		{
 			Idle,
-			IdleAim
+			IdleAim,
+			Shoot
 		};
 
 		enum MoveAnimationType
@@ -67,7 +70,8 @@ namespace ECS::components
 		std::array<Resources::SkeletalAnimationResource::Handle, magic_enum::enum_count<StationaryAnimationType>()> stationary_animations;
 		std::array<SkeletalAnimation::AnimationInstance::Handle, magic_enum::enum_count<MoveAnimationType>()> move_playback_handles;
 		std::array<float, magic_enum::enum_count<MoveAnimationType>()> move_target_weights;
-		
+		SkeletalAnimation::AnimationInstance::Handle shoot_animation_handle;
+
 		State state = State::Idle;
 		vec2 current_aim_dir = vec2(0, 1);
 		void ClearMoveTargets();
@@ -101,6 +105,7 @@ namespace ECS::systems
 
 	private:
 		void ProcessController(components::CharacterController* character_controller, components::AnimationController* animation_controller, components::Transform* transform);
+		void ProcessShooting(components::CharacterController* character_controller, components::AnimationController* animation_controller, components::Transform* transform);
 		void ProcessIdle(components::CharacterController* character_controller, components::AnimationController* animation_controller, components::Transform* transform);
 		void ProcessMovement(components::CharacterController* character_controller, components::AnimationController* animation_controller, components::Transform* transform);
 		void UpdateMovementWeights(components::CharacterController* character_controller);

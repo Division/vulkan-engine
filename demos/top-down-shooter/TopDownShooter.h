@@ -29,11 +29,18 @@ namespace Vehicle::Utils
 namespace ECS::components
 {
 	struct DeltaTime;
+	struct CharacterController;
+	struct Transform;
 }
 
 namespace game
 {
 	class Gameplay;
+}
+
+namespace Projectile
+{
+	class ProjectileManager;
 }
 
 namespace Resources
@@ -64,12 +71,14 @@ private:
 	ECS::EntityID CreateLight(vec3 position, float radius, ECS::components::Light::Type type, vec3 color);
 	ECS::EntityID CreatePlayer();
 
+	void Shoot(ECS::components::Transform* player_transform, ECS::components::CharacterController* character_controller);
 	void UpdatePlayer(float dt);
 	void UpdateFollowCamera();
 	std::optional<vec3> GetMouseTarget();
 
 private:
 	std::unique_ptr<ViewerCamera> camera;
+	std::unique_ptr<Projectile::ProjectileManager> projectile_manager;
 
 	ECS::EntityManager* manager = nullptr;
 	ECS::TransformGraph* graph = nullptr;
@@ -79,6 +88,7 @@ private:
 	ECS::EntityID point_light_id;
 
 	Resources::Handle<Resources::SkeletalAnimationResource> animation;
+	double last_shoot_time = 0.0f;
 
 	bool camera_control = false;
 };

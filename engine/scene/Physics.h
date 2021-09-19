@@ -24,6 +24,9 @@ namespace Physics
 	inline physx::PxTransform ConvertTransform(vec3 position, quat rotation) { return physx::PxTransform(Convert(position), Convert(rotation)); }
 	inline void ConvertTransform(const physx::PxTransform& transform, vec3& out_position, quat& out_rotation) { out_position = Convert(transform.p); out_rotation = Convert(transform.q); }
 
+	void SetupFiltering(physx::PxRigidActor& actor, physx::PxU32 filterGroup, physx::PxU32 filterMask);
+	void SetupFiltering(physx::PxRigidStatic& static_actor, physx::PxU32 filterGroup, physx::PxU32 filterMask);
+
 	template<typename T>
 	class Handle
 	{
@@ -99,15 +102,18 @@ namespace Physics
 		physx::PxCooking* GetCooking() { return cooking.get(); };
 		physx::PxFoundation* GetFoundation() { return foundation.get(); };
 		physx::PxScene* GetScene() { return default_scene.get(); };
+		physx::PxControllerManager* GetControllerManager() { return controller_manager.get(); };
 		physx::PxAllocatorCallback* GetAllocator() { return &allocator; };
 		// Utility functions
 		Handle<physx::PxRigidDynamic> CreateDynamic(const vec3 position, const quat rotation, const physx::PxGeometry& geometry, physx::PxMaterial* material = nullptr, bool add_to_scene = true);
 		Handle<physx::PxRigidStatic> CreateStatic(const vec3 position, const quat rotation, const physx::PxGeometry& geometry, physx::PxMaterial* material = nullptr, bool add_to_scene = true);
 		std::vector<Handle<physx::PxRigidDynamic>> CreateStack(const vec3 position, const quat rotation, uint32_t size, float halfExtent, physx::PxMaterial* material = nullptr);
 		Handle<physx::PxRigidStatic> CreatePlaneStatic(const vec3 position, const quat rotation, physx::PxMaterial* material = nullptr);
-		Handle<physx::PxRigidDynamic> CreateBoxDynamic(const vec3 position, const quat rotation, float half_size, physx::PxMaterial* material = nullptr);
+		Handle<physx::PxRigidDynamic> CreateBoxDynamic(const vec3 position, const quat rotation, vec3 half_size, physx::PxMaterial* material = nullptr);
 		Handle<physx::PxRigidDynamic> CreateSphereDynamic(const vec3 position, const quat rotation, float readius, physx::PxMaterial* material = nullptr);
 		Handle<physx::PxRigidStatic> CreateSphereStatic(const vec3 position, const quat rotation, float radius, physx::PxMaterial* material = nullptr);
+		Handle<physx::PxRigidStatic> CreateBoxStatic(const vec3 position, const quat rotation, vec3 half_size, physx::PxMaterial* material = nullptr);
+		Handle<physx::PxController> CreateCapsuleController(const vec3 position, const vec3 up, float height, float radius);
 
 	private:
 		class Allocator : public physx::PxAllocatorCallback
@@ -140,6 +146,7 @@ namespace Physics
 		Handle<physx::PxDefaultCpuDispatcher> dispatcher;
 		Handle<physx::PxScene> default_scene;
 		Handle<physx::PxMaterial> default_material;
+		Handle<physx::PxControllerManager> controller_manager;
 		bool use_remote_debugger = true;
 		double last_time = 0.0f;
 		double current_time = 0.0f;

@@ -127,6 +127,12 @@ void Scene::ProcessPhysicsSystems()
     // Update transform components with physics simulated data
     auto rigidbody_list = entity_manager->GetChunkListsWithComponents<components::RigidbodyDynamic, components::Transform>();
     physics_post_update_system->ProcessChunks(rigidbody_list);
+
+    if (GetPhysics()->GetControllerManager()->getNbControllers() > 0)
+    {
+        auto character_controller_list = entity_manager->GetChunkListsWithComponents<components::PhysXCharacterController, components::Transform>();
+        ECS::systems::PhysicsCharacterControllerSystem(*entity_manager).ProcessChunks(character_controller_list);
+    }
 }
 
 void Scene::ProcessTransformSystems()

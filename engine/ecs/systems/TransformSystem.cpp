@@ -19,7 +19,7 @@ namespace ECS { namespace systems {
 			auto* parent_transform = transform_fetcher.GetComponent(i);
 			auto& children = transform_graph.GetChildren(root_transform->id);
 			
-			SetTransformRecursive(parent_transform->local_to_world, children);
+			SetTransformRecursive(parent_transform->GetLocalToWorld(), children);
 		}
 	}
 
@@ -29,8 +29,8 @@ namespace ECS { namespace systems {
 		{
 			auto* child_transform = manager.GetComponent<Transform>(child_id);
 			auto child_matrix = ComposeMatrix(child_transform->position, child_transform->rotation, child_transform->scale);
-			child_transform->local_to_world = matrix * child_matrix;
-			SetTransformRecursive(child_transform->local_to_world, transform_graph.GetChildren(child_id));
+			child_transform->SetLocalToWorld(matrix * child_matrix);
+			SetTransformRecursive(child_transform->GetLocalToWorld(), transform_graph.GetChildren(child_id));
 		}
 	}
 
@@ -42,7 +42,7 @@ namespace ECS { namespace systems {
 		for (int i = 0; i < chunk->GetEntityCount(); i++)
 		{
 			auto* transform = transform_fetcher.GetComponent(i);
-			transform->local_to_world = ComposeMatrix(transform->position, transform->rotation, transform->scale);
+			transform->SetLocalToWorld(ComposeMatrix(transform->position, transform->rotation, transform->scale));
 		}
 	}
 

@@ -15,6 +15,7 @@
 #include "utils/Math.h"
 #include "memory/Allocator.h"
 #include "memory/Containers.h"
+#include "components/Entity.h"
 
 namespace ECS {
 
@@ -218,6 +219,13 @@ namespace ECS {
 		void* GetMemory() const { return memory; }
 		Chunk* GetNextChunk() const { return next.get(); };
 		
+		ECS::EntityID GetEntityID(uint32_t index)
+		{
+			assert(index < GetEntityCount());
+			auto entity = (EntityData*)GetComponentPointer(index, GetComponentHash<EntityData>());
+			return entity->id;
+		}
+
 		static void* GetComponentPointer(void* memory, uint32_t index, const ComponentData& data)
 		{
 			return (char*)memory + data.offset + (size_t)data.size * (size_t)index;

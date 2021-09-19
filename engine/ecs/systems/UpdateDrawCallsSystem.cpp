@@ -44,9 +44,9 @@ namespace ECS { namespace systems {
 
 			auto get_material_function = mesh_renderer->material_resources ? &GetMaterialResource : &GetMaterial;
 
-			for (int j = 0; j < mesh_renderer->multi_mesh->GetMeshCount(); j++)
+			for (int j = 0; j < mesh_renderer->GetMultiMesh()->GetMeshCount(); j++)
 			{
-				auto& mesh = mesh_renderer->multi_mesh->GetMesh(j);
+				auto& mesh = mesh_renderer->GetMultiMesh()->GetMesh(j);
 				auto material = mesh_renderer->GetMaterial((size_t)j);
 
 				render::DrawCallInitializer initializer(*mesh, *material);
@@ -55,7 +55,7 @@ namespace ECS { namespace systems {
 				auto draw_call = handle.AddDrawCall(initializer);
 					
 				draw_call->queue = material->GetRenderQueue();
-				draw_call->transform = transform->local_to_world; // TODO: move to AddDrawCall
+				draw_call->transform = transform->GetLocalToWorld(); // TODO: move to AddDrawCall
 				draw_call->obb = obb;
 			}
 

@@ -9,6 +9,7 @@
 #include <ozz/animation/offline/fbx/fbx_animation.h>
 #include <ozz/animation/offline/fbx/fbx.h>
 #include <ozz/animation/offline/animation_optimizer.h>
+#include <ozz/animation/offline/additive_animation_builder.h>
 #include <ozz/animation/offline/animation_builder.h>
 #include <ozz/animation/offline/raw_skeleton.h>
 #include <ozz/animation/offline/skeleton_builder.h>
@@ -135,11 +136,11 @@ namespace Exporter
 		return ExportRootNode(scene, path, exported_assets);
 	}
 
-	bool SceneExporter::ExportFBXAnimationFile(const std::filesystem::path& path, ExportedSceneAssets* exported_assets)
+	bool SceneExporter::ExportFBXAnimationFile(const std::filesystem::path& path, bool is_additive, ExportedSceneAssets* exported_assets)
 	{
 		try
 		{
-			return ExportAnimation(path, exported_assets);
+			return ExportAnimation(path, exported_assets, is_additive);
 		}
 		catch (std::runtime_error e)
 		{
@@ -252,7 +253,7 @@ namespace Exporter
 		return true;
 	}
 
-	bool SceneExporter::ExportAnimation(const std::filesystem::path& path, ExportedSceneAssets* exported_assets)
+	bool SceneExporter::ExportAnimation(const std::filesystem::path& path, ExportedSceneAssets* exported_assets, bool is_additive)
 	{
 		FbxManagerInstance fbx_manager;
 		FbxAnimationIOSettings settings(fbx_manager);
@@ -272,8 +273,21 @@ namespace Exporter
 
 		RawAnimation animation;
 		animation.name = animation_name;
+
 		if (!ozz::animation::offline::fbx::ExtractAnimation(animation_name.c_str(), *scene_loader, *skeleton, 0.0f, &animation))
 			throw std::runtime_error("Error extracting animation from " + path.string());
+
+		if (is_additive)
+		{
+			ozz::animation::offline::AdditiveAnimationBuilder additive_builder;
+			RawAnimation raw_additive;
+
+			const bool succeeded = additive_builder(animation, &raw_additive);
+			if (!succeeded)
+				throw std::runtime_error("Error building additive animation " + path.string());
+
+			animation = raw_additive;
+		}
 
 		ozz::animation::offline::AnimationOptimizer optimizer;
 		RawAnimation raw_optimized_animation;

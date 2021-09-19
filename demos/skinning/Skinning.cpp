@@ -85,11 +85,11 @@ void Game::init()
 
 	animated_entity_id = animated_entity->Spawn(vec3(0, 0, 0));
 	auto* controller = manager->GetComponent<components::AnimationController>(animated_entity_id);
-	auto anim_instance = controller->mixer->PlayAnimation(animation, SkeletalAnimation::PlaybackMode::Loop);
+	auto anim_instance = controller->mixer->PlayAnimation(animation, SkeletalAnimation::PlaybackParams().Playback(SkeletalAnimation::PlaybackMode::Loop));
 
 	animated_entity_id = animated_entity->Spawn(vec3(5, 0, 0));
 	controller = manager->GetComponent<components::AnimationController>(animated_entity_id);
-	auto anim_handle = controller->mixer->PlayAnimation(animation, SkeletalAnimation::PlaybackMode::Loop);
+	auto anim_handle = controller->mixer->PlayAnimation(animation, SkeletalAnimation::PlaybackParams().Playback(SkeletalAnimation::PlaybackMode::Loop));
 	anim_handle.SetSpeed(0.06f);
 
 	auto bone_attachment = manager->AddComponent<components::BoneAttachment>(scifi_box_id);

@@ -18,6 +18,7 @@
 #include "utils/Math.h"
 #include "render/renderer/EnvironmentSettings.h"
 #include "controller/Controller.h"
+#include "projectile/Projectile.h"
 
 Game::Game() = default;
 Game::~Game() = default;
@@ -60,6 +61,8 @@ ECS::EntityID Game::CreatePlayer()
 	auto character_controller = manager->GetComponent<components::CharacterController>(player_id);
 	character_controller->stationary_animations[StationaryAnimationType::Idle]		= SkeletalAnimationResource::Handle(L"assets/top-down-shooter/characters/uetest/Rifle@Idle.anim");
 	character_controller->stationary_animations[StationaryAnimationType::IdleAim]	= SkeletalAnimationResource::Handle(L"assets/top-down-shooter/characters/uetest/Rifle@Idle_GunDown.anim");
+	character_controller->stationary_animations[StationaryAnimationType::Shoot]		= SkeletalAnimationResource::Handle(L"assets/top-down-shooter/characters/uetest/Rifle@ShootLoop_Additive.anim");
+	
 	character_controller->move_animations[MoveAnimationType::RunForward]			= SkeletalAnimationResource::Handle(L"assets/top-down-shooter/characters/uetest/Rifle@RunFwdLoop.anim");
 	character_controller->move_animations[MoveAnimationType::WalkForward]			= SkeletalAnimationResource::Handle(L"assets/top-down-shooter/characters/uetest/Rifle@WalkFwdLoop.anim");
 	character_controller->move_animations[MoveAnimationType::RunBackward]			= SkeletalAnimationResource::Handle(L"assets/top-down-shooter/characters/uetest/Rifle@RunBwdLoop.anim");
@@ -103,12 +106,19 @@ void Game::init()
 
 	manager->AddStaticComponent(graph);
 
+	projectile_manager = std::make_unique<Projectile::ProjectileManager>(*manager);
+
 	point_light_id = CreateLight(vec3(2.5, 4, 0), 10, ECS::components::Light::Type::Point, vec3(1, 1, 1) * 10.0f);
 
 	camera = std::make_unique<ViewerCamera>();
 
 	auto plane_handle = Resources::EntityResource::Handle(L"assets/Entities/Basic/Ground/stylized/plane10_soil_water.entity");
 	plane_handle->Spawn(vec3(0));
+
+	auto box_handle = Resources::EntityResource::Handle(L"assets/top-down-shooter/characters/uetest/phys_box.entity");
+	box_handle->Spawn(vec3(5, 0, 5));
+
+	engine->GetScene()->GetPhysics()->GetControllerManager()->setOverlapRecoveryModule(true);
 }
 
 void Game::UpdatePhysics(float dt)
@@ -129,17 +139,29 @@ std::optional<vec3> Game::GetMouseTarget()
 	return std::nullopt;
 }
 
+void Game::Shoot(components::Transform* player_transform, components::CharacterController* character_controller)
+{
+	Projectile::Params params;
+	params.position = player_transform->position + vec3(0, 1.0f, 0);
+	params.direction = vec3(character_controller->current_aim_dir.x, 0, character_controller->current_aim_dir.y);
+	params.speed = 1.0f;
+	params.max_distance = 10.0f;
+	params.dimensions = vec2(0.5f, 0.5f);
+
+	projectile_manager->CreateProjectile(params);
+}
+
 void Game::UpdatePlayer(float dt)
 {
 	auto input = Engine::Get()->GetInput();
-
 
 	auto character_controller = manager->GetComponent<components::CharacterController>(player_id);
 	auto transform = manager->GetComponent<components::Transform>(player_id);
 	auto& character_input = character_controller->input;
 	character_input.aim_direction = vec2(0);
 	character_input.move_direction = vec2(0);
-	
+	character_input.shoot = false;
+
 	if (camera_control)
 		return;
 
@@ -167,6 +189,14 @@ void Game::UpdatePlayer(float dt)
 	float length = glm::length(character_input.move_direction);
 	if (length > 0.001f)
 		character_input.move_direction /= length;
+
+	character_input.shoot = input->keyDown(Key::MouseLeft);
+	auto time = Engine::Get()->time();
+	if (character_input.shoot && (time - last_shoot_time > 0.2))
+	{
+		Shoot(transform, character_controller);
+		last_shoot_time = time;
+	}
 }
 
 void Game::UpdateFollowCamera()
@@ -187,6 +217,7 @@ void Game::update(float dt)
 	CharacterControllerSystem(*manager).ProcessChunks(controllers);
 
 	UpdatePlayer(dt);
+	projectile_manager->Update();
 
 	auto input = Engine::Get()->GetInput();
 	if (input->FirstKeyDown(Key::Tab))
@@ -239,7 +270,7 @@ PxFilterFlags SimpleFilterShader
 
 physx::PxSimulationFilterShader Game::GetFilterShader()
 {
-	return PxDefaultSimulationFilterShader;
+	return SimpleFilterShader;
 }
 
 physx::PxVec3 Game::GetGravity()

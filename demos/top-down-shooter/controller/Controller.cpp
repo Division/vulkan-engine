@@ -11,16 +11,19 @@ namespace ECS::components
 {
 	void CharacterController::Startup(AnimationController* animation_controller)
 	{
+		const auto move_params = SkeletalAnimation::PlaybackParams().Playback(SkeletalAnimation::PlaybackMode::Loop).FadeTime(0.0f).Layer(MOVE_ANIM_LAYER);
+
 		// move animations are always active and manipulated by handles. Zero weight animation has zero cost.
 		for (uint32_t i = 0; i < move_animations.size(); i++)
 		{
-			move_playback_handles[i] = animation_controller->mixer->BlendAnimation(move_animations[i], SkeletalAnimation::PlaybackMode::Loop, 0.0f, MOVE_ANIM_LAYER);
+			move_playback_handles[i] = animation_controller->mixer->BlendAnimation(move_animations[i], move_params);
 			move_playback_handles[i].SetWeight(0);
 		}
 
 		move_target_weights.fill(0);
 
-		animation_controller->mixer->PlayAnimation(stationary_animations[StationaryAnimationType::Idle], SkeletalAnimation::PlaybackMode::Loop, 0.0f, STATIONARY_ANIM_LAYER);
+		const auto stationary_params = SkeletalAnimation::PlaybackParams().Playback(SkeletalAnimation::PlaybackMode::Loop).FadeTime(0.0f).Layer(STATIONARY_ANIM_LAYER);
+		animation_controller->mixer->PlayAnimation(stationary_animations[StationaryAnimationType::Idle], stationary_params);
 	}
 
 	void CharacterController::ClearMoveTargets()
@@ -55,8 +58,27 @@ namespace ECS::systems
 		}
 	}
 
+	void CharacterControllerSystem::ProcessShooting(components::CharacterController* character_controller, components::AnimationController* animation_controller, components::Transform* transform)
+	{
+		if (character_controller->input.shoot && !character_controller->shoot_animation_handle)
+		{
+			const auto params = SkeletalAnimation::PlaybackParams()
+									.Playback(SkeletalAnimation::PlaybackMode::Loop)
+									.Blending(SkeletalAnimation::BlendingMode::Additive)
+									.FadeTime(0.15f).Layer(components::CharacterController::ADDITIVE_LAYER);
+			auto& animation = character_controller->stationary_animations[components::CharacterController::StationaryAnimationType::Shoot];
+			character_controller->shoot_animation_handle = animation_controller->mixer->PlayAnimation(animation, params);
+		}
+		else if (!character_controller->input.shoot && character_controller->shoot_animation_handle)
+		{
+			character_controller->shoot_animation_handle.FadeOut(0.15);
+			character_controller->shoot_animation_handle = nullptr;
+		}
+	}
+
 	void CharacterControllerSystem::ProcessController(components::CharacterController* character_controller, components::AnimationController* animation_controller, components::Transform* transform)
 	{
+		ProcessShooting(character_controller, animation_controller, transform);
 		UpdateDirection(character_controller, transform);
 
 		switch (character_controller->state)
@@ -108,11 +130,10 @@ namespace ECS::systems
 		if (move_length < 0.01f)
 		{
 			character_controller->state = components::CharacterController::State::Idle;
+			const auto stationary_params = SkeletalAnimation::PlaybackParams().Playback(SkeletalAnimation::PlaybackMode::Loop).FadeTime(0.3f).Layer(components::CharacterController::STATIONARY_ANIM_LAYER);
 			animation_controller->mixer->PlayAnimation(
 				character_controller->stationary_animations[components::CharacterController::StationaryAnimationType::Idle], 
-				SkeletalAnimation::PlaybackMode::Loop,
-				0.3f,
-				components::CharacterController::STATIONARY_ANIM_LAYER
+				stationary_params
 			);
 
 			character_controller->ClearMoveTargets();

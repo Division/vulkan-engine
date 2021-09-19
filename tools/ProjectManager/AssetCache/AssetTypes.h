@@ -102,6 +102,7 @@ namespace Asset::Types
 
 	private:
 		Asset::Export::FBX::ExportType export_type = Asset::Export::FBX::ExportType::Mesh;
+		Asset::Export::FBX::AnimationType animation_type = Asset::Export::FBX::AnimationType::Normal;
 	};
 
 	class PlainCopy : public AssetEntry

@@ -33,14 +33,14 @@ namespace ECS { namespace systems {
 				continue;
 			}
 
-			assert(!mesh_renderer->draw_calls || mesh_renderer->draw_calls.GetDrawCallCount() == mesh_renderer->multi_mesh->GetMeshCount());
-			for (int j = 0; j < mesh_renderer->multi_mesh->GetMeshCount(); j++)
+			assert(!mesh_renderer->draw_calls || mesh_renderer->draw_calls.GetDrawCallCount() == mesh_renderer->GetMultiMesh()->GetMeshCount());
+			for (int j = 0; j < mesh_renderer->GetMultiMesh()->GetMeshCount(); j++)
 			{
 				if (mesh_renderer->draw_calls)
 				{
 					auto* draw_call = mesh_renderer->draw_calls.GetDrawCall(j);
 					draw_call->obb = transform->GetOBB();
-					draw_call->transform = transform->local_to_world;;
+					draw_call->transform = transform->GetLocalToWorld();
 				}
 			}
 		}

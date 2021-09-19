@@ -1,0 +1,5 @@
+{
+  "lighting_enabled": false,
+  "color": [2.0, 2.0, 2.0, 1],
+  "texture0": "assets/top-down-shooter/weapon/rifle_projectile.dds"
+}

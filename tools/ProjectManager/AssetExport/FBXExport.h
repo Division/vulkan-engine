@@ -10,13 +10,20 @@ namespace Asset::Export::FBX
 		Animation
 	};
 
+	enum class AnimationType
+	{
+		Normal,
+		Additive
+	};
+
 	class FBXExport : public Base
 	{
 	public:
-		FBXExport(ExportType export_type);
+		FBXExport(ExportType export_type, AnimationType animation_type);
 
 		Result Export() override;
 	private:
 		ExportType export_type;
+		AnimationType animation_type;
 	};
 }

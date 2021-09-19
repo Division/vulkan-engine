@@ -122,6 +122,11 @@ namespace Asset::Types
 		AssetEntry::Initialize(metadata, relative_path);
 		if (relative_path.find(L"@") != std::wstring::npos)
 			export_type = Export::FBX::ExportType::Animation;
+		
+		auto lowercase_path = relative_path;
+		utils::Lowercase(lowercase_path);
+		if (lowercase_path.find(L"additive") != std::wstring::npos)
+			animation_type = Export::FBX::AnimationType::Additive;
 	}
 
 	void FBX::Deserialize(WValue& json)
@@ -129,6 +134,7 @@ namespace Asset::Types
 		AssetEntry::Deserialize(json);
 
 		ReadEnum(L"export_type", json, Asset::Export::FBX::ExportType::Mesh, export_type);
+		ReadEnum(L"animation_type", json, Asset::Export::FBX::AnimationType::Normal, animation_type);
 	}
 
 	WValue FBX::Serialize(WDocument& document)
@@ -136,13 +142,14 @@ namespace Asset::Types
 		auto result = AssetEntry::Serialize(document);
 
 		WriteEnum(L"export_type", result, export_type, document.GetAllocator());
+		WriteEnum(L"animation_type", result, animation_type, document.GetAllocator());
 
 		return result;
 	}
 
 	std::unique_ptr<Export::Base> FBX::GetExporter()
 	{
-		return std::make_unique<Export::FBX::FBXExport>(export_type);
+		return std::make_unique<Export::FBX::FBXExport>(export_type, animation_type);
 	}
 
 	/////////////////////////////////////////////////////////////

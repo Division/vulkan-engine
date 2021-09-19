@@ -10,6 +10,42 @@ namespace Physics
 
 	constexpr bool DEBUG_RENDER_ENABLED_AT_START = false;
 
+	void SetupFiltering(PxRigidActor& actor, PxU32 filterGroup, PxU32 filterMask)
+	{
+		PxFilterData filterData;
+		filterData.word0 = filterGroup; // word0 = own ID
+		filterData.word1 = filterMask;  // word1 = ID mask to filter pairs that trigger a
+										// contact callback;
+		const PxU32 numShapes = actor.getNbShapes();
+		utils::SmallVector<PxShape*, 8> shapes;
+		shapes.resize(numShapes);
+		actor.getShapes(shapes.data(), numShapes);
+		for (PxU32 i = 0; i < numShapes; i++)
+		{
+			PxShape* shape = shapes[i];
+			shape->setSimulationFilterData(filterData);
+			shape->setFlag(physx::PxShapeFlag::eSCENE_QUERY_SHAPE, true);
+		}
+	}
+
+	void SetupFiltering(PxRigidStatic& static_actor, PxU32 filterGroup, PxU32 filterMask)
+	{
+		PxFilterData filterData;
+		filterData.word0 = filterGroup; // word0 = own ID
+		filterData.word1 = filterMask;  // word1 = ID mask to filter pairs that trigger a
+										// contact callback;
+		const PxU32 numShapes = static_actor.getNbShapes();
+		utils::SmallVector<physx::PxShape*, 8> shapes;
+		shapes.resize(numShapes);
+		static_actor.getShapes(shapes.data(), numShapes);
+		for (PxU32 i = 0; i < numShapes; i++)
+		{
+			PxShape* shape = shapes[i];
+			shape->setSimulationFilterData(filterData);
+			shape->setFlag(physx::PxShapeFlag::eSCENE_QUERY_SHAPE, true);
+		}
+	}
+
 	void* PhysXManager::Allocator::allocate(size_t size, const char* typeName, const char* filename, int line)
 	{
 		void* ptr = allocator.allocate(size);
@@ -75,6 +111,7 @@ namespace Physics
 		PxVehicleSetBasisVectors(PxVec3(0, 1, 0), PxVec3(0, 0, -1));
 		PxVehicleSetUpdateMode(PxVehicleUpdateMode::eACCELERATION);
 
+
 		PxSceneDesc scene_desc(physics->getTolerancesScale());
 		scene_desc.gravity = delegate ? delegate->GetGravity() : PxVec3(0,0,0);
 		dispatcher = PxDefaultCpuDispatcherCreate(std::thread::hardware_concurrency());
@@ -90,6 +127,7 @@ namespace Physics
 			pvd_client->setScenePvdFlag(PxPvdSceneFlag::eTRANSMIT_SCENEQUERIES, true);
 		}
 
+		controller_manager = PxCreateControllerManager(*default_scene);
 		default_material = physics->createMaterial(0.5f, 0.5f, 0.6f);
 
 		if constexpr (DEBUG_RENDER_ENABLED_AT_START)
@@ -217,6 +255,7 @@ namespace Physics
 			material = default_material.get();
 
 		PxTransform transform = ConvertTransform(position, rotation);
+
 		auto body = Handle(PxCreateStatic(*physics, transform, geometry, *material));
 
 		if (add_to_scene)
@@ -257,9 +296,9 @@ namespace Physics
 		return CreateStatic(position, rotation, PxPlaneGeometry());
 	}
 
-	Handle<physx::PxRigidDynamic> PhysXManager::CreateBoxDynamic(const vec3 position, const quat rotation, float half_size, physx::PxMaterial* material)
+	Handle<physx::PxRigidDynamic> PhysXManager::CreateBoxDynamic(const vec3 position, const quat rotation, vec3 half_size, physx::PxMaterial* material)
 	{
-		return CreateDynamic(position, rotation, PxBoxGeometry(half_size, half_size, half_size));
+		return CreateDynamic(position, rotation, PxBoxGeometry(half_size.x, half_size.y, half_size.z));
 	}
 
 	Handle<physx::PxRigidDynamic> PhysXManager::CreateSphereDynamic(const vec3 position, const quat rotation, float radius, physx::PxMaterial* material)
@@ -270,6 +309,28 @@ namespace Physics
 	Handle<physx::PxRigidStatic> PhysXManager::CreateSphereStatic(const vec3 position, const quat rotation, float radius, physx::PxMaterial* material)
 	{
 		return CreateStatic(position, rotation, PxSphereGeometry(radius));
+	}
+
+	Handle<physx::PxRigidStatic> PhysXManager::CreateBoxStatic(const vec3 position, const quat rotation, vec3 half_size, physx::PxMaterial* material)
+	{
+		return CreateStatic(position, rotation, PxBoxGeometry(half_size.x, half_size.y, half_size.z));
+	}
+
+	Handle<physx::PxController> PhysXManager::CreateCapsuleController(const vec3 position, const vec3 up, float height, float radius)
+	{
+		physx::PxCapsuleControllerDesc desc = {};
+		desc.setToDefault();
+		desc.radius = radius;
+		desc.height = height;
+		desc.contactOffset = 0.1f;
+		desc.upDirection = Convert(up);
+		desc.position = physx::PxExtendedVec3(position.x, position.y, position.z);
+		desc.stepOffset = 0.1f;
+		desc.climbingMode = physx::PxCapsuleClimbingMode::Enum::eEASY;
+		desc.material = default_material.get();
+		auto controller = controller_manager->createController(desc);
+
+		return Handle<physx::PxController>(controller);
 	}
 
 }

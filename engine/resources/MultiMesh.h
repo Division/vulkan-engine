@@ -4,6 +4,8 @@
 #include "render/device/Resource.h"
 #include <string>
 #include "utils/Math.h"
+#include <gsl/span>
+#include <Handle.h>
 
 class Mesh;
 
@@ -15,13 +17,16 @@ namespace Common
 namespace Resources
 {
 
-	class MultiMesh
+	class MultiMesh : public Common::Resource
 	{
+		MultiMesh(const gsl::span<const Common::Handle<Mesh>> meshes, AABB aabb);
 	public:
 		using Handle = Handle<MultiMesh>;
 
 		MultiMesh(const std::wstring& filename);
 		~MultiMesh();
+
+		static Common::Handle<MultiMesh> Create(const gsl::span<const Common::Handle<Mesh>> meshes, AABB aabb = { -vec3(1), vec3(1) });
 
 		const size_t GetMeshCount() const { return meshes.size(); }
 		const auto& GetMesh(int index) const { return meshes[index]; }

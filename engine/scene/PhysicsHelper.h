@@ -24,7 +24,7 @@ namespace Physics::Helper
 		bool is_static;
 		vec3 position;
 		quat rotation;
-		float size;
+		vec3 size;
 		Shape shape;// radius or half_size
 		physx::PxMaterial* material = nullptr;
 	};

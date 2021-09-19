@@ -11,8 +11,9 @@
 
 namespace Asset::Export::FBX
 {
-	FBXExport::FBXExport(ExportType export_type)
+	FBXExport::FBXExport(ExportType export_type, AnimationType animation_type)
 		: export_type(export_type)
+		, animation_type(animation_type)
 	{}
 
 	Result FBXExport::Export()
@@ -35,7 +36,7 @@ namespace Asset::Export::FBX
 		if (export_type == ExportType::Mesh)
 			result.success = scene_exporter.ExportFBXFile(settings.input_path, &exported_assets);
 		else
-			result.success = scene_exporter.ExportFBXAnimationFile(settings.input_path, &exported_assets);
+			result.success = scene_exporter.ExportFBXAnimationFile(settings.input_path, animation_type == AnimationType::Additive, &exported_assets);
 
 		if (result.success)
 		{

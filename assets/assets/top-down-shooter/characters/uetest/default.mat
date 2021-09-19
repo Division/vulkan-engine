@@ -1,0 +1,6 @@
+{
+  "lighting_enabled": true,
+  "color": [0.5, 0.5, 0.1, 1],
+  "roughness": 0.1,
+  "metallness": 1.0
+}

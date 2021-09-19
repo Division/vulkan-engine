@@ -54,10 +54,10 @@ TEST_CASE("ECS transform system")
 	root_transform_system.ProcessChunks(root_list);
 
 	transform_child_level2 = manager.GetComponent<Transform>(child_level2);
-	auto transformed_vertex = transform_child_level2->local_to_world * vec4(0, 0, 0, 1);
+	auto transformed_vertex = transform_child_level2->GetLocalToWorld() * vec4(0, 0, 0, 1);
 	REQUIRE(transformed_vertex == vec4(6, 5, 0, 1));
 	
 	transform_child2 = manager.GetComponent<Transform>(child2);
-	transformed_vertex = transform_child2->local_to_world * vec4(0, 0, 0, 1);
+	transformed_vertex = transform_child2->GetLocalToWorld() * vec4(0, 0, 0, 1);
 	REQUIRE(transformed_vertex == vec4(3, 4, 0, 1));
 }
