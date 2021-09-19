@@ -16,7 +16,7 @@ namespace ECS::components
 
 	public:
 		AABB bounds = AABB(vec3(-1), vec3(1));
-		quat rotation;
+		quat rotation = quat();
 		vec3 position = vec3(0, 0, 0);
 		vec3 scale = vec3(1, 1, 1);
 

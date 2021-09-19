@@ -133,22 +133,7 @@ namespace render {
 
 		blank_cube_texture = Device::Texture::Create(cube_initializer);
 		
-		/*auto compute_shader_info = ShaderProgramInfo()
-			.AddShader(ShaderProgram::Stage::Compute, L"shaders/test.comp");
-		compute_program = shader_cache->GetShaderProgram(compute_shader_info);
-
-		auto* buffer_binding = compute_program->GetBindingByName("buf");
-		compute_bindings = std::make_unique<DescriptorSetBindings>();
-		compute_bindings->AddBufferBinding(buffer_binding->address.binding, 0, compute_buffer->GetSize(), compute_buffer->GetBuffer()->Buffer());
-		*/
-
-		//environment_cubemap = loader::LoadTexture("assets/resources/environment/skybox_unorm.ktx"); // TODO: assign via setter
-		//environment_cubemap = TextureResource::Handle(L"assets/resources/environment/skybox.ktx");
-		//radiance_cubemap = TextureResource::Handle(L"assets/resources/environment/grace_probe_radiance_rgba.ktx");
-		//irradiance_cubemap = TextureResource::Handle(L"assets/resources/environment/grace_probe_irradiance_rgba.ktx");
-		//environment_cubemap = loader::LoadTexture("assets/resources/lama.ktx"); // TODO: assign via setter
 		skybox = std::make_unique<effects::Skybox>(*shader_cache);
-		//skybox->SetTexture(environment_cubemap->Get().get());
 
 		post_process = std::make_unique<effects::PostProcess>(*shader_cache, *environment_settings);
 		blur = std::make_unique<Blur>(*shader_cache);

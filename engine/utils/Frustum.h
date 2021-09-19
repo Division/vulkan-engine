@@ -10,6 +10,14 @@ struct Frustum {
   mutable vec4 planes[MAX_CLIP_PLANES * 2];   // + buffer for OBB visibility test
   mutable int  start, count;
 
+  Frustum()
+  {
+      for (auto& plane : planes)
+          plane = vec4(0);
+
+      start = count = 0;
+  }
+
   void calcPlanes(const mat4 &matrix) {
     start = 0;
     count = 5;

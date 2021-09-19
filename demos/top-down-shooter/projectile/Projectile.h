@@ -20,6 +20,7 @@ namespace ECS::components
 		float speed = 1.0f;
 		float distance_travelled = 0.0f;
 		float max_distance = 10.0f;
+		EntityID light_id = 0;
 	};
 
 }

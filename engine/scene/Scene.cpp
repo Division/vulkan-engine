@@ -109,7 +109,7 @@ void Scene::DrawDebug()
                 auto* transform = transform_fetcher.GetComponent(i);
                 auto* light = light_fetcher.GetComponent(i);
                 Engine::Get()->GetDebugDraw()->DrawOBB(transform->GetOBB(), vec4(light->color, 1));
-                Engine::Get()->GetDebugDraw()->DrawPoint(transform->WorldPosition(), light->color, 5.0f);
+                Engine::Get()->GetDebugDraw()->DrawPoint(transform->WorldPosition(), light->color, 25.0f);
             }
         }, *entity_manager, false).ProcessChunks(lights);
     }
@@ -170,8 +170,8 @@ void Scene::ProcessRendererSystems()
         {
             auto* light = light_fetcher.GetComponent(i);
             auto* transform = transform_fetcher.GetComponent(i);
+            transform->bounds = AABB(-vec3(light->radius), vec3(light->radius));
             light->UpdateMatrices(*transform);
-            transform->bounds = AABB(transform->WorldPosition() - vec3(light->radius), transform->WorldPosition() + vec3(light->radius));
             if (camera->obbVisible(transform->GetOBB()))
             {
                 SceneLightData data;

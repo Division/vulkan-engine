@@ -188,9 +188,6 @@ AABB GetViewSpaceAABB(const OBB& src_obb, mat4 view_matrix)
     verts[6] = combined_matrix * (min + vec4(delta.x, delta.y, delta.z, 0));
     verts[7] = combined_matrix * (min + vec4(0, delta.y, delta.z, 0));
 
-    /*for (int i = 0; i < verts.size(); i++)
-        verts[i] /= verts[i].w;*/
-
     AABB aabb(verts[0], verts[0]);
     for (int i = 1; i < verts.size(); i++)
         aabb.expand(verts[i]);
@@ -272,13 +269,12 @@ void LightGrid::upload()
     for (int slice_index = 0; slice_index < slices.size(); slice_index++)
     {
         auto& slice = slices[slice_index];
-        if (slice_index > 0)
-        {
-            for (auto& cluster : slice.clusters)
-                cluster.offset += index_count;
+        
+        for (auto& cluster : slice.clusters)
+        { 
+            cluster.offset += index_count;
+            index_count += cluster.pointLightCount + cluster.spotLightCount + cluster.projectorCount + cluster.decalCount;
         }
-
-        index_count += slice.indices.size();
 
         memcpy((uint8_t*)grid_buffer_pointer + sizeof(slice.clusters) * slice_index, slice.clusters.data(), sizeof(slice.clusters));
     }

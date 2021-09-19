@@ -40,6 +40,17 @@ namespace render {
         point_colors.push_back(vec4(color, size));
     }
 
+    void DebugDraw::DrawAxis(vec3 position, quat rotation, float size)
+    {
+        const vec3 x = rotation * vec3(1, 0, 0);
+        const vec3 y = rotation * vec3(0, 1, 0);
+        const vec3 z = rotation * vec3(0, 0, 1);
+
+        DrawLine(position, position + x, vec4(1, 0, 0, 1));
+        DrawLine(position, position + y, vec4(0, 1, 0, 1));
+        DrawLine(position, position + z, vec4(0, 0, 1, 1));
+    }
+
     void DebugDraw::DrawFrustum(mat4 viewProjection, vec4 color) 
     {
         auto inv = glm::inverse(viewProjection);

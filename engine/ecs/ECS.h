@@ -144,7 +144,6 @@ namespace ECS {
 			auto entity_id = ++id_counter;
 
 			{
-				std::unique_lock lock(mutex);
 				auto address = EntityAddress{ nullptr, (uint32_t)-1 };
 				entity_address[entity_id] = address;
 			}
@@ -156,7 +155,6 @@ namespace ECS {
 
 		void DestroyEntity(EntityID entity)
 		{
-			std::unique_lock lock(mutex);
 			ValidateNoProcessing();
 
 			auto address_it = entity_address.find(entity);
@@ -171,7 +169,6 @@ namespace ECS {
 		template<typename T, typename ...Args>
 		T* AddComponent(EntityID entity, Args&& ...args)
 		{
-			std::unique_lock lock(mutex);
 			ValidateNoProcessing();
 
 			auto entity_address_it = entity_address.find(entity);
@@ -203,7 +200,6 @@ namespace ECS {
 
 		void* AddComponent(EntityID entity, ComponentData&& data)
 		{
-			std::unique_lock lock(mutex);
 			ValidateNoProcessing();
 
 			auto entity_address_it = entity_address.find(entity);
@@ -242,7 +238,6 @@ namespace ECS {
 
 		void RemoveComponent(EntityID entity, ComponentHash hash)
 		{
-			std::unique_lock lock(mutex);
 			ValidateNoProcessing();
 
 			auto entity_address_it = entity_address.find(entity);
@@ -281,7 +276,6 @@ namespace ECS {
 		template<typename T>
 		T* GetComponent(EntityID entity)
 		{
-			std::shared_lock lock(mutex);
 			auto address = entity_address.at(entity);
 			return (T*)address.chunk->GetComponentPointer(address.index, GetComponentHash<T>());
 		}
@@ -297,8 +291,6 @@ namespace ECS {
 
 		void ForEachChunkList(std::function<void(ChunkList*)> callback, std::function<bool(ChunkList*)> predicate)
 		{
-			std::shared_lock lock(mutex);
-
 			for (auto& chunk : chunks)
 				if (predicate(chunk.second.get()))
 					callback(chunk.second.get());
@@ -380,7 +372,6 @@ namespace ECS {
 		}
 
 	private:
-		std::shared_mutex mutex;
 		std::shared_mutex static_component_mutex;
 		std::atomic_uint32_t processing_counter = 0;
 		uint64_t callback_id = 0;

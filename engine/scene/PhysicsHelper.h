@@ -2,6 +2,7 @@
 
 #include "Physics.h"
 #include "ecs/ECS.h"
+#include "utils/Math.h"
 
 namespace Physics::Helper
 {

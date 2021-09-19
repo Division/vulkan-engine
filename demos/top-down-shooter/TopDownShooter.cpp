@@ -108,7 +108,7 @@ void Game::init()
 
 	projectile_manager = std::make_unique<Projectile::ProjectileManager>(*manager);
 
-	point_light_id = CreateLight(vec3(2.5, 4, 0), 10, ECS::components::Light::Type::Point, vec3(1, 1, 1) * 10.0f);
+	//point_light_id = CreateLight(vec3(2.5, 4, 0), 10, ECS::components::Light::Type::Point, vec3(1, 1, 1) * 10.0f);
 
 	camera = std::make_unique<ViewerCamera>();
 
@@ -144,9 +144,9 @@ void Game::Shoot(components::Transform* player_transform, components::CharacterC
 	Projectile::Params params;
 	params.position = player_transform->position + vec3(0, 1.0f, 0);
 	params.direction = vec3(character_controller->current_aim_dir.x, 0, character_controller->current_aim_dir.y);
-	params.speed = 1.0f;
+	params.speed = 30.0f;
 	params.max_distance = 10.0f;
-	params.dimensions = vec2(0.5f, 0.5f);
+	params.dimensions = vec2(0.4f, 0.1f) * 0.5f;
 
 	projectile_manager->CreateProjectile(params);
 }
@@ -192,7 +192,7 @@ void Game::UpdatePlayer(float dt)
 
 	character_input.shoot = input->keyDown(Key::MouseLeft);
 	auto time = Engine::Get()->time();
-	if (character_input.shoot && (time - last_shoot_time > 0.2))
+	if (character_input.shoot && (time - last_shoot_time > 0.1))
 	{
 		Shoot(transform, character_controller);
 		last_shoot_time = time;
@@ -228,11 +228,9 @@ void Game::update(float dt)
 	else
 		UpdateFollowCamera();
 
-	Engine::Get()->GetDebugDraw()->DrawLine(vec3(), vec3(1, 0, 0), vec4(1, 0, 0, 1));
-	Engine::Get()->GetDebugDraw()->DrawLine(vec3(), vec3(0, 1, 0), vec4(0, 1, 0, 1));
-	Engine::Get()->GetDebugDraw()->DrawLine(vec3(), vec3(0, 0, 1), vec4(0, 0, 1, 1));
+	Engine::Get()->GetDebugDraw()->DrawAxis(vec3());
 
-	if (input->keyDown(Key::Space))
+	/*if (input->keyDown(Key::Space))
 	{
 		auto light_transform = manager->GetComponent<components::Transform>(point_light_id);
 		light_transform->position = Engine::Get()->GetScene()->GetCamera()->cameraPosition();
@@ -240,7 +238,7 @@ void Game::update(float dt)
 			Engine::Get()->GetScene()->GetCamera()->cameraForward() + light_transform->position,
 			Engine::Get()->GetScene()->GetCamera()->cameraUp()
 		);
-	}
+	}*/
 
 	if (input->keyDown(Key::F))
 	{
