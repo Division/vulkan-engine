@@ -3,6 +3,7 @@
 #include <set>
 #include <vector>
 #include <array>
+#include <assert.h>
 
 namespace utils {
 

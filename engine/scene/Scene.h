@@ -37,6 +37,7 @@ namespace ECS
         class PhysicsPostUpdateSystem;
         class SkinningSystem;
         class BoneAttachmentSystem;
+        class BehaviourSystem;
     }
 }
 
@@ -104,8 +105,8 @@ private:
     std::unique_ptr<ECS::systems::NoChildTransformSystem> no_child_system;
     std::unique_ptr<ECS::systems::RootTransformSystem> root_transform_system;
     std::unique_ptr<ECS::systems::UpdateRendererSystem> update_renderer_system;
-    std::unique_ptr<ECS::systems::SkinningSystem> skinning_system;
     std::unique_ptr<ECS::systems::BoneAttachmentSystem> bone_attachment_system;
+    std::unique_ptr<ECS::systems::BehaviourSystem> behaviour_system;
     std::unique_ptr<ECS::components::DeltaTime> delta_time_static;
 
 };

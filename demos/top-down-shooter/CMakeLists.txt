@@ -8,6 +8,8 @@ set(GAME_SOURCES
 	camera/ViewerCamera.cpp
 	controller/Controller.h
 	controller/Controller.cpp
+	controller/Player.h
+	controller/Player.cpp
 	projectile/Projectile.h
 	projectile/Projectile.cpp
 )

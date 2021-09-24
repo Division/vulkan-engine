@@ -18,9 +18,6 @@
         "skeleton": "assets/top-down-shooter/characters/uetest/MannequinSkeleton.skel"
       },
       {
-        "type": "CharacterController"
-      },
-      {
         "type": "PhysicsCharacterController",
         "height": 0.5,
         "radius": 0.7

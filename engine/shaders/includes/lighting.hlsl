@@ -74,7 +74,7 @@ float GetSliceIndex(float depth)
 
 float calculateFragmentShadow(Texture2D shadow_map_tex, float2 uv, float fragmentDepth) {
   float shadow = 0.0;
-  float bias = 0.001;
+  float bias = 0.0001;
   uint w;
   uint h;
   shadow_map_tex.GetDimensions(w, h);

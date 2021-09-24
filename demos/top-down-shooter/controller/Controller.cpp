@@ -7,23 +7,32 @@
 #include "Engine.h"
 #include "render/debug/DebugDraw.h"
 
-namespace ECS::components
+namespace scene
 {
-	void CharacterController::Startup(AnimationController* animation_controller)
+	using namespace ECS;
+
+	void CharacterController::Initialize(Animations _animations)
 	{
+		animations = _animations;
+
+		auto animation_controller = GetComponent<components::AnimationController>();
+		animation_controller->mixer->SetRootMotionEnabled(true);
+
 		const auto move_params = SkeletalAnimation::PlaybackParams().Playback(SkeletalAnimation::PlaybackMode::Loop).FadeTime(0.0f).Layer(MOVE_ANIM_LAYER);
 
 		// move animations are always active and manipulated by handles. Zero weight animation has zero cost.
-		for (uint32_t i = 0; i < move_animations.size(); i++)
+		for (uint32_t i = 0; i < animations.move.size(); i++)
 		{
-			move_playback_handles[i] = animation_controller->mixer->BlendAnimation(move_animations[i], move_params);
+			move_playback_handles[i] = animation_controller->mixer->BlendAnimation(animations.move[i], move_params);
 			move_playback_handles[i].SetWeight(0);
 		}
 
 		move_target_weights.fill(0);
 
 		const auto stationary_params = SkeletalAnimation::PlaybackParams().Playback(SkeletalAnimation::PlaybackMode::Loop).FadeTime(0.0f).Layer(STATIONARY_ANIM_LAYER);
-		animation_controller->mixer->PlayAnimation(stationary_animations[StationaryAnimationType::Idle], stationary_params);
+		animation_controller->mixer->PlayAnimation(animations.stationary[StationaryAnimationType::Idle], stationary_params);
+
+		is_initialized = true;
 	}
 
 	void CharacterController::ClearMoveTargets()
@@ -38,76 +47,64 @@ namespace ECS::components
 			handle.SetProgress(0);
 	}
 
-}
-
-namespace ECS::systems
-{
-
-	void CharacterControllerSystem::Process(Chunk* chunk)
+	void CharacterController::Update(float dt)
 	{
-		ComponentFetcher<components::CharacterController> character_controller_fetcher(*chunk);
-		ComponentFetcher<components::AnimationController> animation_controller_fetcher(*chunk);
-		ComponentFetcher<components::Transform> transform_fetcher(*chunk);
+		if (!is_initialized)
+			return;
 
-		for (int i = 0; i < chunk->GetEntityCount(); i++)
-		{
-			auto* character_controller = character_controller_fetcher.GetComponent(i);
-			auto* animation_controller = animation_controller_fetcher.GetComponent(i);
-			auto* transform = transform_fetcher.GetComponent(i);
-			ProcessController(character_controller, animation_controller, transform);
-		}
+		auto* animation_controller = GetComponent<components::AnimationController>();
+		auto* transform = GetComponent<components::Transform>();
+		ProcessController(animation_controller, transform);
 	}
 
-	void CharacterControllerSystem::ProcessShooting(components::CharacterController* character_controller, components::AnimationController* animation_controller, components::Transform* transform)
+	void CharacterController::ProcessShooting(components::AnimationController* animation_controller, components::Transform* transform)
 	{
-		if (character_controller->input.shoot && !character_controller->shoot_animation_handle)
+		if (input.shoot && !shoot_animation_handle)
 		{
 			const auto params = SkeletalAnimation::PlaybackParams()
 									.Playback(SkeletalAnimation::PlaybackMode::Loop)
 									.Blending(SkeletalAnimation::BlendingMode::Additive)
-									.FadeTime(0.15f).Layer(components::CharacterController::ADDITIVE_LAYER);
-			auto& animation = character_controller->stationary_animations[components::CharacterController::StationaryAnimationType::Shoot];
-			character_controller->shoot_animation_handle = animation_controller->mixer->PlayAnimation(animation, params);
+									.FadeTime(0.15f).Layer(ADDITIVE_LAYER);
+			auto& animation = animations.stationary[StationaryAnimationType::Shoot];
+			shoot_animation_handle = animation_controller->mixer->PlayAnimation(animation, params);
 		}
-		else if (!character_controller->input.shoot && character_controller->shoot_animation_handle)
+		else if (!input.shoot && shoot_animation_handle)
 		{
-			character_controller->shoot_animation_handle.FadeOut(0.15);
-			character_controller->shoot_animation_handle = nullptr;
+			shoot_animation_handle.FadeOut(0.15);
+			shoot_animation_handle = nullptr;
 		}
 	}
 
-	void CharacterControllerSystem::ProcessController(components::CharacterController* character_controller, components::AnimationController* animation_controller, components::Transform* transform)
+	void CharacterController::ProcessController(components::AnimationController* animation_controller, components::Transform* transform)
 	{
-		ProcessShooting(character_controller, animation_controller, transform);
-		UpdateDirection(character_controller, transform);
+		ProcessShooting(animation_controller, transform);
+		UpdateDirection(transform);
 
-		switch (character_controller->state)
+		switch (state)
 		{
-		case components::CharacterController::State::Idle:
-			ProcessIdle(character_controller, animation_controller, transform);
+		case State::Idle:
+			ProcessIdle(animation_controller, transform);
 			break;
-		
 
-		case components::CharacterController::State::Move:
-			ProcessMovement(character_controller, animation_controller, transform);
+		case State::Move:
+			ProcessMovement(animation_controller, transform);
 			break;
 		}
 
-		UpdateMovementWeights(character_controller);
+		UpdateMovementWeights();
 	}
 
-	void CharacterControllerSystem::ProcessIdle(components::CharacterController* character_controller, components::AnimationController* animation_controller, components::Transform* transform)
+	void CharacterController::ProcessIdle(components::AnimationController* animation_controller, components::Transform* transform)
 	{
-		auto& input = character_controller->input;
 		const auto move_length = glm::length(input.move_direction);
 		const auto aim_length = glm::length(input.aim_direction);
 		if (move_length > 0.01f)
 		{
-			character_controller->state = components::CharacterController::State::Move;
-			animation_controller->mixer->FadeOutAllAnimations(0.3f, components::CharacterController::STATIONARY_ANIM_LAYER);
+			state = State::Move;
+			animation_controller->mixer->FadeOutAllAnimations(0.3f, STATIONARY_ANIM_LAYER);
 
 			bool should_reset = true;
-			for (auto& handle : character_controller->move_playback_handles)
+			for (auto& handle : move_playback_handles)
 				if (handle.GetWeight() > 0.01)
 				{
 					should_reset = false;
@@ -115,37 +112,36 @@ namespace ECS::systems
 				}
 			
 			if (should_reset)
-				character_controller->ResetMovePlayback();
+				ResetMovePlayback();
 
-			ProcessMovement(character_controller, animation_controller, transform);
+			ProcessMovement(animation_controller, transform);
 		}
 	}
 
-	void CharacterControllerSystem::ProcessMovement(components::CharacterController* character_controller, components::AnimationController* animation_controller, components::Transform* transform)
+	void CharacterController::ProcessMovement(components::AnimationController* animation_controller, components::Transform* transform)
 	{
-		auto& input = character_controller->input;
 		const auto move_length = glm::length(input.move_direction);
 		const auto aim_length = glm::length(input.aim_direction);
 
 		if (move_length < 0.01f)
 		{
-			character_controller->state = components::CharacterController::State::Idle;
-			const auto stationary_params = SkeletalAnimation::PlaybackParams().Playback(SkeletalAnimation::PlaybackMode::Loop).FadeTime(0.3f).Layer(components::CharacterController::STATIONARY_ANIM_LAYER);
+			state = State::Idle;
+			const auto stationary_params = SkeletalAnimation::PlaybackParams().Playback(SkeletalAnimation::PlaybackMode::Loop).FadeTime(0.3f).Layer(STATIONARY_ANIM_LAYER);
 			animation_controller->mixer->PlayAnimation(
-				character_controller->stationary_animations[components::CharacterController::StationaryAnimationType::Idle], 
+				animations.stationary[StationaryAnimationType::Idle],
 				stationary_params
 			);
 
-			character_controller->ClearMoveTargets();
+			ClearMoveTargets();
 		}
 		else
 		{
-			character_controller->ClearMoveTargets();
+			ClearMoveTargets();
 
 			const auto move_dir = input.move_direction / move_length;
-			const float dot = glm::clamp(glm::dot(character_controller->current_aim_dir, move_dir), -1.0f, 1.0f);
+			const float dot = glm::clamp(glm::dot(current_aim_dir, move_dir), -1.0f, 1.0f);
 			const float angle = acosf(dot);
-			const bool direction = glm::cross(vec3(character_controller->current_aim_dir, 0), vec3(move_dir, 0)).z > 0;
+			const bool direction = glm::cross(vec3(current_aim_dir, 0), vec3(move_dir, 0)).z > 0;
 
 			const float float_index = angle / ((float)M_PI / 4.0f);
 			const uint32_t indexA = glm::min((uint32_t)float_index, 3u);
@@ -158,8 +154,8 @@ namespace ECS::systems
 			assert(weightB >= 0 && weightB <= 1.0f);
 
 			const uint32_t index_shift = direction ? 0 : 5;
-			character_controller->move_target_weights[components::CharacterController::RUN_INDICES[indexA + index_shift]] = weightA;
-			character_controller->move_target_weights[components::CharacterController::RUN_INDICES[indexB + index_shift]] = weightB;
+			move_target_weights[RUN_INDICES[indexA + index_shift]] = weightA;
+			move_target_weights[RUN_INDICES[indexB + index_shift]] = weightB;
 
 
 			auto debug_draw = Engine::Get()->GetDebugDraw();
@@ -167,46 +163,44 @@ namespace ECS::systems
 		}
 	}
 
-	void CharacterControllerSystem::UpdateDirection(components::CharacterController* character_controller, components::Transform* transform)
+	void CharacterController::UpdateDirection(components::Transform* transform)
 	{
-		auto& input = character_controller->input;
 		const auto aim_length = glm::length(input.aim_direction);
 		if (aim_length < 0.001f)
 			return;
 
 		const auto aim_dir = input.aim_direction / aim_length;
-		const float dot = glm::dot(character_controller->current_aim_dir, aim_dir);
+		const float dot = glm::dot(current_aim_dir, aim_dir);
 		const float angle = acosf(dot);
-		const float direction = glm::cross(vec3(character_controller->current_aim_dir, 0), vec3(aim_dir, 0)).z > 0 ? 1 : -1;
+		const float direction = glm::cross(vec3(current_aim_dir, 0), vec3(aim_dir, 0)).z > 0 ? 1 : -1;
 
-		auto delta_time = manager.GetStaticComponent<components::DeltaTime>();
+		auto delta_time = GetManager().GetStaticComponent<components::DeltaTime>();
 		const float angle_delta = std::min(delta_time->dt * (float)M_PI, angle) * direction;
 
-		character_controller->current_aim_dir = glm::normalize(glm::rotate(character_controller->current_aim_dir, angle_delta));
+		current_aim_dir = glm::normalize(glm::rotate(current_aim_dir, angle_delta));
 
-		auto rotation_angle = acosf(glm::dot(vec2(0, 1), character_controller->current_aim_dir));
-		const float rotation_direction = glm::cross(vec3(0, 1, 0), vec3(character_controller->current_aim_dir, 0)).z > 0 ? 1 : -1;
+		auto rotation_angle = acosf(glm::dot(vec2(0, 1), current_aim_dir));
+		const float rotation_direction = glm::cross(vec3(0, 1, 0), vec3(current_aim_dir, 0)).z > 0 ? 1 : -1;
 
 		transform->rotation = glm::angleAxis(rotation_angle, vec3(0, -rotation_direction, 0));
 
 		auto debug_draw = Engine::Get()->GetDebugDraw();
-		debug_draw->DrawLine(transform->position, transform->position + vec3(character_controller->current_aim_dir.x, 0, character_controller->current_aim_dir.y), vec4(0,1,0,1));
+		debug_draw->DrawLine(transform->position, transform->position + vec3(current_aim_dir.x, 0, current_aim_dir.y), vec4(0,1,0,1));
 		debug_draw->DrawLine(transform->position, transform->position + vec3(aim_dir.x, 0, aim_dir.y), vec4(1, 0, 0, 1));
 	}
 
-	void CharacterControllerSystem::UpdateMovementWeights(components::CharacterController* character_controller)
+	void CharacterController::UpdateMovementWeights()
 	{
-		auto delta_time = manager.GetStaticComponent<components::DeltaTime>();
-		auto& input = character_controller->input;
+		auto delta_time = GetManager().GetStaticComponent<components::DeltaTime>();
 		//const auto move_length = glm::length(input.move_direction);
 		//const float speed = move_length ? 4.0 : 4.0;
 		const float speed = 4.0f;
 
-		for (uint32_t i = 0; i < character_controller->move_playback_handles.size(); i++)
+		for (uint32_t i = 0; i < move_playback_handles.size(); i++)
 		{
-			auto& handle = character_controller->move_playback_handles[i];
+			auto& handle = move_playback_handles[i];
 			const float current_weight = handle.GetWeight();
-			const float target_weight = character_controller->move_target_weights[i];
+			const float target_weight = move_target_weights[i];
 			float weight_delta = target_weight - current_weight;
 			const bool positive = weight_delta > 0;
 			weight_delta = (positive ? 1.0f : -1.0f) * speed * delta_time->dt;

@@ -66,17 +66,21 @@ public:
 	physx::PxSimulationFilterShader GetFilterShader() override;
 	physx::PxVec3 GetGravity() override;
 	void cleanup() override;
+	Projectile::ProjectileManager* GetProjectileManager() const { return projectile_manager.get(); }
+	std::optional<vec3> Game::GetMouseTarget() const;
+	bool IsCameraControl() const { return camera_control; }
+
+	static Game* GetInstance() { return instance; }
+	
 
 private:
 	ECS::EntityID CreateLight(vec3 position, float radius, ECS::components::Light::Type type, vec3 color);
 	ECS::EntityID CreatePlayer();
 
-	void Shoot(ECS::components::Transform* player_transform, ECS::components::CharacterController* character_controller);
-	void UpdatePlayer(float dt);
 	void UpdateFollowCamera();
-	std::optional<vec3> GetMouseTarget();
 
 private:
+	inline static Game* instance;
 	std::unique_ptr<ViewerCamera> camera;
 	std::unique_ptr<Projectile::ProjectileManager> projectile_manager;
 

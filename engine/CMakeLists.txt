@@ -75,6 +75,7 @@ set(ENGINE_SOURCES
 	ecs/components/Physics.h
 	ecs/components/AnimationController.h
 	ecs/components/BoneAttachment.h
+	ecs/components/BehaviourList.h
 	ecs/systems/TransformSystem.h
 	ecs/systems/TransformSystem.cpp
 	ecs/systems/RendererSystem.h
@@ -87,6 +88,7 @@ set(ENGINE_SOURCES
 	ecs/systems/UpdateDrawCallsSystem.cpp
 	ecs/systems/SkinningSystem.h
 	ecs/systems/SkinningSystem.cpp
+	ecs/systems/BehaviourSystem.h
 	memory/Profiler.h
 	memory/Profiler.cpp
 	memory/Allocator.h
@@ -190,6 +192,8 @@ set(ENGINE_SOURCES
 	render/animation/SkeletalAnimation.cpp
 	scene/Scene.h
 	scene/Scene.cpp
+	scene/Behaviour.h
+	scene/Behaviour.cpp
 	scene/Physics.h
 	scene/Physics.cpp
 	scene/PhysicsHelper.h

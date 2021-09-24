@@ -4,15 +4,19 @@
 #include "render/animation/SkeletalAnimation.h"
 #include <magic_enum/magic_enum.hpp>
 #include "ecs/System.h"
-
+#include "scene/Behaviour.h"
 
 namespace ECS::components
 {
 	struct AnimationController;
 	struct Transform;
+}
 
-	struct CharacterController
+namespace scene
+{
+	class CharacterController : public Behaviour
 	{
+	public:
 		static constexpr uint32_t STATIONARY_ANIM_LAYER = 4;
 		static constexpr uint32_t MOVE_ANIM_LAYER = 5;
 		static constexpr uint32_t ADDITIVE_LAYER = 6;
@@ -65,51 +69,40 @@ namespace ECS::components
 			RunBackward
 		};
 
+		struct Animations
+		{
+			std::array<Resources::SkeletalAnimationResource::Handle, magic_enum::enum_count<MoveAnimationType>()> move;
+			std::array<Resources::SkeletalAnimationResource::Handle, magic_enum::enum_count<StationaryAnimationType>()> stationary;
+		};
+
+		void ClearMoveTargets();
+		void ResetMovePlayback();
+		
+		void Initialize(Animations animations);
+		void Update(float dt) override;
+		//int ExecutionOrder() const override { return 1001; }
+
+		void SetInput(const Input& value) { input = value; }
+
+		vec2 GetCurrentAimDir() const { return current_aim_dir; }
+
+	private:
+		void ProcessController(ECS::components::AnimationController* animation_controller, ECS::components::Transform* transform);
+		void ProcessShooting(ECS::components::AnimationController* animation_controller, ECS::components::Transform* transform);
+		void ProcessIdle(ECS::components::AnimationController* animation_controller, ECS::components::Transform* transform);
+		void ProcessMovement(ECS::components::AnimationController* animation_controller, ECS::components::Transform* transform);
+		void UpdateMovementWeights();
+		void UpdateDirection(ECS::components::Transform* transform);
+
 		Input input;
-		std::array<Resources::SkeletalAnimationResource::Handle, magic_enum::enum_count<MoveAnimationType>()> move_animations;
-		std::array<Resources::SkeletalAnimationResource::Handle, magic_enum::enum_count<StationaryAnimationType>()> stationary_animations;
+		Animations animations;
 		std::array<SkeletalAnimation::AnimationInstance::Handle, magic_enum::enum_count<MoveAnimationType>()> move_playback_handles;
 		std::array<float, magic_enum::enum_count<MoveAnimationType>()> move_target_weights;
 		SkeletalAnimation::AnimationInstance::Handle shoot_animation_handle;
 
 		State state = State::Idle;
 		vec2 current_aim_dir = vec2(0, 1);
-		void ClearMoveTargets();
-		void ResetMovePlayback();
-		void Startup(AnimationController* animation_controller);
-	};
-
-	class CharacterControllerTemplate : public ComponentTemplate
-	{
-		virtual void Load(const rapidjson::Value& data) override
-		{
-		}
-
-		virtual void Spawn(EntityManager& manager, EntityID entity, vec3 position) override
-		{
-			manager.AddComponent<CharacterController>(entity);
-		}
-	};
-}
-
-namespace ECS::systems
-{
-	class CharacterControllerSystem : public ECS::System
-	{
-	public:
-		CharacterControllerSystem(ECS::EntityManager& manager)
-			: ECS::System(manager, false)
-		{}
-
-		void Process(ECS::Chunk* chunk) override;
-
-	private:
-		void ProcessController(components::CharacterController* character_controller, components::AnimationController* animation_controller, components::Transform* transform);
-		void ProcessShooting(components::CharacterController* character_controller, components::AnimationController* animation_controller, components::Transform* transform);
-		void ProcessIdle(components::CharacterController* character_controller, components::AnimationController* animation_controller, components::Transform* transform);
-		void ProcessMovement(components::CharacterController* character_controller, components::AnimationController* animation_controller, components::Transform* transform);
-		void UpdateMovementWeights(components::CharacterController* character_controller);
-		void UpdateDirection(components::CharacterController* character_controller, components::Transform* transform);
+		bool is_initialized = false;
 	};
 
 }
