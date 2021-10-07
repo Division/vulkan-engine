@@ -23,6 +23,7 @@ namespace scene
 
 		void Awake() override;
 		void Update(float dt) override;
+		void OnAnimationEvent(SkeletalAnimation::EventType type, SkeletalAnimation::EventParam param) override;
 	};
 
 }

@@ -3,8 +3,9 @@
 
 namespace SkeletalAnimation
 {
-	AnimationInstance::AnimationInstance(Resources::SkeletonResource::Handle skeleton, Resources::SkeletalAnimationResource::Handle animation, const PlaybackParams& params)
-		: skeleton(skeleton)
+	AnimationInstance::AnimationInstance(uint64_t id, Resources::SkeletonResource::Handle skeleton, Resources::SkeletalAnimationResource::Handle animation, const PlaybackParams& params)
+		: id(id)
+		, skeleton(skeleton)
 		, animation_resource(animation)
 		, animation(*animation->Get())
 		, duration(animation->Get()->duration())
@@ -18,7 +19,7 @@ namespace SkeletalAnimation
 		cache.Resize(num_joints);
 	}
 
-	void AnimationInstance::Update(float dt)
+	void AnimationInstance::Update(float dt, Dispatcher& dispatcher)
 	{
 		progress += speed * dt / duration;
 
@@ -30,6 +31,9 @@ namespace SkeletalAnimation
 			{
 				if (progress >= 1.0f)
 				{
+					if (progress >= 1.0f)
+						dispatcher.Dispatch(EventType::Loop, EventParam{ id });
+
 					progress = fmod(progress, 1.0f);
 					if (GetRootMotionEnabled())
 					{
@@ -41,6 +45,9 @@ namespace SkeletalAnimation
 			case PlaybackMode::Once:
 			case PlaybackMode::Clamp:
 			{
+				if (progress >= 1.0f)
+					dispatcher.Dispatch(EventType::Complete, EventParam{ id });
+
 				progress = std::min(progress, 1.0f);
 				break;
 			}
@@ -125,7 +132,7 @@ namespace SkeletalAnimation
 		for (auto& instance : instances)
 		{
 			if (instance->IsFinished()) continue;
-			instance->Update(dt);
+			instance->Update(dt, dispatcher);
 		}
 
 		instances.erase(
@@ -153,9 +160,11 @@ namespace SkeletalAnimation
 
 	AnimationInstance::Handle AnimationMixer::BlendAnimation(Resources::SkeletalAnimationResource::Handle animation, const PlaybackParams& params)
 	{
-		auto instance = std::make_shared<AnimationInstance>(skeleton, animation, params);
+		auto instance = std::make_shared<AnimationInstance>(++instance_counter, skeleton, animation, params);
 		instance->SetWeight(0);
 		instance->FadeIn(params.fade_time);
+
+		dispatcher.Dispatch(EventType::Start, EventParam{ instance->GetID() });
 
 		if (params.playback_mode == PlaybackMode::Once)
 		{

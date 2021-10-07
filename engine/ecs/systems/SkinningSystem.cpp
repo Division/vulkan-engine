@@ -56,7 +56,7 @@ namespace ECS::systems {
 				for (uint16_t k = 0; k < mesh->GetBoneCount(); k++)
 				{
 					const auto remap_index = mesh->GetBoneRemapIndex(k);
-					skinning_data->bone_matrices[k] = transform->GetLocalToWorld() * (mat4&)model_matrices[remap_index] * inv_bind_pose[k];
+					skinning_data->bone_matrices[k] = /*transform->GetLocalToWorld() **/ (mat4&)model_matrices[remap_index] * inv_bind_pose[k];
 				}
 			}
 

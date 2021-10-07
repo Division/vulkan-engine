@@ -5,6 +5,7 @@
 #include "Entity.h"
 #include <vector>
 #include "scene/Behaviour.h";
+#include "AnimationController.h"
 
 namespace ECS::components 
 {
@@ -14,6 +15,7 @@ namespace ECS::components
 		std::vector<std::shared_ptr<scene::Behaviour>> behaviours;
 		EntityManager* manager = nullptr;
 		EntityID id = 0;
+		SkeletalAnimation::Dispatcher::Handle animation_callback_handle;
 
 		void SortBehaviours()
 		{
@@ -42,10 +44,21 @@ namespace ECS::components
 			assert(behaviour.hash != typeid(scene::Behaviour).hash_code()); // Don't want the base Behaviour itself to be added
 		}
 
+
 		static void Initialize(EntityManager& manager, EntityID id, BehaviourList* behaviour_list)
 		{
 			behaviour_list->id = id;
 			behaviour_list->manager = &manager;
+
+			auto controller = manager.GetComponent<AnimationController>(id);
+			if (controller)
+			{
+				behaviour_list->animation_callback_handle = controller->mixer->AddCallback([id, &manager](SkeletalAnimation::EventType type, SkeletalAnimation::EventParam param) {
+					auto behaviour_list = manager.GetComponent<BehaviourList>(id);
+					if (behaviour_list)
+						behaviour_list->TriggerAnimationEvent(type, param);
+				});
+			}
 
 			for (auto& behaviour : behaviour_list->behaviours)
 				behaviour_list->InitializeBehaviour(*behaviour);
@@ -64,6 +77,12 @@ namespace ECS::components
 		{
 			for (auto& behaviour : behaviours)
 				behaviour->UpdatePhysics(dt);
+		}
+
+		void TriggerAnimationEvent(SkeletalAnimation::EventType type, SkeletalAnimation::EventParam param)
+		{
+			for (auto& behaviour : behaviours)
+				behaviour->OnAnimationEvent(type, param);
 		}
 
 		void Deinitialize()

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ecs/ECS.h"
+#include "render/animation/SkeletalAnimation.h"
 
 namespace ECS::components
 {
@@ -48,6 +49,7 @@ namespace scene
 		virtual void UpdatePhysics(float dt) {}
 		virtual void Awake() {}
 		virtual void Deinitialize() {}
+		virtual void OnAnimationEvent(SkeletalAnimation::EventType type, SkeletalAnimation::EventParam param) {};
 
 		ECS::EntityID GetEntity() { return id; }
 

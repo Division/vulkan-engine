@@ -10,6 +10,11 @@ set(GAME_SOURCES
 	controller/Controller.cpp
 	controller/Player.h
 	controller/Player.cpp
+	controller/Monster.h
+	controller/Monster.cpp
+	controller/Nightmare.h
+	controller/Nightmare.cpp
+	objects/Ground.h
 	projectile/Projectile.h
 	projectile/Projectile.cpp
 )

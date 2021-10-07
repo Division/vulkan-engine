@@ -29,7 +29,7 @@ namespace scene
 
 		move_target_weights.fill(0);
 
-		const auto stationary_params = SkeletalAnimation::PlaybackParams().Playback(SkeletalAnimation::PlaybackMode::Loop).FadeTime(0.0f).Layer(STATIONARY_ANIM_LAYER);
+		const auto stationary_params = SkeletalAnimation::PlaybackParams().Loop().FadeTime(0.0f).Layer(STATIONARY_ANIM_LAYER);
 		animation_controller->mixer->PlayAnimation(animations.stationary[StationaryAnimationType::Idle], stationary_params);
 
 		is_initialized = true;

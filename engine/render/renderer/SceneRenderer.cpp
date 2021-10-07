@@ -188,6 +188,7 @@ namespace render {
 			result.direction_light_color = settings.directional_light->color;
 			result.direction_light_direction = settings.directional_light->transform.Forward();
 			result.direction_light_projection_matrix = settings.directional_light->cameraViewProjectionMatrix();
+			result.direction_light_cast_shadows = settings.directional_light->cast_shadows;
 		}
 
 		result.environment_brightness = settings.environment_brightness;

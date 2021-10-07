@@ -245,6 +245,7 @@ set(ENGINE_SOURCES
 	utils/CapsSet.h
 	utils/Frustum.h
 	utils/JsonUtils.h
+	utils/EventDispatcher.h
 )
 
 find_package(Vulkan REQUIRED)

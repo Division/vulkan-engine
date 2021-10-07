@@ -51,6 +51,8 @@ namespace scene
 		Game::GetInstance()->GetProjectileManager()->CreateProjectile(params);
 	}
 
+
+
 	void PlayerBehaviour::Update(float dt)
 	{
 		auto input = Engine::Get()->GetInput();
@@ -101,6 +103,10 @@ namespace scene
 		}
 
 		character_controller->SetInput(character_input);
+	}
+
+	void PlayerBehaviour::OnAnimationEvent(SkeletalAnimation::EventType type, SkeletalAnimation::EventParam param)
+	{
 	}
 
 }

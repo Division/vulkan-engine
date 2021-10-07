@@ -54,7 +54,7 @@ namespace Exporter
 	SceneExporter::SceneExporter(FBXExporterSetting settings, physx::PxFoundation* in_foundation) : settings(settings)
 	{
 		manager = FbxManager::Create();
-		FbxIOSettings *ios = FbxIOSettings::Create(manager, IOSROOT);
+		FbxIOSettings* ios = FbxIOSettings::Create(manager, IOSROOT);
 		manager->SetIOSettings(ios);
 		input_is_in_assets = utils::BeginsWith(FileSystem::FormatPath(settings.input_path), FileSystem::FormatPath(settings.assets_path));
 
@@ -96,20 +96,20 @@ namespace Exporter
 				return false;
 			}
 		}
-		
+
 		return ExportFBXFile(settings.input_path);
 	}
 
 	bool SceneExporter::ExportFBXFile(const std::filesystem::path& path, ExportedSceneAssets* exported_assets)
 	{
 		// Create an importer using the SDK manager.
-		FbxImporter* importer = FbxImporter::Create(manager,"");
+		FbxImporter* importer = FbxImporter::Create(manager, "");
 
 		// Use the first argument as the filename for the importer.
-		if(!importer->Initialize(path.string().c_str(), -1, manager->GetIOSettings())) 
+		if (!importer->Initialize(path.string().c_str(), -1, manager->GetIOSettings()))
 		{
-			printf("Call to FbxImporter::Initialize() failed.\n"); 
-			printf("Error returned: %s\n\n", importer->GetStatus().GetErrorString()); 
+			printf("Call to FbxImporter::Initialize() failed.\n");
+			printf("Error returned: %s\n\n", importer->GetStatus().GetErrorString());
 			return false;
 		}
 
@@ -195,8 +195,7 @@ namespace Exporter
 				result[current_name].type = MeshExportData::Type::Mesh;
 				nested_depth = depth;
 			}
-			else
-			if (utils::BeginsWith(name, phys_convex_prefix))
+			else if (utils::BeginsWith(name, phys_convex_prefix))
 			{
 				if (current_name != default_key)
 					throw std::runtime_error("Nested export groups not supported");
@@ -222,20 +221,20 @@ namespace Exporter
 				}
 				if (attrib->GetAttributeType() == FbxNodeAttribute::eSkeleton)
 				{
-					result[current_name].bones.push_back((FbxSkeleton*)attrib);
-					result[current_name].type = MeshExportData::Type::Skeleton; // probably wrong
+					//result[current_name].bones.push_back((FbxSkeleton*)attrib);
+					//if (current_name != default_key)
+						//result[current_name].type = MeshExportData::Type::Skeleton; // probably wrong
 				}
 			}
 
 			return true;
-		});
+			});
 
 		return result;
 	}
 
-	bool ExtractOzzRuntimeSkeleton(FbxScene* scene, FbxNode* node, ozz::unique_ptr<Skeleton>& out_skeleton)
+	bool ExtractOzzRuntimeSkeleton(FbxScene* scene, FbxNode* node, ozz::unique_ptr<Skeleton>& out_skeleton, ozz::math::Float3& out_scale = ozz::math::Float3())
 	{
-		//ozz::animation::
 		FbxSystemConverter converter(scene->GetGlobalSettings().GetAxisSystem(), scene->GetGlobalSettings().GetSystemUnit());
 		RawSkeleton raw_skeleton;
 		OzzImporter::NodeType node_type;
@@ -253,47 +252,13 @@ namespace Exporter
 		return true;
 	}
 
-	bool SceneExporter::ExportAnimation(const std::filesystem::path& path, ExportedSceneAssets* exported_assets, bool is_additive)
+	void SceneExporter::WriteAnimation(const std::filesystem::path& path, const RawAnimation& animation, const ozz::string& animation_name, const Skeleton& skeleton, ExportedSceneAssets* exported_assets)
 	{
-		FbxManagerInstance fbx_manager;
-		FbxAnimationIOSettings settings(fbx_manager);
-		::FbxSceneLoader* scene_loader;
-		scene_loader = ozz::New<FbxSceneLoader>(path.string().c_str(), "", fbx_manager, settings);
-
-		ozz::unique_ptr<Skeleton> skeleton;
-		const bool has_skeleton = ExtractOzzRuntimeSkeleton(scene_loader->scene(), scene_loader->scene()->GetRootNode(), skeleton);
-		if (!has_skeleton)
-			return true;
-
-		auto animation_names = ozz::animation::offline::fbx::GetAnimationNames(*scene_loader);
-		if (animation_names.empty())
-			return true;
-
-		auto& animation_name = animation_names[0];
-
-		RawAnimation animation;
-		animation.name = animation_name;
-
-		if (!ozz::animation::offline::fbx::ExtractAnimation(animation_name.c_str(), *scene_loader, *skeleton, 0.0f, &animation))
-			throw std::runtime_error("Error extracting animation from " + path.string());
-
-		if (is_additive)
-		{
-			ozz::animation::offline::AdditiveAnimationBuilder additive_builder;
-			RawAnimation raw_additive;
-
-			const bool succeeded = additive_builder(animation, &raw_additive);
-			if (!succeeded)
-				throw std::runtime_error("Error building additive animation " + path.string());
-
-			animation = raw_additive;
-		}
-
 		ozz::animation::offline::AnimationOptimizer optimizer;
 		RawAnimation raw_optimized_animation;
-		if (!optimizer(animation, *skeleton, &raw_optimized_animation))
+		if (!optimizer(animation, skeleton, &raw_optimized_animation))
 			throw std::runtime_error("Error optimizing animation " + std::string(animation_name.c_str()) + ", " + path.string());
-		
+
 		// Builds runtime animation.
 		ozz::unique_ptr<ozz::animation::Animation> runtime_animation;
 		AnimationBuilder builder;
@@ -311,10 +276,89 @@ namespace Exporter
 		ozz::io::OArchive archive(&file, ozz::Endianness::kLittleEndian);
 		archive << *runtime_animation;
 
-		ozz::Delete(scene_loader);
-
 		if (exported_assets)
 			exported_assets->filenames.push_back(output_path);
+	}
+
+	bool SceneExporter::ExportAnimation(std::filesystem::path path, ExportedSceneAssets* exported_assets, bool is_additive)
+	{
+		FbxManagerInstance fbx_manager;
+		FbxAnimationIOSettings settings(fbx_manager);
+		::FbxSceneLoader* scene_loader;
+		scene_loader = ozz::New<FbxSceneLoader>(path.string().c_str(), "", fbx_manager, settings);
+
+		std::cout << "EXPORT ANIMATION " << path << "\n";
+
+		ozz::unique_ptr<Skeleton> skeleton;
+		ozz::math::Float3 skeleton_scale(1, 1, 1);
+		const bool has_skeleton = ExtractOzzRuntimeSkeleton(scene_loader->scene(), scene_loader->scene()->GetRootNode(), skeleton, skeleton_scale);
+		if (!has_skeleton)
+			return true;
+
+		auto animation_names = ozz::animation::offline::fbx::GetAnimationNames(*scene_loader);
+		std::cout << "Animations: \n";
+		for (auto& anim : animation_names)
+			std::cout << " - " << anim.c_str() << "\n";
+
+		if (animation_names.empty())
+			return true;
+
+		if (is_additive && animation_names.size() > 1)
+			throw std::runtime_error("Multiple animations fbx not supported for additive");
+
+
+		if (is_additive)
+		{
+			auto& animation_name = animation_names[0];
+
+			RawAnimation animation;
+			animation.name = animation_name;
+
+			if (!ozz::animation::offline::fbx::ExtractAnimation(animation_name.c_str(), *scene_loader, *skeleton, 0.0f, &animation))
+				throw std::runtime_error("Error extracting animation from " + path.string());
+
+			ozz::animation::offline::AdditiveAnimationBuilder additive_builder;
+			RawAnimation raw_additive;
+
+			const bool succeeded = additive_builder(animation, &raw_additive);
+			if (!succeeded)
+				throw std::runtime_error("Error building additive animation " + path.string());
+
+			WriteAnimation(path, raw_additive, animation_name, *skeleton, exported_assets);
+		}
+		else
+		{
+			const bool use_names_from_fbx = animation_names.size() > 1;
+			std::wstring base_path;
+			if (use_names_from_fbx)
+			{
+				base_path = utils::GetStringBeforeLast(path.replace_extension(L"").wstring(), L'@') + L"@";
+			}
+
+			for (auto& animation_name : animation_names)
+			{
+				RawAnimation animation;
+				animation.name = animation_name;
+
+				if (!ozz::animation::offline::fbx::ExtractAnimation(animation_name.c_str(), *scene_loader, *skeleton, 0.0f, &animation))
+					throw std::runtime_error(std::string("Error extracting animation ") + animation_name.c_str() + " from " + path.string());
+
+				std::wstring final_path;
+				if (use_names_from_fbx)
+				{
+					auto short_animation_name = utils::GetStringAfterLast(utils::StringToWString(animation_name.c_str()), L'|');
+					final_path = base_path + short_animation_name;
+				}
+				else
+				{
+					final_path = path.wstring();
+				}
+
+				WriteAnimation(final_path, animation, animation_name, *skeleton, exported_assets);
+			}
+		}
+
+		ozz::Delete(scene_loader);
 
 		return true;
 	}
@@ -328,7 +372,9 @@ namespace Exporter
 			auto filename = path.filename().replace_extension().string();
 			utils::Lowercase(filename);
 
+			std::cout << "EXPORT SCENE " << path << "\n";
 			ozz::unique_ptr<Skeleton> skeleton;
+
 			const bool has_skeleton = ExtractOzzRuntimeSkeleton(scene, scene->GetRootNode(), skeleton);
 			if (has_skeleton)
 			{

@@ -86,6 +86,8 @@ VS_out vs_main(VS_in input)
         float joint_weight = input.joint_weights[i];
         model_matrix += SkinningMatrices[skinning_offset + joint_index] * joint_weight;
     }
+
+    model_matrix = mul(objectModelMatrix, model_matrix);
 #endif
 
     float4 position_worldspace = mul(model_matrix, float4(input.position.xyz, 1.0));

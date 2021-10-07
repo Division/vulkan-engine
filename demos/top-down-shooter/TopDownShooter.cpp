@@ -20,7 +20,10 @@
 #include "render/renderer/EnvironmentSettings.h"
 #include "controller/Controller.h"
 #include "controller/Player.h"
+#include "controller/Monster.h"
+#include "controller/Nightmare.h"
 #include "projectile/Projectile.h"
+#include "objects/Ground.h"
 
 Game::Game() = default;
 Game::~Game() = default;
@@ -74,9 +77,25 @@ ECS::EntityID Game::CreatePlayer()
 	return player_id;
 }
 
+ECS::EntityID Game::CreateNightmare(vec3 position)
+{
+	auto monster_template = Resources::EntityResource::Handle(L"assets/top-down-shooter/characters/monsters/nightmare/nightmare.entity");
+	auto monster_id = monster_template->Spawn(position);
+
+	auto behaviour = manager->AddComponent<components::BehaviourList>(monster_id);
+	behaviour->AddBehaviour(std::make_unique<scene::MonsterController>());
+	behaviour->AddBehaviour(std::make_unique<scene::NightmareBehaviour>());
+
+	return monster_id;
+}
+
 void Game::init()
 {
 	OPTICK_EVENT();
+
+	auto* settings = Engine::Get()->GetSceneRenderer()->GetEnvironmentSettings();
+	settings->directional_light->enabled = true;
+	settings->directional_light->zNear = 10;
 
 	instance = this;
 
@@ -98,12 +117,14 @@ void Game::init()
 	camera = std::make_unique<ViewerCamera>();
 
 	auto plane_handle = Resources::EntityResource::Handle(L"assets/Entities/Basic/Ground/stylized/plane10_soil_water.entity");
-	plane_handle->Spawn(vec3(0));
+	auto ground_id = plane_handle->Spawn(vec3(0));
 
 	auto box_handle = Resources::EntityResource::Handle(L"assets/top-down-shooter/characters/uetest/phys_box.entity");
 	box_handle->Spawn(vec3(5, 0, 5));
 
 	engine->GetScene()->GetPhysics()->GetControllerManager()->setOverlapRecoveryModule(true);
+
+	CreateNightmare(vec3(3, 0, -3));
 }
 
 void Game::UpdatePhysics(float dt)
@@ -148,6 +169,17 @@ void Game::update(float dt)
 		camera->Update(dt);
 	else
 		UpdateFollowCamera();
+
+	auto* settings = Engine::Get()->GetSceneRenderer()->GetEnvironmentSettings();
+	auto player_transform = manager->GetComponent<components::Transform>(player_id);
+	settings->directional_light->transform.position = player_transform->position + vec3(-10, 30, -20);
+	settings->directional_light->orthographic_size = vec2(20, 20);
+	settings->directional_light->transform.LookAt(
+		player_transform->position,
+		vec3(0, 1, 0)
+	);
+
+	last_player_position = player_transform->position;
 
 	Engine::Get()->GetDebugDraw()->DrawAxis(vec3());
 

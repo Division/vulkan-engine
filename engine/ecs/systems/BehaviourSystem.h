@@ -17,7 +17,6 @@ namespace ECS::systems
 		{
 			OPTICK_EVENT();
 
-			list.clear();
 			ComponentFetcher<components::BehaviourList> behaviour_fetcher(*chunk);
 
 			for (int i = 0; i < chunk->GetEntityCount(); i++)
@@ -29,6 +28,8 @@ namespace ECS::systems
 
 		void Update()
 		{
+			list.clear();
+
 			ProcessChunks(manager.GetChunkListsWithComponent<components::BehaviourList>());
 			auto dt = manager.GetStaticComponent<components::DeltaTime>()->dt;
 

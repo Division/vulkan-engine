@@ -17,6 +17,7 @@
 #include "resources/SkeletonResource.h"
 #include "utils/DataStructures.h"
 #include <magic_enum/magic_enum.hpp>
+#include "utils/EventDispatcher.h"
 
 namespace SkeletalAnimation
 {
@@ -33,6 +34,20 @@ namespace SkeletalAnimation
 		Additive
 	};
 
+	enum class EventType
+	{
+		Start,
+		Complete,
+		Loop
+	};
+
+	struct EventParam
+	{
+		uint64_t id = 0;
+	};
+
+	typedef utils::EventDispatcher<EventType, EventParam> Dispatcher;
+
 	constexpr float DEFAULT_FADE_TIME = 0.3f;
 
 	struct PlaybackParams
@@ -43,6 +58,9 @@ namespace SkeletalAnimation
 		uint32_t layer = 0;
 
 		PlaybackParams& Playback(PlaybackMode value) { playback_mode = value; return *this; }
+		PlaybackParams& Loop() { return Playback(PlaybackMode::Loop); }
+		PlaybackParams& Once() { return Playback(PlaybackMode::Once); }
+		PlaybackParams& Clamp() { return Playback(PlaybackMode::Clamp); }
 		PlaybackParams& Blending(BlendingMode value) { blending_mode = value; return *this; }
 		PlaybackParams& FadeTime(float value) { fade_time = value; return *this; }
 		PlaybackParams& Layer(uint32_t value) { layer = value; return *this; }
@@ -146,7 +164,7 @@ namespace SkeletalAnimation
 			Type type = Type::Blend;
 		};
 
-		AnimationInstance(Resources::SkeletonResource::Handle skeleton, Resources::SkeletalAnimationResource::Handle animation, const PlaybackParams& params);
+		AnimationInstance(uint64_t id, Resources::SkeletonResource::Handle skeleton, Resources::SkeletalAnimationResource::Handle animation, const PlaybackParams& params);
 
 		void Play()
 		{
@@ -188,7 +206,7 @@ namespace SkeletalAnimation
 		uint32_t GetLayer() const { return layer; }
 
 		const auto& GetAnimation() { return animation; }
-		void Update(float dt);
+		void Update(float dt, Dispatcher& dispatcher);
 		void RemoveBlendEvents();
 
 		void FadeIn(float fade_duration_seconds);
@@ -202,6 +220,7 @@ namespace SkeletalAnimation
 		void SetLastRootPosition(vec3 value) { last_root_position = value; }
 		bool GetShouldSkipRootUpdate() const { return should_skip_root_update; }
 		void SetShouldSkipRootUpdate(bool value) { should_skip_root_update = value; }
+		uint64_t GetID() const { return id; }
 
 		bool GetRootMotionEnabled() const { return root_motion_enabled; }
 		void SetRootMotionEnabled(bool value) { root_motion_enabled = value; }
@@ -210,6 +229,7 @@ namespace SkeletalAnimation
 		void UpdateBlendEvents(float progress);
 
 	private:
+		uint64_t id = 0;
 		Resources::SkeletonResource::Handle skeleton;
 		Resources::SkeletalAnimationResource::Handle animation_resource;
 		const ozz::animation::Animation& animation;
@@ -254,11 +274,14 @@ namespace SkeletalAnimation
 		const vec3& GetRootOffset() const { return root_offset; };
 		void SetRootMotionEnabled(bool value) { root_motion = value; }
 		bool GetRootMotionEnabled() const { return root_motion; }
+		Dispatcher::Handle AddCallback(Dispatcher::Callback callback) { return dispatcher.AddCallback(callback); };
 
 	private:
+		uint64_t instance_counter = 0;
 		Resources::SkeletonResource::Handle skeleton;
 		std::vector<std::shared_ptr<AnimationInstance>> instances;
 		std::array<std::vector<ozz::animation::BlendingJob::Layer>, magic_enum::enum_count<BlendingMode>()> blend_layers;
+		Dispatcher dispatcher;
 
 		// Buffer of local transforms which stores the blending result.
 		ozz::vector<ozz::math::SoaTransform> blended_locals;
