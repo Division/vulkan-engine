@@ -38,6 +38,12 @@ void Material::SetConstantsDirty()
 	constants_dirty = true;
 }
 
+void Material::SetShaderPath(std::wstring shader_path)
+{
+	this->shader_path = std::move(shader_path);
+	SetDirty();
+}
+
 void Material::Texture0(Device::Handle<Device::Texture> texture) 
 {
 	if (texture0 != texture)

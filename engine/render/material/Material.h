@@ -37,6 +37,9 @@ public:
 	void Texture0(Device::Handle<Device::Texture> texture);
 	const Device::Handle<Device::Texture>& Texture0() const { return texture0; };
 
+	void SetShaderPath(std::wstring shader_path);
+	const std::wstring& GetShaderPath() const { return shader_path; };
+
 	void SetTexture0Resource(Resources::TextureResource::Handle texture);
 	const Resources::TextureResource::Handle& GetTexture0Resource() const { return texture0_resource; };
 

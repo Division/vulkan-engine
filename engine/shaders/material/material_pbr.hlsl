@@ -1,9 +1,9 @@
-#include "includes/global.hlsl"
-#include "material/material_common.hlsl"
+#include "shaders/includes/global.hlsl"
+#include "shaders/material/material_common.hlsl"
 
 #if defined(LIGHTING)
-#include "includes/lighting.hlsl"
-#include "includes/pbr.hlsl"
+#include "shaders/includes/lighting.hlsl"
+#include "shaders/includes/pbr.hlsl"
 #endif
 
 struct PBRData

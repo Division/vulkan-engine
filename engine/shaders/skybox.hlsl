@@ -1,5 +1,5 @@
 
-#include "includes/global.hlsl"
+#include "shaders/includes/global.hlsl"
 
 struct VS_in
 {

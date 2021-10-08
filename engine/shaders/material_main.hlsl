@@ -1,4 +1,4 @@
-#include "material/material_default.hlsl"
+#include "shaders/material/material_default.hlsl"
 
 VS_out vs_main(VS_in input)
 {
@@ -8,4 +8,4 @@ VS_out vs_main(VS_in input)
 float4 ps_main(VS_out input) : SV_TARGET
 {
     return GetPSMaterialDefault(input);
-}
+} 

@@ -116,8 +116,10 @@ void Game::init()
 
 	camera = std::make_unique<ViewerCamera>();
 
-	auto plane_handle = Resources::EntityResource::Handle(L"assets/Entities/Basic/Ground/stylized/plane10_soil_water.entity");
+	auto plane_handle = Resources::EntityResource::Handle(L"assets/top-down-shooter/ground/ground.entity");
 	auto ground_id = plane_handle->Spawn(vec3(0));
+	auto ground_behaviour = manager->AddComponent<components::BehaviourList>(ground_id);
+	ground_behaviour->AddBehaviour(std::make_unique<scene::Ground>());
 
 	auto box_handle = Resources::EntityResource::Handle(L"assets/top-down-shooter/characters/uetest/phys_box.entity");
 	box_handle->Spawn(vec3(5, 0, 5));

@@ -1,4 +1,4 @@
-#include "material/material_pbr.hlsl"
+#include "shaders/material/material_pbr.hlsl"
 
 #if defined(TEXTURE0)
 Texture2D texture0 : register(t2, space1);
