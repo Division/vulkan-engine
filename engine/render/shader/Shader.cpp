@@ -101,7 +101,7 @@ namespace Device {
 		auto* reflection = module.GetReflectionInfo();
 		auto stage_flags = shader_stage_flag_map.at(stage);
 		
-		auto append_binding_internal = [&](BindingType type, uint32_t id, const std::string& name, unsigned set, unsigned binding)
+		auto append_binding_internal = [&](BindingType type, uint32_t id, const std::string& name, const unsigned set, const unsigned binding)
 		{
 			auto& descriptor_set = descriptor_sets[set];
 			auto iterator = existing_bindings.find(std::make_pair(set, binding));
@@ -115,13 +115,15 @@ namespace Device {
 				binding_data->stage_flags |= (unsigned)stage;
 			} else
 			{
-				if (name_binding_map.find(name) != name_binding_map.end())
+				if (name_binding_map.find(name) != name_binding_map.end()) 
 					throw std::runtime_error("binding already exists: " + name);
 
 				descriptor_set.bindings.push_back(BindingData());
 				existing_bindings[std::make_pair(set, binding)] = descriptor_set.bindings.size() - 1;
+
 				binding_data = &descriptor_set.bindings.back();
 				binding_data->name = name;
+
 				binding_data->name_hash = GetParameterNameHash(name);
 				binding_data->address = { set, binding };
 				binding_data->stage_flags = (unsigned)stage;
@@ -143,7 +145,7 @@ namespace Device {
 			const auto binding_type = SHADER_DYNAMIC_OFFSET_BUFFERS.find(ubo.shader_buffer) == SHADER_DYNAMIC_OFFSET_BUFFERS.end()
 				? BindingType::UniformBuffer
 				: BindingType::UniformBufferDynamic;
-
+;
 			auto* binding = append_binding_internal(binding_type, (uint32_t)ubo.shader_buffer, ubo.name, ubo.set, ubo.binding);
 			binding->size = ubo.size;
 			for (auto& member : ubo.members)
@@ -168,9 +170,6 @@ namespace Device {
 		{
 			append_binding_internal(BindingType::Sampler, (uint32_t)sampler.sampler_name, sampler.name, sampler.set, sampler.binding);
 		}
-
-		for (auto& set : descriptor_sets)
-			std::sort(set.bindings.begin(), set.bindings.end());
 	}
 
 	void ShaderProgram::AppendPushConstants(const ShaderModule& module, ShaderProgram::Stage stage)
@@ -247,6 +246,9 @@ namespace Device {
 			AppendBindings(*compute_module, Stage::Compute, existing_bindings);
 			AppendPushConstants(*compute_module, Stage::Compute);
 		}
+
+		for (auto& set : descriptor_sets)
+			std::sort(set.bindings.begin(), set.bindings.end());
 
 		hash = ShaderProgram::CalculateHash(fragment_hash, vertex_hash, compute_hash);
 

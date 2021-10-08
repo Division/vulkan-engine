@@ -5,6 +5,8 @@
 #include "Shader.h"
 #include <optional>
 
+//#define DEBUG_OUTPUT
+
 namespace Device {
 
 	std::string ConvertHLSLName(const std::string& str)
@@ -49,6 +51,10 @@ namespace Device {
 			data.members.emplace_back(std::move(member));
 		}
 
+		#if defined(DEBUG_OUTPUT)
+		std::cout << "Uniform buffer " << data.name << ", (" << data.binding << ", " << data.set << ")\n";
+		#endif
+
 		return data;
 	}
 
@@ -92,12 +98,20 @@ namespace Device {
 			data.members.emplace_back(std::move(member));
 		}
 
+		#if defined(DEBUG_OUTPUT)
+		std::cout << "Storage buffer " << data.name << ", (" << data.binding << ", " << data.set << ")\n";
+		#endif
+
 		return data;
 	}
 
 	ReflectionInfo::ReflectionInfo(uint32_t* spirv_data, size_t count)
 		: compiler(spirv_data, count)
 	{
+		#if defined(DEBUG_OUTPUT)
+		std::cout << "Reflection start\n";
+		#endif
+
 		auto resources = compiler.get_shader_resources();
 		for (auto& entry : compiler.get_entry_points_and_stages())
 		{
