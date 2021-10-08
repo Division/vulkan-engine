@@ -62,7 +62,7 @@ struct VS_out
 
 struct VertexData
 {
-    float3 position_worldspace;
+    float4 position_worldspace;
     float2 texcoord0;
     float4 normal_worldspace;
     float4 tangent_worldspace;
@@ -98,7 +98,7 @@ VertexData GetDefaultVertexData(VS_in input, float4x4 object_model_matrix)
     model_matrix = mul(object_model_matrix, model_matrix);
 #endif
 
-    result.position_worldspace = mul(model_matrix, float4(input.position.xyz, 1.0)).xyz;
+    result.position_worldspace = mul(model_matrix, float4(input.position.xyz, 1.0));
 
 #if defined(LIGHTING)
     result.normal_worldspace = normalize(mul(model_matrix, float4(input.normal.xyz, 0)));
@@ -124,7 +124,7 @@ VertexData GePSVertexData(VS_out input)
     VertexData result;
 
 #if !defined(DEPTH_ONLY)
-    result.position_worldspace = input.position_worldspace.xyz;
+    result.position_worldspace = input.position_worldspace;
 #endif
 
 #if defined(LIGHTING)
@@ -154,7 +154,7 @@ VS_out GetVSOut(VertexData data, float4x4 view_projection)
     result.texcoord0 = data.texcoord0;
 #endif
 
-    float4 position_worldspace = float4(data.position_worldspace, 1);
+    float4 position_worldspace = data.position_worldspace;
 
 #if !defined(DEPTH_ONLY)
     result.position_worldspace = position_worldspace;
