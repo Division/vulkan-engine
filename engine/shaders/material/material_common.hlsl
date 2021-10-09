@@ -81,10 +81,11 @@ float LinearizeDepth(float depth_ndc, float near, float far)
     return (2.0 * near * far) / (far + near - (depth_ndc * 2.0f - 1.0f) * (far - near));
 }
 
-VertexData GetDefaultVertexData(VS_in input, float4x4 object_model_matrix)
+VertexData GetDefaultVertexData(VS_in input, float4x4 object_model_matrix, float4x4 object_normal_matrix)
 {
     VertexData result;
     float4x4 model_matrix = object_model_matrix;
+    float4x4 normal_matrix = object_normal_matrix;
 #if defined(SKINNING)
     model_matrix = float4x4(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
     [unroll]
@@ -95,16 +96,17 @@ VertexData GetDefaultVertexData(VS_in input, float4x4 object_model_matrix)
         model_matrix += SkinningMatrices[skinning_offset + joint_index] * joint_weight;
     }
 
+    normal_matrix = mul(object_normal_matrix, model_matrix);
     model_matrix = mul(object_model_matrix, model_matrix);
 #endif
 
     result.position_worldspace = mul(model_matrix, float4(input.position.xyz, 1.0));
 
 #if defined(LIGHTING)
-    result.normal_worldspace = normalize(mul(model_matrix, float4(input.normal.xyz, 0)));
+    result.normal_worldspace = normalize(mul(normal_matrix, float4(input.normal.xyz, 0)));
     result.tangent_worldspace = 0.0f;
 #if defined(NORMAL_MAP)
-    result.tangent_worldspace = normalize(mul(model_matrix, float4(input.tangent.xyz, 0)));
+    result.tangent_worldspace = normalize(mul(normal_matrix, float4(input.tangent.xyz, 0)));
     result.tangent_worldspace.w = input.tangent.w;
 #endif
     result.linear_depth = 0;

@@ -74,6 +74,7 @@ namespace ECS { namespace systems {
 		{
 			auto* draw_call = draw_call_fetcher.GetComponent(i);
 			draw_call->constants.AddFloat4x4Binding(&draw_call->transform, Device::GetBufferMemberHash(BufferMemberName::ModelMatrix));
+			draw_call->constants.AddFloat4x4Binding(&draw_call->normal_transform, Device::GetBufferMemberHash(BufferMemberName::NormalMatrix));
 			draw_call->constants.Merge(draw_call->material->GetConstantBindings());
 		}
 	}

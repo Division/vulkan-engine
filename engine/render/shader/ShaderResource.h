@@ -7,6 +7,7 @@
 enum class BufferMemberName : uint32_t
 {
 	ModelMatrix,
+	NormalMatrix,
 	Color,
 	Roughness,
 	Metalness,

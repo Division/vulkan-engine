@@ -11,6 +11,7 @@ Texture2D normal_map : register(t5, space1);
 cbuffer ObjectParams : register(b1, space1)
 {
     float4x4 objectModelMatrix;
+    float4x4 objectNormalMatrix;
     float4 color;
     float roughness;
     float metalness;
@@ -56,7 +57,7 @@ void GetPSDataMaterialDefault(in VS_out input, out VertexData vertex_data, out P
 
 VS_out GetVSMaterialDefault(VS_in input)
 {
-    VertexData vertex_data = GetDefaultVertexData(input, objectModelMatrix);
+    VertexData vertex_data = GetDefaultVertexData(input, objectModelMatrix, objectNormalMatrix);
     return GetVSOut(vertex_data, mul(camera.cameraProjectionMatrix, camera.cameraViewMatrix));
 }
 

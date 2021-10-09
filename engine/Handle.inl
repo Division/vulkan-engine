@@ -10,6 +10,8 @@ public:
 
 	Handle() = default;
 
+	Handle(std::nullptr_t) {}
+
 	Handle(std::unique_ptr<T> resource_src)
 	{
 		resource = std::move(resource_src);
