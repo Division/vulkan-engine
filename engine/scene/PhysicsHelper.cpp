@@ -27,13 +27,21 @@ namespace Physics::Helper
 			
 			case PhysicsInitializer::Shape::Sphere:
 			{
-				component->body = physics->CreateSphereStatic(init.position, init.rotation, init.size, init.material);
+				component->body = physics->CreateSphereStatic(init.position, init.rotation, init.size.x, init.material);
+				break;
+			}
+
+			case PhysicsInitializer::Shape::Box:
+			{
+				component->body = physics->CreateBoxStatic(init.position, init.rotation, init.size, init.material);
 				break;
 			}
 
 			default:
 				throw std::runtime_error("unsupported physics parameters");
 			}
+
+			Physics::SetupFiltering(*component->body, 1, ~0);
 
 			result = component->body.get();
 		}
@@ -50,13 +58,16 @@ namespace Physics::Helper
 
 			case PhysicsInitializer::Shape::Sphere:
 			{
-				component->body = physics->CreateSphereDynamic(init.position, init.rotation, init.size, init.material);
+				component->body = physics->CreateSphereDynamic(init.position, init.rotation, init.size.x, init.material);
 				break;
 			}
 
 			default:
 				throw std::runtime_error("unsupported physics parameters");
 			}
+
+			component->body->setRigidBodyFlag(PxRigidBodyFlag::eKINEMATIC, true);
+			Physics::SetupFiltering(*component->body, 1, ~0);
 
 			result = component->body.get();
 		}

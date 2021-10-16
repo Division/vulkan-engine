@@ -7,6 +7,7 @@
 const std::map<std::string, BufferMemberName> SHADER_BUFFER_MEMBER_NAMES =
 {
 	{ "objectModelMatrix", BufferMemberName::ModelMatrix },
+	{ "objectNormalMatrix", BufferMemberName::NormalMatrix },
 	{ "color", BufferMemberName::Color },
 	{ "roughness", BufferMemberName::Roughness },
 	{ "metalness", BufferMemberName::Metalness },

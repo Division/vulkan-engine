@@ -10,6 +10,8 @@ public:
 
 	Handle() = default;
 
+	Handle(std::nullptr_t) {}
+
 	Handle(std::unique_ptr<T> resource_src)
 	{
 		resource = std::move(resource_src);
@@ -29,6 +31,13 @@ public:
 	{
 		AddToReleaser(resource);
 		resource = other.resource;
+		return *this;
+	}
+
+	Handle& operator=(std::nullptr_t)
+	{
+		AddToReleaser(resource);
+		resource = nullptr;
 		return *this;
 	}
 
@@ -69,5 +78,5 @@ public:
 
 
 private:
-	std::shared_ptr<T> resource;
+	mutable std::shared_ptr<T> resource;
 };

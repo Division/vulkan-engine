@@ -75,6 +75,7 @@ set(ENGINE_SOURCES
 	ecs/components/Physics.h
 	ecs/components/AnimationController.h
 	ecs/components/BoneAttachment.h
+	ecs/components/BehaviourList.h
 	ecs/systems/TransformSystem.h
 	ecs/systems/TransformSystem.cpp
 	ecs/systems/RendererSystem.h
@@ -87,6 +88,7 @@ set(ENGINE_SOURCES
 	ecs/systems/UpdateDrawCallsSystem.cpp
 	ecs/systems/SkinningSystem.h
 	ecs/systems/SkinningSystem.cpp
+	ecs/systems/BehaviourSystem.h
 	memory/Profiler.h
 	memory/Profiler.cpp
 	memory/Allocator.h
@@ -190,6 +192,8 @@ set(ENGINE_SOURCES
 	render/animation/SkeletalAnimation.cpp
 	scene/Scene.h
 	scene/Scene.cpp
+	scene/Behaviour.h
+	scene/Behaviour.cpp
 	scene/Physics.h
 	scene/Physics.cpp
 	scene/PhysicsHelper.h
@@ -241,6 +245,7 @@ set(ENGINE_SOURCES
 	utils/CapsSet.h
 	utils/Frustum.h
 	utils/JsonUtils.h
+	utils/EventDispatcher.h
 )
 
 find_package(Vulkan REQUIRED)
@@ -300,10 +305,13 @@ if (${CMAKE_BUILD_TYPE} STREQUAL "Debug")
 	target_link_libraries(vk_engine ${CMAKE_CURRENT_SOURCE_DIR}/lib/static/physx/PhysXPvdSDK_static_debug_64.lib)
 	target_link_libraries(vk_engine ${CMAKE_CURRENT_SOURCE_DIR}/lib/static/physx/PhysXExtensions_static_debug_64.lib)
 	target_link_libraries(vk_engine ${CMAKE_CURRENT_SOURCE_DIR}/lib/static/physx/PhysXVehicle_static_debug_64.lib)
+	target_link_libraries(vk_engine ${CMAKE_CURRENT_SOURCE_DIR}/lib/static/physx/PhysXCharacterKinematic_static_debug_64.lib)
+	
 else (${CMAKE_BUILD_TYPE} STREQUAL "Debug")
 	target_link_libraries(vk_engine ${CMAKE_CURRENT_SOURCE_DIR}/lib/static/physx/PhysXPvdSDK_static_64.lib)
 	target_link_libraries(vk_engine ${CMAKE_CURRENT_SOURCE_DIR}/lib/static/physx/PhysXExtensions_static_64.lib)
 	target_link_libraries(vk_engine ${CMAKE_CURRENT_SOURCE_DIR}/lib/static/physx/PhysXVehicle_static_64.lib)
+	target_link_libraries(vk_engine ${CMAKE_CURRENT_SOURCE_DIR}/lib/static/physx/PhysXCharacterKinematic_static_64.lib)
 endif (${CMAKE_BUILD_TYPE} STREQUAL "Debug")
 
 # Tests

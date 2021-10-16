@@ -38,6 +38,12 @@ void Material::SetConstantsDirty()
 	constants_dirty = true;
 }
 
+void Material::SetShaderPath(std::wstring shader_path)
+{
+	this->shader_path = std::move(shader_path);
+	SetDirty();
+}
+
 void Material::Texture0(Device::Handle<Device::Texture> texture) 
 {
 	if (texture0 != texture)
@@ -134,6 +140,35 @@ void Material::VertexColorEnabled(bool vertex_color_enabled_)
 	}
 }
 
+void Material::AddExtraTexture(Resources::TextureResource::Handle texture, const char* name)
+{
+	ExtraTextureBinding value{ Device::ShaderProgram::GetParameterNameHash(name), texture };
+	AddExtraTextureBinding(value);
+}
+
+void Material::AddExtraTexture(Device::Handle<Device::Texture> texture, const char* name)
+{
+	ExtraTextureBinding value{ Device::ShaderProgram::GetParameterNameHash(name), texture };
+	AddExtraTextureBinding(value);
+}
+
+void Material::AddExtraTextureBinding(const ExtraTextureBinding& value)
+{
+	assert(!value.texture.valueless_by_exception());
+	auto it = std::find_if(extra_texture_bindings.begin(), extra_texture_bindings.end(), [hash = value.name_hash](const ExtraTextureBinding& binding) { return binding.name_hash == hash; });
+	if (it != extra_texture_bindings.end())
+		*it = value;
+	else
+		extra_texture_bindings.push_back(value);
+
+	SetBindingsDirty();
+}
+
+void Material::ClearExtraTextures()
+{
+	extra_texture_bindings.clear();
+}
+
 void Material::UpdateCaps() const
 {
 	if (!caps_dirty) return;
@@ -214,6 +249,14 @@ void Material::UpdateBindings() const
 
 	if (has_normal_map)
 		resource_bindings.AddTextureBinding(Device::GetShaderTextureNameHash(ShaderTextureName::NormalMap), GetNormalMap());
+
+	for (auto& extra_texture : extra_texture_bindings)
+	{
+		if (extra_texture.texture.index() == 0)
+			resource_bindings.AddTextureBinding(extra_texture.name_hash, std::get<0>(extra_texture.texture)->Get().get());
+		else
+			resource_bindings.AddTextureBinding(extra_texture.name_hash, std::get<1>(extra_texture.texture).get());
+	}
 
 	bindings_dirty = false;
 }

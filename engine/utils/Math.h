@@ -29,6 +29,19 @@ extern const vec3 VectorDown;
 extern const vec3 VectorForward;
 extern const vec3 VectorBack;
 
+inline quat QuatLookAt(const vec3& direction, const vec3& up = vec3(0, 1, 0))
+{
+    mat3 Result;
+
+    Result[2] = -direction;
+    vec3 Right = glm::normalize(cross(up, Result[2]));
+    Result[0] = glm::normalize(Right * inversesqrt(glm::max(0.00001f, dot(Right, Right))));
+    Result[1] = glm::normalize(cross(Result[2], Result[0]));
+
+    return quat_cast(Result);
+}
+
+
 namespace glm {
 	float dotf(const vec2 &a, const vec3 &b);
 	float dotf(const vec3 &a, const vec3 &b);

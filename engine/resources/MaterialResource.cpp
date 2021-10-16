@@ -38,7 +38,11 @@ namespace Resources
 
 			std::string name = iter->name.GetString();
 
-			if (name == "texture0")
+			if (name == "shader")
+			{
+				new_material->SetShaderPath(utils::StringToWString(iter->value.GetString()));
+			}
+			else if (name == "texture0")
 			{
 				new_material->SetTexture0Resource(TextureResource::Handle(utils::StringToWString(iter->value.GetString())));
 			}

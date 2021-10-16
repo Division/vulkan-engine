@@ -8,6 +8,15 @@ set(GAME_SOURCES
 	camera/ViewerCamera.cpp
 	controller/Controller.h
 	controller/Controller.cpp
+	controller/Player.h
+	controller/Player.cpp
+	controller/Monster.h
+	controller/Monster.cpp
+	controller/Nightmare.h
+	controller/Nightmare.cpp
+	objects/Ground.h
+	projectile/Projectile.h
+	projectile/Projectile.cpp
 )
  
 include_directories(../../engine ../../engine/lib .)

@@ -1,4 +1,4 @@
-#include "../includes/sampling.hlsl"
+#include "shaders/includes/sampling.hlsl"
 
 cbuffer parameters : register(b1) {
     float exposure;

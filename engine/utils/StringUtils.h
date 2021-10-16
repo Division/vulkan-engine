@@ -46,6 +46,10 @@ namespace utils
 
 	std::string WStringToString(const std::wstring& wstr);
 
+	std::wstring GetStringBeforeLast(const std::wstring& str, const wchar_t character);
+
+	std::wstring GetStringAfterLast(const std::wstring& str, const wchar_t character);
+
 	// returns if string starts with value substring
 	template <typename T>
 	bool BeginsWith(const T& string, const T& value)

@@ -9,6 +9,12 @@
 #include "EntityChunks.h"
 #include "components/Entity.h"
 #include "EntityTemplate.h"
+#include <type_traits>
+
+namespace scene
+{
+	class Behaviour;
+}
 
 namespace ECS {
 
@@ -144,19 +150,18 @@ namespace ECS {
 			auto entity_id = ++id_counter;
 
 			{
-				std::unique_lock lock(mutex);
 				auto address = EntityAddress{ nullptr, (uint32_t)-1 };
 				entity_address[entity_id] = address;
 			}
 
 			auto* entity = AddComponent<EntityData>(entity_id); // EntityData component exists for all entities
 			entity->id = entity_id;
+			pending_initialize.push_back(entity_id);
 			return entity_id;
 		}
 
 		void DestroyEntity(EntityID entity)
 		{
-			std::unique_lock lock(mutex);
 			ValidateNoProcessing();
 
 			auto address_it = entity_address.find(entity);
@@ -171,7 +176,8 @@ namespace ECS {
 		template<typename T, typename ...Args>
 		T* AddComponent(EntityID entity, Args&& ...args)
 		{
-			std::unique_lock lock(mutex);
+			static_assert(!std::is_base_of<scene::Behaviour, T>::value, "Behaviour is not a component. It can only be added to BehaviourList component.");
+
 			ValidateNoProcessing();
 
 			auto entity_address_it = entity_address.find(entity);
@@ -203,7 +209,6 @@ namespace ECS {
 
 		void* AddComponent(EntityID entity, ComponentData&& data)
 		{
-			std::unique_lock lock(mutex);
 			ValidateNoProcessing();
 
 			auto entity_address_it = entity_address.find(entity);
@@ -242,7 +247,6 @@ namespace ECS {
 
 		void RemoveComponent(EntityID entity, ComponentHash hash)
 		{
-			std::unique_lock lock(mutex);
 			ValidateNoProcessing();
 
 			auto entity_address_it = entity_address.find(entity);
@@ -281,7 +285,8 @@ namespace ECS {
 		template<typename T>
 		T* GetComponent(EntityID entity)
 		{
-			std::shared_lock lock(mutex);
+			static_assert(!std::is_base_of<scene::Behaviour, T>::value, "Behaviour is not a component. Use GetBehaviour instead.");
+
 			auto address = entity_address.at(entity);
 			return (T*)address.chunk->GetComponentPointer(address.index, GetComponentHash<T>());
 		}
@@ -297,8 +302,6 @@ namespace ECS {
 
 		void ForEachChunkList(std::function<void(ChunkList*)> callback, std::function<bool(ChunkList*)> predicate)
 		{
-			std::shared_lock lock(mutex);
-
 			for (auto& chunk : chunks)
 				if (predicate(chunk.second.get()))
 					callback(chunk.second.get());
@@ -372,6 +375,21 @@ namespace ECS {
 
 		bool EntityExists(EntityID entity) const { return entity_address.find(entity) != entity_address.end(); }
 
+		void TriggerPendingInitialize()
+		{
+			for (auto id : pending_initialize)
+			{
+				auto it = entity_address.find(id); // can be deleted just after creation
+				if (it == entity_address.end())
+					continue;
+
+				auto& address = it->second;
+				address.chunk->TriggerInitialize(*this, id, address.index);
+			}
+
+			pending_initialize.clear();
+		}
+
 	private:
 		void TriggerDestroyCallbacks(EntityID id)
 		{
@@ -380,7 +398,6 @@ namespace ECS {
 		}
 
 	private:
-		std::shared_mutex mutex;
 		std::shared_mutex static_component_mutex;
 		std::atomic_uint32_t processing_counter = 0;
 		uint64_t callback_id = 0;
@@ -389,6 +406,7 @@ namespace ECS {
 		std::unordered_map<EntityID, EntityAddress> entity_address;
 		std::unordered_map<ComponentHash, void*> static_components;
 		std::vector<EntityCallbackData> entity_destroy_callbacks;
+		std::vector<EntityID> pending_initialize;
 		std::unordered_map<std::string, std::unique_ptr<ComponentTemplate>(*)(void)> component_templates;
 	};
 

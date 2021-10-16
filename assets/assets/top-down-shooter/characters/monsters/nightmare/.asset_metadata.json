@@ -1,0 +1,52 @@
+[
+    {
+        "type": "copy",
+        "filename": "nightmare.entity",
+        "uid": "756a03b948deab09"
+    },
+    {
+        "type": "copy",
+        "filename": "nightmare.mat",
+        "uid": "afa72c7e271a31df"
+    },
+    {
+        "type": "texture",
+        "filename": "nightmare_albedo_roughness.png",
+        "uid": "7a222f3717a7681b",
+        "compression_type": "BC7"
+    },
+    {
+        "type": "fbx",
+        "filename": "nightmare_creature.fbx",
+        "uid": "5198722bb363c1df",
+        "export_type": "Mesh",
+        "animation_type": "Normal"
+    },
+    {
+        "type": "fbx",
+        "filename": "nightmare_creature@anim.fbx",
+        "uid": "d6fe0a9fdcec83e4",
+        "export_type": "Animation",
+        "animation_type": "Normal"
+    },
+    {
+        "type": "fbx",
+        "filename": "nightmare_creature@anim2.fbx",
+        "uid": "0b92cb86dcd0d6ae",
+        "export_type": "Animation",
+        "animation_type": "Normal"
+    },
+    {
+        "type": "fbx",
+        "filename": "nightmare_creature_top.fbx",
+        "uid": "eea8fb0ca35f1e39",
+        "export_type": "Mesh",
+        "animation_type": "Normal"
+    },
+    {
+        "type": "texture",
+        "filename": "nightmare_normal.png",
+        "uid": "ee3d92ff22f5853c",
+        "compression_type": "BC7"
+    }
+]

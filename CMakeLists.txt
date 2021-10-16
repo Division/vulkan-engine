@@ -21,7 +21,5 @@ if (VK_ENGINE_BUILD_DEMOS)
 endif()
 
 if (VK_ENGINE_BUILD_TOOLS)
-	add_subdirectory(tools/ShaderCompiler)
-	add_subdirectory(tools/FBXExporter)
 	add_subdirectory(tools/ProjectManager)
 endif()

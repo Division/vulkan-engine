@@ -6,7 +6,12 @@
 #include "exporters/MeshExporter.h"
 #include <physx/PxPhysicsAPI.h>
 #include "scene/Physics.h"
+#include <ozz/base/containers/string.h>
 
+namespace ozz::animation::offline
+{
+	struct RawAnimation;
+}
 namespace Exporter
 {
 
@@ -49,12 +54,13 @@ namespace Exporter
 
 		bool Export();
 		bool ExportFBXFile(const std::filesystem::path& path, ExportedSceneAssets* exported_assets = nullptr);
-		bool ExportFBXAnimationFile(const std::filesystem::path& path, ExportedSceneAssets* exported_assets = nullptr);
+		bool ExportFBXAnimationFile(const std::filesystem::path& path, bool is_additive, ExportedSceneAssets* exported_assets = nullptr);
 
 	private:
 		FileMetadata GetMetadataForFile(const std::filesystem::path& path);
 		bool ExportRootNode(FbxScene* scene, const std::filesystem::path& path, ExportedSceneAssets* exported_assets);
-		bool ExportAnimation(const std::filesystem::path& path, ExportedSceneAssets* exported_assets);
+		bool ExportAnimation(std::filesystem::path path, ExportedSceneAssets* exported_assets, bool is_additive);
+		void WriteAnimation(const std::filesystem::path& path, const ozz::animation::offline::RawAnimation& animation, const ozz::string& animation_name, const ozz::animation::Skeleton& skeleton, ExportedSceneAssets* exported_assets);
 		std::unordered_map<std::string, MeshExportData> GetMeshesToExport(FbxScene* scene);
 		std::wstring GetMeshOutputPath(const std::string& mesh_name, const std::filesystem::path& fbx_path);
 		std::wstring GetSkeletonOutputPath(const std::filesystem::path& fbx_path);

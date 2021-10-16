@@ -1,0 +1,23 @@
+[
+    {
+        "type": "copy",
+        "filename": "ground.entity",
+        "uid": "e785f0c9a8117d6e"
+    },
+    {
+        "type": "copy",
+        "filename": "ground.hlsl",
+        "uid": "f20d8095a39925cf"
+    },
+    {
+        "type": "copy",
+        "filename": "ground.mat",
+        "uid": "c6706c8272b52b89"
+    },
+    {
+        "type": "texture",
+        "filename": "splatmap.png",
+        "uid": "f4f6ed73d9fb80d9",
+        "compression_type": "BC7"
+    }
+]

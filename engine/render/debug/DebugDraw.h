@@ -20,6 +20,7 @@ namespace render {
 
         void DrawLine(const vec3 &p1, const vec3 &p2, const vec4 &color);
         void DrawPoint(const vec3 &p, const vec3 &color, float size = 5.0f);
+        void DrawAxis(vec3 position, quat rotation = quat(), float size = 1.0f);
         void DrawFrustum(mat4 view_projection, vec4 color = vec4(1, 0, 0, 1));
         void DrawAABB(const vec3 &min, const  vec3 &max, const vec4 &color);
         void DrawAABB(const AABB &bounds, const vec4 &color);

@@ -34,7 +34,7 @@ void Camera::UpdateProjection()
 
 void Camera::UpdateView() 
 {
-    view_matrix = glm::inverse(transform.local_to_world);
+    view_matrix = glm::inverse(transform.GetLocalToWorld());
 }
 
 void Camera::UpdateViewport() 
@@ -45,7 +45,7 @@ void Camera::UpdateViewport()
 
 void Camera::Update() 
 {
-    transform.local_to_world = ComposeMatrix(transform.position, transform.rotation, transform.scale);
+    transform.SetLocalToWorld(ComposeMatrix(transform.position, transform.rotation, transform.scale));
     UpdateViewport();
     UpdateProjection();
     UpdateView();

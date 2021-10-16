@@ -15,6 +15,7 @@
 #include "utils/Math.h"
 #include "memory/Allocator.h"
 #include "memory/Containers.h"
+#include "components/Entity.h"
 
 namespace ECS {
 
@@ -24,6 +25,8 @@ namespace ECS {
 
 	typedef size_t ComponentHash;
 	typedef uint32_t ComponentSetHash;
+
+	class EntityManager;
 
 	template<typename T>
 	ComponentHash GetComponentHash()
@@ -51,6 +54,7 @@ namespace ECS {
 		uint32_t size;
 		void(*destructor)(const void*);
 		void(*move_constructor)(void* x, void* other);
+		void(*initialize)(EntityManager& manager, EntityID id, void*);
 	};
 
 	class ComponentLayout
@@ -58,7 +62,18 @@ namespace ECS {
 	public:
 		ComponentLayout(const ComponentLayout&) = default;
 
-		//ComponentLayout(ComponentLayout&&) = delete;
+		template <typename T>
+		class HasInitialize
+		{
+			typedef char one;
+			struct two { char x[2]; };
+
+			template <typename C> static one test(decltype(&C::Initialize));
+			template <typename C> static two test(...);
+
+		public:
+			enum { value = sizeof(test<T>(0)) == sizeof(one) };
+		};
 
 		explicit ComponentLayout(size_t chunk_size)
 			: chunk_size(chunk_size)
@@ -83,8 +98,14 @@ namespace ECS {
 			components[component_count] = ComponentData{ 
 				hash, 0, sizeof(T), 
 				[](const void* x){ static_cast<const T*>(x)->~T(); },
-				[](void* x, void* other) { new (x) T(std::move(*(T*)other)); }
+				[](void* x, void* other) { new (x) T(std::move(*(T*)other)); },
+				nullptr
 			};
+
+			if constexpr (HasInitialize<T>::value)
+			{
+				components[component_count].initialize = [](EntityManager& manager, EntityID id, void* x) { T::Initialize(manager, id, static_cast<T*>(x)); };
+			}
 
 			component_count += 1;
 			assert(component_count <= MAX_COMPONENTS);
@@ -218,6 +239,13 @@ namespace ECS {
 		void* GetMemory() const { return memory; }
 		Chunk* GetNextChunk() const { return next.get(); };
 		
+		ECS::EntityID GetEntityID(uint32_t index)
+		{
+			assert(index < GetEntityCount());
+			auto entity = (EntityData*)GetComponentPointer(index, GetComponentHash<EntityData>());
+			return entity->id;
+		}
+
 		static void* GetComponentPointer(void* memory, uint32_t index, const ComponentData& data)
 		{
 			return (char*)memory + data.offset + (size_t)data.size * (size_t)index;
@@ -316,6 +344,19 @@ namespace ECS {
 			}
 
 			entity_count -= 1;
+		}
+
+		// TODO: may need a defined sorting order
+		void TriggerInitialize(EntityManager& manager, EntityID id, uint32_t index)
+		{
+			assert(index < entity_count);
+			for (uint32_t i = 0; i < layout.GetComponentCount(); i++)
+			{
+				auto& component_data = layout.GetComponents()[i];
+				auto* pointer = GetComponentPointer(index, &component_data);
+				if (component_data.initialize)
+					component_data.initialize(manager, id, pointer);
+			}
 		}
 
 	private:

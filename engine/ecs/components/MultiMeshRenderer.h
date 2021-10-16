@@ -17,7 +17,11 @@ namespace ECS::components
 
 	struct MultiMeshRenderer
 	{
+	private:
 		Resources::MultiMesh::Handle multi_mesh;
+		Common::Handle<Resources::MultiMesh> common_multi_mesh;
+	
+	public:
 		render::MaterialList::Handle materials;
 		render::MaterialResourceList::Handle material_resources;
 		render::DrawCallManager::Handle draw_calls;
@@ -25,6 +29,29 @@ namespace ECS::components
 		bool HasMaterials()
 		{
 			return (materials && materials->size()) || (material_resources && material_resources->size());
+		}
+
+		void SetMultiMesh(Resources::MultiMesh::Handle value)
+		{
+			multi_mesh = value;
+			common_multi_mesh = nullptr;
+		}
+
+		void SetMultiMesh(Common::Handle<Resources::MultiMesh> value)
+		{
+			common_multi_mesh = value;
+			multi_mesh = nullptr;
+		}
+
+		const Resources::MultiMesh* GetMultiMesh() const
+		{
+			if (multi_mesh)
+				return &*multi_mesh;
+
+			if (common_multi_mesh)
+				return &*common_multi_mesh;
+
+			return nullptr;
 		}
 
 		const Material::Handle GetMaterial(size_t index) const

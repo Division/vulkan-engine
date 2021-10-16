@@ -29,11 +29,18 @@ namespace Vehicle::Utils
 namespace ECS::components
 {
 	struct DeltaTime;
+	struct CharacterController;
+	struct Transform;
 }
 
 namespace game
 {
 	class Gameplay;
+}
+
+namespace Projectile
+{
+	class ProjectileManager;
 }
 
 namespace Resources
@@ -59,17 +66,26 @@ public:
 	physx::PxSimulationFilterShader GetFilterShader() override;
 	physx::PxVec3 GetGravity() override;
 	void cleanup() override;
+	Projectile::ProjectileManager* GetProjectileManager() const { return projectile_manager.get(); }
+	std::optional<vec3> Game::GetMouseTarget() const;
+	bool IsCameraControl() const { return camera_control; }
+	vec3 GetPlayerPosition() const { return last_player_position; }
+
+	static Game* GetInstance() { return instance; }
+	
 
 private:
 	ECS::EntityID CreateLight(vec3 position, float radius, ECS::components::Light::Type type, vec3 color);
 	ECS::EntityID CreatePlayer();
+	ECS::EntityID CreateNightmare(vec3 position);
 
-	void UpdatePlayer(float dt);
 	void UpdateFollowCamera();
-	std::optional<vec3> GetMouseTarget();
 
 private:
+	inline static Game* instance;
 	std::unique_ptr<ViewerCamera> camera;
+	vec3 last_player_position;
+	std::unique_ptr<Projectile::ProjectileManager> projectile_manager;
 
 	ECS::EntityManager* manager = nullptr;
 	ECS::TransformGraph* graph = nullptr;
@@ -79,6 +95,7 @@ private:
 	ECS::EntityID point_light_id;
 
 	Resources::Handle<Resources::SkeletalAnimationResource> animation;
+	double last_shoot_time = 0.0f;
 
 	bool camera_control = false;
 };

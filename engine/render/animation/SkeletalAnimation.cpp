@@ -3,13 +3,15 @@
 
 namespace SkeletalAnimation
 {
-	AnimationInstance::AnimationInstance(Resources::SkeletonResource::Handle skeleton, Resources::SkeletalAnimationResource::Handle animation, PlaybackMode playback_mode, uint32_t layer)
-		: skeleton(skeleton)
+	AnimationInstance::AnimationInstance(uint64_t id, Resources::SkeletonResource::Handle skeleton, Resources::SkeletalAnimationResource::Handle animation, const PlaybackParams& params)
+		: id(id)
+		, skeleton(skeleton)
 		, animation_resource(animation)
 		, animation(*animation->Get())
 		, duration(animation->Get()->duration())
-		, playback_mode(playback_mode)
-		, layer(layer)
+		, playback_mode(params.playback_mode)
+		, blend_mode(params.blending_mode)
+		, layer(params.layer)
 	{
 		const int num_joints = skeleton->Get()->num_joints();
 		const int num_soa_joints = skeleton->Get()->num_soa_joints();
@@ -17,7 +19,7 @@ namespace SkeletalAnimation
 		cache.Resize(num_joints);
 	}
 
-	void AnimationInstance::Update(float dt)
+	void AnimationInstance::Update(float dt, Dispatcher& dispatcher)
 	{
 		progress += speed * dt / duration;
 
@@ -29,6 +31,9 @@ namespace SkeletalAnimation
 			{
 				if (progress >= 1.0f)
 				{
+					if (progress >= 1.0f)
+						dispatcher.Dispatch(EventType::Loop, EventParam{ id });
+
 					progress = fmod(progress, 1.0f);
 					if (GetRootMotionEnabled())
 					{
@@ -40,6 +45,9 @@ namespace SkeletalAnimation
 			case PlaybackMode::Once:
 			case PlaybackMode::Clamp:
 			{
+				if (progress >= 1.0f)
+					dispatcher.Dispatch(EventType::Complete, EventParam{ id });
+
 				progress = std::min(progress, 1.0f);
 				break;
 			}
@@ -124,7 +132,7 @@ namespace SkeletalAnimation
 		for (auto& instance : instances)
 		{
 			if (instance->IsFinished()) continue;
-			instance->Update(dt);
+			instance->Update(dt, dispatcher);
 		}
 
 		instances.erase(
@@ -144,22 +152,24 @@ namespace SkeletalAnimation
 		}
 	}
 
-	AnimationInstance::Handle AnimationMixer::PlayAnimation(Resources::SkeletalAnimationResource::Handle animation, PlaybackMode playback_mode, float fade_duration, uint32_t layer)
+	AnimationInstance::Handle AnimationMixer::PlayAnimation(Resources::SkeletalAnimationResource::Handle animation, const PlaybackParams& params)
 	{
-		FadeOutAllAnimations(fade_duration, layer);
-		return BlendAnimation(animation, playback_mode, fade_duration, layer);
+		FadeOutAllAnimations(params.fade_time, params.layer);
+		return BlendAnimation(animation, params);
 	}
 
-	AnimationInstance::Handle AnimationMixer::BlendAnimation(Resources::SkeletalAnimationResource::Handle animation, PlaybackMode playback_mode, float fade_duration, uint32_t layer)
+	AnimationInstance::Handle AnimationMixer::BlendAnimation(Resources::SkeletalAnimationResource::Handle animation, const PlaybackParams& params)
 	{
-		auto instance = std::make_shared<AnimationInstance>(skeleton, animation, playback_mode, layer);
+		auto instance = std::make_shared<AnimationInstance>(++instance_counter, skeleton, animation, params);
 		instance->SetWeight(0);
-		instance->FadeIn(fade_duration);
+		instance->FadeIn(params.fade_time);
 
-		if (playback_mode == PlaybackMode::Once)
+		dispatcher.Dispatch(EventType::Start, EventParam{ instance->GetID() });
+
+		if (params.playback_mode == PlaybackMode::Once)
 		{
 			const float anim_duration = animation->Get()->duration();
-			const float fade_duration_progress = fade_duration / anim_duration;
+			const float fade_duration_progress = params.fade_time / anim_duration;
 			instance->AddBlendEvent(AnimationInstance::BlendEvent::Type::Blend, 1.0f - fade_duration_progress, fade_duration_progress, 1.0f, 0.0f);
 			instance->AddBlendEvent(AnimationInstance::BlendEvent::Type::Finish, 1.0f);
 		}
@@ -188,13 +198,16 @@ namespace SkeletalAnimation
 
 	void AnimationMixer::ProcessBlending()
 	{
-		blend_layers.clear();
+		for (auto &layer : blend_layers)
+			layer.clear();
 
 		root_offset = vec3(0);
 
-		float total_weight = 0.0001f;
+		std::array<float, magic_enum::enum_count<BlendingMode>()> total_weight;
+		total_weight.fill(0.0001f);
+
 		for (auto& instance : instances)
-			total_weight += instance->GetWeight();
+			total_weight[(uint32_t)instance->GetBlendingMode()] += instance->GetWeight();
 
 		for (auto& instance : instances)
 		{
@@ -213,15 +226,18 @@ namespace SkeletalAnimation
 			if (!sampling_job.Run())
 				throw std::runtime_error("Error sampling animation");
 
-			auto& layer = blend_layers.emplace_back();
+			const uint32_t layer_index = (uint32_t)instance->GetBlendingMode();
+
+			auto& layer = blend_layers[layer_index].emplace_back();
+			layer.weight = instance->GetWeight() / total_weight[layer_index];
 			layer.transform = ozz::make_span(instance->GetLocals());
-			layer.weight = instance->GetWeight() / total_weight;
+
 			if (instance->GetRootMotionEnabled())
 			{
 				const auto offset = RemoveTranslation(root_motion_bone, make_span(sampling_job.output));
 				if (!instance->GetShouldSkipRootUpdate())
 				{
-					root_offset += (offset - instance->GetLastRootPosition()) * instance->GetWeight() / total_weight;
+					root_offset += (offset - instance->GetLastRootPosition()) * layer.weight;
 				}
 
 				instance->SetShouldSkipRootUpdate(false);
@@ -232,7 +248,8 @@ namespace SkeletalAnimation
 		// Setups blending job.
 		ozz::animation::BlendingJob blend_job;
 		blend_job.threshold = 0.1f;
-		blend_job.layers = ozz::make_span(blend_layers);
+		blend_job.layers = ozz::make_span(blend_layers[(uint32_t)BlendingMode::Normal]);
+		blend_job.additive_layers = ozz::make_span(blend_layers[(uint32_t)BlendingMode::Additive]);
 		blend_job.bind_pose = skeleton->Get()->joint_bind_poses();
 		blend_job.output = make_span(blended_locals);
 
@@ -252,5 +269,76 @@ namespace SkeletalAnimation
 		// Runs ltm job.
 		if (!ltm_job.Run())
 			throw std::runtime_error("Error calculating model matrices");
+
+		UpdateSockets();
+	}
+
+	const mat4* AnimationMixer::GetModelMatrix(uint32_t index) const
+	{
+		if (index < SOCKET_OFFSET)
+			return index < model_matrices.size() ? (mat4*)&model_matrices[index] : nullptr;
+		else
+			return index - SOCKET_OFFSET < sockets.size() ? &sockets[index - SOCKET_OFFSET].GetModelMatrix() : nullptr;
+	}
+
+	AnimationMixer::Socket* AnimationMixer::AddSocket(const char* name, uint32_t parent_index)
+	{
+		auto socket = GetSocket(name);
+		if (!socket)
+		{
+			socket = &sockets.emplace_back(name, parent_index);
+		}
+
+		socket->parent_bone_index = parent_index;
+
+		return socket;
+	}
+
+	void AnimationMixer::RemoveSocket(const char* name)
+	{
+		const uint32_t hash = FastHash(name);
+		sockets.erase(std::remove_if(sockets.begin(), sockets.end(), [hash](const Socket& socket) { return socket.GetNameHash() == hash; }));
+	}
+
+	const AnimationMixer::Socket* AnimationMixer::GetSocket(const char* name) const
+	{
+		return GetSocket(name);
+	}
+
+	AnimationMixer::Socket* AnimationMixer::GetSocket(const char* name)
+	{
+		const uint32_t hash = FastHash(name);
+		auto it = std::find_if(sockets.begin(), sockets.end(), [hash](const Socket& socket) { return socket.GetNameHash() == hash; });
+		return it != sockets.end() ? &*it : nullptr;
+	}
+
+	std::optional<uint32_t> AnimationMixer::GetSocketIndex(const char* name) const
+	{
+		const uint32_t hash = FastHash(name);
+		auto it = std::find_if(sockets.begin(), sockets.end(), [hash](const Socket& socket) { return socket.GetNameHash() == hash; });
+		if (it == sockets.end())
+			return std::nullopt;
+		else
+			return SOCKET_OFFSET + std::distance(sockets.begin(), it);
+	}
+
+	const mat4& AnimationMixer::Socket::GetLocalMatrix() const
+	{
+		if (dirty)
+		{
+			matrix = ComposeMatrix(position, rotation, scale);
+			dirty = false;
+		}
+
+		return matrix;
+	}
+
+	void AnimationMixer::UpdateSockets()
+	{
+		for (auto& socket : sockets)
+		{
+			auto parent_matrix = (mat4&)GetModelMatrices()[socket.GetParentBone()];
+			socket.local_to_model = parent_matrix * socket.GetLocalMatrix();
+		}
 	}
 }

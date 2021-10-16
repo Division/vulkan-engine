@@ -29,4 +29,22 @@ namespace utils
 
 		return converterX.to_bytes(wstr);
 	}
+
+	std::wstring GetStringBeforeLast(const std::wstring& str, const wchar_t character)
+	{
+		const auto pos = str.find_last_of(character);
+		if (pos == std::wstring::npos)
+			return str;
+		else
+			return str.substr(0, pos);
+	}
+
+	std::wstring GetStringAfterLast(const std::wstring& str, const wchar_t character)
+	{
+		const auto pos = str.find_last_of(character);
+		if (pos == std::wstring::npos)
+			return str;
+		else
+			return str.substr(pos + 1, -1);
+	}
 }

@@ -1,0 +1,8 @@
+{
+  "texture0": "assets/top-down-shooter/characters/monsters/nightmare/nightmare_albedo_roughness.dds",
+  "normal_map": "assets/top-down-shooter/characters/monsters/nightmare/nightmare_normal.dds",
+  "lighting_enabled": true,
+  "vertex_color_enabled": false,
+  "roughness": -1.0,
+  "metallness": 0.0
+}

@@ -1,13 +1,73 @@
 [
     {
+        "type": "texture",
+        "filename": "T_black_soil_albedo_roughness.png",
+        "uid": "cf9009ea3e258586",
+        "compression_type": "BC7"
+    },
+    {
+        "type": "texture",
+        "filename": "T_black_soil_cracks_albedo_roughness.png",
+        "uid": "6878619ef2ef6949",
+        "compression_type": "BC7"
+    },
+    {
+        "type": "texture",
+        "filename": "T_black_soil_cracks_normal.png",
+        "uid": "27ef097ddf120d91",
+        "compression_type": "BC7"
+    },
+    {
+        "type": "texture",
+        "filename": "T_black_soil_grass_albedo_roughness.png",
+        "uid": "d1829a46dad878fc",
+        "compression_type": "BC7"
+    },
+    {
+        "type": "texture",
+        "filename": "T_black_soil_grass_normal.png",
+        "uid": "2d3d6171a4c7e847",
+        "compression_type": "BC7"
+    },
+    {
+        "type": "texture",
+        "filename": "T_black_soil_normal.png",
+        "uid": "c0f9ff9d2872ddbc",
+        "compression_type": "BC7"
+    },
+    {
+        "type": "texture",
+        "filename": "T_ground_water_albedo_roughness.png",
+        "uid": "e8b53dd06fa0f7b8",
+        "compression_type": "BC7"
+    },
+    {
+        "type": "texture",
+        "filename": "T_ground_water_normal.png",
+        "uid": "1cca3e7ad1911a96",
+        "compression_type": "BC7"
+    },
+    {
         "type": "copy",
         "filename": "T_soil_water_albedo_roughness.ktx",
         "uid": "77eb5e8a40998276"
     },
     {
+        "type": "texture",
+        "filename": "T_soil_water_albedo_roughness.png",
+        "uid": "1926f31740421cbb",
+        "compression_type": "BC7"
+    },
+    {
         "type": "copy",
         "filename": "T_soil_water_normal.ktx",
         "uid": "7938e6fd1f0dfd97"
+    },
+    {
+        "type": "texture",
+        "filename": "T_soil_water_normal.png",
+        "uid": "104cecc9045abd97",
+        "compression_type": "BC7"
     },
     {
         "type": "copy",

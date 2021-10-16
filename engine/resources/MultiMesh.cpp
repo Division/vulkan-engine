@@ -34,6 +34,22 @@ namespace Resources
 		}
 	}
 
+	MultiMesh::MultiMesh(const gsl::span<const Common::Handle<Mesh>> in_meshes, AABB aabb)
+	{
+		for (auto& mesh : in_meshes)
+		{
+			meshes.push_back(mesh);
+			mesh_names.push_back("mesh");
+		}
+
+		this->aabb = aabb;
+	}
+
+	Common::Handle<MultiMesh> MultiMesh::Create(const gsl::span<const Common::Handle<Mesh>> meshes, AABB aabb)
+	{
+		return Common::Handle<MultiMesh>(std::unique_ptr<MultiMesh>(new MultiMesh(meshes, aabb)));
+	}
+
 	std::tuple<Common::Handle<Mesh>, std::string, std::vector<mat4>> MultiMesh::LoadMesh(std::istream& stream)
 	{
 		uint32_t flags, vertex_count, triangle_count;

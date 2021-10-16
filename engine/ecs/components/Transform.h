@@ -10,28 +10,32 @@ namespace ECS::components
 
 	struct Transform
 	{
-		AABB bounds = AABB(vec3(-1), vec3(1));
-		quat rotation;
-		vec3 position = vec3(0,0,0);
-		vec3 scale = vec3(1,1,1);
+	private:
 		mat4 local_to_world;
-		
-		void Rotate(vec3 axis, float angle) 
+		OBB obb;
+
+	public:
+		AABB bounds = AABB(vec3(-1), vec3(1));
+		quat rotation = quat();
+		vec3 position = vec3(0, 0, 0);
+		vec3 scale = vec3(1, 1, 1);
+
+		void Rotate(vec3 axis, float angle)
 		{
 			rotation = glm::rotate(rotation, angle, axis);
 		}
 
-		void Rotate(vec3 euler_angles) 
+		void Rotate(vec3 euler_angles)
 		{
 			rotation = glm::rotate(rotation, euler_angles);
 		}
 
-		void Translate(vec3 translation) 
+		void Translate(vec3 translation)
 		{
 			position += translation;
 		}
 
-		void SetMatrix(const mat4 &matrix) 
+		void SetMatrix(const mat4& matrix)
 		{
 			quat r;
 			vec3 skew;
@@ -45,7 +49,25 @@ namespace ECS::components
 			SetMatrix(glm::inverse(glm::lookAt(position, center, up)));
 		}
 
-		OBB GetOBB() const { return OBB(local_to_world, bounds.min, bounds.max); }
+		const OBB& GetOBB() const { return obb; }
+
+		void SetLocalToWorld(const mat4& value)
+		{
+			local_to_world = value;
+			mat4 obb_matrix = local_to_world;
+			vec3& a = (vec3&)obb_matrix[0];
+			vec3& b = (vec3&)obb_matrix[1];
+			vec3& c = (vec3&)obb_matrix[2];
+
+			const auto scale = vec3(glm::length(a), glm::length(b), glm::length(c));
+			a /= scale.x;
+			b /= scale.y;
+			c /= scale.z;
+
+			obb = OBB(obb_matrix, bounds.min * scale, bounds.max * scale);
+		}
+
+		const mat4& GetLocalToWorld() const { return local_to_world; }
 
 		vec3 WorldPosition() const { return vec3(local_to_world[3]); }
 		const vec3 Left() const  { return -Right(); }

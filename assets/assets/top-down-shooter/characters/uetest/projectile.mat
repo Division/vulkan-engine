@@ -1,0 +1,6 @@
+{
+  "lighting_enabled": false,
+  "color": [80.0, 80.0, 80.0, 1],
+  "texture0": "assets/top-down-shooter/weapon/rifle_projectile.dds",
+  "queue": "translucent"
+}

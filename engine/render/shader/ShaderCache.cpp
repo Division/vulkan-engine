@@ -94,7 +94,7 @@ namespace Device {
 				if (last != std::string::npos && last > 0)
 				{
 					std::wstring include_path = utils::StringToWString(line.substr(10, last - 10));
-					auto include_hash = GetShaderSourceHash(L"shaders/" + include_path);
+					auto include_hash = GetShaderSourceHash(include_path);
 					all_hashes.push_back(include_hash);
 				}
 			}

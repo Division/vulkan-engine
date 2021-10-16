@@ -10,6 +10,8 @@
 #include "Handle.h"
 #include "render/renderer/IRenderer.h"
 
+#include <variant>
+
 namespace Device 
 {
 	class Texture;
@@ -37,6 +39,9 @@ public:
 	void Texture0(Device::Handle<Device::Texture> texture);
 	const Device::Handle<Device::Texture>& Texture0() const { return texture0; };
 
+	void SetShaderPath(std::wstring shader_path);
+	const std::wstring& GetShaderPath() const { return shader_path; };
+
 	void SetTexture0Resource(Resources::TextureResource::Handle texture);
 	const Resources::TextureResource::Handle& GetTexture0Resource() const { return texture0_resource; };
 
@@ -47,6 +52,10 @@ public:
 
 	void SetNormalMapResource(Resources::TextureResource::Handle normal_map);
 	const Resources::TextureResource::Handle& GetNormalMapResource() const { return normal_map_resource; };
+
+	void AddExtraTexture(Resources::TextureResource::Handle texture, const char* name);
+	void AddExtraTexture(Device::Handle<Device::Texture> texture, const char* name);
+	void ClearExtraTextures();
 
 	Device::Texture* GetNormalMap() const;
 
@@ -88,6 +97,14 @@ protected:
 	void SetBindingsDirty();
 	void SetConstantsDirty();
 
+	struct ExtraTextureBinding
+	{
+		uint32_t name_hash;
+		std::variant<Resources::TextureResource::Handle, Device::Handle<Device::Texture>> texture;
+	};
+
+	void AddExtraTextureBinding(const ExtraTextureBinding& value);
+
 protected:
 	mutable bool caps_dirty = true;
 	mutable bool shader_hash_dirty = true;
@@ -96,6 +113,7 @@ protected:
 
 	mutable bool bindings_dirty = true;
 	mutable Device::ResourceBindings resource_bindings;
+	std::vector<ExtraTextureBinding> extra_texture_bindings;
 
 	mutable bool constants_dirty = true;
 	mutable Device::ConstantBindings constant_bindings;
@@ -109,6 +127,7 @@ protected:
 	mutable Device::ShaderProgramInfo depth_only_shader_info;
 	mutable Device::ShaderProgramInfo shader_info_skinning;
 	mutable Device::ShaderProgramInfo depth_only_shader_info_skinning;
+
 
 	bool has_texture0 = false;
 	Device::Handle<Device::Texture> texture0;

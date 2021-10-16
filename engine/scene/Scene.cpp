@@ -6,6 +6,7 @@
 #include "ecs/systems/TransformSystem.h"
 #include "ecs/systems/UpdateDrawCallsSystem.h"
 #include "ecs/systems/PhysicsSystem.h"
+#include "ecs/systems/BehaviourSystem.h"
 #include "ecs/systems/SkinningSystem.h"
 #include "ecs/components/Static.h"
 #include "ecs/components/MultiMeshRenderer.h"
@@ -45,8 +46,8 @@ Scene::Scene(IGame& game, render::DebugSettings* settings)
     update_renderer_system = std::make_unique<systems::UpdateRendererSystem>(*entity_manager);
     physics_post_update_system = std::make_unique<systems::PhysicsPostUpdateSystem>(*entity_manager);
     physx_manager = std::make_unique<Physics::PhysXManager>(game.GetPhysicsDelegate(), delta_time_static.get());
-    skinning_system = std::make_unique<systems::SkinningSystem>(*entity_manager);
     bone_attachment_system = std::make_unique<systems::BoneAttachmentSystem>(*entity_manager);
+    behaviour_system = std::make_unique<systems::BehaviourSystem>(*entity_manager);
 }
 
 void Scene::Update(IGame& game, float dt)
@@ -54,6 +55,9 @@ void Scene::Update(IGame& game, float dt)
     delta_time_static->dt = dt;
     // Game update
     game.update(dt);
+    // Initialize created entities
+    entity_manager->TriggerPendingInitialize();
+    behaviour_system->Update();
     camera->Update();
 
     // Physics
@@ -61,13 +65,13 @@ void Scene::Update(IGame& game, float dt)
     physx_manager->FetchResults();
     physx_manager->DrawDebug();
 
-    auto animation_controllers = entity_manager->GetChunkListsWithComponent<components::AnimationController>();
-    skinning_system->ProcessChunks(animation_controllers); // find a better place?
+    systems::SkinningSystem(*entity_manager).ProcessChunks(entity_manager->GetChunkListsWithComponent<components::AnimationController>()); // find a better place?
 
     // ECS update
     ProcessPhysicsSystems();
     ProcessTransformSystems();
     ProcessRendererSystems();
+    behaviour_system->LateUpdate();
 
     DrawDebug();
 }
@@ -109,7 +113,7 @@ void Scene::DrawDebug()
                 auto* transform = transform_fetcher.GetComponent(i);
                 auto* light = light_fetcher.GetComponent(i);
                 Engine::Get()->GetDebugDraw()->DrawOBB(transform->GetOBB(), vec4(light->color, 1));
-                Engine::Get()->GetDebugDraw()->DrawPoint(transform->WorldPosition(), light->color, 5.0f);
+                Engine::Get()->GetDebugDraw()->DrawPoint(transform->WorldPosition(), light->color, 25.0f);
             }
         }, *entity_manager, false).ProcessChunks(lights);
     }
@@ -127,6 +131,12 @@ void Scene::ProcessPhysicsSystems()
     // Update transform components with physics simulated data
     auto rigidbody_list = entity_manager->GetChunkListsWithComponents<components::RigidbodyDynamic, components::Transform>();
     physics_post_update_system->ProcessChunks(rigidbody_list);
+
+    if (GetPhysics()->GetControllerManager()->getNbControllers() > 0)
+    {
+        auto character_controller_list = entity_manager->GetChunkListsWithComponents<components::PhysXCharacterController, components::Transform>();
+        ECS::systems::PhysicsCharacterControllerSystem(*entity_manager).ProcessChunks(character_controller_list);
+    }
 }
 
 void Scene::ProcessTransformSystems()
@@ -164,8 +174,8 @@ void Scene::ProcessRendererSystems()
         {
             auto* light = light_fetcher.GetComponent(i);
             auto* transform = transform_fetcher.GetComponent(i);
+            transform->bounds = AABB(-vec3(light->radius), vec3(light->radius));
             light->UpdateMatrices(*transform);
-            transform->bounds = AABB(transform->WorldPosition() - vec3(light->radius), transform->WorldPosition() + vec3(light->radius));
             if (camera->obbVisible(transform->GetOBB()))
             {
                 SceneLightData data;

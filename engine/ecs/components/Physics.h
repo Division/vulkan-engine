@@ -21,6 +21,11 @@ namespace ECS::components
 		Physics::Handle<physx::PxRigidStatic> body;
 	};*/
 
+	struct PhysXCharacterController
+	{
+		Physics::Handle<physx::PxController> controller;
+	};
+
 	struct Vehicle
 	{
 		physx::PxVehicleDrive4W* vehicle = nullptr;

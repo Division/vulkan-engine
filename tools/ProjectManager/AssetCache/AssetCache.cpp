@@ -301,6 +301,7 @@ namespace Asset
 				|| utils::EndsWith(filename, std::wstring(L".dds")) 
 				|| utils::EndsWith(filename, std::wstring(L".ktx"))
 				|| utils::EndsWith(filename, std::wstring(L".mat"))
+				|| utils::EndsWith(filename, std::wstring(L".hlsl"))
 				|| utils::EndsWith(filename, std::wstring(L".entity"));
 		}, [] { return std::make_unique<Asset::Types::PlainCopy>(); } });
 

@@ -33,14 +33,21 @@ namespace ECS { namespace systems {
 				continue;
 			}
 
-			assert(!mesh_renderer->draw_calls || mesh_renderer->draw_calls.GetDrawCallCount() == mesh_renderer->multi_mesh->GetMeshCount());
-			for (int j = 0; j < mesh_renderer->multi_mesh->GetMeshCount(); j++)
+			assert(!mesh_renderer->draw_calls || mesh_renderer->draw_calls.GetDrawCallCount() == mesh_renderer->GetMultiMesh()->GetMeshCount());
+			for (int j = 0; j < mesh_renderer->GetMultiMesh()->GetMeshCount(); j++)
 			{
 				if (mesh_renderer->draw_calls)
 				{
 					auto* draw_call = mesh_renderer->draw_calls.GetDrawCall(j);
 					draw_call->obb = transform->GetOBB();
-					draw_call->transform = transform->local_to_world;;
+					draw_call->transform = transform->GetLocalToWorld();
+
+					const bool is_uniform_scale = (std::abs(transform->scale.x - transform->scale.y) < 1e-4f) && (std::abs(transform->scale.x - transform->scale.z) < 1e-4f);
+
+					if (is_uniform_scale)
+						draw_call->normal_transform = draw_call->transform;
+					else
+						draw_call->normal_transform = glm::transpose(glm::inverse(draw_call->transform));
 				}
 			}
 		}

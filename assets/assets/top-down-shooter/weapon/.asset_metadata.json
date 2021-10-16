@@ -1,0 +1,14 @@
+[
+    {
+        "type": "texture",
+        "filename": "muzzle_flash01.png",
+        "uid": "31d9da59607f081d",
+        "compression_type": "BC7"
+    },
+    {
+        "type": "texture",
+        "filename": "rifle_projectile.png",
+        "uid": "f02ef90de34450c2",
+        "compression_type": "BC7"
+    }
+]

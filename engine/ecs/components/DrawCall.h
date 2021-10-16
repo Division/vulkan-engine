@@ -24,6 +24,7 @@ namespace ECS::components {
 		const Mesh* mesh = nullptr;
 		OBB obb;
 		mat4 transform;
+		mat4 normal_transform;
 		Device::ShaderProgram* shader = nullptr;
 		Device::DescriptorSet* descriptor_set = nullptr;
 		Device::ShaderProgram* depth_only_shader = nullptr;

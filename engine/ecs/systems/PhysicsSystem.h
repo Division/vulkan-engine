@@ -11,6 +11,13 @@ namespace ECS::systems
 		void Process(Chunk* chunk) override;
 	};
 
+	class PhysicsCharacterControllerSystem : public System
+	{
+	public:
+		PhysicsCharacterControllerSystem(EntityManager& manager) : System(manager) {}
+		void Process(Chunk* chunk) override;
+	};
+
 	class VehicleControlSystem : public System
 	{
 	public:

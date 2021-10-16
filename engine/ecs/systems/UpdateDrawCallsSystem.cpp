@@ -44,9 +44,9 @@ namespace ECS { namespace systems {
 
 			auto get_material_function = mesh_renderer->material_resources ? &GetMaterialResource : &GetMaterial;
 
-			for (int j = 0; j < mesh_renderer->multi_mesh->GetMeshCount(); j++)
+			for (int j = 0; j < mesh_renderer->GetMultiMesh()->GetMeshCount(); j++)
 			{
-				auto& mesh = mesh_renderer->multi_mesh->GetMesh(j);
+				auto& mesh = mesh_renderer->GetMultiMesh()->GetMesh(j);
 				auto material = mesh_renderer->GetMaterial((size_t)j);
 
 				render::DrawCallInitializer initializer(*mesh, *material);
@@ -55,7 +55,7 @@ namespace ECS { namespace systems {
 				auto draw_call = handle.AddDrawCall(initializer);
 					
 				draw_call->queue = material->GetRenderQueue();
-				draw_call->transform = transform->local_to_world; // TODO: move to AddDrawCall
+				draw_call->transform = transform->GetLocalToWorld(); // TODO: move to AddDrawCall
 				draw_call->obb = obb;
 			}
 
@@ -74,6 +74,7 @@ namespace ECS { namespace systems {
 		{
 			auto* draw_call = draw_call_fetcher.GetComponent(i);
 			draw_call->constants.AddFloat4x4Binding(&draw_call->transform, Device::GetBufferMemberHash(BufferMemberName::ModelMatrix));
+			draw_call->constants.AddFloat4x4Binding(&draw_call->normal_transform, Device::GetBufferMemberHash(BufferMemberName::NormalMatrix));
 			draw_call->constants.Merge(draw_call->material->GetConstantBindings());
 		}
 	}

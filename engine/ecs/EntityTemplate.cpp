@@ -2,12 +2,15 @@
 #include "components/Transform.h"
 #include "components/MultiMeshRenderer.h"
 #include "components/AnimationController.h"
+#include "components/Physics.h"
 #include "ECS.h"
 #include "utils/StringUtils.h"
 #include "utils/JsonUtils.h"
 #include "resources/MaterialResource.h"
 #include "resources/SkeletonResource.h"
 #include "scene/PhysicsHelper.h"
+#include "scene/Scene.h"
+#include "Engine.h"
 
 namespace ECS
 {
@@ -89,7 +92,7 @@ namespace ECS
 			virtual void Spawn(EntityManager& manager, EntityID entity, vec3 position) override
 			{
 				auto* component = manager.AddComponent<MultiMeshRenderer>(entity);
-				component->multi_mesh = Resources::MultiMesh::Handle(path);
+				component->SetMultiMesh(Resources::MultiMesh::Handle(path));
 
 				component->material_resources = render::MaterialResourceList::Create();
 
@@ -98,9 +101,9 @@ namespace ECS
 					const auto default_iter = material_map.find("default");
 					auto default_material = default_iter != material_map.end() ? default_iter->second : material_map.begin()->second;
 
-					for (int i = 0; i < component->multi_mesh->GetMeshCount(); i++)
+					for (int i = 0; i < component->GetMultiMesh()->GetMeshCount(); i++)
 					{
-						std::string mesh_name = component->multi_mesh->GetMeshName(i);
+						std::string mesh_name = component->GetMultiMesh()->GetMeshName(i);
 						utils::Lowercase(mesh_name);
 						auto iter = material_map.find(mesh_name);
 						if (iter != material_map.end())
@@ -116,12 +119,12 @@ namespace ECS
 				}
 
 				AABB combined_aabb;
-				if (component->multi_mesh->GetMeshCount())
-					combined_aabb = component->multi_mesh->GetMesh(0)->aabb();
+				if (component->GetMultiMesh()->GetMeshCount())
+					combined_aabb = component->GetMultiMesh()->GetMesh(0)->aabb();
 
-				for (int i = 1; i < component->multi_mesh->GetMeshCount(); i++)
+				for (int i = 1; i < component->GetMultiMesh()->GetMeshCount(); i++)
 				{
-					const auto mesh_aabb = component->multi_mesh->GetMesh(i)->aabb();
+					const auto mesh_aabb = component->GetMultiMesh()->GetMesh(i)->aabb();
 					combined_aabb.expand(mesh_aabb.min);
 					combined_aabb.expand(mesh_aabb.max);
 				}
@@ -147,6 +150,36 @@ namespace ECS
 			virtual void Spawn(EntityManager& manager, EntityID entity, vec3 position) override
 			{
 				manager.AddComponent<AnimationController>(entity, Resources::SkeletonResource::Handle(skeleton));
+			}
+		};
+
+		class PhysicsCharacterControllerTemplate : public ComponentTemplate
+		{
+			float radius = 1.0f;
+			float height = 1.0f;
+
+			virtual void Load(const rapidjson::Value& data) override
+			{
+				if (data.HasMember("radius"))
+				{
+					if (!data["radius"].IsNumber())
+						throw std::runtime_error("radius must be a number");
+					radius = data["radius"].GetFloat();
+				}
+
+				if (data.HasMember("height"))
+				{
+					if (!data["height"].IsNumber())
+						throw std::runtime_error("height must be a number");
+					height = data["height"].GetFloat();
+				}
+
+			}
+
+			virtual void Spawn(EntityManager& manager, EntityID entity, vec3 position) override
+			{
+				auto phys_controller = manager.AddComponent<PhysXCharacterController>(entity);
+				phys_controller->controller = Engine::Get()->GetScene()->GetPhysics()->CreateCapsuleController(position, vec3(0, 1, 0), height, radius);
 			}
 		};
 
@@ -176,15 +209,18 @@ namespace ECS
 					if (!has_size || !size.IsNumber())
 						throw std::runtime_error("size is missing or must be a number");
 
-					initializer.size = size.GetFloat();
+					initializer.size.x = size.GetFloat();
 				}
 				else if (shape.GetString() == std::string("box"))
 				{
 					initializer.shape = Physics::Helper::PhysicsInitializer::Shape::Box;
-					if (!has_size || !size.IsNumber())
-						throw std::runtime_error("size is missing or must be a number");
+					if (!has_size || !(size.IsNumber() || size.IsArray()))
+						throw std::runtime_error("size is missing or must be a number or array");
 
-					initializer.size = size.GetFloat();
+					if (size.IsNumber())
+						initializer.size = vec3(size.GetFloat() / 2.0f);
+					else
+						initializer.size = utils::JSON::ReadVector3(size);
 				}
 				else if (shape.GetString() == std::string("plane"))
 				{
@@ -198,8 +234,13 @@ namespace ECS
 
 			virtual void Spawn(EntityManager& manager, EntityID entity, vec3 position) override
 			{
-				initializer.position = position;
-				Physics::Helper::AddPhysics(manager, entity, initializer);
+				auto actial_initializer = initializer;
+				actial_initializer.position = position;
+
+				auto transform = manager.GetComponent<Transform>(entity);
+				if (transform)
+					actial_initializer.size *= transform->scale;
+				Physics::Helper::AddPhysics(manager, entity, actial_initializer);
 			}
 		};
 	}
@@ -250,6 +291,7 @@ namespace ECS
 		manager.RegisterComponentTemplate<components::MultiMeshRendererTemplate>("MultiMeshRenderer");
 		manager.RegisterComponentTemplate<components::PhysBodyTemplate>("PhysBody");
 		manager.RegisterComponentTemplate<components::AnimationControllerTemplate>("AnimationController");
+		manager.RegisterComponentTemplate<components::PhysicsCharacterControllerTemplate>("PhysicsCharacterController");
 	}
 
 }

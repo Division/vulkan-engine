@@ -1,0 +1,25 @@
+[
+    {
+        "id":  "test",
+        "components": [
+            {
+              "type": "Transform",
+              "scale": [4, 2, 5]
+            },
+            {
+                "type": "MultiMeshRenderer",
+                "path": "assets/Entities/Basic/cube.mesh",
+                "materials": 
+                {
+                    "default" : "assets/top-down-shooter/characters/uetest/default.mat"
+                }
+            },
+            {
+                "type": "PhysBody",
+                "shape": "box",
+                "size": 1,
+                "dynamic": false
+            }
+        ]
+    }
+]
