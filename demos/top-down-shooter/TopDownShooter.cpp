@@ -73,6 +73,8 @@ ECS::EntityID Game::CreatePlayer()
 	auto bone_attachment = manager->AddComponent<components::BoneAttachment>(rifle_id);
 	bone_attachment->entity_id = player_id;
 	bone_attachment->joint_index = animation_controller->mixer->GetSkeleton()->GetJointIndex("ik_hand_gun");
+	auto socket = animation_controller->mixer->AddSocket("fire_pos", bone_attachment->joint_index);
+	socket->SetPosition(vec3(0, 0.095f, 0.64f));
 
 	return player_id;
 }

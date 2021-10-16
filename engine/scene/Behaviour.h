@@ -46,6 +46,7 @@ namespace scene
 
 		virtual int ExecutionOrder() const { return DEFAULT_ORDER; }
 		virtual void Update(float dt) {}
+		virtual void LateUpdate(float dt) {}
 		virtual void UpdatePhysics(float dt) {}
 		virtual void Awake() {}
 		virtual void Deinitialize() {}

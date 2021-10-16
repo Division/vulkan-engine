@@ -17,12 +17,14 @@ namespace scene
 		double last_shoot_time = 0.0;
 
 	private:
-		void Shoot(ECS::components::Transform* player_transform, CharacterController* character_controller);
+		void Shoot(vec3 position, CharacterController* character_controller);
+		bool should_shoot = false;
 
 	public:
 
 		void Awake() override;
 		void Update(float dt) override;
+		void LateUpdate(float dt) override;
 		void OnAnimationEvent(SkeletalAnimation::EventType type, SkeletalAnimation::EventParam param) override;
 	};
 

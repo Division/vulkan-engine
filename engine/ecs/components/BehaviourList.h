@@ -73,6 +73,12 @@ namespace ECS::components
 				behaviour->Update(dt);
 		}
 
+		void LateUpdate(float dt)
+		{
+			for (auto& behaviour : behaviours)
+				behaviour->LateUpdate(dt);
+		}
+
 		void UpdatePhysics(float dt)
 		{
 			for (auto& behaviour : behaviours)

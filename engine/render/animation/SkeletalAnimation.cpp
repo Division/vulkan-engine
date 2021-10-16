@@ -269,5 +269,76 @@ namespace SkeletalAnimation
 		// Runs ltm job.
 		if (!ltm_job.Run())
 			throw std::runtime_error("Error calculating model matrices");
+
+		UpdateSockets();
+	}
+
+	const mat4* AnimationMixer::GetModelMatrix(uint32_t index) const
+	{
+		if (index < SOCKET_OFFSET)
+			return index < model_matrices.size() ? (mat4*)&model_matrices[index] : nullptr;
+		else
+			return index - SOCKET_OFFSET < sockets.size() ? &sockets[index - SOCKET_OFFSET].GetModelMatrix() : nullptr;
+	}
+
+	AnimationMixer::Socket* AnimationMixer::AddSocket(const char* name, uint32_t parent_index)
+	{
+		auto socket = GetSocket(name);
+		if (!socket)
+		{
+			socket = &sockets.emplace_back(name, parent_index);
+		}
+
+		socket->parent_bone_index = parent_index;
+
+		return socket;
+	}
+
+	void AnimationMixer::RemoveSocket(const char* name)
+	{
+		const uint32_t hash = FastHash(name);
+		sockets.erase(std::remove_if(sockets.begin(), sockets.end(), [hash](const Socket& socket) { return socket.GetNameHash() == hash; }));
+	}
+
+	const AnimationMixer::Socket* AnimationMixer::GetSocket(const char* name) const
+	{
+		return GetSocket(name);
+	}
+
+	AnimationMixer::Socket* AnimationMixer::GetSocket(const char* name)
+	{
+		const uint32_t hash = FastHash(name);
+		auto it = std::find_if(sockets.begin(), sockets.end(), [hash](const Socket& socket) { return socket.GetNameHash() == hash; });
+		return it != sockets.end() ? &*it : nullptr;
+	}
+
+	std::optional<uint32_t> AnimationMixer::GetSocketIndex(const char* name) const
+	{
+		const uint32_t hash = FastHash(name);
+		auto it = std::find_if(sockets.begin(), sockets.end(), [hash](const Socket& socket) { return socket.GetNameHash() == hash; });
+		if (it == sockets.end())
+			return std::nullopt;
+		else
+			return SOCKET_OFFSET + std::distance(sockets.begin(), it);
+	}
+
+	const mat4& AnimationMixer::Socket::GetLocalMatrix() const
+	{
+		if (dirty)
+		{
+			matrix = ComposeMatrix(position, rotation, scale);
+			dirty = false;
+		}
+
+		return matrix;
+	}
+
+	void AnimationMixer::UpdateSockets()
+	{
+		for (auto& socket : sockets)
+		{
+			auto parent_matrix = (mat4&)GetModelMatrices()[socket.GetParentBone()];
+			socket.local_to_model = parent_matrix * socket.GetLocalMatrix();
+		}
 	}
 }

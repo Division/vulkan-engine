@@ -71,6 +71,7 @@ void Scene::Update(IGame& game, float dt)
     ProcessPhysicsSystems();
     ProcessTransformSystems();
     ProcessRendererSystems();
+    behaviour_system->LateUpdate();
 
     DrawDebug();
 }

@@ -260,6 +260,50 @@ namespace SkeletalAnimation
 	class AnimationMixer
 	{
 	public:
+		static constexpr uint32_t SOCKET_OFFSET = 10000; // Bone indices that greater or equal than this are sockets
+
+		class Socket
+		{
+			friend AnimationMixer;
+
+			uint32_t name_hash = 0;
+			uint32_t parent_bone_index = 0;
+			vec3 position = vec3(0);
+			quat rotation;
+			vec3 scale = vec3(1);
+			mutable mat4 matrix = mat4(1); // local TRS combined
+			mutable bool dirty = true;
+			mat4 local_to_model = mat4(1); // not worldspace yet (Transform component not included here)
+
+		public:
+			Socket(const char* name, const uint32_t parent_bone_index)
+				: name_hash(FastHash(name))
+				, parent_bone_index(parent_bone_index)
+			{
+			}
+
+			uint32_t GetParentBone() const { return parent_bone_index; }
+			uint32_t GetNameHash() const { return name_hash; }
+			void SetPosition(const vec3& value) { if (position != value) dirty = true; position = value; }
+			const vec3 GetPosition() const { return position; }
+			void SetRotation(const quat& value) { if (rotation != value) dirty = true; rotation = value; }
+			const quat GetRotation() const { return rotation; }
+			void SetScale(const vec3& value) { if (scale != value) dirty = true; scale = value;  }
+			const vec3 GetScale() const { return scale; }
+
+			vec3 GetModelPosition() const { return vec3(local_to_model[3]); }
+			const vec3 Left() const { return -Right(); }
+			const vec3 Up() const { return vec3(local_to_model[1]); }
+			const vec3 Forward() const { return -Backward(); }
+			const vec3 Right() const { return vec3(local_to_model[0]); }
+			const vec3 Down() const { return -Up(); }
+			const vec3 Backward() const { return vec3(local_to_model[2]); }
+
+			const mat4& GetLocalMatrix() const;
+			const mat4& GetModelMatrix() const { return local_to_model; };
+
+		};
+
 		AnimationMixer(Resources::SkeletonResource::Handle skeleton);
 		~AnimationMixer();
 
@@ -270,18 +314,29 @@ namespace SkeletalAnimation
 		AnimationInstance::Handle BlendAnimation(Resources::SkeletalAnimationResource::Handle animation, const PlaybackParams& params = {});
 		Resources::SkeletonResource::Handle GetSkeleton() const { return skeleton; }
 
-		const ozz::span<const ozz::math::Float4x4> GetModelMatrices() const { return ozz::make_span(model_matrices); }
+		const ozz::span<const ozz::math::Float4x4> GetModelMatrices() const { return ozz::make_span(model_matrices); } // Doesn't include sockets
+		const mat4* GetModelMatrix(uint32_t index) const; // includes sockets
+
 		const vec3& GetRootOffset() const { return root_offset; };
 		void SetRootMotionEnabled(bool value) { root_motion = value; }
 		bool GetRootMotionEnabled() const { return root_motion; }
 		Dispatcher::Handle AddCallback(Dispatcher::Callback callback) { return dispatcher.AddCallback(callback); };
+		Socket* AddSocket(const char* name, uint32_t parent_index);
+		void RemoveSocket(const char* name);
+		Socket* GetSocket(const char* name);
+		const Socket* GetSocket(const char* name) const;
+		std::optional<uint32_t> GetSocketIndex(const char* name) const;
 
 	private:
+		void UpdateSockets();
+
 		uint64_t instance_counter = 0;
 		Resources::SkeletonResource::Handle skeleton;
 		std::vector<std::shared_ptr<AnimationInstance>> instances;
 		std::array<std::vector<ozz::animation::BlendingJob::Layer>, magic_enum::enum_count<BlendingMode>()> blend_layers;
 		Dispatcher dispatcher;
+
+		std::vector<Socket> sockets;
 
 		// Buffer of local transforms which stores the blending result.
 		ozz::vector<ozz::math::SoaTransform> blended_locals;

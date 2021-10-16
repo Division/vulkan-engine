@@ -37,5 +37,13 @@ namespace ECS::systems
 				behaviour->Update(dt);
 		}
 
+		void LateUpdate()
+		{
+			auto dt = manager.GetStaticComponent<components::DeltaTime>()->dt;
+
+			for (auto behaviour : list)
+				behaviour->LateUpdate(dt);
+		}
+
 	};
 }

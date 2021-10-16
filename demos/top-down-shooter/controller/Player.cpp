@@ -39,10 +39,10 @@ namespace scene
 		controller->Initialize(animations);
 	}
 
-	void PlayerBehaviour::Shoot(components::Transform* player_transform, CharacterController* character_controller)
+	void PlayerBehaviour::Shoot(vec3 position, CharacterController* character_controller)
 	{
 		::Projectile::Params params;
-		params.position = player_transform->position + vec3(0, 1.0f, 0);
+		params.position = position;
 		params.direction = vec3(character_controller->GetCurrentAimDir().x, 0, character_controller->GetCurrentAimDir().y);
 		params.speed = 30.0f;
 		params.max_distance = 10.0f;
@@ -51,10 +51,10 @@ namespace scene
 		Game::GetInstance()->GetProjectileManager()->CreateProjectile(params);
 	}
 
-
-
 	void PlayerBehaviour::Update(float dt)
 	{
+		should_shoot = false;
+
 		auto input = Engine::Get()->GetInput();
 
 		auto character_controller = GetBehaviour<CharacterController>().lock();
@@ -98,11 +98,26 @@ namespace scene
 		auto time = Engine::Get()->time();
 		if (character_input.shoot && (time - last_shoot_time > 0.1))
 		{
-			Shoot(transform, character_controller.get());
+			should_shoot = true;
 			last_shoot_time = time;
 		}
 
 		character_controller->SetInput(character_input);
+	}
+
+	void PlayerBehaviour::LateUpdate(float dt)
+	{
+		{
+			auto character_controller = GetBehaviour<CharacterController>().lock();
+			auto animation_controller = GetComponent<components::AnimationController>();
+			auto transform = GetComponent<components::Transform>();
+			auto* socket = animation_controller->mixer->GetSocket("fire_pos");
+
+			const vec3 shoot_position = vec4(socket->GetModelPosition(), 1) * glm::transpose(transform->GetLocalToWorld());
+
+			if (should_shoot)
+				Shoot(shoot_position, character_controller.get());
+		}
 	}
 
 	void PlayerBehaviour::OnAnimationEvent(SkeletalAnimation::EventType type, SkeletalAnimation::EventParam param)
