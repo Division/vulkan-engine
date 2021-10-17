@@ -76,6 +76,7 @@ set(ENGINE_SOURCES
 	ecs/components/AnimationController.h
 	ecs/components/BoneAttachment.h
 	ecs/components/BehaviourList.h
+	ecs/components/Batching.h
 	ecs/systems/TransformSystem.h
 	ecs/systems/TransformSystem.cpp
 	ecs/systems/RendererSystem.h
@@ -89,6 +90,8 @@ set(ENGINE_SOURCES
 	ecs/systems/SkinningSystem.h
 	ecs/systems/SkinningSystem.cpp
 	ecs/systems/BehaviourSystem.h
+	ecs/systems/BatchingSystem.h
+	ecs/systems/BatchingSystem.cpp
 	memory/Profiler.h
 	memory/Profiler.cpp
 	memory/Allocator.h

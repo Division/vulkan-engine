@@ -8,6 +8,7 @@
 #include "ecs/systems/PhysicsSystem.h"
 #include "ecs/systems/BehaviourSystem.h"
 #include "ecs/systems/SkinningSystem.h"
+#include "ecs/systems/BatchingSystem.h"
 #include "ecs/components/Static.h"
 #include "ecs/components/MultiMeshRenderer.h"
 #include "ecs/components/Light.h"
@@ -160,6 +161,8 @@ void Scene::ProcessTransformSystems()
 
 void Scene::ProcessRendererSystems()
 {
+    systems::BatchingVolumeSystem(*entity_manager).ProcessChunks(entity_manager->GetChunkListsWithComponent<components::BatchingVolume>());
+
     // Update lights
     auto lights = entity_manager->GetChunkListsWithComponents<components::Light, components::Transform>();
 

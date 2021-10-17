@@ -41,9 +41,9 @@ Mesh::Handle Mesh::Create(bool keepData, int componentCount, bool isStatic)
     return Mesh::Handle(std::make_unique<Mesh>(keepData, componentCount, isStatic));
 }
 
-Mesh::Handle Mesh::Create(uint32_t flags, uint8_t* vertices, uint32_t vertex_count, uint8_t* indices, uint32_t triangle_count, AABB aabb)
+Mesh::Handle Mesh::Create(uint32_t flags, uint8_t* vertices, uint32_t vertex_count, uint8_t* indices, uint32_t triangle_count, AABB aabb, bool keep_data)
 {
-    return Mesh::Handle(std::make_unique<Mesh>(flags, vertices, vertex_count, indices, triangle_count, aabb));
+    return Mesh::Handle(std::make_unique<Mesh>(flags, vertices, vertex_count, indices, triangle_count, aabb, keep_data));
 }
 
 Mesh::Mesh(bool keepData, int componentCount, bool isStatic) 
@@ -83,9 +83,10 @@ Mesh::Mesh(bool keepData, int componentCount, bool isStatic)
     _colorOffsetBytes = 0;
 }
 
-Mesh::Mesh(uint32_t flags, uint8_t* vertices, uint32_t vertex_count, uint8_t* indices, uint32_t triangle_count, AABB aabb)
-    : Mesh(true, 3, true)
+Mesh::Mesh(uint32_t flags, uint8_t* vertices, uint32_t vertex_count, uint8_t* indices, uint32_t triangle_count, AABB aabb, bool keep_data)
+    : Mesh(keep_data, 3, true)
 {
+    this->flags = flags;
     this->_aabb = aabb;
 
     _strideBytes = GetVertexStride(flags);
@@ -143,25 +144,11 @@ Mesh::Mesh(uint32_t flags, uint8_t* vertices, uint32_t vertex_count, uint8_t* in
 
     if (_keepData)
     {
-        for (int i = 0; i < vertex_count; i++)
-        {
-            vec3& position = mesh_layout.GetPosition(vertices, i);
-            _vertices.insert(_vertices.end(), { position.x, position.y, position.z });
-            if (_hasNormals)
-            {
-                vec3 normal = (vec4)mesh_layout.GetNormal(vertices, i);
-                _normals.insert(_normals.end(), { normal.x, normal.y, normal.z } );
-            }
+        vertex_data.resize(vertex_data_size);
+        index_data.resize(indexes_size);
 
-            if (_hasWeights)
-            {
-                auto& indexes = mesh_layout.GetIndices(vertices, i);
-                auto& weights = mesh_layout.GetWeights(vertices, i);
-
-                _jointIndices.push_back(indexes);
-                _weights.push_back(weights);
-            }
-        }
+        memcpy(vertex_data.data(), vertices, vertex_data_size);
+        memcpy(index_data.data(), indices, indexes_size);
     }
 }
 
@@ -362,7 +349,7 @@ void Mesh::createBuffer() {
 
   assert(_strideBytes == layout.GetStride());
 
-  std::vector<char> data_buffer(_strideBytes * _vertexCount);
+  std::vector<uint8_t> data_buffer(_strideBytes * _vertexCount);
 
   Layout mesh_layout(layout);
 
@@ -423,8 +410,9 @@ void Mesh::createBuffer() {
 
   _calculateAABB();
 
+  
+
   // Free data arrays
-  if (!_keepData) {
     std::vector<float>().swap(_vertices);
     std::vector<float>().swap(_normals);
     std::vector<float>().swap(_tangents);
@@ -433,7 +421,6 @@ void Mesh::createBuffer() {
     std::vector<Vector4b>().swap(_jointIndices);
     std::vector<float>().swap(_colors);
     std::vector<uint16_t>().swap(_indices);
-  }
 }
 
 void Mesh::_prepareVAO() {

@@ -51,8 +51,10 @@ namespace Asset
 				stream >> time;
 				stream >> std::ws;
 
-				if (hash == 0 || time == 0)
+				if (/*hash == 0 || */time == 0) // 0 hash is valid for empty files
+				{
 					throw std::runtime_error("Parsing error: hash and time can't be zero");
+				}
 			};
 
 			std::wstring filename;

@@ -6,6 +6,7 @@
 #include "ecs/components/AnimationController.h"
 #include "ecs/components/BoneAttachment.h"
 #include "ecs/components/BehaviourList.h"
+#include "ecs/components/Batching.h"
 #include "scene/Scene.h"
 #include "render/debug/DebugDraw.h"
 #include "render/texture/Texture.h"
@@ -55,6 +56,42 @@ ECS::EntityID Game::CreateLight(vec3 position, float radius, ECS::components::Li
 	return entity;
 }
 
+ECS::EntityID Game::CreateGrass(vec3 position, float rotation)
+{
+	ECS::EntityID id = manager->CreateEntity();
+
+	{
+		auto transform = manager->AddComponent<components::Transform>(id);
+	}
+
+	{
+		auto renderer = manager->AddComponent<components::MultiMeshRenderer>(id);
+	}
+
+	{
+		auto batching = manager->AddComponent<components::BatchingVolume>(id);
+
+		auto material = Resources::MaterialResource::Handle(L"assets/top-down-shooter/vegetation/Kentucky.mat");
+		auto mesh = Resources::MultiMesh::KeepDataHandle(L"assets/top-down-shooter/vegetation/Kentucky.mesh");
+
+		for (uint32_t i = 0; i < 10; i++)
+		{
+			for (uint32_t j = 0; j < 10; j++)
+			{
+				auto& src = batching->src_meshes.emplace_back();
+				src.position = vec3(i * 0.4f, 0, j * 0.4f);
+				src.rotation = glm::angleAxis(Random() * (float)M_PI * 2, vec3(0, 1, 0));
+				src.scale = vec3(4);
+				src.mesh = mesh->GetMesh(0);
+				src.material = material->Get();
+			}
+		}
+
+	}
+
+	return id;
+}
+
 ECS::EntityID Game::CreatePlayer()
 {
 	auto player_template = Resources::EntityResource::Handle(L"assets/top-down-shooter/characters/uetest/player.entity");
@@ -95,6 +132,8 @@ void Game::init()
 {
 	OPTICK_EVENT();
 
+	Randomize();
+
 	auto* settings = Engine::Get()->GetSceneRenderer()->GetEnvironmentSettings();
 	settings->directional_light->enabled = true;
 	settings->directional_light->zNear = 10;
@@ -109,6 +148,9 @@ void Game::init()
 	engine->GetSceneRenderer()->SetRadianceCubemap(Resources::TextureResource::Handle(L"assets/Textures/environment/IBL/radiance3.ktx"));
 
 	player_id = CreatePlayer();
+
+
+	CreateGrass(vec3(0), 0);
 
 	manager->AddStaticComponent(graph);
 

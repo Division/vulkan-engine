@@ -52,6 +52,11 @@ public:
 		hash = 0;
 	}
 
+	bool HasAttrib(VertexAttrib attrib) const
+	{
+		return attribs[(uint32_t)attrib].offset != -1;
+	}
+
 	uint32_t GetHash() const { return hash; }
 	uint32_t GetStride() const { return stride; }
 	uint32_t GetAttribOffset(VertexAttrib attrib) const

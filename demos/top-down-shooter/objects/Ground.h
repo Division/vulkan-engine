@@ -35,6 +35,7 @@ namespace scene
 
 			material_list->push_back(material);
 			renderer->materials = material_list;
+			renderer->material_resources.reset();
 		}
 
 		void Update(float dt) override

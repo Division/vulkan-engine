@@ -3,6 +3,7 @@
 #include "CommonIncludes.h"
 #include "VertexAttrib.h"
 #include "utils/Math.h"
+#include <gsl/span>
 
 namespace Device
 {
@@ -31,31 +32,44 @@ public:
       VertexLayout layout;
   public:
       Layout(VertexLayout layout) : layout(layout) {}
+      bool HasPosition() const { return layout.HasAttrib(VertexAttrib::Position); }
       vec3& GetPosition(uint8_t* data, size_t index) const { return (vec3&)data[index * layout.GetStride() + layout.GetAttribOffset(VertexAttrib::Position)]; }
+      bool HasNormal() const { return layout.HasAttrib(VertexAttrib::Normal); }
       Vector4_A2R10G10B10& GetNormal(uint8_t* data, size_t index) const { return (Vector4_A2R10G10B10&)data[index * layout.GetStride() + layout.GetAttribOffset(VertexAttrib::Normal)]; }
+      bool HasTangent() const { return layout.HasAttrib(VertexAttrib::Tangent); }
       Vector4_A2R10G10B10& GetTangent(uint8_t* data, size_t index) const { return (Vector4_A2R10G10B10&)data[index * layout.GetStride() + layout.GetAttribOffset(VertexAttrib::Tangent)]; }
+      bool HasCorner() const { return layout.HasAttrib(VertexAttrib::Corner); }
       vec2& GetCorner(uint8_t* data, size_t index) const { return (vec2&)data[index * layout.GetStride() + layout.GetAttribOffset(VertexAttrib::Corner)]; }
+      bool HasColor() const { return layout.HasAttrib(VertexAttrib::VertexColor); }
       vec4& GetColor(uint8_t* data, size_t index) const { return (vec4&)data[index * layout.GetStride() + layout.GetAttribOffset(VertexAttrib::VertexColor)]; }
+      bool HasUV0() const { return layout.HasAttrib(VertexAttrib::TexCoord0); }
       Vector2Half& GetUV0(uint8_t* data, size_t index) const { return (Vector2Half&)data[index * layout.GetStride() + layout.GetAttribOffset(VertexAttrib::TexCoord0)]; }
+      bool HasIndices() const { return layout.HasAttrib(VertexAttrib::JointIndices); }
       Vector4b& GetIndices(uint8_t* data, size_t index) const { return (Vector4b&)data[index * layout.GetStride() + layout.GetAttribOffset(VertexAttrib::JointIndices)]; }
+      bool HasWeights() const { return layout.HasAttrib(VertexAttrib::JointWeights); }
       Vector4b& GetWeights(uint8_t* data, size_t index) const { return (Vector4b&)data[index * layout.GetStride() + layout.GetAttribOffset(VertexAttrib::JointWeights)]; }
   };
 
   using Handle = Common::Handle<Mesh>;
 
   explicit Mesh(bool keepData = true, int componentCount = 3, bool isStatic = true);
-  Mesh(uint32_t flags, uint8_t* vertices, uint32_t vertex_count, uint8_t* indices, uint32_t triangle_count, AABB aabb);
+  Mesh(uint32_t flags, uint8_t* vertices, uint32_t vertex_count, uint8_t* indices, uint32_t triangle_count, AABB aabb, bool keep_data = false);
   virtual ~Mesh();
 
   static size_t GetVertexStride(uint32_t flags);
   static Handle Create(bool keepData = true, int componentCount = 3, bool isStatic = true);
-  static Handle Create(uint32_t flags, uint8_t* vertices, uint32_t vertex_count, uint8_t* indices, uint32_t triangle_count, AABB aabb);
+  static Handle Create(uint32_t flags, uint8_t* vertices, uint32_t vertex_count, uint8_t* indices, uint32_t triangle_count, AABB aabb, bool keep_data = false);
+
+  uint32_t GetFlags() const { return flags; }
 
   Device::VulkanBuffer* vertexBuffer() const { return _vertexBuffer.get(); }
   Device::VulkanBuffer* indexBuffer() const { return _indexBuffer.get(); }
   bool UsesShortIndexes() const { return uses_short_indices; }
 
   const VertexLayout& GetVertexLayout() const { return layout; }
+
+  const gsl::span<const uint8_t> GetVertexData() const { return gsl::make_span(vertex_data); }
+  const gsl::span<const uint8_t> GetIndexData() const { return gsl::make_span(index_data); }
 
   void SetBoneRemap(const uint16_t* indices, int bone_count);
   uint16_t GetBoneRemapIndex(uint16_t mesh_bone_index) const { return bone_remap[mesh_bone_index]; }
@@ -153,6 +167,8 @@ private:
   void _calculateAABB();
 
 private:
+  uint32_t flags = 0;
+
   AABB _aabb;
   VertexLayout layout;
 
@@ -200,6 +216,10 @@ private:
   int _colorOffset;
   int _colorOffsetBytes;
 
+  std::vector<uint16_t> bone_remap;
+  std::vector<uint8_t> vertex_data;
+  std::vector<uint8_t> index_data;
+
   // Attrib data
   std::vector<uint16_t> _indices;
   std::vector<float> _vertices;
@@ -210,6 +230,5 @@ private:
   std::vector<Vector4b> _weights;
   std::vector<Vector4b> _jointIndices;
   std::vector<float> _colors;
-  std::vector<uint16_t> bone_remap;
 };
 

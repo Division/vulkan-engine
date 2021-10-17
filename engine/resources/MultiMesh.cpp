@@ -6,7 +6,12 @@
 
 namespace Resources
 {
-	MultiMesh::MultiMesh(const std::wstring& filename)
+	MultiMesh::MultiMesh(const Initializer& initializer) : MultiMesh(initializer.GetPath(), initializer.GetKeepData())
+	{
+	}
+
+	MultiMesh::MultiMesh(const std::wstring& filename, bool keep_data)
+		: keep_data(keep_data)
 	{
 		std::ifstream stream(filename, std::ios::binary);
 		stream.exceptions(std::ios::badbit | std::ios::failbit);
@@ -93,7 +98,7 @@ namespace Resources
 		vertex_data.resize(vertex_count * vertex_stride);
 		stream.read((char*)vertex_data.data(), vertex_data.size());
 
-		auto mesh = Mesh::Create(flags, vertex_data.data(), vertex_count, index_data.data(), triangle_count, mesh_aabb);
+		auto mesh = Mesh::Create(flags, vertex_data.data(), vertex_count, index_data.data(), triangle_count, mesh_aabb, keep_data);
 		if (bone_remap_data.size())
 			mesh->SetBoneRemap(bone_remap_data.data(), bone_remap_data.size());
 

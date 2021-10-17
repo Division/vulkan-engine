@@ -155,6 +155,8 @@ struct AABB
     vec3 min;
     vec3 max;
 
+    static AABB Empty() { return AABB(vec3(std::numeric_limits<float>::infinity()), vec3(-std::numeric_limits<float>::infinity())); }
+
     AABB() = default;
 
     AABB(const AABB& other) : min(other.min), max(other.max) {}
@@ -171,6 +173,12 @@ struct AABB
     {
         min = glm::min(point, min);
         max = glm::max(point, max);
+    }
+
+    void expand(const AABB& aabb)
+    {
+        expand(aabb.min);
+        expand(aabb.max);
     }
 
     static AABB fromSphere(const vec3 &position, float radius) 

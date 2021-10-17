@@ -1,0 +1,9 @@
+{
+    "texture0": "assets/top-down-shooter/vegetation/Kentucky_AlbedoRoughness.dds",
+    "normal_map": "assets/top-down-shooter/vegetation/Kentucky_NormalAlpha.dds",
+    "shader": "assets/top-down-shooter/vegetation/vegetation.hlsl",
+    "lighting_enabled": true,
+    "roughness": -1.0,
+    "metallness": 0.0,
+    "queue": "translucent"
+}

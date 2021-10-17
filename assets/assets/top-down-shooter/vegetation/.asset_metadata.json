@@ -1,0 +1,65 @@
+[
+    {
+        "type": "copy",
+        "filename": "Kentucky.entity",
+        "uid": "b1164ad93405f248"
+    },
+    {
+        "type": "fbx",
+        "filename": "Kentucky.fbx",
+        "uid": "a4c3d49ab392e7e4",
+        "export_type": "Mesh",
+        "animation_type": "Normal"
+    },
+    {
+        "type": "copy",
+        "filename": "Kentucky.mat",
+        "uid": "5d3eba5f604cb1cb"
+    },
+    {
+        "type": "texture",
+        "filename": "Kentucky_AlbedoRoughness.png",
+        "uid": "804ceda67da6c686",
+        "compression_type": "BC7"
+    },
+    {
+        "type": "texture",
+        "filename": "Kentucky_NormalAlpha.png",
+        "uid": "fd936bce63fcf227",
+        "compression_type": "BC7"
+    },
+    {
+        "type": "copy",
+        "filename": "Lamium.entity",
+        "uid": "88b4ff0a6bc95c5b"
+    },
+    {
+        "type": "fbx",
+        "filename": "Lamium.fbx",
+        "uid": "623c00ed88deb277",
+        "export_type": "Mesh",
+        "animation_type": "Normal"
+    },
+    {
+        "type": "copy",
+        "filename": "Lamium.mat",
+        "uid": "9a4462497d58f7c4"
+    },
+    {
+        "type": "texture",
+        "filename": "Lamium_AlbedoRoughness.png",
+        "uid": "fb8be38e92fa93bd",
+        "compression_type": "BC7"
+    },
+    {
+        "type": "texture",
+        "filename": "Lamium_NormalAlpha.png",
+        "uid": "1e108c80330d3a71",
+        "compression_type": "BC7"
+    },
+    {
+        "type": "copy",
+        "filename": "vegetation.hlsl",
+        "uid": "89997b93ab5bb606"
+    }
+]

@@ -76,6 +76,7 @@ public:
 
 private:
 	ECS::EntityID CreateLight(vec3 position, float radius, ECS::components::Light::Type type, vec3 color);
+	ECS::EntityID Game::CreateGrass(vec3 position, float rotation);
 	ECS::EntityID CreatePlayer();
 	ECS::EntityID CreateNightmare(vec3 position);
 
