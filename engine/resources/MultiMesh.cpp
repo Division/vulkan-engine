@@ -3,6 +3,7 @@
 
 #include "MultiMesh.h"
 #include "render/mesh/Mesh.h"
+#include "utils/StringUtils.h"
 
 namespace Resources
 {
@@ -27,9 +28,11 @@ namespace Resources
 		stream.read((char*)&mesh_count, sizeof(mesh_count));
 		stream.read((char*)&aabb, sizeof(aabb));
 
+		const auto debug_name = utils::WStringToString(filename);
+
 		for (int i = 0; i < mesh_count; i++)
 		{
-			auto [mesh, name, inv_bind_pose] = LoadMesh(stream);
+			auto [mesh, name, inv_bind_pose] = LoadMesh(stream, debug_name);
 			if (!mesh)
 				throw Exception(filename) << "failed loading mesh";
 			
@@ -55,7 +58,7 @@ namespace Resources
 		return Common::Handle<MultiMesh>(std::unique_ptr<MultiMesh>(new MultiMesh(meshes, aabb)));
 	}
 
-	std::tuple<Common::Handle<Mesh>, std::string, std::vector<mat4>> MultiMesh::LoadMesh(std::istream& stream)
+	std::tuple<Common::Handle<Mesh>, std::string, std::vector<mat4>> MultiMesh::LoadMesh(std::istream& stream, const std::string& debug_name)
 	{
 		uint32_t flags, vertex_count, triangle_count;
 		AABB mesh_aabb;
@@ -98,7 +101,7 @@ namespace Resources
 		vertex_data.resize(vertex_count * vertex_stride);
 		stream.read((char*)vertex_data.data(), vertex_data.size());
 
-		auto mesh = Mesh::Create(flags, vertex_data.data(), vertex_count, index_data.data(), triangle_count, mesh_aabb, keep_data);
+		auto mesh = Mesh::Create(flags, vertex_data.data(), vertex_count, index_data.data(), triangle_count, mesh_aabb, keep_data, debug_name);
 		if (bone_remap_data.size())
 			mesh->SetBoneRemap(bone_remap_data.data(), bone_remap_data.size());
 

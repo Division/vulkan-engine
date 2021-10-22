@@ -33,7 +33,7 @@ namespace ECS { namespace systems {
 		for (int i = 0; i < chunk->GetEntityCount(); i++)
 		{
 			auto* mesh_renderer = multimesh_renderer_fetcher.GetComponent(i);
-			if (mesh_renderer->draw_calls)
+			if (!mesh_renderer->GetMultiMesh() || mesh_renderer->draw_calls)
 				continue;
 
 			assert((bool)mesh_renderer->material_resources ^ (bool)mesh_renderer->materials);

@@ -24,7 +24,7 @@ float4 ps_main(VS_out input) : SV_TARGET
 
     PBRData pbr_data;
     pbr_data.albedo = albedo_color.rgb;
-    pbr_data.roughness = albedo_color.w;
+    pbr_data.roughness = 1.0f;
     pbr_data.metalness = 0.0f;
 
     float3 light_color = ComputePBRLighting(vertex_data, pbr_data);

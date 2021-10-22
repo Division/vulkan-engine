@@ -41,15 +41,16 @@ Mesh::Handle Mesh::Create(bool keepData, int componentCount, bool isStatic)
     return Mesh::Handle(std::make_unique<Mesh>(keepData, componentCount, isStatic));
 }
 
-Mesh::Handle Mesh::Create(uint32_t flags, uint8_t* vertices, uint32_t vertex_count, uint8_t* indices, uint32_t triangle_count, AABB aabb, bool keep_data)
+Mesh::Handle Mesh::Create(uint32_t flags, uint8_t* vertices, uint32_t vertex_count, uint8_t* indices, uint32_t triangle_count, AABB aabb, bool keep_data, const std::string& debug_name)
 {
-    return Mesh::Handle(std::make_unique<Mesh>(flags, vertices, vertex_count, indices, triangle_count, aabb, keep_data));
+    return Mesh::Handle(std::make_unique<Mesh>(flags, vertices, vertex_count, indices, triangle_count, aabb, keep_data, debug_name));
 }
 
-Mesh::Mesh(bool keepData, int componentCount, bool isStatic) 
+Mesh::Mesh(bool keepData, int componentCount, bool isStatic, const std::string& debug_name)
     : _keepData(keepData)
     , _componentCount(componentCount)
     , _isStatic(isStatic)
+    , debug_name(debug_name)
 {
     _stride = 0;
     _faceCount = 0;
@@ -83,8 +84,8 @@ Mesh::Mesh(bool keepData, int componentCount, bool isStatic)
     _colorOffsetBytes = 0;
 }
 
-Mesh::Mesh(uint32_t flags, uint8_t* vertices, uint32_t vertex_count, uint8_t* indices, uint32_t triangle_count, AABB aabb, bool keep_data)
-    : Mesh(keep_data, 3, true)
+Mesh::Mesh(uint32_t flags, uint8_t* vertices, uint32_t vertex_count, uint8_t* indices, uint32_t triangle_count, AABB aabb, bool keep_data, const std::string& debug_name)
+    : Mesh(keep_data, 3, true, debug_name)
 {
     this->flags = flags;
     this->_aabb = aabb;
@@ -130,14 +131,17 @@ Mesh::Mesh(uint32_t flags, uint8_t* vertices, uint32_t vertex_count, uint8_t* in
     auto vertex_initializer = Device::VulkanBufferInitializer(vertex_data_size)
         .SetVertex()
         .MemoryUsage(VMA_MEMORY_USAGE_GPU_ONLY)
-        .Data(vertices);
+        .Data(vertices)
+        .Name(debug_name);
+    
     _vertexBuffer = Device::VulkanBuffer::Create(vertex_initializer);
 
     unsigned int indexes_size = (uses_short_indices ? sizeof(uint16_t) : sizeof(uint32_t)) * index_count;
     auto index_initializer = Device::VulkanBufferInitializer(indexes_size)
         .SetIndex()
         .MemoryUsage(VMA_MEMORY_USAGE_GPU_ONLY)
-        .Data(indices);
+        .Data(indices)
+        .Name(debug_name);
     _indexBuffer = Device::VulkanBuffer::Create(index_initializer);
 
     Layout mesh_layout(layout);
@@ -152,8 +156,8 @@ Mesh::Mesh(uint32_t flags, uint8_t* vertices, uint32_t vertex_count, uint8_t* in
     }
 }
 
-Mesh::~Mesh() {
-  _deleteBuffer();
+Mesh::~Mesh() 
+{
 }
 
 // Setting mesh data
@@ -287,11 +291,6 @@ void Mesh::setIndices(const std::vector<uint16_t> &indices) {
   _updateFaceCount();
 }
 
-
-void Mesh::_deleteBuffer() {
-
-}
-
 void Mesh::createBuffer() {
   _stride = _getStrideSize();
   _strideBytes = _stride;
@@ -387,16 +386,11 @@ void Mesh::createBuffer() {
     }
   }
 
-  if (!_isStatic)
-  {
-      last_frame_vertex_buffer = std::move(_vertexBuffer);
-      last_frame_index_buffer = std::move(_indexBuffer);
-  }
-
   auto vertex_initializer = Device::VulkanBufferInitializer(data_buffer.size())
 	  .SetVertex()
 	  .MemoryUsage(VMA_MEMORY_USAGE_GPU_ONLY)
-	  .Data(data_buffer.data());
+	  .Data(data_buffer.data())
+      .Name(debug_name);
   _vertexBuffer = Device::VulkanBuffer::Create(vertex_initializer);
 
   if (_hasIndices) {
@@ -404,7 +398,8 @@ void Mesh::createBuffer() {
 	auto index_initializer = Device::VulkanBufferInitializer(indexSize)
 		.SetIndex()
 		.MemoryUsage(VMA_MEMORY_USAGE_GPU_ONLY)
-		.Data(_indices.data());
+		.Data(_indices.data())
+        .Name(debug_name);
 	_indexBuffer = Device::VulkanBuffer::Create(index_initializer);
   }
 

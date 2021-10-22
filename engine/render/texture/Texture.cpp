@@ -173,9 +173,9 @@ namespace Device {
 		{
 			auto* uploader = Engine::GetVulkanContext()->GetUploader();
 			auto upload_staging_buffer = VulkanBuffer::Create(
-				VulkanBufferInitializer(size).SetStaging().Data(initializer.data)
+				VulkanBufferInitializer(size).SetStaging().Data(initializer.data).Name(initializer.name + " Staging")
 			);
-			uploader->AddImageToUpload(upload_staging_buffer.get(), image, mip_levels, array_layers, initializer.copies.empty() ? GetCopies() : initializer.copies);
+			uploader->AddImageToUpload(upload_staging_buffer, image, mip_levels, array_layers, initializer.copies.empty() ? GetCopies() : initializer.copies);
 		}
 
 		if (!initializer.name.empty())
@@ -198,7 +198,7 @@ namespace Device {
 	{
 		staging_buffers[current_staging_buffer]->Unmap();
 		auto* uploader = Engine::GetVulkanContext()->GetUploader();
-		uploader->AddImageToUpload(staging_buffers[current_staging_buffer].get(), image, 1, array_layers, GetCopies()); // TODO: fix that
+		uploader->AddImageToUpload(staging_buffers[current_staging_buffer], image, 1, array_layers, GetCopies()); // TODO: fix that
 
 		current_staging_buffer = (current_staging_buffer + 1) % caps::MAX_FRAMES_IN_FLIGHT;
 		mapped_pointer = nullptr;

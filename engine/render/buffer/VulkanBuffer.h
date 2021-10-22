@@ -64,6 +64,13 @@ namespace Device {
 			return *this;
 		}
 
+		VulkanBufferInitializer& Name(std::string name)
+		{
+			this->debug_name = std::move(name);
+			return *this;
+		}
+
+		std::string debug_name;
 		VkBufferUsageFlags usage = VK_BUFFER_USAGE_TRANSFER_DST_BIT;
 		uint32_t size = 0;
 		VmaMemoryUsage memory_usage = VMA_MEMORY_USAGE_UNKNOWN;
@@ -89,8 +96,10 @@ namespace Device {
 		
 		void* Map();
 		void Unmap();
+		const std::string& GetDebugName() const { return debug_name; }
 
 	protected:
+		std::string debug_name;
 		VkBuffer buffer;
 		VkBufferUsageFlags usage;
 		uint32_t size;

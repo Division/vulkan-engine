@@ -52,13 +52,13 @@ public:
 
   using Handle = Common::Handle<Mesh>;
 
-  explicit Mesh(bool keepData = true, int componentCount = 3, bool isStatic = true);
-  Mesh(uint32_t flags, uint8_t* vertices, uint32_t vertex_count, uint8_t* indices, uint32_t triangle_count, AABB aabb, bool keep_data = false);
+  explicit Mesh(bool keepData = true, int componentCount = 3, bool isStatic = true, const std::string& debug_name = "ProceduralMesh");
+  Mesh(uint32_t flags, uint8_t* vertices, uint32_t vertex_count, uint8_t* indices, uint32_t triangle_count, AABB aabb, bool keep_data = false, const std::string& debug_name = "Mesh");
   virtual ~Mesh();
 
   static size_t GetVertexStride(uint32_t flags);
   static Handle Create(bool keepData = true, int componentCount = 3, bool isStatic = true);
-  static Handle Create(uint32_t flags, uint8_t* vertices, uint32_t vertex_count, uint8_t* indices, uint32_t triangle_count, AABB aabb, bool keep_data = false);
+  static Handle Create(uint32_t flags, uint8_t* vertices, uint32_t vertex_count, uint8_t* indices, uint32_t triangle_count, AABB aabb, bool keep_data = false, const std::string& debug_name = "Mesh");
 
   uint32_t GetFlags() const { return flags; }
 
@@ -161,7 +161,6 @@ public:
 
 private:
   int _getStrideSize();
-  void _deleteBuffer();
   void _updateFaceCount();
   void _prepareVAO();
   void _calculateAABB();
@@ -169,14 +168,12 @@ private:
 private:
   uint32_t flags = 0;
 
+  std::string debug_name;
   AABB _aabb;
   VertexLayout layout;
 
   Device::Handle<Device::VulkanBuffer> _vertexBuffer;
   Device::Handle<Device::VulkanBuffer> _indexBuffer;
-
-  Device::Handle<Device::VulkanBuffer> last_frame_vertex_buffer;
-  Device::Handle<Device::VulkanBuffer> last_frame_index_buffer;
 
   bool _isStatic;
   bool _keepData;

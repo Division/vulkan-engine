@@ -53,7 +53,7 @@ namespace render
 
 		shader_upsample = shader_cache.GetShaderProgram(upsample_info);
 
-		full_screen_quad_mesh = std::make_unique<Mesh>(false);
+		full_screen_quad_mesh = std::make_unique<Mesh>(false, 3, true, "Bloom full screen quad");
 		MeshGeneration::generateFullScreenQuad(full_screen_quad_mesh.get());
 		full_screen_quad_mesh->createBuffer();
 	}

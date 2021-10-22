@@ -9,11 +9,6 @@
 
 class Mesh;
 
-namespace Common
-{
-	template <typename T> class Handle;
-}
-
 namespace Resources
 {
 
@@ -61,7 +56,7 @@ namespace Resources
 		const std::vector<mat4>& GetInvBindPose(int index) const { return inv_bind_poses[index]; };
 
 	private:
-		std::tuple<Common::Handle<Mesh>, std::string, std::vector<mat4>> LoadMesh(std::istream& stream);
+		std::tuple<Common::Handle<Mesh>, std::string, std::vector<mat4>> LoadMesh(std::istream& stream, const std::string& name);
 
 	private:
 		bool keep_data = false;

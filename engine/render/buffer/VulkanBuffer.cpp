@@ -9,6 +9,7 @@ namespace Device {
 
 	VulkanBuffer::VulkanBuffer(VulkanBufferInitializer initializer)
 	{
+		debug_name = std::move(initializer.debug_name);
 		usage = initializer.usage;
 		size = initializer.size;
 
@@ -20,6 +21,9 @@ namespace Device {
 		
 		auto allocator = Engine::GetVulkanContext()->GetAllocator();
 		vmaCreateBuffer(allocator, &bufferInfo, &allocInfo, &buffer, &allocation, nullptr);
+
+		if (debug_name.size())
+			Engine::GetVulkanContext()->AssignDebugName((uint64_t)buffer, vk::DebugReportObjectTypeEXT::eBuffer, ("[Buffer] " + debug_name).c_str());
 
 		if (initializer.data)
 		{
@@ -34,12 +38,12 @@ namespace Device {
 
 				// Create temporary staging buffer
 				auto staging_buffer = VulkanBuffer::Create(
-					VulkanBufferInitializer(size).SetStaging().Data(initializer.data)
+					VulkanBufferInitializer(size).SetStaging().Data(initializer.data).Name("[Staging] "+ debug_name)
 				);
 
 				// Upload from staging to current buffer
 				auto* uploader = Engine::GetVulkanContext()->GetUploader();
-				uploader->AddToUpload(staging_buffer.get(), this, size);
+				uploader->AddToUpload(staging_buffer, this, size);
 			}
 
 		}

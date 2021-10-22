@@ -20,12 +20,12 @@ namespace Device {
 			UploadBase(UploadBase&&);
 
 			virtual void Process(vk::CommandBuffer& command_buffer) {};
-			VulkanBuffer* src_buffer;
+			Device::Handle<VulkanBuffer> src_buffer;
 		};
 
 		struct BufferUpload : public UploadBase
 		{
-			BufferUpload(VulkanBuffer* src_buffer, VulkanBuffer* dst_buffer, VkDeviceSize size);
+			BufferUpload(Device::Handle<VulkanBuffer> src_buffer, VulkanBuffer* dst_buffer, VkDeviceSize size);
 			BufferUpload(BufferUpload&& other);
 			~BufferUpload();
 
@@ -37,7 +37,7 @@ namespace Device {
 
 		struct ImageUpload : public UploadBase
 		{
-			ImageUpload(VulkanBuffer* src_buffer, vk::Image dst_image, uint32_t mip_count, uint32_t array_count, std::vector<vk::BufferImageCopy> copies);
+			ImageUpload(Device::Handle<VulkanBuffer> src_buffer, vk::Image dst_image, uint32_t mip_count, uint32_t array_count, std::vector<vk::BufferImageCopy> copies);
 			ImageUpload(ImageUpload&& other);
 			~ImageUpload();
 
@@ -49,8 +49,8 @@ namespace Device {
 			std::vector<vk::BufferImageCopy> copies;
 		};
 
-		void AddToUpload(VulkanBuffer* src_buffer, VulkanBuffer* dst_buffer, vk::DeviceSize size);
-		void AddImageToUpload(VulkanBuffer* src_buffer, vk::Image dst_image, uint32_t mip_count, uint32_t array_count, std::vector<vk::BufferImageCopy> copies);
+		void AddToUpload(Device::Handle<VulkanBuffer> src_buffer, VulkanBuffer* dst_buffer, vk::DeviceSize size);
+		void AddImageToUpload(Device::Handle<VulkanBuffer> src_buffer, vk::Image dst_image, uint32_t mip_count, uint32_t array_count, std::vector<vk::BufferImageCopy> copies);
 		void ProcessUpload();
 		
 		VulkanUploader();

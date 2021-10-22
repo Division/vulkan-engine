@@ -45,7 +45,7 @@ namespace ECS::systems
 		{
 			memcpy(vertex_data.data() + vertex_offset, batch->mesh->GetVertexData().data(), batch->mesh->GetVertexData().size_bytes());
 			auto transform = ComposeMatrix(batch->position, batch->rotation, batch->scale);
-			auto normal_transform = glm::inverse(glm::transpose(transform));
+			auto normal_transform = glm::transpose(glm::inverse(transform));
 
 			for (uint32_t i = 0; i < batch->mesh->vertexCount(); i++)
 			{
@@ -101,10 +101,66 @@ namespace ECS::systems
 		}
 
 		auto material = batches[0]->material;
-		auto mesh = Mesh::Create(batches[0]->mesh->GetFlags(), vertex_data.data(), vertex_count, index_data.data(), index_count / 3, aabb);
+		auto mesh = Mesh::Create(batches[0]->mesh->GetFlags(), vertex_data.data(), vertex_count, index_data.data(), index_count / 3, aabb, false, "BatchingVolume");
 
 		return { material, mesh };
 	}
+
+	class BatchingVolumeSystem::ProcessBatchingJob : public Thread::Job
+	{
+	public:
+		ProcessBatchingJob(std::vector<BatchingVolume::BatchSrc> src_meshes, BatchingVolume::JobData* data)
+			: Job()
+			, src_meshes(std::move(src_meshes))
+			, data(data)
+		{
+			assert(data->state == BatchingVolume::JobData::State::Idle);
+			data->state = BatchingVolume::JobData::State::Processing;
+		}
+
+		virtual void Execute() override
+		{
+			OPTICK_EVENT();
+			BatchMap batch_map;
+
+			for (auto& batch : src_meshes)
+				batch_map.insert({ batch.GetHash(), &batch });
+
+			utils::SmallVector<BatchingVolume::BatchSrc*, 128> batch_array;
+			utils::SmallVector<Mesh::Handle, 128> mesh_array;
+
+			auto material_list = render::MaterialList::Create();
+
+			auto aabb = AABB::Empty();
+
+			uint32_t key = batch_map.begin()->first;
+			for (auto it = batch_map.begin(); it != batch_map.end(); it++)
+			{
+				const auto next = std::next(it);
+				batch_array.push_back(it->second);
+
+				if (next == batch_map.end() || key != next->first)
+				{
+					auto [material, mesh] = CreateMergedMesh(gsl::make_span(batch_array.data(), batch_array.size()));
+					material_list->push_back(material);
+					mesh_array.push_back(mesh);
+					aabb.expand(mesh->aabb());
+
+					key = it->first;
+					batch_array.clear();
+				}
+			}
+
+			data->result_materials = material_list;
+			data->result_mesh = Resources::MultiMesh::Create(gsl::make_span(mesh_array.data(), mesh_array.size()), aabb);
+			data->aabb = aabb;
+			data->state = BatchingVolume::JobData::State::Ready;
+		}
+
+	private:
+		std::vector<BatchingVolume::BatchSrc> src_meshes;
+		BatchingVolume::JobData* data = nullptr;
+	};
 
 	void BatchingVolumeSystem::Process(Chunk* chunk)
 	{
@@ -114,67 +170,42 @@ namespace ECS::systems
 		ComponentFetcher<Transform> transform_fetcher(*chunk);
 		ComponentFetcher<BatchingVolume> batching_volume_fetcher(*chunk);
 
-		BatchMap batch_map;
 
 		for (int i = 0; i < chunk->GetEntityCount(); i++)
 		{
 			auto* batching_volume = batching_volume_fetcher.GetComponent(i);
-			if (!batching_volume->is_dirty)
-				continue;
-
 			auto* transform = transform_fetcher.GetComponent(i);
 			auto* mesh_renderer = mesh_renderer_fetcher.GetComponent(i);
 
-			mesh_renderer->draw_calls.Reset();
-			if (mesh_renderer->materials)
-				mesh_renderer->materials->clear();
+			if (batching_volume->IsReady())
+			{
+				batching_volume->job_data->state = BatchingVolume::JobData::State::Idle;
+				mesh_renderer->SetMultiMesh(batching_volume->job_data->result_mesh);
+				mesh_renderer->materials = batching_volume->job_data->result_materials;
+				mesh_renderer->material_resources.reset();
+				transform->bounds = batching_volume->job_data->aabb;
+			}
 
-			mesh_renderer->SetMultiMesh(Resources::MultiMesh::Handle(nullptr));
+			if (!batching_volume->IsIdle() || !batching_volume->is_dirty)
+				continue;
+
 
 			if (batching_volume->src_meshes.size() > 0)
-				AppendMesh(batch_map, transform, batching_volume, mesh_renderer);
+			{
+				Thread::Scheduler::Get().SpawnJob<ProcessBatchingJob>(Thread::Job::Priority::High, batching_volume->src_meshes, batching_volume->job_data.get());
+				//ProcessBatchingJob(batching_volume->src_meshes, batching_volume->job_data.get()).Execute();
+			}
+			else
+			{
+				mesh_renderer->draw_calls.Reset();
+				if (mesh_renderer->materials)
+					mesh_renderer->materials->clear();
+
+				mesh_renderer->SetMultiMesh(Resources::MultiMesh::Handle(nullptr));
+			}
 
 			batching_volume->is_dirty = false;
 		}
 	}
 
-	void BatchingVolumeSystem::AppendMesh(BatchMap& batch_map, components::Transform* transform, components::BatchingVolume* batching_volume, MultiMeshRenderer* mesh_renderer)
-	{
-		batch_map.clear();
-
-		for (auto& batch : batching_volume->src_meshes)
-			batch_map.insert({ batch.GetHash(), &batch });
-
-		utils::SmallVector<BatchingVolume::BatchSrc*, 128> batch_array;
-		utils::SmallVector<Mesh::Handle, 128> mesh_array;
-
-
-		auto material_list = render::MaterialList::Create();
-
-		auto aabb = AABB::Empty();
-
-		uint32_t key = batch_map.begin()->first;
-		for (auto it = batch_map.begin(); it != batch_map.end(); it++)
-		{
-			const auto next = std::next(it);
-			batch_array.push_back(it->second);
-
-			if (next == batch_map.end() || key != next->first)
-			{
-				auto [material, mesh] = CreateMergedMesh(gsl::make_span(batch_array.data(), batch_array.size()));
-				material_list->push_back(material);
-				mesh_array.push_back(mesh);
-				aabb.expand(mesh->aabb());
-
-				key = it->first;
-				batch_array.clear();
-			}
-
-		}
-
-		mesh_renderer->SetMultiMesh(Resources::MultiMesh::Create(gsl::make_span(mesh_array.data(), mesh_array.size()), aabb));
-		mesh_renderer->materials = material_list;
-		mesh_renderer->material_resources.reset();
-		transform->bounds = aabb;
-	}
 }

@@ -43,6 +43,11 @@ namespace Projectile
 	class ProjectileManager;
 }
 
+namespace scene
+{
+	class GroundItemsCache;
+}
+
 namespace Resources
 {
 	class TextureResource;
@@ -87,6 +92,7 @@ private:
 	std::unique_ptr<ViewerCamera> camera;
 	vec3 last_player_position;
 	std::unique_ptr<Projectile::ProjectileManager> projectile_manager;
+	std::unique_ptr<scene::GroundItemsCache> ground_items;
 
 	ECS::EntityManager* manager = nullptr;
 	ECS::TransformGraph* graph = nullptr;

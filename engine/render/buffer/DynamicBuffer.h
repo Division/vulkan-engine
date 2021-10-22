@@ -61,7 +61,7 @@ namespace Device {
 			if (upload_data_size)
 			{
 				auto* uploader = Engine::GetVulkanContext()->GetUploader();
-				uploader->AddToUpload(staging_buffers[current_staging_buffer].get(), buffer.get(), upload_data_size);
+				uploader->AddToUpload(staging_buffers[current_staging_buffer], buffer.get(), upload_data_size);
 			}
 
 			current_staging_buffer = (current_staging_buffer + 1) % staging_buffers.size();

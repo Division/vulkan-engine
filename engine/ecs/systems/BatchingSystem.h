@@ -3,6 +3,7 @@
 #include "ecs/System.h"
 #include "ecs/components/Batching.h"
 #include <unordered_map>
+#include "system/JobSystem.h"
 
 namespace ECS::components
 {
@@ -16,8 +17,7 @@ namespace ECS::systems
 	class BatchingVolumeSystem : public System
 	{
 		typedef std::unordered_multimap<uint32_t, components::BatchingVolume::BatchSrc*> BatchMap;
-
-		void AppendMesh(BatchMap& batch_map, components::Transform* transform, components::BatchingVolume* volume, components::MultiMeshRenderer* mesh_renderer);
+		class ProcessBatchingJob;
 
 	public:
 		BatchingVolumeSystem(EntityManager& manager) : System(manager) {}

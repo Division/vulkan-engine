@@ -21,10 +21,10 @@ namespace render {
         shader = shader_cache.GetShaderProgram(shader_info);
 
 
-        line_meshes[0] = std::make_unique<Mesh>(true, 2, false);
-        line_meshes[1] = std::make_unique<Mesh>(true, 2, false);
-        point_meshes[0] = std::make_unique<Mesh>(true, 1, false);
-        point_meshes[1] = std::make_unique<Mesh>(true, 1, false);
+        line_meshes[0] = std::make_unique<Mesh>(true, 2, false, "Line Debug Mesh");
+        line_meshes[1] = std::make_unique<Mesh>(true, 2, false, "Line Debug Mesh");
+        point_meshes[0] = std::make_unique<Mesh>(true, 1, false, "Point Debug Mesh");
+        point_meshes[1] = std::make_unique<Mesh>(true, 1, false, "Point Debug Mesh");
     }
 
     void DebugDraw::DrawLine(const vec3 &p1, const vec3 &p2, const vec4 &color) {
