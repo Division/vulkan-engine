@@ -77,6 +77,9 @@ public:
 	RenderQueue GetRenderQueue() const { return render_queue; }
 	void SetRenderQueue(RenderQueue value) { render_queue = value; }
 
+	void SetAlphaCutoff(bool value);
+	bool GetAlphaCutoff() const { return alpha_cutoff; }
+
 	const ShaderCapsSet& ShaderCaps() const { if (caps_dirty) UpdateCaps(); return shader_caps; }
 	const Device::ResourceBindings& GetResourceBindings() const { if (bindings_dirty) UpdateBindings(); return resource_bindings; }
 	const Device::ConstantBindings& GetConstantBindings() const { if (constants_dirty) UpdateConstants(); return constant_bindings; }
@@ -121,6 +124,7 @@ protected:
 	vec4 color = vec4(1,1,1,1);
 	float roughness = 0.5;
 	float metalness = 0.2;
+	bool alpha_cutoff = false;
 
 	// TODO: unify/factorize this when more combinations is needed
 	mutable Device::ShaderProgramInfo shader_info;

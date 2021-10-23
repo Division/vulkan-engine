@@ -54,20 +54,21 @@ namespace Device {
 		ShaderCache();
 		~ShaderCache();
 
-		const std::vector<uint8_t>& GetShaderSource(const std::wstring& filename);
+		static const std::vector<uint8_t>& GetShaderSource(const std::wstring& filename);
 		ShaderProgram* GetShaderProgram(const ShaderProgramInfo& info);
 	private:
 		class PrepareShaderJob;
+		static uint32_t GetShaderSourceHash(const std::wstring& path);
 		static uint32_t GetCombinedHash(uint32_t name_hash, const ShaderCapsSet& caps_set);
 		static uint32_t GetDefinesHash(std::vector<ShaderProgramInfo::Macro> defines);
 		ShaderModule* GetShaderModule(const ShaderProgramInfo::ShaderData& shader_data);
 		bool LoadShaderModule(ShaderModule& module, const ShaderProgramInfo::ShaderData& shader_data);
 
 	private:
-		std::mutex source_mutex;
+		inline static std::unordered_map<std::wstring, std::vector<uint8_t>> source_cache;
+		inline static std::mutex source_mutex;
 		std::mutex program_mutex;
 		std::mutex module_mutex;
-		std::unordered_map<std::wstring, std::vector<uint8_t>> source_cache;
 		std::unordered_map<uint32_t, std::unique_ptr<ShaderModule>> module_cache;
 		std::unordered_map<uint32_t, std::unique_ptr<ShaderProgram>> program_cache;
 	};

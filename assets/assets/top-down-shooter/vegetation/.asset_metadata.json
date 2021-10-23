@@ -1,6 +1,93 @@
 [
     {
         "type": "copy",
+        "filename": "CamomileFlower.entity",
+        "uid": "b10cf7b9ad8a417a"
+    },
+    {
+        "type": "fbx",
+        "filename": "CamomileFlower.fbx",
+        "uid": "43678810235b07e3",
+        "export_type": "Mesh",
+        "animation_type": "Normal"
+    },
+    {
+        "type": "copy",
+        "filename": "CamomileFlower.mat",
+        "uid": "4dba421d0a40df0d"
+    },
+    {
+        "type": "texture",
+        "filename": "CamomileFlower_AlbedoRoughness.png",
+        "uid": "4e21a1f9156aa70f",
+        "compression_type": "BC7"
+    },
+    {
+        "type": "texture",
+        "filename": "CamomileFlower_NormalAlpha.png",
+        "uid": "7d2820423a1309b9",
+        "compression_type": "BC7"
+    },
+    {
+        "type": "copy",
+        "filename": "Clovers.entity",
+        "uid": "4f1ca761a07c9d98"
+    },
+    {
+        "type": "fbx",
+        "filename": "Clovers.fbx",
+        "uid": "c68e577bfca3d226",
+        "export_type": "Mesh",
+        "animation_type": "Normal"
+    },
+    {
+        "type": "copy",
+        "filename": "Clovers.mat",
+        "uid": "b4b8d77d08658683"
+    },
+    {
+        "type": "texture",
+        "filename": "Clovers_AlbedoRoughness.png",
+        "uid": "f6c97323c8ba9c05",
+        "compression_type": "BC7"
+    },
+    {
+        "type": "texture",
+        "filename": "Clovers_NormalAlpha.png",
+        "uid": "b322df2489fc81dd",
+        "compression_type": "BC7"
+    },
+    {
+        "type": "copy",
+        "filename": "Ear.entity",
+        "uid": "2d3dd5021dd4d1d3"
+    },
+    {
+        "type": "fbx",
+        "filename": "Ear.fbx",
+        "uid": "50e573815977f019",
+        "export_type": "Mesh",
+        "animation_type": "Normal"
+    },
+    {
+        "type": "copy",
+        "filename": "Ear.mat",
+        "uid": "0ed26f8565cb06e6"
+    },
+    {
+        "type": "texture",
+        "filename": "Ear_AlbedoRoughness.png",
+        "uid": "04695cc12caf6cba",
+        "compression_type": "BC7"
+    },
+    {
+        "type": "texture",
+        "filename": "Ear_NormalAlpha.png",
+        "uid": "169d2a825596306f",
+        "compression_type": "BC7"
+    },
+    {
+        "type": "copy",
         "filename": "Kentucky.entity",
         "uid": "b1164ad93405f248"
     },

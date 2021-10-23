@@ -1,0 +1,17 @@
+[
+    {
+        "components": [
+            {
+                "type": "Transform"
+            },
+            {
+                "type": "MultiMeshRenderer",
+                "path": "assets/top-down-shooter/vegetation/Ear.mesh",
+                "materials": [
+                  "assets/top-down-shooter/vegetation/Ear.mat"
+                ]
+            }
+            
+        ]
+    }
+]

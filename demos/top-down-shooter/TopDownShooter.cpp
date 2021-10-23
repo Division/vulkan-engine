@@ -138,6 +138,7 @@ void Game::init()
 	auto* settings = Engine::Get()->GetSceneRenderer()->GetEnvironmentSettings();
 	settings->directional_light->enabled = true;
 	settings->directional_light->zNear = 10;
+	settings->bloom_strength = 1.0f;
 
 	instance = this;
 
@@ -158,7 +159,7 @@ void Game::init()
 
 	//point_light_id = CreateLight(vec3(2.5, 4, 0), 10, ECS::components::Light::Type::Point, vec3(1, 1, 1) * 10.0f);
 
-	ground_items = std::make_unique<scene::GroundItemsCache>(*manager);
+	ground_items = std::make_unique<scene::GroundItemsCache>(*manager, L"assets/top-down-shooter/ground/copy_grass.png");
 	camera = std::make_unique<ViewerCamera>();
 
 	auto plane_handle = Resources::EntityResource::Handle(L"assets/top-down-shooter/ground/ground.entity");

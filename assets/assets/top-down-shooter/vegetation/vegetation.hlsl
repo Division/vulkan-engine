@@ -7,19 +7,16 @@ VS_out vs_main(VS_in input)
 
 float4 ps_main(VS_out input) : SV_TARGET
 {
-#if defined(DEPTH_ONLY)
-    return 1;
-#else
     VertexData vertex_data = GePSVertexData(input);
-
     float4 normal_map_value = normal_map.Sample(SamplerLinearWrap, vertex_data.texcoord0);
-    float4 normal_worldspace = GetTBNNormal(vertex_data, normal_map_value);
-
     float alpha = normal_map_value.a;
-
     if (alpha < 0.5f)
         discard;
 
+#if defined(DEPTH_ONLY)
+    return 1;
+#else
+    float4 normal_worldspace = GetTBNNormal(vertex_data, normal_map_value);
     float4 albedo_color = texture0.Sample(SamplerLinearWrap, vertex_data.texcoord0);
 
     PBRData pbr_data;

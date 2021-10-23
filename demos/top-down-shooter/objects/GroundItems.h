@@ -27,7 +27,9 @@ namespace scene
 		enum class GrassType
 		{
 			Kentucky,
-			Lamium
+			Lamium,
+			Ear,
+			Clovers
 		};
 
 		struct GrassHandles
@@ -37,11 +39,11 @@ namespace scene
 		};
 
 		static constexpr float TILE_SIZE = 6.0f;
-		static constexpr int32_t TILE_VISIBLE_RADIUS = 1;
+		static constexpr int32_t TILE_VISIBLE_RADIUS = 2;
 		static constexpr int32_t TILE_VISIBLE_DIAMETER = TILE_VISIBLE_RADIUS * 2 + 1;
 		static constexpr float SPLATMAP_SIZE = 6.0f;
 
-		GroundItemsCache(ECS::EntityManager& manager);
+		GroundItemsCache(ECS::EntityManager& manager, const std::wstring& grass_texture);
 		void Update(float dt);
 		void OnMovedToTile(glm::ivec2 tile);
 
@@ -58,6 +60,10 @@ namespace scene
 		static GroundItemsCache* GetInstance() { return instance; }
 
 		const auto& GetGrassHandle(GrassType type) const { return grass_handles[(size_t)type]; }
+
+		vec4 GetGrassValueFromWorldPos(vec3 world_pos) const;
+		vec4 GetGrassValue(vec2 texcoord) const { return grass_map ? grass_map->GetInterpolatedValue(texcoord) : vec4(0); }
+		vec2 GetGrassTexelSize() const { return grass_map ? grass_map->texel_size : vec2(0); }
 
 	private:
 		void AwakeTile(glm::ivec2 tile);
@@ -78,6 +84,18 @@ namespace scene
 			};
 		};
 
+		struct GrassMap
+		{
+			typedef std::unique_ptr<unsigned char, void(*)(unsigned char*)> TextureData;
+
+			int width = 0;
+			int height = 0;
+			TextureData data = TextureData(nullptr, [](auto p) {});
+			vec2 texel_size;
+			vec4 GetInterpolatedValue(vec2 coord) const;
+		};
+
+		std::optional<GrassMap> grass_map;
 		std::array<GrassHandles, magic_enum::enum_count<GrassType>()> grass_handles;
 
 		std::unordered_map<glm::ivec2, TileData, TileData::Hasher> tiles;

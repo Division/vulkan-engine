@@ -1,6 +1,6 @@
 {
-  "texture0": "assets/top-down-shooter/vegetation/Lamium_AlbedoRoughness.dds",
-  "normal_map": "assets/top-down-shooter/vegetation/Lamium_NormalAlpha.dds",
+  "texture0": "assets/top-down-shooter/vegetation/CamomileFlower_AlbedoRoughness.dds",
+  "normal_map": "assets/top-down-shooter/vegetation/CamomileFlower_NormalAlpha.dds",
   "shader": "assets/top-down-shooter/vegetation/vegetation.hlsl",
   "lighting_enabled": true,
   "roughness": -1.0,

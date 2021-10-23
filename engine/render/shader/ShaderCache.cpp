@@ -73,9 +73,9 @@ namespace Device {
 		return FastHash(combined_hash, sizeof(combined_hash));
 	}
 
-	uint32_t GetShaderSourceHash(const std::wstring& path)
+	uint32_t ShaderCache::GetShaderSourceHash(const std::wstring& path)
 	{
-		auto source_data = loader::LoadFile(path);
+		auto& source_data = GetShaderSource(path);
 		uint32_t source_hash = 0;
 		if (source_data.size())
 			source_hash = FastHash(source_data.data(), source_data.size());

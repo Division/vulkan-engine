@@ -32,10 +32,7 @@ float4 ps_main(VS_out input) : SV_TARGET
     float4 normal2_worldspace = GetTBNNormal(vertex_data, normal2.Sample(SamplerLinearWrap, vertex_data.texcoord0));
     float4 normal3_worldspace = GetTBNNormal(vertex_data, normal3.Sample(SamplerLinearWrap, vertex_data.texcoord0));
 
-    float4 splatmap_values = splatmap.Sample(SamplerLinearWrap, vertex_data.texcoord0 * 0.01f);
-    splatmap_values.w = 0.001f;
-    splatmap_values = normalize(splatmap_values);
-    splatmap_values.w = 1.0f - (splatmap_values.x + splatmap_values.y + splatmap_values.z);
+    float4 splatmap_values = splatmap.Sample(SamplerLinearWrap, vertex_data.texcoord0 * 0.05f);
 
     float4 albedo_final = albedo0_color * splatmap_values.x + albedo1_color * splatmap_values.y + albedo2_color * splatmap_values.z + albedo3_color * splatmap_values.w;
     vertex_data.normal_worldspace = normalize(normal0_worldspace * splatmap_values.x + normal1_worldspace * splatmap_values.y + normal2_worldspace * splatmap_values.z + normal3_worldspace * splatmap_values.w);

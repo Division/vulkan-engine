@@ -109,6 +109,15 @@ void Material::SetTexture0Resource(TextureResource::Handle texture)
 	}
 }
 
+void Material::SetAlphaCutoff(bool value) 
+{ 
+	if (alpha_cutoff != value)
+	{
+		alpha_cutoff = value; 
+		SetDirty();
+	}
+}
+
 void Material::SetNormalMapResource(Resources::TextureResource::Handle normal_map)
 {
 	if (this->normal_map_resource != normal_map)
@@ -206,17 +215,30 @@ void Material::UpdateShaderHash() const
 	UpdateCaps();
 	std::vector<ShaderProgramInfo::Macro> defines;
 	ShaderCache::AppendCapsDefines(shader_caps, defines);
+	if (alpha_cutoff)
+	{
+		defines.push_back({ "ALPHA_CUTOFF", "1" });
+	}
+
+	std::vector<ShaderProgramInfo::Macro> defines_depth_only = defines;
+	defines_depth_only.push_back({ "DEPTH_ONLY", "1" });
 
 	auto vertex_data = ShaderProgramInfo::ShaderData(ShaderProgram::Stage::Vertex, shader_path, "vs_main", defines);
 	auto fragment_data = ShaderProgramInfo::ShaderData(ShaderProgram::Stage::Fragment, shader_path, "ps_main", defines);
-	auto vertex_depth_only_data = ShaderProgramInfo::ShaderData(ShaderProgram::Stage::Vertex, shader_path, "vs_main", { {"DEPTH_ONLY", "1" } });
+	auto vertex_depth_only_data = ShaderProgramInfo::ShaderData(ShaderProgram::Stage::Vertex, shader_path, "vs_main", defines_depth_only);
 	auto fragment_depth_only_data = ShaderProgramInfo::ShaderData(ShaderProgram::Stage::Fragment, L"shaders/noop.hlsl");
+	if (alpha_cutoff)
+	{
+		fragment_depth_only_data = ShaderProgramInfo::ShaderData(ShaderProgram::Stage::Fragment, shader_path, "ps_main", defines_depth_only);
+	}
 
 	ShaderCapsSet skinning_caps;
 	skinning_caps.addCap(ShaderCaps::Skinning);
 	ShaderCache::AppendCapsDefines(skinning_caps, defines);
+	ShaderCache::AppendCapsDefines(skinning_caps, defines_depth_only);
+	
 	auto vertex_data_skinning = ShaderProgramInfo::ShaderData(ShaderProgram::Stage::Vertex, shader_path, "vs_main", defines);
-	auto vertex_depth_only_data_skinning = ShaderProgramInfo::ShaderData(ShaderProgram::Stage::Vertex, shader_path, "vs_main", { {"DEPTH_ONLY", "1" }, { "SKINNING", "1"} });
+	auto vertex_depth_only_data_skinning = ShaderProgramInfo::ShaderData(ShaderProgram::Stage::Vertex, shader_path, "vs_main", defines_depth_only);
 	auto fragment_data_skinning = ShaderProgramInfo::ShaderData(ShaderProgram::Stage::Fragment, shader_path, "ps_main", defines);
 
 	shader_info.Clear();

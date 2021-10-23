@@ -76,6 +76,10 @@ namespace Resources
 				utils::Lowercase(queue);
 				new_material->SetRenderQueue(render::RENDER_QUEUE_NAME_MAP.at(queue));
 			}
+			else if (name == "alpha_cutoff")
+			{
+				new_material->SetAlphaCutoff(iter->value.GetBool());
+			}
 			else
 			{
 				ENGLog("Invalid json key: %s in file %s", name.c_str(), utils::WStringToString(filename).c_str());
