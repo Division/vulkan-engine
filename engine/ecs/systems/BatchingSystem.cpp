@@ -8,6 +8,7 @@ namespace ECS::systems
 	using namespace components;
 
 	std::pair<Material::Handle, Mesh::Handle> CreateMergedMesh(gsl::span<BatchingVolume::BatchSrc*> batches)
+	std::pair<Material::Handle, Mesh::Handle> CreateMergedMesh(gsl::span<BatchingVolume::BatchSrc*> batches, bool include_origin)
 	{
 		assert(batches.size());
 
@@ -28,12 +29,15 @@ namespace ECS::systems
 
 		assert(index_count % 3 == 0);
 
-		vertex_data.resize(vertex_count * vertex_size);
+		const auto src_layout = Mesh::Layout(batches[0]->mesh->GetVertexLayout());
+		const auto flags = src_layout.GetFlags() | (include_origin ? Mesh::MESH_FLAG_HAS_ORIGIN : 0);
+		auto dst_layout = Mesh::Layout(flags);
+		const auto dst_vertex_size = dst_layout.GetVertexLayout().GetStride();
+
+		vertex_data.resize(vertex_count * dst_vertex_size);
 		index_data.resize(index_count * sizeof(uint32_t));
 
-		auto layout = Mesh::Layout(batches[0]->mesh->GetVertexLayout());
-
-		size_t vertex_offset = 0;
+		size_t dst_vertex_offset = 0;
 		size_t index_offset = 0;
 
 		auto aabb = AABB::Empty();
@@ -43,37 +47,49 @@ namespace ECS::systems
 		uint32_t vertex_counter = 0;
 		for (auto* batch : batches)
 		{
-			memcpy(vertex_data.data() + vertex_offset, batch->mesh->GetVertexData().data(), batch->mesh->GetVertexData().size_bytes());
+			auto src_data = batch->mesh->GetVertexData().data();
+			auto dst_data = vertex_data.data();
 			auto transform = ComposeMatrix(batch->position, batch->rotation, batch->scale);
 			auto normal_transform = glm::transpose(glm::inverse(transform));
 
 			for (uint32_t i = 0; i < batch->mesh->vertexCount(); i++)
 			{
-				if (layout.HasPosition())
+				if (src_layout.HasPosition())
 				{
-					auto& position = layout.GetPosition(vertex_data.data() + vertex_offset, i);
-					position = transform * vec4(position, 1);
+					auto position = transform * vec4(src_layout.GetPosition(src_data, i), 1);
+					dst_layout.GetPosition(dst_data + dst_vertex_offset, i) = position;
 					aabb.expand(position);
 				}
 
-				if (layout.HasNormal())
+				if (src_layout.HasNormal())
 				{
-					auto& normal_compressed = layout.GetNormal(vertex_data.data() + vertex_offset, i);
+					auto& normal_compressed = src_layout.GetNormal(src_data, i);
 					vec3 normal = (vec4)normal_compressed;
 					normal = glm::normalize(normal_transform * vec4(normal, 0));
-					normal_compressed = Vector4_A2R10G10B10::FromSignedNormalizedFloat(vec4(normal, 0));
+					dst_layout.GetNormal(dst_data + dst_vertex_offset, i) = Vector4_A2R10G10B10::FromSignedNormalizedFloat(vec4(normal, 0));
 				}
 
-				if (layout.HasTangent())
+				if (src_layout.HasTangent())
 				{
-					auto& tangent_compressed = layout.GetTangent(vertex_data.data() + vertex_offset, i);
+					auto& tangent_compressed = src_layout.GetTangent(src_data, i);
 					vec3 tangent = (vec4)tangent_compressed;
 					tangent = glm::normalize(normal_transform * vec4(tangent, 0));
-					tangent_compressed = Vector4_A2R10G10B10::FromSignedNormalizedFloat(vec4(tangent, 0));
+					dst_layout.GetTangent(dst_data + dst_vertex_offset, i) = Vector4_A2R10G10B10::FromSignedNormalizedFloat(vec4(tangent, 0));
+				}
+
+				if (src_layout.HasUV0())
+				{
+					auto& uv0 = src_layout.GetUV0(src_data, i);
+					dst_layout.GetUV0(dst_data + dst_vertex_offset, i) = uv0;
+				}
+
+				if (dst_layout.HasOrigin())
+				{
+					dst_layout.GetOrigin(dst_data + dst_vertex_offset, i) = batch->position;
 				}
 			}
 
-			vertex_offset += batch->mesh->GetVertexData().size_bytes();
+			dst_vertex_offset += batch->mesh->vertexCount() * dst_vertex_size;
 
 			auto indices = batch->mesh->GetIndexData();
 			if (batch->mesh->UsesShortIndexes())
@@ -101,7 +117,7 @@ namespace ECS::systems
 		}
 
 		auto material = batches[0]->material;
-		auto mesh = Mesh::Create(batches[0]->mesh->GetFlags(), vertex_data.data(), vertex_count, index_data.data(), index_count / 3, aabb, false, "BatchingVolume");
+		auto mesh = Mesh::Create(flags, vertex_data.data(), vertex_count, index_data.data(), index_count / 3, aabb, false, "BatchingVolume");
 
 		return { material, mesh };
 	}
@@ -109,8 +125,9 @@ namespace ECS::systems
 	class BatchingVolumeSystem::ProcessBatchingJob : public Thread::Job
 	{
 	public:
-		ProcessBatchingJob(std::vector<BatchingVolume::BatchSrc> src_meshes, BatchingVolume::JobData* data)
+		ProcessBatchingJob(std::vector<BatchingVolume::BatchSrc> src_meshes, bool include_origin, BatchingVolume::JobData* data)
 			: Job()
+			, include_origin(include_origin)
 			, src_meshes(std::move(src_meshes))
 			, data(data)
 		{
@@ -141,7 +158,7 @@ namespace ECS::systems
 
 				if (next == batch_map.end() || key != next->first)
 				{
-					auto [material, mesh] = CreateMergedMesh(gsl::make_span(batch_array.data(), batch_array.size()));
+					auto [material, mesh] = CreateMergedMesh(gsl::make_span(batch_array.data(), batch_array.size()), include_origin);
 					material_list->push_back(material);
 					mesh_array.push_back(mesh);
 					aabb.expand(mesh->aabb());
@@ -158,6 +175,7 @@ namespace ECS::systems
 		}
 
 	private:
+		bool include_origin = false;
 		std::vector<BatchingVolume::BatchSrc> src_meshes;
 		BatchingVolume::JobData* data = nullptr;
 	};
@@ -169,6 +187,7 @@ namespace ECS::systems
 		ComponentFetcher<MultiMeshRenderer> mesh_renderer_fetcher(*chunk);
 		ComponentFetcher<Transform> transform_fetcher(*chunk);
 		ComponentFetcher<BatchingVolume> batching_volume_fetcher(*chunk);
+		ComponentFetcher<EntityData> entity_data_fetcher(*chunk);
 
 
 		for (int i = 0; i < chunk->GetEntityCount(); i++)
@@ -176,6 +195,7 @@ namespace ECS::systems
 			auto* batching_volume = batching_volume_fetcher.GetComponent(i);
 			auto* transform = transform_fetcher.GetComponent(i);
 			auto* mesh_renderer = mesh_renderer_fetcher.GetComponent(i);
+			auto* entity = entity_data_fetcher.GetComponent(i);
 
 			if (batching_volume->IsReady())
 			{
@@ -192,8 +212,14 @@ namespace ECS::systems
 
 			if (batching_volume->src_meshes.size() > 0)
 			{
-				Thread::Scheduler::Get().SpawnJob<ProcessBatchingJob>(Thread::Job::Priority::High, batching_volume->src_meshes, batching_volume->job_data.get());
-				//ProcessBatchingJob(batching_volume->src_meshes, batching_volume->job_data.get()).Execute();
+				Thread::Scheduler::Get().SpawnJob<ProcessBatchingJob>(
+					Thread::Job::Priority::High,
+					batching_volume->src_meshes,
+					batching_volume->include_origin,
+					batching_volume->job_data.get()
+				);
+
+				//ProcessBatchingJob(batching_volume->src_meshes, batching_volume->include_origin, batching_volume->job_data.get()).Execute();
 			}
 			else
 			{

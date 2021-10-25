@@ -2,6 +2,7 @@
 
 namespace Device {
 
+	// It's SEMANTIC name, not the attribute
 	const std::map<std::string, VertexAttrib> VERTEX_ATTRIB_NAMES =
 	{
 		{ "position", VertexAttrib::Position },
@@ -17,7 +18,7 @@ namespace Device {
 		{ "joint_indices", VertexAttrib::JointIndices },
 		{ "blendweight", VertexAttrib::JointWeights },
 		{ "blendindices", VertexAttrib::JointIndices },
-	
+		{ "position1", VertexAttrib::Origin }
 	};
 
 	const std::map<ShaderCaps, std::string> SHADER_CAPS_DEFINES = {
@@ -30,7 +31,11 @@ namespace Device {
 		{ ShaderCaps::Texture1, "TEXTURE1" },
 		{ ShaderCaps::NormalMap, "NORMAL_MAP" },
 		{ ShaderCaps::SpecularMap, "SPECULAR_MAP" },
-		{ ShaderCaps::Skinning, "SKINNING" }
+		{ ShaderCaps::Skinning, "SKINNING" },
+		{ ShaderCaps::VertexTBN, "VERTEX_TBN" },
+		{ ShaderCaps::VertexOrigin, "VERTEX_ORIGIN" },
+		{ ShaderCaps::DepthOnly, "DEPTH_ONLY" },
+		{ ShaderCaps::AlphaCutoff, "ALPHA_CUTOFF" }
 	};
 
 }

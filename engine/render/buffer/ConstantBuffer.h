@@ -18,8 +18,8 @@ namespace Device {
 			uint32_t size = 0;
 		};
 
-		ConstantBuffer(size_t size, BufferType type = BufferType::Uniform)
-			: DynamicBuffer<uint8_t>(size, type, false)
+		ConstantBuffer(std::string name, size_t size, BufferType type = BufferType::Uniform)
+			: DynamicBuffer<uint8_t>(name, size, type, false)
 		{
 			DynamicBuffer::Map();
 		}

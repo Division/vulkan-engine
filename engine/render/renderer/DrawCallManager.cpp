@@ -99,24 +99,57 @@ namespace render {
 		draw_call_list_pool = std::make_unique<utils::Pool<DrawCallList>>();
 	}
 
+	Device::ShaderProgramInfo AppendDrawCallDefines(const Device::ShaderProgramInfo& src_info, const DrawCallInitializer& initializer, bool depth_only)
+	{
+		OPTICK_EVENT();
+		auto result = src_info;
+		ShaderCapsSet caps;
+		if (initializer.has_skinning)
+			caps.addCap(ShaderCaps::Skinning);
+
+		auto& layout = initializer.mesh.GetVertexLayout();
+		if (layout.HasAttrib(VertexAttrib::Origin))
+			caps.addCap(ShaderCaps::VertexOrigin);
+
+		if (layout.HasAttrib(VertexAttrib::JointIndices) && layout.HasAttrib(VertexAttrib::JointWeights))
+			caps.addCap(ShaderCaps::VertexTBN);
+
+		if (depth_only)
+			caps.addCap(ShaderCaps::DepthOnly);
+
+		std::vector<ShaderProgramInfo::Macro> macro;
+		ShaderCache::AppendCapsDefines(caps, macro);
+
+		for (auto& m : macro)
+			result.AddMacro(m);
+
+		return result;
+	}
+
 	std::pair<EntityID, components::DrawCall*> DrawCallManager::AddDrawCall(const DrawCallInitializer& initializer)
 	{
+		OPTICK_EVENT();
 		auto* descriptor_cache = Engine::GetVulkanContext()->GetDescriptorCache();
 
 		components::DrawCall* draw_call;
 		EntityID entity;
-		entity = manager->CreateEntity();
-
-		if (initializer.has_skinning)
 		{
-			manager->AddComponent<components::SkinningData>(entity);
+			OPTICK_EVENT("INIT1");
+			entity = manager->CreateEntity();
+
+			if (initializer.has_skinning)
+			{
+				manager->AddComponent<components::SkinningData>(entity);
+			}
+
+			draw_call = manager->AddComponent<components::DrawCall>(entity);
+			draw_call->mesh = &initializer.mesh;
 		}
 
-		draw_call = manager->AddComponent<components::DrawCall>(entity);
-		draw_call->mesh = &initializer.mesh;
-
-		auto& depth_shader_info = initializer.has_skinning ? initializer.material.GetDepthOnlyShaderInfoSkinning() : initializer.material.GetDepthOnlyShaderInfo();
-		auto& shader_info = initializer.has_skinning ? initializer.material.GetShaderInfoSkinning() : initializer.material.GetShaderInfo();
+		auto& material_depth_shader_info = initializer.material.GetDepthOnlyShaderInfo();
+		auto& material_shader_info = initializer.material.GetShaderInfo();
+		auto depth_shader_info = AppendDrawCallDefines(material_depth_shader_info, initializer, true);
+		auto shader_info = AppendDrawCallDefines(material_shader_info, initializer, false);
 
 		draw_call->shader = shader_cache->GetShaderProgram(shader_info);
 		draw_call->depth_only_shader = shader_cache->GetShaderProgram(depth_shader_info);

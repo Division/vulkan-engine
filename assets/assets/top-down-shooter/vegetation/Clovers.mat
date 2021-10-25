@@ -6,5 +6,18 @@
   "roughness": -1.0,
   "metallness": 0.0,
   "queue": "opaque",
-  "alpha_cutoff": true
+  "alpha_cutoff": true,
+  "extra_textures": [
+    {
+      "name": "WindTexture",
+      "path": "assets/top-down-shooter/vegetation/wind.dds",
+      "srgb": false
+    }
+  ],
+  "constants": [
+    {
+      "name": "wind_multiplier",
+      "value": 0.7
+    }
+  ]
 }

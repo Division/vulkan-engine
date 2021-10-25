@@ -158,8 +158,8 @@ namespace scene
 			move_target_weights[RUN_INDICES[indexB + index_shift]] = weightB;
 
 
-			auto debug_draw = Engine::Get()->GetDebugDraw();
-			debug_draw->DrawLine(transform->position, transform->position + vec3(move_dir.x, 0, move_dir.y), vec4(0, 0, 1, 1));
+			//auto debug_draw = Engine::Get()->GetDebugDraw();
+			//debug_draw->DrawLine(transform->position, transform->position + vec3(move_dir.x, 0, move_dir.y), vec4(0, 0, 1, 1));
 		}
 	}
 
@@ -184,9 +184,9 @@ namespace scene
 
 		transform->rotation = glm::angleAxis(rotation_angle, vec3(0, -rotation_direction, 0));
 
-		auto debug_draw = Engine::Get()->GetDebugDraw();
-		debug_draw->DrawLine(transform->position, transform->position + vec3(current_aim_dir.x, 0, current_aim_dir.y), vec4(0,1,0,1));
-		debug_draw->DrawLine(transform->position, transform->position + vec3(aim_dir.x, 0, aim_dir.y), vec4(1, 0, 0, 1));
+		//auto debug_draw = Engine::Get()->GetDebugDraw();
+		//debug_draw->DrawLine(transform->position, transform->position + vec3(current_aim_dir.x, 0, current_aim_dir.y), vec4(0,1,0,1));
+		//debug_draw->DrawLine(transform->position, transform->position + vec3(aim_dir.x, 0, aim_dir.y), vec4(1, 0, 0, 1));
 	}
 
 	void CharacterController::UpdateMovementWeights()

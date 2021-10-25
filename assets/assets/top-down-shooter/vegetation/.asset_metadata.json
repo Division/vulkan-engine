@@ -148,5 +148,11 @@
         "type": "copy",
         "filename": "vegetation.hlsl",
         "uid": "89997b93ab5bb606"
+    },
+    {
+        "type": "texture",
+        "filename": "wind.png",
+        "uid": "ad895a8767895415",
+        "compression_type": "BC7"
     }
 ]

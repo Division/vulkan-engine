@@ -39,6 +39,8 @@ namespace scene
 
 	void GrassTile::Awake()
 	{
+		OPTICK_EVENT();
+
 		{
 			auto transform = AddComponent<components::Transform>();
 		}
@@ -49,7 +51,7 @@ namespace scene
 
 		{
 			auto batching = AddComponent<components::BatchingVolume>();
-
+			batching->include_origin = true;
 
 			const vec3 origin = GroundItemsCache::GetTileOrigin(position);
 			
@@ -141,6 +143,7 @@ namespace scene
 
 	void GroundItemsCache::OnMovedToTile(glm::ivec2 tile)
 	{
+		OPTICK_EVENT();
 		//std::cout << "PLAYER TILE " << tile.x << ", " << tile.y << "\n";
 
 		if (current_tile == INIT_TILE)

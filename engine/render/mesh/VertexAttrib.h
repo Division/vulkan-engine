@@ -17,6 +17,7 @@ enum class VertexAttrib : uint32_t {
 	TexCoord1,
 	JointWeights,
 	JointIndices,
+	Origin,
 	Unknown,
 	Count
 };

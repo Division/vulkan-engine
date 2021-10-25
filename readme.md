@@ -1,3 +1,6 @@
+Engine top down shooter demo video:
+https://www.youtube.com/watch?v=FHfV1GQ4_JA
+
 Engine roadmap:
 - top down shooter demo
 - Proper deletion of entities loaded from resource

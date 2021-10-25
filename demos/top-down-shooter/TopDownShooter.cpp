@@ -220,7 +220,7 @@ void Game::update(float dt)
 		auto* settings = Engine::Get()->GetSceneRenderer()->GetEnvironmentSettings();
 		auto player_transform = manager->GetComponent<components::Transform>(player_id);
 		settings->directional_light->transform.position = player_transform->position + vec3(-10, 30, -20);
-		settings->directional_light->orthographic_size = vec2(20, 20);
+		settings->directional_light->orthographic_size = vec2(30, 20);
 		settings->directional_light->transform.LookAt(
 			player_transform->position,
 			vec3(0, 1, 0)
@@ -229,9 +229,11 @@ void Game::update(float dt)
 		last_player_position = player_transform->position;
 	}
 
+	Engine::Get()->GetSceneRenderer()->GetConstantStorage().AddFloat3Constant("player_position", last_player_position);
+
 	ground_items->Update(dt);
 
-	Engine::Get()->GetDebugDraw()->DrawAxis(vec3());
+	//Engine::Get()->GetDebugDraw()->DrawAxis(vec3());
 
 	/*if (input->keyDown(Key::Space))
 	{

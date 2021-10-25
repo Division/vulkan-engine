@@ -337,6 +337,7 @@ namespace Device {
 
 	bool ShaderProgram::TransitionState(ShaderModule::State old_state, ShaderModule::State new_state)
 	{
+		OPTICK_EVENT();
 		return state.compare_exchange_strong(old_state, new_state);
 	}
 }

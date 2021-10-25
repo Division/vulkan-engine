@@ -46,6 +46,8 @@ namespace Device { namespace VulkanUtils {
 
 		std::vector<const char*> extensions(glfwExtensions, glfwExtensions + glfwExtensionCount);
 
+		extensions.push_back(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
+
 		if (enable_validation_layers) {
 			extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
 			extensions.push_back(VK_EXT_DEBUG_REPORT_EXTENSION_NAME);
@@ -57,6 +59,8 @@ namespace Device { namespace VulkanUtils {
 	const std::vector<const char*> GetDeviceExtensions(bool enable_validation_layers)
 	{
 		auto result = DEVICE_EXTENSIONS;
+
+		result.push_back(VK_EXT_SHADER_DEMOTE_TO_HELPER_INVOCATION_EXTENSION_NAME);
 
 		if (enable_validation_layers)
 		{

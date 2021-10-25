@@ -128,8 +128,31 @@ namespace Device {
 		swapchain = nullptr;
 	}
 
-	VKAPI_ATTR VkBool32 VKAPI_CALL VulkanContext::DebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData) {
-		std::cerr << "validation layer: " << pCallbackData->pMessage << std::endl;
+	VKAPI_ATTR VkBool32 VKAPI_CALL VulkanContext::DebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData) 
+	{
+		if (pCallbackData->messageIdNumber == 0x609a13b) // UNASSIGNED-CoreValidation-Shader-OutputNotConsumed
+			return VK_FALSE;
+
+		if (messageType & VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT)
+		{
+			//std::cerr << "[VK] GENERAL ";
+			return VK_FALSE;
+		}
+		else if (messageType & VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT)
+			std::cerr << "[VK] VALIDATION ";
+		else if (messageType & VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT)
+			std::cerr << "[VK] PERFOMANCE ";
+
+		if (messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT)
+			std::cerr << "ERROR: ";
+		else if (messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT)
+			std::cerr << "WARNING: ";
+		else if (messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT)
+			std::cerr << "INFO: ";
+		else if (messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT)
+			std::cerr << "VERBOSE: ";
+
+		std::cerr << pCallbackData->pMessage << std::endl;
 
 		return VK_FALSE;
 	}
@@ -270,17 +293,27 @@ namespace Device {
 			queueCreateInfos.push_back(queueCreateInfo);
 		}
 
-		VkPhysicalDeviceFeatures deviceFeatures = {};
-		deviceFeatures.samplerAnisotropy = VK_TRUE;
+		VkPhysicalDeviceShaderDemoteToHelperInvocationFeaturesEXT demote_to_helper = {};
+		demote_to_helper.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_DEMOTE_TO_HELPER_INVOCATION_FEATURES_EXT;
+		demote_to_helper.pNext = nullptr;
+		demote_to_helper.shaderDemoteToHelperInvocation = true;
+
+		VkPhysicalDeviceFeatures2 deviceFeatures2 = {};
+		deviceFeatures2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
+		deviceFeatures2.pNext = &demote_to_helper;
+
+		VkPhysicalDeviceFeatures& deviceFeatures = deviceFeatures2.features;
+		deviceFeatures = {};
 		deviceFeatures.fillModeNonSolid = true; // TODO: debug only?
+		deviceFeatures.samplerAnisotropy = VK_TRUE;
 
 		VkDeviceCreateInfo createInfo = {};
 		createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+		createInfo.pNext = &deviceFeatures2;
 
 		createInfo.queueCreateInfoCount = static_cast<uint32_t>(queueCreateInfos.size());
 		createInfo.pQueueCreateInfos = queueCreateInfos.data();
 
-		createInfo.pEnabledFeatures = &deviceFeatures;
 
 		auto device_extensions = VulkanUtils::GetDeviceExtensions(ENABLE_VALIDATION_LAYERS);
 		createInfo.enabledExtensionCount = static_cast<uint32_t>(device_extensions.size());

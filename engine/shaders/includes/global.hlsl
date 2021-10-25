@@ -20,14 +20,9 @@ struct CameraData
 };
 
 
-[[vk::binding(0, 0)]]
-cbuffer Camera : register(b0) 
-{
-    CameraData camera;
-};
-
-[[vk::binding(1, 0)]]
-cbuffer EnvironmentSettings : register(b1) 
+cbuffer GlobalConstants : register(b1, space0)
 {
     EnvironmentSettingsData environment;
+    CameraData camera;
+    float CurrentTime;
 };

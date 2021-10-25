@@ -34,6 +34,7 @@ namespace Device {
 		
 		const ShaderData* GetShaderData(ShaderProgram::Stage stage) const;
 
+		void AddMacro(const Macro& m);
 		ShaderProgramInfo& AddShader(ShaderProgram::Stage stage, std::wstring path, std::string entry_point = "main", std::vector<Macro> defines = {});
 		ShaderProgramInfo& AddShader(ShaderData&& shader_data);
 		
@@ -66,7 +67,9 @@ namespace Device {
 
 	private:
 		inline static std::unordered_map<std::wstring, std::vector<uint8_t>> source_cache;
+		inline static std::unordered_map<std::wstring, uint32_t> hash_cache;
 		inline static std::mutex source_mutex;
+		inline static std::mutex hash_mutex;
 		std::mutex program_mutex;
 		std::mutex module_mutex;
 		std::unordered_map<uint32_t, std::unique_ptr<ShaderModule>> module_cache;

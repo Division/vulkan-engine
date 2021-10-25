@@ -10,31 +10,59 @@
 #include "render/device/Types.h"
 #include "utils/Math.h"
 
-const int JOINT_PER_VERTEX_MAX = Mesh::JOINT_PER_VERTEX_MAX;
-const int JOINTS_MAX = Mesh::JOINTS_MAX;
+namespace
+{
+    const int JOINT_PER_VERTEX_MAX = Mesh::JOINT_PER_VERTEX_MAX;
 
-const int VERTEX_SIZE = 3 * 4;
-const Device::Format VERTEX_FORMAT = Device::Format::R32G32B32_float;
+    const int VERTEX_SIZE = 3 * 4;
+    const Device::Format VERTEX_FORMAT = Device::Format::R32G32B32_float;
 
-const int NORMAL_SIZE = 4;
-const Device::Format NORMAL_FORMAT = Device::Format::A2R10G10B10_snorm;
+    const int NORMAL_SIZE = 4;
+    const Device::Format NORMAL_FORMAT = Device::Format::A2R10G10B10_snorm;
 
-const int TEXCOORD_SIZE = 2 * 2;
-const Device::Format TEXCOORD_FORMAT = Device::Format::R16G16_float;
+    const int TEXCOORD_SIZE = 2 * 2;
+    const Device::Format TEXCOORD_FORMAT = Device::Format::R16G16_float;
 
-const int CORNER_SIZE = 2 * 4;
-const Device::Format CORNER_FORMAT = Device::Format::R32G32_float;
+    const int CORNER_SIZE = 2 * 4;
+    const Device::Format CORNER_FORMAT = Device::Format::R32G32_float;
 
-const int JOINT_INDEX_SIZE = 4;
-const Device::Format JOINT_INDEX_FORMAT = Device::Format::R8G8B8A8_uint;
+    const int JOINT_INDEX_SIZE = 4;
+    const Device::Format JOINT_INDEX_FORMAT = Device::Format::R8G8B8A8_uint;
 
-const int WEIGHT_SIZE = 4;
-const Device::Format WEIGHTS_FORMAT = Device::Format::R8G8B8A8_unorm;
+    const int WEIGHT_SIZE = 4;
+    const Device::Format WEIGHTS_FORMAT = Device::Format::R8G8B8A8_unorm;
 
-const int COLOR_SIZE = 4 * 4;
-const Device::Format COLOR_FORMAT = Device::Format::R32G32B32A32_float;
+    const int COLOR_SIZE = 4 * 4;
+    const Device::Format COLOR_FORMAT = Device::Format::R32G32B32A32_float;
 
-#define BUFFER_OFFSET(i) ((char *)NULL + (i))
+    const int ORIGIN_SIZE = 3 * 4;
+    const Device::Format ORIGIN_FORMAT = Device::Format::R32G32B32_float;
+}
+
+Mesh::Layout::Layout(uint32_t flags)
+{
+    layout.AddAttrib(VertexAttrib::Position, VERTEX_FORMAT, VERTEX_SIZE);
+
+    if (flags & MESH_FLAG_HAS_NORMALS)
+        layout.AddAttrib(VertexAttrib::Normal, NORMAL_FORMAT, NORMAL_SIZE);
+
+    if (flags & MESH_FLAG_HAS_TBN)
+    {
+        layout.AddAttrib(VertexAttrib::Tangent, NORMAL_FORMAT, NORMAL_SIZE);
+    }
+
+    if (flags & MESH_FLAG_HAS_UV0)
+        layout.AddAttrib(VertexAttrib::TexCoord0, TEXCOORD_FORMAT, TEXCOORD_SIZE);
+
+    if (flags & MESH_FLAG_HAS_WEIGHTS)
+    {
+        layout.AddAttrib(VertexAttrib::JointIndices, JOINT_INDEX_FORMAT, JOINT_INDEX_SIZE);
+        layout.AddAttrib(VertexAttrib::JointWeights, WEIGHTS_FORMAT, WEIGHT_SIZE);
+    }
+
+    if (flags & MESH_FLAG_HAS_ORIGIN)
+        layout.AddAttrib(VertexAttrib::Origin, ORIGIN_FORMAT, ORIGIN_SIZE);
+}
 
 Mesh::Handle Mesh::Create(bool keepData, int componentCount, bool isStatic)
 {
@@ -52,36 +80,6 @@ Mesh::Mesh(bool keepData, int componentCount, bool isStatic, const std::string& 
     , _isStatic(isStatic)
     , debug_name(debug_name)
 {
-    _stride = 0;
-    _faceCount = 0;
-    _strideBytes = 0;
-    _vertexCount = 0;
-
-    uses_short_indices = true;
-
-    _hasIndices = false;
-    _hasVertices = false;
-    _hasNormals = false;
-    _hasTBN = false;
-    _hasTexCoord0 = false;
-    _hasCorners = false;
-    _hasWeights = false;
-    _hasColors = false;
-
-    _vertexOffset = 0;
-    _vertexOffsetBytes = 0;
-    _normalOffset = 0;
-    _normalOffsetBytes = 0;
-    _tangentOffset = 0;
-    _tangentOffsetBytes = 0;
-    _texCoord0Offset = 0;
-    _texCoord0OffsetBytes = 0;
-    _jointIndexOffset = 0;
-    _jointIndexOffsetBytes = 0;
-    _weightOffset = 0;
-    _weightOffsetBytes = 0;
-    _colorOffset = 0;
-    _colorOffsetBytes = 0;
 }
 
 Mesh::Mesh(uint32_t flags, uint8_t* vertices, uint32_t vertex_count, uint8_t* indices, uint32_t triangle_count, AABB aabb, bool keep_data, const std::string& debug_name)
@@ -100,28 +98,10 @@ Mesh::Mesh(uint32_t flags, uint8_t* vertices, uint32_t vertex_count, uint8_t* in
     _hasTBN = flags & MESH_FLAG_HAS_TBN;
     _hasTexCoord0 = flags & MESH_FLAG_HAS_UV0;
     _hasWeights = flags & MESH_FLAG_HAS_WEIGHTS;
+    _hasOrigin = flags & MESH_FLAG_HAS_ORIGIN;
     _hasIndices = true;
     _hasVertices = true;
-    layout.Clear();
-    
-    layout.AddAttrib(VertexAttrib::Position, VERTEX_FORMAT, VERTEX_SIZE);
-
-    if (_hasNormals)
-        layout.AddAttrib(VertexAttrib::Normal, NORMAL_FORMAT, NORMAL_SIZE);
-    
-    if (_hasTBN) 
-    {
-        layout.AddAttrib(VertexAttrib::Tangent, NORMAL_FORMAT, NORMAL_SIZE);
-    }
-
-    if (_hasTexCoord0) 
-        layout.AddAttrib(VertexAttrib::TexCoord0, TEXCOORD_FORMAT, TEXCOORD_SIZE);
-    
-    if (_hasWeights) 
-    {
-        layout.AddAttrib(VertexAttrib::JointIndices, JOINT_INDEX_FORMAT, JOINT_INDEX_SIZE);
-        layout.AddAttrib(VertexAttrib::JointWeights, WEIGHTS_FORMAT, WEIGHT_SIZE);
-    }
+    layout = Layout(flags).GetVertexLayout();
 
     uint32_t index_count = triangle_count * 3;
     uses_short_indices = IsShortIndexCount(index_count);
@@ -143,8 +123,6 @@ Mesh::Mesh(uint32_t flags, uint8_t* vertices, uint32_t vertex_count, uint8_t* in
         .Data(indices)
         .Name(debug_name);
     _indexBuffer = Device::VulkanBuffer::Create(index_initializer);
-
-    Layout mesh_layout(layout);
 
     if (_keepData)
     {
@@ -171,6 +149,7 @@ size_t Mesh::GetVertexStride(uint32_t flags)
     if (flags & Mesh::MESH_FLAG_HAS_TBN) result += sizeof(Vector4_A2R10G10B10); // tangent
     if (flags & Mesh::MESH_FLAG_HAS_UV0) result += sizeof(Vector2Half); // uv
     if (flags & Mesh::MESH_FLAG_HAS_WEIGHTS) result += sizeof(uint32_t) * 2; // bone weights and indices
+    if (flags & Mesh::MESH_FLAG_HAS_ORIGIN) result += sizeof(vec3); // origin
 
     return result;
 }

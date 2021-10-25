@@ -263,7 +263,7 @@ set(GLFW_INSTALL false)
 add_subdirectory(lib/glfw-3.3)
 set(EXPORT_TARGETS ${EXPORT_TARGETS} glfw) # remove?
 
-set(OPTICK_ENABLED false)
+set(OPTICK_ENABLED true)
 set(OPTICK_USE_VULKAN false)
 set(ozz_build_tools false)
 set(ozz_build_fbx false)
@@ -327,7 +327,7 @@ set(TEST_SOURCES
 	tests/test_containers.cpp
 	tests/test_allocators.cpp
 	tests/test_job_system.cpp
-	tests/test_ktx.cpp
+	tests/test_material.cpp
 )
 
 if (VK_ENGINE_BUILD_TESTS)

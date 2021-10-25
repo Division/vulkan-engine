@@ -144,6 +144,7 @@ namespace Device {
 			data.location = compiler.get_decoration(input.id, spv::DecorationLocation);
 			auto attrib_iterator = VERTEX_ATTRIB_NAMES.find(ConvertHLSLName(data.name));
 			data.vertex_attrib = attrib_iterator != VERTEX_ATTRIB_NAMES.end() ? attrib_iterator->second : VertexAttrib::Unknown; // unknown may be varyings (fragment input from vertex)
+
 			vertex_attribs.push_back(data);
 		}
 

@@ -63,6 +63,7 @@ namespace ECS::components
 		};
 
 		std::vector<BatchSrc> src_meshes;
+		bool include_origin = false;
 		bool is_dirty = true;
 	};
 
