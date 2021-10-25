@@ -4,34 +4,14 @@
 #include <atomic>
 #include <array>
 #include <vector>
+#include "system/BaseHandle.h"
 
 namespace Device
 {
-	class Resource
-	{
-	public:
-		virtual ~Resource() = default;
-	private:
-	};
+	using Resource = System::Resource;
+	
+	using Releaser = System::ResourceReleaser<3u>;
 
-	class ResourceReleaser
-	{
-	public:
-		static constexpr uint32_t bucket_count = 4;
-
-		void Add(std::shared_ptr<Resource> resource);
-		void Swap();
-		size_t Clear();
-
-	private:
-		size_t ClearBucket(int index);
-
-		std::recursive_mutex mutex;
-		uint32_t current_bucket = 0;
-		std::array<std::vector<std::shared_ptr<Resource>>, bucket_count> buckets;
-	};
-
-	ResourceReleaser& GetReleaser();
-
-	#include "Handle.inl"
+	template<typename T>
+	using Handle = System::BaseHandle<T, Releaser>;
 }

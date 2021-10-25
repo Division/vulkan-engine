@@ -33,6 +33,8 @@ namespace Device {
 
 	DescriptorSet* VulkanDescriptorCache::GetDescriptorSet(const DescriptorSetBindings& bindings)
 	{
+		OPTICK_EVENT();
+
 		static thread_local DescriptorSetData set_data;
 
 		const auto& descriptor_set_layout = bindings.GetDescriptorSetLayout();

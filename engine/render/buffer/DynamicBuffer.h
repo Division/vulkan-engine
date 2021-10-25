@@ -12,11 +12,11 @@ namespace Device {
 	class DynamicBuffer
 	{
 	public:
-		DynamicBuffer(size_t size, BufferType type = BufferType::Uniform, bool align = true)
-			: size(size), type(type), alignment(align ? 256 : 1) // TODO: get from API
+		DynamicBuffer(std::string name, size_t size, BufferType type = BufferType::Uniform, bool align = true)
+			: name(name), size(size), type(type), alignment(align ? 256 : 1) // TODO: get from API
 		{
 			assert(size >= sizeof(T) && "buffer size must be greater than the element size");
-			auto main_initializer = VulkanBufferInitializer(size);
+			auto main_initializer = VulkanBufferInitializer(size).Name("Dynamic " + name);
 
 			switch (type)
 			{
@@ -39,11 +39,12 @@ namespace Device {
 
 			buffer = VulkanBuffer::Create(main_initializer);
 
-			auto staging_initializer = VulkanBufferInitializer(size).SetStaging();
+			auto staging_initializer = VulkanBufferInitializer(size).SetStaging().Name("StagingDynamic " + name);
 			for (int i = 0; i < staging_buffers.size(); i++)
 				staging_buffers[i] = VulkanBuffer::Create(staging_initializer);
 		}
 
+		const std::string& GetName() const { return name; }
 		BufferType GetType() const { return type; }
 		VulkanBuffer* GetBuffer() const { return buffer.get(); }
 		size_t GetElementSize() const { return sizeof(T); }
@@ -61,7 +62,7 @@ namespace Device {
 			if (upload_data_size)
 			{
 				auto* uploader = Engine::GetVulkanContext()->GetUploader();
-				uploader->AddToUpload(staging_buffers[current_staging_buffer].get(), buffer.get(), upload_data_size);
+				uploader->AddToUpload(staging_buffers[current_staging_buffer], buffer.get(), upload_data_size);
 			}
 
 			current_staging_buffer = (current_staging_buffer + 1) % staging_buffers.size();
@@ -95,6 +96,7 @@ namespace Device {
 		}
 
 	protected:
+		std::string name;
 		void* mapped_pointer = nullptr;
 		size_t upload_data_size = 0;
 		size_t size = 0;

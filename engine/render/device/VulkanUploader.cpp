@@ -14,7 +14,7 @@ namespace Device {
 	VulkanUploader::UploadBase::~UploadBase() = default;
 	VulkanUploader::UploadBase::UploadBase(UploadBase&&) = default;
 
-	VulkanUploader::BufferUpload::BufferUpload(VulkanBuffer* src_buffer, VulkanBuffer* dst_buffer, VkDeviceSize size) : UploadBase()
+	VulkanUploader::BufferUpload::BufferUpload(Device::Handle<VulkanBuffer> src_buffer, VulkanBuffer* dst_buffer, VkDeviceSize size) : UploadBase()
 		, dst_buffer(dst_buffer)
 		, size(size)
 	{
@@ -86,7 +86,7 @@ namespace Device {
 		command_buffer.pipelineBarrier(source_stage, destination_stage, vk::DependencyFlags(), 0, nullptr, 0, nullptr, 1, &barrier);
 	}
 	
-	VulkanUploader::ImageUpload::ImageUpload(VulkanBuffer* src_buffer, vk::Image dst_image, uint32_t mip_count, uint32_t array_count, std::vector<vk::BufferImageCopy> copies)
+	VulkanUploader::ImageUpload::ImageUpload(Device::Handle<VulkanBuffer> src_buffer, vk::Image dst_image, uint32_t mip_count, uint32_t array_count, std::vector<vk::BufferImageCopy> copies)
 		: dst_image(dst_image)
 		, mip_count(mip_count)
 		, array_count(array_count)
@@ -108,20 +108,20 @@ namespace Device {
 	VulkanUploader::VulkanUploader() 
 	{
 		auto* context = Engine::Get()->GetContext();
-		command_pool = std::make_unique<VulkanCommandPool>(context->GetQueueFamilyIndex(PipelineBindPoint::Graphics));
+		command_pool = std::make_unique<VulkanCommandPool>(context->GetQueueFamilyIndex(PipelineBindPoint::Graphics), "Uploader");
 		for (int i = 0; i < caps::MAX_FRAMES_IN_FLIGHT; i++)
 			command_buffers[i] = command_pool->GetCommandBuffer();
 	};
 
 	VulkanUploader::~VulkanUploader() {};
 
-	void VulkanUploader::AddToUpload(VulkanBuffer* src_buffer, VulkanBuffer* dst_buffer, vk::DeviceSize size)
+	void VulkanUploader::AddToUpload(Device::Handle<VulkanBuffer> src_buffer, VulkanBuffer* dst_buffer, vk::DeviceSize size)
 	{
 		std::lock_guard<std::mutex> lock(uploader_mutex);
 		current_frame_uploads.emplace_back(std::make_unique<BufferUpload>(src_buffer, dst_buffer, size));
 	}
 
-	void VulkanUploader::AddImageToUpload(VulkanBuffer* src_buffer, vk::Image dst_image, uint32_t mip_count, uint32_t array_count, std::vector<vk::BufferImageCopy> copies)
+	void VulkanUploader::AddImageToUpload(Device::Handle<VulkanBuffer> src_buffer, vk::Image dst_image, uint32_t mip_count, uint32_t array_count, std::vector<vk::BufferImageCopy> copies)
 	{
 		std::lock_guard<std::mutex> lock(uploader_mutex);
 		current_frame_uploads.emplace_back(std::make_unique<ImageUpload>(std::move(src_buffer), dst_image, mip_count, array_count, std::move(copies)));

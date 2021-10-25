@@ -118,6 +118,7 @@ namespace Device {
 
 	void ResourceBindings::Merge(const ResourceBindings& other)
 	{
+		OPTICK_EVENT();
 		for (auto& texture_binding : other.texture_bindings)
 			AddTextureBinding(texture_binding.name_hash, texture_binding.texture);
 
@@ -131,6 +132,8 @@ namespace Device {
 	DescriptorSetBindings::DescriptorSetBindings(const Device::ResourceBindings& resource_bindings, const ShaderProgram::DescriptorSetLayout& descriptor_set_layout)
 		: descriptor_set_layout(descriptor_set_layout)
 	{
+		OPTICK_EVENT();
+
 		for (auto& binding : descriptor_set_layout.bindings)
 		{
 			auto& address = binding.address;

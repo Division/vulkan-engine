@@ -27,7 +27,7 @@ namespace Resources
 			while (true)
 			{
 				const auto released_resource_count = GCCollect();
-				const auto released_common_count = Common::GetReleaser().Clear(); // Need to clear it since Resources from cache could contain Common::Handle
+				const auto released_common_count = Common::Releaser::GetReleaser().Clear(); // Need to clear it since Resources from cache could contain Common::Handle
 				if (released_resource_count == 0 && released_common_count == 0)
 					break;
 			}

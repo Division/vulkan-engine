@@ -13,6 +13,10 @@ enum class ShaderCaps : uint32_t {
 	NormalMap,
 	SpecularMap,
 	Skinning,
+	VertexOrigin,
+	VertexTBN,
+	DepthOnly,
+	AlphaCutoff,
 	Count
 };
 

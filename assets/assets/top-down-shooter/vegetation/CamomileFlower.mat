@@ -1,0 +1,23 @@
+{
+  "texture0": "assets/top-down-shooter/vegetation/CamomileFlower_AlbedoRoughness.dds",
+  "normal_map": "assets/top-down-shooter/vegetation/CamomileFlower_NormalAlpha.dds",
+  "shader": "assets/top-down-shooter/vegetation/vegetation.hlsl",
+  "lighting_enabled": true,
+  "roughness": -1.0,
+  "metallness": 0.0,
+  "queue": "opaque",
+  "alpha_cutoff": true,
+  "extra_textures": [
+    {
+      "name": "WindTexture",
+      "path": "assets/top-down-shooter/vegetation/wind.dds",
+      "srgb": false
+    }
+  ],
+  "constants": [
+    {
+      "name": "wind_multiplier",
+      "value": 1.0
+    }
+  ]
+}

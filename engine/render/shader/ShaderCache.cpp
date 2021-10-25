@@ -30,6 +30,12 @@ namespace Device {
 	{
 	}
 
+	void ShaderProgramInfo::AddMacro(const Macro& m)
+	{
+		for (auto& shader : shaders)
+			shader.defines.push_back(m);
+	}
+
 	const ShaderProgramInfo::ShaderData* ShaderProgramInfo::GetShaderData(ShaderProgram::Stage stage) const
 	{
 		for (auto& data : shaders)
@@ -73,9 +79,17 @@ namespace Device {
 		return FastHash(combined_hash, sizeof(combined_hash));
 	}
 
-	uint32_t GetShaderSourceHash(const std::wstring& path)
+	uint32_t ShaderCache::GetShaderSourceHash(const std::wstring& path)
 	{
-		auto source_data = loader::LoadFile(path);
+		{
+			std::scoped_lock lock(hash_mutex);
+			if (auto it = hash_cache.find(path); it != hash_cache.end())
+			{
+				return it->second;
+			}
+		}
+
+		auto& source_data = GetShaderSource(path);
 		uint32_t source_hash = 0;
 		if (source_data.size())
 			source_hash = FastHash(source_data.data(), source_data.size());
@@ -83,26 +97,42 @@ namespace Device {
 		utils::SmallVector<uint32_t, 20> all_hashes;
 		all_hashes.push_back(source_hash);
 
-		InputMemoryStream stream((char*)source_data.data(), source_data.size());
-		std::string line;
-
-		while (std::getline(stream, line))
 		{
-			if (line.find("#include \"") == 0)
+			OPTICK_EVENT("PARSE INCLUDES");
+			size_t offset = 0;
+			std::string_view view((char*)source_data.data(), source_data.size());
+			static const std::string_view include_str{ "#include \"" };
+			static const std::string_view closing_str{ "\"" };
+
+			while (1)
 			{
-				auto last = line.rfind("\"");
-				if (last != std::string::npos && last > 0)
-				{
-					std::wstring include_path = utils::StringToWString(line.substr(10, last - 10));
-					auto include_hash = GetShaderSourceHash(include_path);
-					all_hashes.push_back(include_hash);
-				}
+				auto found = view.find(include_str.data(), offset);
+				if (found == std::string::npos)
+					break;
+
+				auto closing_view = view.substr(found + 10);
+
+				auto closing = closing_view.find(closing_str);
+				if (closing == std::string::npos)
+					throw std::runtime_error("Missed #include closing `\"`");
+
+				std::wstring include_path = utils::StringToWString(std::string(closing_view.data(), closing));
+
+				auto include_hash = GetShaderSourceHash(include_path);
+				all_hashes.push_back(include_hash);
+
+				offset = found + closing + 1;
 			}
 		}
 
 		if (all_hashes.size() > 1)
 		{
 			source_hash = FastHash(all_hashes.data(), all_hashes.size() * sizeof(uint32_t));
+		}
+
+		{
+			std::scoped_lock lock(hash_mutex);
+			hash_cache[path] = source_hash;
 		}
 
 		return source_hash;
@@ -242,6 +272,7 @@ namespace Device {
 
 		virtual void Execute() override
 		{
+			OPTICK_EVENT();
 			if (vertex_data)
 			{
 				auto vertex_module = shader_cache->GetShaderModule(*vertex_data);
@@ -291,6 +322,7 @@ namespace Device {
 
 	ShaderProgram* ShaderCache::GetShaderProgram(const ShaderProgramInfo& info)
 	{
+		OPTICK_EVENT();
 		ShaderProgram* program;
 
 		auto program_hash = GetShaderProgramInfoHash(info);

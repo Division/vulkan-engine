@@ -17,11 +17,6 @@ namespace Device { namespace ShaderBufferStruct {
 		vec2 padding;
 	};
 
-	struct SkinningMatrices 
-	{
-		mat4 matrices[Mesh::JOINTS_MAX];
-	};
-
 	struct Light 
 	{
 		vec3 position; // offset = 0, size = 12

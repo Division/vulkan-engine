@@ -1,8 +1,8 @@
-[[vk::binding(3,  0)]] Texture2D shadow_map : register(t3);
-[[vk::binding(4,  0)]] Texture2D shadow_map_atlas : register(t4);
-[[vk::binding(11, 0)]] TextureCube radiance_cubemap : register(t11);
-[[vk::binding(12, 0)]] TextureCube irradiance_cubemap : register(t12); // diffuse, ao
-[[vk::binding(13, 0)]] Texture2D brdf_lut : register(t13); // specular
+Texture2D shadow_map : register(t3, space0);
+Texture2D shadow_map_atlas : register(t4, space0);
+TextureCube radiance_cubemap : register(t11, space0);
+TextureCube irradiance_cubemap : register(t12, space0); // diffuse, ao
+Texture2D brdf_lut : register(t13, space0); // specular
  
 struct LightGridItem
 {
@@ -39,19 +39,19 @@ struct ProjectorItem
     uint mask;
 };
 
-[[vk::binding(5, 0)]] cbuffer Lights : register(b5)
+cbuffer Lights : register(b5, space0)
 {
     LightItem lights[100];
 }
 
-[[vk::binding(5, 0)]] cbuffer Projectors : register(b6)
+cbuffer Projectors : register(b6, space0)
 {
     ProjectorItem projectors[100];
 };
 
-[[vk::binding(7, 0)]] StructuredBuffer<LightGridItem> LightGrid;
+StructuredBuffer<LightGridItem> LightGrid : register(t7, space0);
 
-[[vk::binding(8, 0)]] StructuredBuffer<uint> LightIndices;
+StructuredBuffer<uint> LightIndices : register(t8, space0);;
 
 #define CLUSTER_COUNT_X 4.0f
 #define CLUSTER_COUNT_Y 4.0f

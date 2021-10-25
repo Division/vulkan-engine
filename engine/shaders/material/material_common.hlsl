@@ -9,7 +9,7 @@ SamplerState SamplerLinearWrap;
 SamplerState SamplerLinearClamp;
 
 #if defined(SKINNING)
-StructuredBuffer<float4x4> SkinningMatrices : register(t3, space1);
+StructuredBuffer<float4x4> SkinningMatrices : register(t9, space0);
 
 cbuffer SkinningOffset : register(b4, space1)
 {
@@ -37,6 +37,10 @@ struct VS_in
     float4 joint_weights : BLENDWEIGHT;
     uint4 joint_indices : BLENDINDICES;
 #endif
+
+#if defined(VERTEX_ORIGIN)
+    float4 origin : POSITION1;
+#endif
 };
 
 struct VS_out
@@ -57,12 +61,17 @@ struct VS_out
     float4 position_worldspace : POSITION;
 #endif
 
+#if defined(VERTEX_ORIGIN)
+    float4 origin : POSITION2;
+#endif
+
     float4 frag_coord : SV_Position;
 };
 
 struct VertexData
 {
     float4 position_worldspace;
+    float4 origin;
     float2 texcoord0;
     float4 normal_worldspace;
     float4 tangent_worldspace;
@@ -101,6 +110,10 @@ VertexData GetDefaultVertexData(VS_in input, float4x4 object_model_matrix, float
 #endif
 
     result.position_worldspace = mul(model_matrix, float4(input.position.xyz, 1.0));
+    result.origin = float4(0, 0, 0, 1);
+#if defined(VERTEX_ORIGIN)
+    result.origin = mul(model_matrix, float4(input.origin.xyz, 1.0));
+#endif
 
 #if defined(LIGHTING)
     result.normal_worldspace = normalize(mul(normal_matrix, float4(input.normal.xyz, 0)));
@@ -143,6 +156,10 @@ VertexData GePSVertexData(VS_out input)
     result.texcoord0 = input.texcoord0;
 #endif
 
+#if defined(VERTEX_ORIGIN)
+    result.origin = input.origin;
+#endif
+
     result.frag_coord = input.frag_coord;
 
     return result;
@@ -168,6 +185,10 @@ VS_out GetVSOut(VertexData data, float4x4 view_projection)
     result.normal_worldspace = data.normal_worldspace;
     result.tangent_worldspace = data.tangent_worldspace;
     result.linear_depth = LinearizeDepth(result.position.z / result.position.w, camera.zMin, camera.zMax);
+#endif
+
+#if defined(VERTEX_ORIGIN)
+    result.origin = data.origin;
 #endif
 
     return result;

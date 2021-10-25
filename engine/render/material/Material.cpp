@@ -4,6 +4,189 @@
 using namespace Device;
 using namespace Resources;
 
+namespace render
+{
+	struct ConstantBindingStorage::ConstantMetadata
+	{
+		uint16_t offset;
+		uint16_t size;
+		uint32_t name_hash;
+	};
+
+	gsl::span<ConstantBindingStorage::ConstantMetadata> ConstantBindingStorage::GetMetadata() const
+	{
+		return gsl::make_span<ConstantMetadata>(reinterpret_cast<ConstantMetadata*>(data.data()), constant_count);
+	}
+
+	gsl::span<uint8_t> ConstantBindingStorage::GetConstantsData() const
+	{
+		const size_t metadata_size = constant_count * sizeof(ConstantMetadata);
+		return gsl::make_span<uint8_t>(data.data() + metadata_size, data.size() - metadata_size);
+	}
+
+	ConstantBindingStorage::ConstantData ConstantBindingStorage::GetConstantByIndex(uint32_t index) const
+	{
+		if (index >= constant_count)
+			throw std::runtime_error("constant out of bounds");
+
+		auto& meta = GetMetadata()[index];
+		return { &GetConstantsData()[meta.offset], meta.name_hash, meta.size };
+	}
+
+	void* ConstantBindingStorage::GetConstantDataByOffset(size_t offset)
+	{
+		const size_t metadata_size = constant_count * sizeof(ConstantMetadata);
+		const size_t data_offset =  metadata_size + offset;
+		assert(data_offset < data.size());
+		return data.data() + data_offset;
+	}
+
+	std::optional<float> ConstantBindingStorage::GetFloatConstant(const char* name)
+	{
+		return GetConstantValue<float>(name);
+	}
+
+	std::optional<vec2> ConstantBindingStorage::GetFloat2Constant(const char* name)
+	{
+		return GetConstantValue<vec2>(name);
+	}
+
+	std::optional<vec3> ConstantBindingStorage::GetFloat3Constant(const char* name)
+	{
+		return GetConstantValue<vec3>(name);
+	}
+
+	std::optional<float4> ConstantBindingStorage::GetFloat4Constant(const char* name)
+	{
+		return GetConstantValue<float4>(name);
+	}
+
+	template<typename T>
+	std::optional<T> ConstantBindingStorage::GetConstantValue(const char* name)
+	{
+		auto data = FindConstant<T>(Device::ShaderProgram::GetParameterNameHash(name));
+		if (!data)
+			return std::nullopt;
+		else
+			return *data;
+	}
+
+	template<typename T>
+	T* ConstantBindingStorage::FindConstant(uint32_t hash)
+	{
+		for (auto& meta : GetMetadata())
+		{
+			if (meta.name_hash == hash)
+			{
+				assert(sizeof(T) == meta.size);
+				if (sizeof(T) != meta.size)
+					return nullptr;
+
+				return reinterpret_cast<T*>(GetConstantDataByOffset(meta.offset));
+			}
+		}
+
+		return nullptr;
+	}
+
+	template<typename T>
+	void ConstantBindingStorage::AddConstant(uint32_t hash, T value)
+	{
+		T* constant_data = FindConstant<T>(hash);
+		
+		if (!constant_data)
+		{
+			const size_t move_data_size = GetConstantsData().size_bytes();
+			const size_t resize_amount = sizeof(ConstantMetadata) + sizeof(value);
+			data.resize(data.size() + resize_amount);
+			void* move_from = data.data() + constant_count * sizeof(ConstantMetadata);
+			void* move_to = (uint8_t*)move_from + sizeof(ConstantMetadata);
+			memmove(move_to, move_from, move_data_size);
+			constant_count += 1;
+			
+			const size_t constant_offset = data.size() - sizeof(T) - constant_count * sizeof(ConstantMetadata);
+			constant_data = reinterpret_cast<T*>(GetConstantDataByOffset(constant_offset));
+			GetMetadata()[constant_count - 1] = { (uint16_t)move_data_size, (uint16_t)sizeof(value), hash };
+		}
+		
+		assert(FindConstant<T>(hash));
+
+		*constant_data = value;
+	}
+
+	void ConstantBindingStorage::AddFloatConstant(const char* name, float value)
+	{
+		AddConstant(Device::ShaderProgram::GetParameterNameHash(name), value);
+	}
+
+	void ConstantBindingStorage::AddFloat2Constant(const char* name, vec2 value)
+	{
+		AddConstant(Device::ShaderProgram::GetParameterNameHash(name), value);
+	}
+
+	void ConstantBindingStorage::AddFloat3Constant(const char* name, vec3 value)
+	{
+		AddConstant(Device::ShaderProgram::GetParameterNameHash(name), value);
+	}
+
+	void ConstantBindingStorage::AddFloat4Constant(const char* name, vec4 value)
+	{
+		AddConstant(Device::ShaderProgram::GetParameterNameHash(name), value);
+	}
+
+	void ConstantBindingStorage::RemoveConstant(const char* name)
+	{
+		RemoveConstant(Device::ShaderProgram::GetParameterNameHash(name));
+	}
+
+	void ConstantBindingStorage::Clear()
+	{
+		data.resize(0);
+		constant_count = 0;
+	}
+
+	void ConstantBindingStorage::RemoveConstant(uint32_t hash)
+	{
+		auto metadata = GetMetadata();
+		const auto metadata_size = metadata.size_bytes();
+		const auto data_size = data.size();
+
+		auto it = std::find_if(metadata.begin(), metadata.end(), [hash](const ConstantMetadata& meta) { return meta.name_hash == hash; });
+		if (it != metadata.end())
+		{
+			const size_t offset_difference = it->size;
+			assert(offset_difference > 0);
+
+			const auto index = std::distance(metadata.begin(), it);
+			for (uint32_t i = index + 1; i < metadata.size(); i++)
+			{
+				metadata[i].offset -= offset_difference;
+			}
+
+			uint8_t* meta_offset_start = data.data() + (index + 1) * sizeof(ConstantMetadata);
+			const size_t meta_offset_size = sizeof(ConstantMetadata) * (metadata.size() - index - 1) + it->offset;
+			memmove(meta_offset_start - sizeof(ConstantMetadata), meta_offset_start, meta_offset_size);
+
+			uint8_t* data_offset_start = meta_offset_start + meta_offset_size + offset_difference;
+			const size_t data_move_size = (size_t)data.data() + data.size() - (size_t)data_offset_start;
+			const size_t data_offset_size = sizeof(ConstantMetadata) + offset_difference;
+			assert(data.size() == (size_t)data_offset_start + data_move_size - (size_t)data.data());
+			memmove(data_offset_start - data_offset_size, data_offset_start, data_move_size);
+			data.resize(data.size() - data_offset_size);
+			constant_count -= 1;
+		}
+	}
+
+	void ConstantBindingStorage::Flush(Device::ConstantBindings& bindings) const
+	{
+		for (uint32_t i = 0; i < constant_count; i++)
+		{
+			auto& constant = GetConstantByIndex(i);
+			bindings.AddDataBinding(constant.data, constant.size, constant.name_hash);
+		}
+	}
+}
+
 Material::Material()
 {
 }
@@ -109,6 +292,15 @@ void Material::SetTexture0Resource(TextureResource::Handle texture)
 	}
 }
 
+void Material::SetAlphaCutoff(bool value) 
+{ 
+	if (alpha_cutoff != value)
+	{
+		alpha_cutoff = value; 
+		SetDirty();
+	}
+}
+
 void Material::SetNormalMapResource(Resources::TextureResource::Handle normal_map)
 {
 	if (this->normal_map_resource != normal_map)
@@ -169,6 +361,36 @@ void Material::ClearExtraTextures()
 	extra_texture_bindings.clear();
 }
 
+void Material::AddFloatConstant(const char* name, float value)
+{
+	constants_dirty = true;
+	constant_storage.AddFloatConstant(name, value);
+}
+
+void Material::AddFloat2Constant(const char* name, vec2 value)
+{
+	constants_dirty = true;
+	constant_storage.AddFloat2Constant(name, value);
+}
+
+void Material::AddFloat3Constant(const char* name, vec3 value)
+{
+	constants_dirty = true;
+	constant_storage.AddFloat3Constant(name, value);
+}
+
+void Material::AddFloat4Constant(const char* name, vec4 value)
+{
+	constants_dirty = true;
+	constant_storage.AddFloat4Constant(name, value);
+}
+
+void Material::ClearConstants()
+{
+	constants_dirty = true;
+	constant_storage.Clear();
+}
+
 void Material::UpdateCaps() const
 {
 	if (!caps_dirty) return;
@@ -197,6 +419,13 @@ void Material::UpdateCaps() const
 		shader_caps.removeCap(ShaderCaps::VertexColor);
 	}
 
+	if (alpha_cutoff) {
+		shader_caps.addCap(ShaderCaps::AlphaCutoff);
+	}
+	else {
+		shader_caps.removeCap(ShaderCaps::AlphaCutoff);
+	}
+
 	caps_dirty = false;
 }
 
@@ -209,37 +438,27 @@ void Material::UpdateShaderHash() const
 
 	auto vertex_data = ShaderProgramInfo::ShaderData(ShaderProgram::Stage::Vertex, shader_path, "vs_main", defines);
 	auto fragment_data = ShaderProgramInfo::ShaderData(ShaderProgram::Stage::Fragment, shader_path, "ps_main", defines);
-	auto vertex_depth_only_data = ShaderProgramInfo::ShaderData(ShaderProgram::Stage::Vertex, shader_path, "vs_main", { {"DEPTH_ONLY", "1" } });
+	auto vertex_depth_only_data = ShaderProgramInfo::ShaderData(ShaderProgram::Stage::Vertex, shader_path, "vs_main", defines);
 	auto fragment_depth_only_data = ShaderProgramInfo::ShaderData(ShaderProgram::Stage::Fragment, L"shaders/noop.hlsl");
-
-	ShaderCapsSet skinning_caps;
-	skinning_caps.addCap(ShaderCaps::Skinning);
-	ShaderCache::AppendCapsDefines(skinning_caps, defines);
-	auto vertex_data_skinning = ShaderProgramInfo::ShaderData(ShaderProgram::Stage::Vertex, shader_path, "vs_main", defines);
-	auto vertex_depth_only_data_skinning = ShaderProgramInfo::ShaderData(ShaderProgram::Stage::Vertex, shader_path, "vs_main", { {"DEPTH_ONLY", "1" }, { "SKINNING", "1"} });
-	auto fragment_data_skinning = ShaderProgramInfo::ShaderData(ShaderProgram::Stage::Fragment, shader_path, "ps_main", defines);
+	if (alpha_cutoff)
+	{
+		fragment_depth_only_data = ShaderProgramInfo::ShaderData(ShaderProgram::Stage::Fragment, shader_path, "ps_main", defines);
+	}
 
 	shader_info.Clear();
 	shader_info.AddShader(std::move(vertex_data));
 	shader_info.AddShader(std::move(fragment_data));
 
-	shader_info_skinning.Clear();
-	shader_info_skinning.AddShader(std::move(vertex_data_skinning));
-	shader_info_skinning.AddShader(std::move(fragment_data_skinning));
-
 	depth_only_shader_info.Clear();
 	depth_only_shader_info.AddShader(std::move(vertex_depth_only_data));
 	depth_only_shader_info.AddShader(ShaderProgramInfo::ShaderData(fragment_depth_only_data));
-
-	depth_only_shader_info_skinning.Clear();
-	depth_only_shader_info_skinning.AddShader(std::move(vertex_depth_only_data_skinning));
-	depth_only_shader_info_skinning.AddShader(ShaderProgramInfo::ShaderData(fragment_depth_only_data));
 
 	shader_hash_dirty = false;
 }
 
 void Material::UpdateBindings() const
 {
+	OPTICK_EVENT();
 	if (!bindings_dirty)
 		return;
 
@@ -263,6 +482,7 @@ void Material::UpdateBindings() const
 
 void Material::UpdateConstants() const
 {
+	OPTICK_EVENT();
 	if (!constants_dirty)
 		return;
 
@@ -270,6 +490,8 @@ void Material::UpdateConstants() const
 	constant_bindings.AddFloat4Binding(&color, "color");
 	constant_bindings.AddFloatBinding(&roughness, "roughness");
 	constant_bindings.AddFloatBinding(&metalness, "metalness");
+	
+	constant_storage.Flush(constant_bindings);
 
 	constants_dirty = false;
 }

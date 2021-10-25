@@ -9,12 +9,62 @@
 #include "resources/TextureResource.h"
 #include "Handle.h"
 #include "render/renderer/IRenderer.h"
+#include <gsl/span>
 
 #include <variant>
 
 namespace Device 
 {
 	class Texture;
+}
+
+namespace render
+{
+	// Stores list of constants in a single allocation (or even 0 for small ones)
+	class ConstantBindingStorage
+	{
+	public:
+		struct ConstantData
+		{
+			const void* data;
+			uint32_t name_hash;
+			uint16_t size;
+		};
+
+		void AddFloatConstant(const char* name, float value);
+		std::optional<float> GetFloatConstant(const char* name);
+		void AddFloat2Constant(const char* name, vec2 value);
+		std::optional<vec2> GetFloat2Constant(const char* name);
+		void AddFloat3Constant(const char* name, vec3 value);
+		std::optional<vec3> GetFloat3Constant(const char* name);
+		void AddFloat4Constant(const char* name, vec4 value);
+		std::optional<float4> GetFloat4Constant(const char* name);
+		void RemoveConstant(const char* name);
+		void RemoveConstant(uint32_t hash);
+		uint32_t GetConstantCount() const { return constant_count; }
+		ConstantData GetConstantByIndex(uint32_t index) const;
+		void Clear();
+		void Flush(Device::ConstantBindings& bindings) const;
+
+	private:
+		template<typename T>
+		std::optional<T> GetConstantValue(const char* name);
+
+		template<typename T>
+		void AddConstant(uint32_t hash, T value);
+
+		template<typename T>
+		T* FindConstant(uint32_t hash);
+
+		void* GetConstantDataByOffset(size_t offset);
+
+		struct ConstantMetadata;
+		gsl::span<ConstantMetadata> GetMetadata() const;
+		gsl::span<uint8_t> GetConstantsData() const;
+
+		uint16_t constant_count = 0;
+		mutable utils::SmallVector<uint8_t, 64> data;
+	};
 }
 
 class Material : public Common::Resource {
@@ -77,14 +127,21 @@ public:
 	RenderQueue GetRenderQueue() const { return render_queue; }
 	void SetRenderQueue(RenderQueue value) { render_queue = value; }
 
+	void SetAlphaCutoff(bool value);
+	bool GetAlphaCutoff() const { return alpha_cutoff; }
+
+	void AddFloatConstant(const char* name, float value);
+	void AddFloat2Constant(const char* name, vec2 value);
+	void AddFloat3Constant(const char* name, vec3 value);
+	void AddFloat4Constant(const char* name, vec4 value);
+	void ClearConstants();
+
 	const ShaderCapsSet& ShaderCaps() const { if (caps_dirty) UpdateCaps(); return shader_caps; }
 	const Device::ResourceBindings& GetResourceBindings() const { if (bindings_dirty) UpdateBindings(); return resource_bindings; }
 	const Device::ConstantBindings& GetConstantBindings() const { if (constants_dirty) UpdateConstants(); return constant_bindings; }
 
 	const Device::ShaderProgramInfo& GetShaderInfo() const { UpdateShaderHash(); return shader_info; }
 	const Device::ShaderProgramInfo& GetDepthOnlyShaderInfo() const { UpdateShaderHash(); return depth_only_shader_info; }
-	const Device::ShaderProgramInfo& GetShaderInfoSkinning() const { UpdateShaderHash(); return shader_info_skinning; }
-	const Device::ShaderProgramInfo& GetDepthOnlyShaderInfoSkinning() const { UpdateShaderHash(); return depth_only_shader_info_skinning; }
 
 	uint32_t GetHash() const;
 
@@ -106,6 +163,8 @@ protected:
 	void AddExtraTextureBinding(const ExtraTextureBinding& value);
 
 protected:
+	render::ConstantBindingStorage constant_storage;
+
 	mutable bool caps_dirty = true;
 	mutable bool shader_hash_dirty = true;
 	std::wstring shader_path = L"shaders/material_main.hlsl";
@@ -121,13 +180,10 @@ protected:
 	vec4 color = vec4(1,1,1,1);
 	float roughness = 0.5;
 	float metalness = 0.2;
+	bool alpha_cutoff = false;
 
-	// TODO: unify/factorize this when more combinations is needed
 	mutable Device::ShaderProgramInfo shader_info;
 	mutable Device::ShaderProgramInfo depth_only_shader_info;
-	mutable Device::ShaderProgramInfo shader_info_skinning;
-	mutable Device::ShaderProgramInfo depth_only_shader_info_skinning;
-
 
 	bool has_texture0 = false;
 	Device::Handle<Device::Texture> texture0;

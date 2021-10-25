@@ -1,23 +1,28 @@
 [
     {
         "type": "copy",
+        "filename": "copy_grass.png",
+        "uid": "ea8bad98e7dc9b39"
+    },
+    {
+        "type": "copy",
         "filename": "ground.entity",
-        "uid": "e785f0c9a8117d6e"
+        "uid": "0fc86c78d0b832b8"
     },
     {
         "type": "copy",
         "filename": "ground.hlsl",
-        "uid": "f20d8095a39925cf"
+        "uid": "27d377ff1e90e5f2"
     },
     {
         "type": "copy",
         "filename": "ground.mat",
-        "uid": "c6706c8272b52b89"
+        "uid": "70ec73786f631b4d"
     },
     {
         "type": "texture",
         "filename": "splatmap.png",
-        "uid": "f4f6ed73d9fb80d9",
+        "uid": "99c9fa595941b654",
         "compression_type": "BC7"
     }
 ]

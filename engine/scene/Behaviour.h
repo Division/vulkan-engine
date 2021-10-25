@@ -24,6 +24,12 @@ namespace scene
 			return manager->GetComponent<T>(id);
 		}
 
+		template<typename T, typename ...Args>
+		T* AddComponent(Args&& ...args)
+		{
+			return manager->AddComponent<T>(id, std::forward<Args>(args)...);
+		}
+
 		template<typename T>
 		std::weak_ptr<T> GetBehaviour()
 		{

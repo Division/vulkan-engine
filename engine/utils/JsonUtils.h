@@ -6,6 +6,27 @@
 namespace utils::JSON
 {
 
+	inline vec2 ReadVector2(const rapidjson::Value& data)
+	{
+		if (!data.IsArray())
+			throw std::runtime_error("vector must be an array");
+
+		vec2 result;
+		int i = 0;
+		for (auto iter = data.Begin(); iter != data.End(); iter++)
+		{
+			if (i == 2)
+				throw std::runtime_error("vector array must be of length 2");
+
+			result[i++] = iter->GetFloat();
+		}
+
+		if (i != 2)
+			throw std::runtime_error("vector array must be of length 2");
+
+		return result;
+	}
+
 	inline vec3 ReadVector3(const rapidjson::Value& data)
 	{
 		if (!data.IsArray())

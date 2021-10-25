@@ -58,6 +58,7 @@ namespace render {
 	struct EnvironmentSettings;
 	class Bloom;
 	class Blur;
+	class ConstantBindingStorage;
 
 	struct ShadowCasterData
 	{
@@ -94,6 +95,7 @@ namespace render {
 		LightGrid& GetLightGrid() { return *light_grid; }
 		void SetRadianceCubemap(Resources::Handle<Resources::TextureResource> cubemap);
 		void SetIrradianceCubemap(Resources::Handle<Resources::TextureResource> cubemap);
+		ConstantBindingStorage& GetConstantStorage() const { return *constant_storage; }
 
 		Device::Texture* GetBlankTexture() const;
 
@@ -146,11 +148,13 @@ namespace render {
 		std::vector<ShadowCasterData> shadow_casters;
 
 		std::unique_ptr<EnvironmentSettings> environment_settings;
+		std::unique_ptr<ConstantBindingStorage> constant_storage;
 		DebugSettings* debug_settings;
 		std::unique_ptr<effects::Skybox> skybox;
 		std::unique_ptr<effects::PostProcess> post_process;
 		std::unique_ptr<Bloom> bloom;
 		std::unique_ptr<Blur> blur;
+		float time;
 	};
 
 }

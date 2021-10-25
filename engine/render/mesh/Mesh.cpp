@@ -10,82 +10,82 @@
 #include "render/device/Types.h"
 #include "utils/Math.h"
 
-const int JOINT_PER_VERTEX_MAX = Mesh::JOINT_PER_VERTEX_MAX;
-const int JOINTS_MAX = Mesh::JOINTS_MAX;
+namespace
+{
+    const int JOINT_PER_VERTEX_MAX = Mesh::JOINT_PER_VERTEX_MAX;
 
-const int VERTEX_SIZE = 3 * 4;
-const Device::Format VERTEX_FORMAT = Device::Format::R32G32B32_float;
+    const int VERTEX_SIZE = 3 * 4;
+    const Device::Format VERTEX_FORMAT = Device::Format::R32G32B32_float;
 
-const int NORMAL_SIZE = 4;
-const Device::Format NORMAL_FORMAT = Device::Format::A2R10G10B10_snorm;
+    const int NORMAL_SIZE = 4;
+    const Device::Format NORMAL_FORMAT = Device::Format::A2R10G10B10_snorm;
 
-const int TEXCOORD_SIZE = 2 * 2;
-const Device::Format TEXCOORD_FORMAT = Device::Format::R16G16_float;
+    const int TEXCOORD_SIZE = 2 * 2;
+    const Device::Format TEXCOORD_FORMAT = Device::Format::R16G16_float;
 
-const int CORNER_SIZE = 2 * 4;
-const Device::Format CORNER_FORMAT = Device::Format::R32G32_float;
+    const int CORNER_SIZE = 2 * 4;
+    const Device::Format CORNER_FORMAT = Device::Format::R32G32_float;
 
-const int JOINT_INDEX_SIZE = 4;
-const Device::Format JOINT_INDEX_FORMAT = Device::Format::R8G8B8A8_uint;
+    const int JOINT_INDEX_SIZE = 4;
+    const Device::Format JOINT_INDEX_FORMAT = Device::Format::R8G8B8A8_uint;
 
-const int WEIGHT_SIZE = 4;
-const Device::Format WEIGHTS_FORMAT = Device::Format::R8G8B8A8_unorm;
+    const int WEIGHT_SIZE = 4;
+    const Device::Format WEIGHTS_FORMAT = Device::Format::R8G8B8A8_unorm;
 
-const int COLOR_SIZE = 4 * 4;
-const Device::Format COLOR_FORMAT = Device::Format::R32G32B32A32_float;
+    const int COLOR_SIZE = 4 * 4;
+    const Device::Format COLOR_FORMAT = Device::Format::R32G32B32A32_float;
 
-#define BUFFER_OFFSET(i) ((char *)NULL + (i))
+    const int ORIGIN_SIZE = 3 * 4;
+    const Device::Format ORIGIN_FORMAT = Device::Format::R32G32B32_float;
+}
+
+Mesh::Layout::Layout(uint32_t flags)
+{
+    layout.AddAttrib(VertexAttrib::Position, VERTEX_FORMAT, VERTEX_SIZE);
+
+    if (flags & MESH_FLAG_HAS_NORMALS)
+        layout.AddAttrib(VertexAttrib::Normal, NORMAL_FORMAT, NORMAL_SIZE);
+
+    if (flags & MESH_FLAG_HAS_TBN)
+    {
+        layout.AddAttrib(VertexAttrib::Tangent, NORMAL_FORMAT, NORMAL_SIZE);
+    }
+
+    if (flags & MESH_FLAG_HAS_UV0)
+        layout.AddAttrib(VertexAttrib::TexCoord0, TEXCOORD_FORMAT, TEXCOORD_SIZE);
+
+    if (flags & MESH_FLAG_HAS_WEIGHTS)
+    {
+        layout.AddAttrib(VertexAttrib::JointIndices, JOINT_INDEX_FORMAT, JOINT_INDEX_SIZE);
+        layout.AddAttrib(VertexAttrib::JointWeights, WEIGHTS_FORMAT, WEIGHT_SIZE);
+    }
+
+    if (flags & MESH_FLAG_HAS_ORIGIN)
+        layout.AddAttrib(VertexAttrib::Origin, ORIGIN_FORMAT, ORIGIN_SIZE);
+}
 
 Mesh::Handle Mesh::Create(bool keepData, int componentCount, bool isStatic)
 {
     return Mesh::Handle(std::make_unique<Mesh>(keepData, componentCount, isStatic));
 }
 
-Mesh::Handle Mesh::Create(uint32_t flags, uint8_t* vertices, uint32_t vertex_count, uint8_t* indices, uint32_t triangle_count, AABB aabb)
+Mesh::Handle Mesh::Create(uint32_t flags, uint8_t* vertices, uint32_t vertex_count, uint8_t* indices, uint32_t triangle_count, AABB aabb, bool keep_data, const std::string& debug_name)
 {
-    return Mesh::Handle(std::make_unique<Mesh>(flags, vertices, vertex_count, indices, triangle_count, aabb));
+    return Mesh::Handle(std::make_unique<Mesh>(flags, vertices, vertex_count, indices, triangle_count, aabb, keep_data, debug_name));
 }
 
-Mesh::Mesh(bool keepData, int componentCount, bool isStatic) 
+Mesh::Mesh(bool keepData, int componentCount, bool isStatic, const std::string& debug_name)
     : _keepData(keepData)
     , _componentCount(componentCount)
     , _isStatic(isStatic)
+    , debug_name(debug_name)
 {
-    _stride = 0;
-    _faceCount = 0;
-    _strideBytes = 0;
-    _vertexCount = 0;
-
-    uses_short_indices = true;
-
-    _hasIndices = false;
-    _hasVertices = false;
-    _hasNormals = false;
-    _hasTBN = false;
-    _hasTexCoord0 = false;
-    _hasCorners = false;
-    _hasWeights = false;
-    _hasColors = false;
-
-    _vertexOffset = 0;
-    _vertexOffsetBytes = 0;
-    _normalOffset = 0;
-    _normalOffsetBytes = 0;
-    _tangentOffset = 0;
-    _tangentOffsetBytes = 0;
-    _texCoord0Offset = 0;
-    _texCoord0OffsetBytes = 0;
-    _jointIndexOffset = 0;
-    _jointIndexOffsetBytes = 0;
-    _weightOffset = 0;
-    _weightOffsetBytes = 0;
-    _colorOffset = 0;
-    _colorOffsetBytes = 0;
 }
 
-Mesh::Mesh(uint32_t flags, uint8_t* vertices, uint32_t vertex_count, uint8_t* indices, uint32_t triangle_count, AABB aabb)
-    : Mesh(true, 3, true)
+Mesh::Mesh(uint32_t flags, uint8_t* vertices, uint32_t vertex_count, uint8_t* indices, uint32_t triangle_count, AABB aabb, bool keep_data, const std::string& debug_name)
+    : Mesh(keep_data, 3, true, debug_name)
 {
+    this->flags = flags;
     this->_aabb = aabb;
 
     _strideBytes = GetVertexStride(flags);
@@ -98,28 +98,10 @@ Mesh::Mesh(uint32_t flags, uint8_t* vertices, uint32_t vertex_count, uint8_t* in
     _hasTBN = flags & MESH_FLAG_HAS_TBN;
     _hasTexCoord0 = flags & MESH_FLAG_HAS_UV0;
     _hasWeights = flags & MESH_FLAG_HAS_WEIGHTS;
+    _hasOrigin = flags & MESH_FLAG_HAS_ORIGIN;
     _hasIndices = true;
     _hasVertices = true;
-    layout.Clear();
-    
-    layout.AddAttrib(VertexAttrib::Position, VERTEX_FORMAT, VERTEX_SIZE);
-
-    if (_hasNormals)
-        layout.AddAttrib(VertexAttrib::Normal, NORMAL_FORMAT, NORMAL_SIZE);
-    
-    if (_hasTBN) 
-    {
-        layout.AddAttrib(VertexAttrib::Tangent, NORMAL_FORMAT, NORMAL_SIZE);
-    }
-
-    if (_hasTexCoord0) 
-        layout.AddAttrib(VertexAttrib::TexCoord0, TEXCOORD_FORMAT, TEXCOORD_SIZE);
-    
-    if (_hasWeights) 
-    {
-        layout.AddAttrib(VertexAttrib::JointIndices, JOINT_INDEX_FORMAT, JOINT_INDEX_SIZE);
-        layout.AddAttrib(VertexAttrib::JointWeights, WEIGHTS_FORMAT, WEIGHT_SIZE);
-    }
+    layout = Layout(flags).GetVertexLayout();
 
     uint32_t index_count = triangle_count * 3;
     uses_short_indices = IsShortIndexCount(index_count);
@@ -129,44 +111,31 @@ Mesh::Mesh(uint32_t flags, uint8_t* vertices, uint32_t vertex_count, uint8_t* in
     auto vertex_initializer = Device::VulkanBufferInitializer(vertex_data_size)
         .SetVertex()
         .MemoryUsage(VMA_MEMORY_USAGE_GPU_ONLY)
-        .Data(vertices);
+        .Data(vertices)
+        .Name(debug_name);
+    
     _vertexBuffer = Device::VulkanBuffer::Create(vertex_initializer);
 
     unsigned int indexes_size = (uses_short_indices ? sizeof(uint16_t) : sizeof(uint32_t)) * index_count;
     auto index_initializer = Device::VulkanBufferInitializer(indexes_size)
         .SetIndex()
         .MemoryUsage(VMA_MEMORY_USAGE_GPU_ONLY)
-        .Data(indices);
+        .Data(indices)
+        .Name(debug_name);
     _indexBuffer = Device::VulkanBuffer::Create(index_initializer);
-
-    Layout mesh_layout(layout);
 
     if (_keepData)
     {
-        for (int i = 0; i < vertex_count; i++)
-        {
-            vec3& position = mesh_layout.GetPosition(vertices, i);
-            _vertices.insert(_vertices.end(), { position.x, position.y, position.z });
-            if (_hasNormals)
-            {
-                vec3 normal = (vec4)mesh_layout.GetNormal(vertices, i);
-                _normals.insert(_normals.end(), { normal.x, normal.y, normal.z } );
-            }
+        vertex_data.resize(vertex_data_size);
+        index_data.resize(indexes_size);
 
-            if (_hasWeights)
-            {
-                auto& indexes = mesh_layout.GetIndices(vertices, i);
-                auto& weights = mesh_layout.GetWeights(vertices, i);
-
-                _jointIndices.push_back(indexes);
-                _weights.push_back(weights);
-            }
-        }
+        memcpy(vertex_data.data(), vertices, vertex_data_size);
+        memcpy(index_data.data(), indices, indexes_size);
     }
 }
 
-Mesh::~Mesh() {
-  _deleteBuffer();
+Mesh::~Mesh() 
+{
 }
 
 // Setting mesh data
@@ -180,6 +149,7 @@ size_t Mesh::GetVertexStride(uint32_t flags)
     if (flags & Mesh::MESH_FLAG_HAS_TBN) result += sizeof(Vector4_A2R10G10B10); // tangent
     if (flags & Mesh::MESH_FLAG_HAS_UV0) result += sizeof(Vector2Half); // uv
     if (flags & Mesh::MESH_FLAG_HAS_WEIGHTS) result += sizeof(uint32_t) * 2; // bone weights and indices
+    if (flags & Mesh::MESH_FLAG_HAS_ORIGIN) result += sizeof(vec3); // origin
 
     return result;
 }
@@ -300,11 +270,6 @@ void Mesh::setIndices(const std::vector<uint16_t> &indices) {
   _updateFaceCount();
 }
 
-
-void Mesh::_deleteBuffer() {
-
-}
-
 void Mesh::createBuffer() {
   _stride = _getStrideSize();
   _strideBytes = _stride;
@@ -362,7 +327,7 @@ void Mesh::createBuffer() {
 
   assert(_strideBytes == layout.GetStride());
 
-  std::vector<char> data_buffer(_strideBytes * _vertexCount);
+  std::vector<uint8_t> data_buffer(_strideBytes * _vertexCount);
 
   Layout mesh_layout(layout);
 
@@ -400,16 +365,11 @@ void Mesh::createBuffer() {
     }
   }
 
-  if (!_isStatic)
-  {
-      last_frame_vertex_buffer = std::move(_vertexBuffer);
-      last_frame_index_buffer = std::move(_indexBuffer);
-  }
-
   auto vertex_initializer = Device::VulkanBufferInitializer(data_buffer.size())
 	  .SetVertex()
 	  .MemoryUsage(VMA_MEMORY_USAGE_GPU_ONLY)
-	  .Data(data_buffer.data());
+	  .Data(data_buffer.data())
+      .Name(debug_name);
   _vertexBuffer = Device::VulkanBuffer::Create(vertex_initializer);
 
   if (_hasIndices) {
@@ -417,14 +377,16 @@ void Mesh::createBuffer() {
 	auto index_initializer = Device::VulkanBufferInitializer(indexSize)
 		.SetIndex()
 		.MemoryUsage(VMA_MEMORY_USAGE_GPU_ONLY)
-		.Data(_indices.data());
+		.Data(_indices.data())
+        .Name(debug_name);
 	_indexBuffer = Device::VulkanBuffer::Create(index_initializer);
   }
 
   _calculateAABB();
 
+  
+
   // Free data arrays
-  if (!_keepData) {
     std::vector<float>().swap(_vertices);
     std::vector<float>().swap(_normals);
     std::vector<float>().swap(_tangents);
@@ -433,7 +395,6 @@ void Mesh::createBuffer() {
     std::vector<Vector4b>().swap(_jointIndices);
     std::vector<float>().swap(_colors);
     std::vector<uint16_t>().swap(_indices);
-  }
 }
 
 void Mesh::_prepareVAO() {

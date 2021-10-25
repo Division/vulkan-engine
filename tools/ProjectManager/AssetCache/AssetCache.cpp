@@ -51,8 +51,10 @@ namespace Asset
 				stream >> time;
 				stream >> std::ws;
 
-				if (hash == 0 || time == 0)
+				if (/*hash == 0 || */time == 0) // 0 hash is valid for empty files
+				{
 					throw std::runtime_error("Parsing error: hash and time can't be zero");
+				}
 			};
 
 			std::wstring filename;
@@ -283,6 +285,18 @@ namespace Asset
 	Cache::Cache()
 	{
 		task_manager = std::make_unique<TaskManager>();
+
+		create_functions.push_back({ [](const std::wstring& filename)
+		{
+			return filename == L"copy"
+				|| utils::BeginsWith(fs::path(filename).filename().wstring(), std::wstring(L"copy_"))
+				|| utils::EndsWith(filename, std::wstring(L".dds"))
+				|| utils::EndsWith(filename, std::wstring(L".ktx"))
+				|| utils::EndsWith(filename, std::wstring(L".mat"))
+				|| utils::EndsWith(filename, std::wstring(L".hlsl"))
+				|| utils::EndsWith(filename, std::wstring(L".entity"));
+		}, [] { return std::make_unique<Asset::Types::PlainCopy>(); } });
+
 		create_functions.push_back({ [](const std::wstring& filename) 
 		{
 			return filename == L"texture" || 
@@ -294,16 +308,6 @@ namespace Asset
 		{
 			return filename == L"fbx" || utils::EndsWith(filename, std::wstring(L".fbx"));
 		}, [] { return std::make_unique<Asset::Types::FBX>(); } });
-
-		create_functions.push_back({ [](const std::wstring& filename)
-		{
-			return filename == L"copy" 
-				|| utils::EndsWith(filename, std::wstring(L".dds")) 
-				|| utils::EndsWith(filename, std::wstring(L".ktx"))
-				|| utils::EndsWith(filename, std::wstring(L".mat"))
-				|| utils::EndsWith(filename, std::wstring(L".hlsl"))
-				|| utils::EndsWith(filename, std::wstring(L".entity"));
-		}, [] { return std::make_unique<Asset::Types::PlainCopy>(); } });
 
 		// Should go last
 		create_functions.push_back({ [](const std::wstring& filename) { return true; }, [] { return std::make_unique<Asset::Types::IgnoredEntry>(); } });

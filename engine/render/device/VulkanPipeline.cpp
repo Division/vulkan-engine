@@ -114,7 +114,7 @@ namespace Device {
 			{
 				vertex_attribute_descriptions.push_back(
 					vk::VertexInputAttributeDescription(
-						attrib.location, 
+						attrib.location,
 						0,
 						vk::Format(layout->GetAttribFormat(attrib.vertex_attrib)),
 						layout->GetAttribOffset(attrib.vertex_attrib)

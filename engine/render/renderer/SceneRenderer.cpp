@@ -86,6 +86,8 @@ namespace render {
 		environment_settings = std::make_unique<EnvironmentSettings>();
 		environment_settings->directional_light = directional_light.get();
 
+		constant_storage = std::make_unique<ConstantBindingStorage>();
+
 		draw_call_manager = std::make_unique<DrawCallManager>(*this);
 		create_draw_calls_system = std::make_unique<systems::CreateDrawCallsSystem>(*scene.GetEntityManager(), *draw_call_manager);
 		upload_draw_calls_system = std::make_unique<systems::UploadDrawCallsSystem>(*draw_call_manager, *scene_buffers);
@@ -105,7 +107,7 @@ namespace render {
 
 		brdf_lut = TextureResource::Linear(L"assets/Textures/LUT/ibl_brdf_lut.dds");
 
-		compute_buffer = std::make_unique<DynamicBuffer<unsigned char>>(128 * 128 * sizeof(vec4), BufferType::Storage);
+		compute_buffer = std::make_unique<DynamicBuffer<unsigned char>>("TestCompute", 128 * 128 * sizeof(vec4), BufferType::Storage);
 
 		uint32_t colors[16];
 		for (auto& color : colors)
@@ -200,6 +202,10 @@ namespace render {
 	{
 		OPTICK_EVENT();
 
+		time = Engine::Get()->time();
+		global_constant_bindings->Clear();
+		global_constant_bindings->AddFloatBinding(&time, "CurrentTime");
+
 		draw_call_manager->Update();
 
 		auto* entity_manager = scene.GetEntityManager();
@@ -247,6 +253,8 @@ namespace render {
 		*/
 
 		UploadDrawCalls();
+
+		constant_storage->Flush(*global_constant_bindings);
 
 		auto main_camera = GetCameraData(scene.GetCamera(), scene.GetCamera()->cameraViewSize());
 		global_constant_bindings->AddDataBinding(&main_camera, sizeof(main_camera), Device::GetBufferMemberHash(BufferMemberName::Camera));

@@ -1,7 +1,6 @@
 #pragma once
 
 #include <memory>
-#include <mutex>
 #include "ECS.h"
 
 namespace ECS
@@ -142,7 +141,6 @@ namespace ECS
 				[](void* x, void* other) { new (x) T(std::move(*(T*)other)); }
 			};
 
-			std::scoped_lock lock(mutex);
 			commands.emplace_back(std::make_unique<AddComponentCommand<T>>(entity, std::move(component), std::move(data)));
 		}
 
@@ -155,40 +153,34 @@ namespace ECS
 				[](void* x, void* other) { new (x) T(std::move(*(T*)other)); }
 			};
 
-			std::scoped_lock lock(mutex);
 			commands.emplace_back(std::make_unique<AddComponentCommand<T>>(this, transient_id, std::move(component), std::move(data)));
 		}
 
 		template <typename T>
 		void RemoveComponent(EntityID entity)
 		{
-			std::scoped_lock lock(mutex);
 			commands.emplace_back(std::make_unique<RemoveComponentCommand>(entity, GetComponentHash<T>()));
 		}
 
 		template <typename T>
 		void RemoveComponent(TransientEntityID transient_id)
 		{
-			std::scoped_lock lock(mutex);
 			commands.emplace_back(std::make_unique<RemoveComponentCommand>(this, transient_id, GetComponentHash<T>()));
 		}
 
 		void DestroyEntity(EntityID entity)
 		{
-			std::scoped_lock lock(mutex);
 			commands.emplace_back(std::make_unique<DestroyEntityCommand>(entity));
 		}
 
 		TransientEntityID CreateEntity()
 		{
-			std::scoped_lock lock(mutex);
 			commands.emplace_back(std::make_unique<CreateEntityCommand>(this, current_id));
 			return current_id++;
 		}
 
 		bool GetCreatedEntityID(TransientEntityID transient_id, EntityID& out_entity)
 		{
-			std::scoped_lock lock(mutex);
 			auto it = created_entity_map.find(transient_id);
 			if (it == created_entity_map.end())
 				return false;
@@ -200,14 +192,12 @@ namespace ECS
 
 		void EntityCreated(TransientEntityID transient_id, EntityID entity)
 		{
-			std::scoped_lock lock(mutex);
 			assert(created_entity_map.find(transient_id) == created_entity_map.end());
 			created_entity_map[transient_id] = entity;
 		}
 
 		void Flush()
 		{
-			std::scoped_lock lock(mutex);
 			for (auto& command : commands)
 			{
 				command->Execute(manager);
@@ -222,6 +212,5 @@ namespace ECS
 		EntityManager& manager;
 		std::unordered_map<TransientEntityID, EntityID> created_entity_map;
 		std::vector<std::unique_ptr<Command>> commands;
-		std::mutex mutex;
 	};
 }

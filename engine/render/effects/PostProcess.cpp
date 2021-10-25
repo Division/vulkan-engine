@@ -55,7 +55,7 @@ namespace render::effects
 		PostProcessSettings base;
 
 		//shader = shader_cache.GetShaderProgram(shader_info_base);
-		full_screen_quad_mesh = std::make_unique<Mesh>(false);
+		full_screen_quad_mesh = std::make_unique<Mesh>(false, 3, true, "PostProcess mesh");
 		MeshGeneration::generateFullScreenQuad(full_screen_quad_mesh.get());
 		full_screen_quad_mesh->createBuffer();
 

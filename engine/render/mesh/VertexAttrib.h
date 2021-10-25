@@ -17,6 +17,7 @@ enum class VertexAttrib : uint32_t {
 	TexCoord1,
 	JointWeights,
 	JointIndices,
+	Origin,
 	Unknown,
 	Count
 };
@@ -50,6 +51,11 @@ public:
 
 		stride = 0;
 		hash = 0;
+	}
+
+	bool HasAttrib(VertexAttrib attrib) const
+	{
+		return attribs[(uint32_t)attrib].offset != -1;
 	}
 
 	uint32_t GetHash() const { return hash; }

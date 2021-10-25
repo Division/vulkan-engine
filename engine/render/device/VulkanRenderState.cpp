@@ -132,8 +132,8 @@ namespace Device {
 		: current_render_mode()
 	{
 		auto context = Engine::Get()->GetContext();
-		command_pools[context->GetQueueFamilyIndex(PipelineBindPoint::Graphics)] = std::make_unique<VulkanCommandPool>(context->GetQueueFamilyIndex(PipelineBindPoint::Graphics));
-		command_pools[context->GetQueueFamilyIndex(PipelineBindPoint::Compute)] = std::make_unique<VulkanCommandPool>(context->GetQueueFamilyIndex(PipelineBindPoint::Compute));
+		command_pools[context->GetQueueFamilyIndex(PipelineBindPoint::Graphics)] = std::make_unique<VulkanCommandPool>(context->GetQueueFamilyIndex(PipelineBindPoint::Graphics), "Graphics RenderState");
+		command_pools[context->GetQueueFamilyIndex(PipelineBindPoint::Compute)] = std::make_unique<VulkanCommandPool>(context->GetQueueFamilyIndex(PipelineBindPoint::Compute), "Compute RenderState");
 		auto& device = Engine::GetVulkanDevice();
 
 		for (auto& it : command_pools)

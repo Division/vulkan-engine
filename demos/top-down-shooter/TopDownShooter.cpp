@@ -6,6 +6,7 @@
 #include "ecs/components/AnimationController.h"
 #include "ecs/components/BoneAttachment.h"
 #include "ecs/components/BehaviourList.h"
+#include "ecs/components/Batching.h"
 #include "scene/Scene.h"
 #include "render/debug/DebugDraw.h"
 #include "render/texture/Texture.h"
@@ -24,6 +25,7 @@
 #include "controller/Nightmare.h"
 #include "projectile/Projectile.h"
 #include "objects/Ground.h"
+#include "objects/GroundItems.h"
 
 Game::Game() = default;
 Game::~Game() = default;
@@ -53,6 +55,42 @@ ECS::EntityID Game::CreateLight(vec3 position, float radius, ECS::components::Li
 	light->cast_shadows = true;
 
 	return entity;
+}
+
+ECS::EntityID Game::CreateGrass(vec3 position, float rotation)
+{
+	ECS::EntityID id = manager->CreateEntity();
+
+	{
+		auto transform = manager->AddComponent<components::Transform>(id);
+	}
+
+	{
+		auto renderer = manager->AddComponent<components::MultiMeshRenderer>(id);
+	}
+
+	{
+		auto batching = manager->AddComponent<components::BatchingVolume>(id);
+
+		auto material = Resources::MaterialResource::Handle(L"assets/top-down-shooter/vegetation/Lamium.mat");
+		auto mesh = Resources::MultiMesh::KeepDataHandle(L"assets/top-down-shooter/vegetation/Lamium.mesh");
+
+		for (uint32_t i = 0; i < 10; i++)
+		{
+			for (uint32_t j = 0; j < 10; j++)
+			{
+				auto& src = batching->src_meshes.emplace_back();
+				src.position = vec3(i * 0.4f, 0, j * 0.4f);
+				src.rotation = glm::angleAxis(Random() * (float)M_PI * 2, vec3(0, 1, 0));
+				src.scale = vec3(4);
+				src.mesh = mesh->GetMesh(0);
+				src.material = material->Get();
+			}
+		}
+
+	}
+
+	return id;
 }
 
 ECS::EntityID Game::CreatePlayer()
@@ -95,9 +133,12 @@ void Game::init()
 {
 	OPTICK_EVENT();
 
+	Randomize();
+
 	auto* settings = Engine::Get()->GetSceneRenderer()->GetEnvironmentSettings();
 	settings->directional_light->enabled = true;
 	settings->directional_light->zNear = 10;
+	settings->bloom_strength = 1.0f;
 
 	instance = this;
 
@@ -110,12 +151,15 @@ void Game::init()
 
 	player_id = CreatePlayer();
 
+	//CreateGrass(vec3(0), 0);
+
 	manager->AddStaticComponent(graph);
 
 	projectile_manager = std::make_unique<Projectile::ProjectileManager>(*manager);
 
 	//point_light_id = CreateLight(vec3(2.5, 4, 0), 10, ECS::components::Light::Type::Point, vec3(1, 1, 1) * 10.0f);
 
+	ground_items = std::make_unique<scene::GroundItemsCache>(*manager, L"assets/top-down-shooter/ground/copy_grass.png");
 	camera = std::make_unique<ViewerCamera>();
 
 	auto plane_handle = Resources::EntityResource::Handle(L"assets/top-down-shooter/ground/ground.entity");
@@ -161,8 +205,6 @@ void Game::UpdateFollowCamera()
 
 void Game::update(float dt)
 {
-	Resources::Cache::Get().GCCollect();
-
 	projectile_manager->Update();
 
 	auto input = Engine::Get()->GetInput();
@@ -172,20 +214,26 @@ void Game::update(float dt)
 	if (camera_control)
 		camera->Update(dt);
 	else
+	{
 		UpdateFollowCamera();
 
-	auto* settings = Engine::Get()->GetSceneRenderer()->GetEnvironmentSettings();
-	auto player_transform = manager->GetComponent<components::Transform>(player_id);
-	settings->directional_light->transform.position = player_transform->position + vec3(-10, 30, -20);
-	settings->directional_light->orthographic_size = vec2(20, 20);
-	settings->directional_light->transform.LookAt(
-		player_transform->position,
-		vec3(0, 1, 0)
-	);
+		auto* settings = Engine::Get()->GetSceneRenderer()->GetEnvironmentSettings();
+		auto player_transform = manager->GetComponent<components::Transform>(player_id);
+		settings->directional_light->transform.position = player_transform->position + vec3(-10, 30, -20);
+		settings->directional_light->orthographic_size = vec2(30, 20);
+		settings->directional_light->transform.LookAt(
+			player_transform->position,
+			vec3(0, 1, 0)
+		);
 
-	last_player_position = player_transform->position;
+		last_player_position = player_transform->position;
+	}
 
-	Engine::Get()->GetDebugDraw()->DrawAxis(vec3());
+	Engine::Get()->GetSceneRenderer()->GetConstantStorage().AddFloat3Constant("player_position", last_player_position);
+
+	ground_items->Update(dt);
+
+	//Engine::Get()->GetDebugDraw()->DrawAxis(vec3());
 
 	/*if (input->keyDown(Key::Space))
 	{

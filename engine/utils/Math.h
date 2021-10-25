@@ -150,44 +150,68 @@ struct Vector4b
 
 };
 
-struct AABB 
+template<typename T>
+struct BaseAABB
 {
-    vec3 min;
-    vec3 max;
+    T min;
+    T max;
 
-    AABB() = default;
+    static BaseAABB Empty() { return BaseAABB(T(std::numeric_limits<float>::infinity()), T(-std::numeric_limits<float>::infinity())); }
 
-    AABB(const AABB& other) : min(other.min), max(other.max) {}
+    BaseAABB() = default;
 
-    AABB(const vec3 &vmin, const vec3 &vmax) 
+    BaseAABB(const BaseAABB& other) : min(other.min), max(other.max) {}
+
+    BaseAABB(const T& vmin, const T& vmax)
     {
         min = vmin;
         max = vmax;
     }
 
-    vec3 size() { return max - min; }
+    T size() { return max - min; }
 
-    void expand(const vec3 &point) 
+    void expand(const T& point)
     {
         min = glm::min(point, min);
         max = glm::max(point, max);
     }
 
-    static AABB fromSphere(const vec3 &position, float radius) 
+    void expand(const BaseAABB& aabb)
     {
-        vec3 radiusVec = vec3(radius, radius, radius);
-        return AABB(position - radiusVec, position + radiusVec);
+        expand(aabb.min);
+        expand(aabb.max);
     }
 
-    bool intersectsAABB(const AABB &other) 
+    bool IntersectsPoint(const T& point) const
     {
+        for (uint32_t i = 0; i < point.length(); i++)
+            if (min[i] > point[i] || max[i] < point[i])
+                return false;
 
+        return true;
+    }
+
+    static BaseAABB fromSphere(const T& position, float radius)
+    {
+        T radiusVec = T(radius);
+        return BaseAABB(position - radiusVec, position + radiusVec);
+    }
+};
+
+struct AABBVec3 : public BaseAABB<glm::vec3>
+{
+    AABBVec3() = default;
+    AABBVec3(const BaseAABB<glm::vec3>& other) : BaseAABB(other) {}
+    AABBVec3(const vec3& vmin, const vec3& vmax) : BaseAABB(vmin, vmax) {}
+
+    bool intersectsAABB(const AABBVec3& other)
+    {
         return (min.x <= other.max.x && max.x >= other.min.x) &&
-              (min.y <= other.max.y && max.y >= other.min.y) &&
-              (min.z <= other.max.z && max.z >= other.min.z);
+            (min.y <= other.max.y && max.y >= other.min.y) &&
+            (min.z <= other.max.z && max.z >= other.min.z);
     }
 
-    AABB project(const mat4 &modelMatrix, const mat4 &projectionMatrix, const vec4 &viewport) 
+    AABBVec3 project(const mat4& modelMatrix, const mat4& projectionMatrix, const vec4& viewport)
     {
         vec3 s = size();
 
@@ -202,7 +226,7 @@ struct AABB
             glm::project(max - s * vec3(0, 0, 1), modelMatrix, projectionMatrix, viewport),
         };
 
-        AABB result (vertices[0], vertices[0]);
+        AABBVec3 result(vertices[0], vertices[0]);
         for (int i = 1; i < 8; i++) {
             result.expand(vertices[i]);
         }
@@ -210,6 +234,48 @@ struct AABB
         return result;
     }
 };
+
+struct AABBVec2 : public BaseAABB<glm::vec2>
+{
+    AABBVec2() = default;
+    AABBVec2(const BaseAABB<glm::vec2>& other) : BaseAABB(other) {}
+    AABBVec2(const vec2& vmin, const vec2& vmax) : BaseAABB(vmin, vmax) {}
+
+    bool intersectsAABB(const AABBVec2& other)
+    {
+        return (min.x <= other.max.x && max.x >= other.min.x) &&
+            (min.y <= other.max.y && max.y >= other.min.y);
+    }
+};
+
+struct AABBIVec2 : public BaseAABB<glm::ivec2>
+{
+    AABBIVec2() = default;
+    AABBIVec2(const BaseAABB<glm::ivec2>& other) : BaseAABB(other) {}
+    AABBIVec2(const ivec2& vmin, const ivec2& vmax) : BaseAABB(vmin, vmax) {}
+
+    bool intersectsAABB(const AABBIVec2& other)
+    {
+        return (min.x <= other.max.x && max.x >= other.min.x) &&
+            (min.y <= other.max.y && max.y >= other.min.y);
+    }
+};
+
+struct AABBIVec3 : public BaseAABB<glm::ivec3>
+{
+    AABBIVec3() = default;
+    AABBIVec3(const BaseAABB<glm::ivec3>& other) : BaseAABB(other) {}
+    AABBIVec3(const ivec3& vmin, const ivec3& vmax) : BaseAABB(vmin, vmax) {}
+
+    bool intersectsAABB(const AABBIVec3& other)
+    {
+        return (min.x <= other.max.x && max.x >= other.min.x) &&
+            (min.y <= other.max.y && max.y >= other.min.y) &&
+            (min.z <= other.max.z && max.z >= other.min.z);
+    }
+};
+
+typedef AABBVec3 AABB;
 
 Sphere boundingSphereForFrustum(float width, float height, float zNear, float zFar, float fov);
 

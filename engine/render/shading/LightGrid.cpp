@@ -22,10 +22,10 @@ LightGrid::LightGrid()
 {	
 	auto* context = Engine::GetVulkanContext();
 	context->AddRecreateSwapchainCallback(std::bind(&LightGrid::OnRecreateSwapchain, this, std::placeholders::_1, std::placeholders::_2));
-    projectors[0] = std::make_unique<DynamicBuffer<ShaderBufferStruct::Projector>>(sizeof(ShaderBufferStruct::Projector), BufferType::Uniform, true);
-    lights[0] = std::make_unique<DynamicBuffer<ShaderBufferStruct::Light>>(sizeof(ShaderBufferStruct::Light), BufferType::Uniform, true);
-    light_index[0] = std::make_unique<DynamicBuffer<char>>(1, BufferType::Uniform, true);
-    light_grid[0] = std::make_unique<DynamicBuffer<char>>(1, BufferType::Uniform, true);
+    projectors[0] = std::make_unique<DynamicBuffer<ShaderBufferStruct::Projector>>("Projectors", sizeof(ShaderBufferStruct::Projector), BufferType::Uniform, true);
+    lights[0] = std::make_unique<DynamicBuffer<ShaderBufferStruct::Light>>("Lights", sizeof(ShaderBufferStruct::Light), BufferType::Uniform, true);
+    light_index[0] = std::make_unique<DynamicBuffer<char>>("LightIndex", 1, BufferType::Storage, true);
+    light_grid[0] = std::make_unique<DynamicBuffer<char>>("LightClusters", 1, BufferType::Uniform, true);
 }
 
 float LightGrid::GetSliceMaxDepth(uint32_t slice)
@@ -168,7 +168,7 @@ void ResizeBuffer(std::unique_ptr<DynamicBuffer<T>> buffer[2], size_t size, bool
 {
 	if (!buffer[0] || buffer[0]->GetSize() < size)
 	{
-		buffer[0] = std::make_unique<DynamicBuffer<T>>(std::max(size, buffer[0]->GetElementSize()) , is_storage ? BufferType::Storage : BufferType::Uniform, false);
+		buffer[0] = std::make_unique<DynamicBuffer<T>>(buffer[0]->GetName(), std::max(size, buffer[0]->GetElementSize()) , is_storage ? BufferType::Storage : BufferType::Uniform, false);
 	}
 }
 

@@ -15,6 +15,8 @@ set(GAME_SOURCES
 	controller/Nightmare.h
 	controller/Nightmare.cpp
 	objects/Ground.h
+	objects/GroundItems.h
+	objects/GroundItems.cpp
 	projectile/Projectile.h
 	projectile/Projectile.cpp
 )

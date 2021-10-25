@@ -26,6 +26,9 @@ namespace ECS { namespace systems {
 			auto* mesh_renderer = mesh_renderer_fetcher.GetComponent(i);
 			auto* transform = transform_fetcher.GetComponent(i);
 			
+			if (!mesh_renderer->GetMultiMesh())
+				continue;
+
 			assert(mesh_renderer->HasMaterials());
 
 			if (!mesh_renderer->HasMaterials())
@@ -45,9 +48,9 @@ namespace ECS { namespace systems {
 					const bool is_uniform_scale = (std::abs(transform->scale.x - transform->scale.y) < 1e-4f) && (std::abs(transform->scale.x - transform->scale.z) < 1e-4f);
 
 					if (is_uniform_scale)
-						draw_call->normal_transform = draw_call->transform;
+						draw_call->normal_transform = mat3(draw_call->transform);
 					else
-						draw_call->normal_transform = glm::transpose(glm::inverse(draw_call->transform));
+						draw_call->normal_transform = glm::transpose(glm::inverse(mat3(draw_call->transform)));
 				}
 			}
 		}

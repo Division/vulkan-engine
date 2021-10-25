@@ -97,8 +97,8 @@ namespace render {
 			TextureInitializer initializer(width, height, 4, pixels, false);
 			font_texture = std::make_unique<Texture>(initializer);
 
-			vertex_buffers[0] = std::make_unique<DynamicBuffer<char>>(256, BufferType::Vertex, false);
-			index_buffers[0] = std::make_unique<DynamicBuffer<char>>(256, BufferType::Index, false);
+			vertex_buffers[0] = std::make_unique<DynamicBuffer<char>>("IMGUI", 256, BufferType::Vertex, false);
+			index_buffers[0] = std::make_unique<DynamicBuffer<char>>("IMGUI", 256, BufferType::Index, false);
 
 			ResourceBindings resource_bindings;
 			resource_bindings.AddTextureBinding("font_texture", font_texture.get());
@@ -128,7 +128,7 @@ namespace render {
 			{
 				auto type = buffer[0]->GetType();
 				buffer[1] = std::move(buffer[0]);
-				buffer[0] = std::make_unique<DynamicBuffer<T>>(size, type, false);
+				buffer[0] = std::make_unique<DynamicBuffer<T>>("IMGUI", size, type, false);
 			}
 		}
 

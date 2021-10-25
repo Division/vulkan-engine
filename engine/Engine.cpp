@@ -111,7 +111,7 @@ Engine::~Engine()
 	debug_draw = nullptr;
 
 	Resources::Cache::Get().Destroy(); // Destroying Resources from the cache as well as all the Common::Resource
-	::Device::GetReleaser().Clear(); // Goes last since Device::Resource never contains Common::Resource
+	::Device::Releaser::GetReleaser().Clear(); // Goes last since Device::Resource never contains Common::Resource
 	vulkan_context->Cleanup();
 	vulkan_context = nullptr;
 
@@ -178,8 +178,8 @@ void Engine::MainLoop()
 		scene_renderer->RenderScene();
 		context->Present();
 
-		::Device::GetReleaser().Swap();
-		Common::GetReleaser().Swap();
+		Common::Releaser::GetReleaser().Swap();
+		::Device::Releaser::GetReleaser().Swap();
 
 		while (System::DequeueAndShowMessage()) {}
 

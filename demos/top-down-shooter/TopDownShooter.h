@@ -43,6 +43,11 @@ namespace Projectile
 	class ProjectileManager;
 }
 
+namespace scene
+{
+	class GroundItemsCache;
+}
+
 namespace Resources
 {
 	class TextureResource;
@@ -76,6 +81,7 @@ public:
 
 private:
 	ECS::EntityID CreateLight(vec3 position, float radius, ECS::components::Light::Type type, vec3 color);
+	ECS::EntityID Game::CreateGrass(vec3 position, float rotation);
 	ECS::EntityID CreatePlayer();
 	ECS::EntityID CreateNightmare(vec3 position);
 
@@ -86,6 +92,7 @@ private:
 	std::unique_ptr<ViewerCamera> camera;
 	vec3 last_player_position;
 	std::unique_ptr<Projectile::ProjectileManager> projectile_manager;
+	std::unique_ptr<scene::GroundItemsCache> ground_items;
 
 	ECS::EntityManager* manager = nullptr;
 	ECS::TransformGraph* graph = nullptr;
