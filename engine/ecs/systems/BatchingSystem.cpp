@@ -7,7 +7,6 @@ namespace ECS::systems
 {
 	using namespace components;
 
-	std::pair<Material::Handle, Mesh::Handle> CreateMergedMesh(gsl::span<BatchingVolume::BatchSrc*> batches)
 	std::pair<Material::Handle, Mesh::Handle> CreateMergedMesh(gsl::span<BatchingVolume::BatchSrc*> batches, bool include_origin)
 	{
 		assert(batches.size());
