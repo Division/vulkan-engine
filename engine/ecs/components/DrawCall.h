@@ -31,6 +31,7 @@ namespace ECS::components {
 		Device::DescriptorSet* depth_only_descriptor_set = nullptr;
 		Device::ConstantBindings constants;
 		const Material* material = nullptr;
+		uint32_t instance_count = 1;
 		uint32_t visible = 0;
 		RenderQueue queue = RenderQueue::Opaque;
 	};

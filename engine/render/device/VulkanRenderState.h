@@ -222,8 +222,8 @@ namespace Device {
 
 		void UpdateState();
 		void RenderDrawCall(const ECS::components::DrawCall* draw_call, bool is_depth);
-		void DrawIndexed(const VulkanBuffer& vertex_buffer, const VulkanBuffer& index_buffer, uint32_t vertex_offset, uint32_t index_count, uint32_t first_index, IndexType index_type);
-		void Draw(const VulkanBuffer& buffer, uint32_t vertexCount, uint32_t firstVertex);
+		void DrawIndexed(const VulkanBuffer& vertex_buffer, const VulkanBuffer& index_buffer, uint32_t vertex_offset, uint32_t index_count, uint32_t first_index, IndexType index_type, uint32_t instance_count = 1);
+		void Draw(const VulkanBuffer& buffer, uint32_t vertexCount, uint32_t firstVertex, uint32_t instance_count = 1);
 
 		VulkanCommandBuffer* GetCurrentCommandBuffer() const;
 		void UpdateGlobalDescriptorSet();
@@ -231,7 +231,7 @@ namespace Device {
 		VulkanCommandBuffer* BeginRendering(const VulkanRenderTarget& render_target, const VulkanRenderPass& render_pass);
 		void EndRendering();
 
-		void RecordCompute(const ShaderProgram& program, DescriptorSetBindings& bindings, uvec3 group_size);
+		void Dispatch(const ShaderProgram& program, ResourceBindings& bindings, ConstantBindings& constants, uvec3 group_size);
 
 		void BeginRecording(PipelineBindPoint bind_point);
 		void EndRecording();

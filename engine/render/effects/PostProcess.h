@@ -59,7 +59,6 @@ namespace render { namespace effects {
 			render::graph::RenderGraph& graph, 
 			const Input& input,
 			render::graph::ResourceWrapper& destination_target, 
-			render::graph::ResourceWrapper& hdr_buffer,
 			const Device::ResourceBindings& global_bindings,
 			const Device::ConstantBindings& global_constants
 		);

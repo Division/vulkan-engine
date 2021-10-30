@@ -16,6 +16,7 @@
 namespace Device 
 {
 	class Texture;
+	class VulkanBuffer;
 }
 
 namespace render
@@ -105,13 +106,15 @@ public:
 
 	void AddExtraTexture(Resources::TextureResource::Handle texture, const char* name);
 	void AddExtraTexture(Device::Handle<Device::Texture> texture, const char* name);
-	void ClearExtraTextures();
+	void AddExtraBuffer(Device::Handle<Device::VulkanBuffer> buffer, const char* name);
+	void ClearExtraResources();
 
 	Device::Texture* GetNormalMap() const;
 
 	void LightingEnabled(bool lighting_enabled_);
 	bool LightingEnabled() const { return lighting_enabled; }
 
+	// TODO: remove from material, mesh property
 	void VertexColorEnabled(bool vertex_color_enabled_);
 	bool VertexColorEnabled() const { return vertex_color_enabled; }
 	
@@ -154,13 +157,13 @@ protected:
 	void SetBindingsDirty();
 	void SetConstantsDirty();
 
-	struct ExtraTextureBinding
+	struct ExtraResourceBinding
 	{
 		uint32_t name_hash;
-		std::variant<Resources::TextureResource::Handle, Device::Handle<Device::Texture>> texture;
+		std::variant<Resources::TextureResource::Handle, Device::Handle<Device::Texture>, Device::Handle<Device::VulkanBuffer>> resource;
 	};
 
-	void AddExtraTextureBinding(const ExtraTextureBinding& value);
+	void AddExtraResourceBinding(const ExtraResourceBinding& value);
 
 protected:
 	render::ConstantBindingStorage constant_storage;
@@ -168,11 +171,13 @@ protected:
 	mutable bool caps_dirty = true;
 	mutable bool shader_hash_dirty = true;
 	std::wstring shader_path = L"shaders/material_main.hlsl";
+	std::string vs_entry = "vs_main";
+	std::string ps_entry = "ps_main";
 	mutable ShaderCapsSet shader_caps;
 
 	mutable bool bindings_dirty = true;
 	mutable Device::ResourceBindings resource_bindings;
-	std::vector<ExtraTextureBinding> extra_texture_bindings;
+	std::vector<ExtraResourceBinding> extra_resource_bindings;
 
 	mutable bool constants_dirty = true;
 	mutable Device::ConstantBindings constant_bindings;

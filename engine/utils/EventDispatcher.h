@@ -8,7 +8,7 @@ namespace utils
 {
 
 	template<class ...Args>
-	class EventDispatcher : std::enable_shared_from_this<EventDispatcher<Args...>>
+	class EventDispatcher
 	{
 	public:
 		typedef std::function<void(Args...)> Callback;

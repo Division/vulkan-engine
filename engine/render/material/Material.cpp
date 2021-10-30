@@ -1,5 +1,6 @@
 ﻿#include "Material.h"
 #include "utils/Math.h"
+#include "render/buffer/VulkanBuffer.h"
 
 using namespace Device;
 using namespace Resources;
@@ -334,31 +335,37 @@ void Material::VertexColorEnabled(bool vertex_color_enabled_)
 
 void Material::AddExtraTexture(Resources::TextureResource::Handle texture, const char* name)
 {
-	ExtraTextureBinding value{ Device::ShaderProgram::GetParameterNameHash(name), texture };
-	AddExtraTextureBinding(value);
+	ExtraResourceBinding value{ Device::ShaderProgram::GetParameterNameHash(name), texture };
+	AddExtraResourceBinding(value);
 }
 
 void Material::AddExtraTexture(Device::Handle<Device::Texture> texture, const char* name)
 {
-	ExtraTextureBinding value{ Device::ShaderProgram::GetParameterNameHash(name), texture };
-	AddExtraTextureBinding(value);
+	ExtraResourceBinding value{ Device::ShaderProgram::GetParameterNameHash(name), texture };
+	AddExtraResourceBinding(value);
 }
 
-void Material::AddExtraTextureBinding(const ExtraTextureBinding& value)
+void Material::AddExtraBuffer(Device::Handle<Device::VulkanBuffer> buffer, const char* name)
 {
-	assert(!value.texture.valueless_by_exception());
-	auto it = std::find_if(extra_texture_bindings.begin(), extra_texture_bindings.end(), [hash = value.name_hash](const ExtraTextureBinding& binding) { return binding.name_hash == hash; });
-	if (it != extra_texture_bindings.end())
+	ExtraResourceBinding value{ Device::ShaderProgram::GetParameterNameHash(name), buffer };
+	AddExtraResourceBinding(value);
+}
+
+void Material::AddExtraResourceBinding(const ExtraResourceBinding& value)
+{
+	assert(!value.resource.valueless_by_exception());
+	auto it = std::find_if(extra_resource_bindings.begin(), extra_resource_bindings.end(), [hash = value.name_hash](const ExtraResourceBinding& binding) { return binding.name_hash == hash; });
+	if (it != extra_resource_bindings.end())
 		*it = value;
 	else
-		extra_texture_bindings.push_back(value);
+		extra_resource_bindings.push_back(value);
 
 	SetBindingsDirty();
 }
 
-void Material::ClearExtraTextures()
+void Material::ClearExtraResources()
 {
-	extra_texture_bindings.clear();
+	extra_resource_bindings.clear();
 }
 
 void Material::AddFloatConstant(const char* name, float value)
@@ -436,13 +443,13 @@ void Material::UpdateShaderHash() const
 	std::vector<ShaderProgramInfo::Macro> defines;
 	ShaderCache::AppendCapsDefines(shader_caps, defines);
 
-	auto vertex_data = ShaderProgramInfo::ShaderData(ShaderProgram::Stage::Vertex, shader_path, "vs_main", defines);
-	auto fragment_data = ShaderProgramInfo::ShaderData(ShaderProgram::Stage::Fragment, shader_path, "ps_main", defines);
-	auto vertex_depth_only_data = ShaderProgramInfo::ShaderData(ShaderProgram::Stage::Vertex, shader_path, "vs_main", defines);
-	auto fragment_depth_only_data = ShaderProgramInfo::ShaderData(ShaderProgram::Stage::Fragment, L"shaders/noop.hlsl");
+	auto vertex_data = ShaderProgramInfo::ShaderData(ShaderProgram::Stage::Vertex, shader_path, vs_entry, defines);
+	auto fragment_data = ShaderProgramInfo::ShaderData(ShaderProgram::Stage::Fragment, shader_path, ps_entry, defines);
+	auto vertex_depth_only_data = ShaderProgramInfo::ShaderData(ShaderProgram::Stage::Vertex, shader_path, vs_entry, defines);
+	auto fragment_depth_only_data = ShaderProgramInfo::ShaderData(ShaderProgram::Stage::Fragment, L"shaders/noop.hlsl", "main");
 	if (alpha_cutoff)
 	{
-		fragment_depth_only_data = ShaderProgramInfo::ShaderData(ShaderProgram::Stage::Fragment, shader_path, "ps_main", defines);
+		fragment_depth_only_data = ShaderProgramInfo::ShaderData(ShaderProgram::Stage::Fragment, shader_path, ps_entry, defines);
 	}
 
 	shader_info.Clear();
@@ -469,12 +476,14 @@ void Material::UpdateBindings() const
 	if (has_normal_map)
 		resource_bindings.AddTextureBinding(Device::GetShaderTextureNameHash(ShaderTextureName::NormalMap), GetNormalMap());
 
-	for (auto& extra_texture : extra_texture_bindings)
+	for (auto& extra_texture : extra_resource_bindings)
 	{
-		if (extra_texture.texture.index() == 0)
-			resource_bindings.AddTextureBinding(extra_texture.name_hash, std::get<0>(extra_texture.texture)->Get().get());
+		if (extra_texture.resource.index() == 0)
+			resource_bindings.AddTextureBinding(extra_texture.name_hash, std::get<0>(extra_texture.resource)->Get().get());
+		else if (extra_texture.resource.index() == 0)
+			resource_bindings.AddTextureBinding(extra_texture.name_hash, std::get<1>(extra_texture.resource).get());
 		else
-			resource_bindings.AddTextureBinding(extra_texture.name_hash, std::get<1>(extra_texture.texture).get());
+			resource_bindings.AddBufferBinding(extra_texture.name_hash, std::get<2>(extra_texture.resource).get(), std::get<2>(extra_texture.resource)->Size());
 	}
 
 	bindings_dirty = false;

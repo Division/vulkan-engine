@@ -25,6 +25,7 @@ namespace ECS::components
 		render::MaterialList::Handle materials;
 		render::MaterialResourceList::Handle material_resources;
 		render::DrawCallManager::Handle draw_calls;
+		uint32_t instance_count = 1; // Number of instanced per draw call
 
 		bool HasMaterials()
 		{

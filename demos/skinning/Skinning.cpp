@@ -77,7 +77,7 @@ void Game::init()
 	box_renderer->materials->push_back(Material::Create());
 	box_renderer->materials->at(0)->SetColor(vec4(32, 2.25, 1.3125, 1.0f));
 	box_renderer->materials->at(0)->LightingEnabled(false);
-	//manager->GetComponent<components::Transform>(scifi_box_id)->rotation = glm::angleAxis((float)M_PI * 4.8f, vec3(0, 1, 0)) * glm::angleAxis((float)M_PI * 4.8f, vec3(1, 0, 0));
+	manager->GetComponent<components::Transform>(scifi_box_id)->rotation = glm::angleAxis((float)M_PI * 4.8f, vec3(0, 1, 0)) * glm::angleAxis((float)M_PI * 4.8f, vec3(1, 0, 0));
 
 	//auto sphere_mirror_handle = Resources::EntityResource::Handle(L"assets/Entities/Basic/Spheres/sphere_mirror.entity");
 	//auto sphere_mirror_handle = Resources::EntityResource::Handle(L"assets/Entities/Basic/Spheres/sphere_rust_coated.entity");

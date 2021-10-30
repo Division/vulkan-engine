@@ -6,6 +6,8 @@
 #include "render/shader/ShaderResource.h"
 #include "render/shader/Shader.h"
 #include "ecs/systems/CullingSystem.h"
+#include "utils/EventDispatcher.h"
+#include <magic_enum/magic_enum.hpp>
 
 class Scene;
 class IShadowCaster;
@@ -76,13 +78,27 @@ namespace render {
 	namespace graph
 	{
 		class RenderGraph;
+		class DependencyNode;
 	}
 
+	struct RenderCallbackData
+	{
+		SceneRenderer& scene_renderer;
+		const Device::ConstantBindings& global_constant_bindings;
+		const Device::ResourceBindings& global_resource_bindings;
+	};
 
 	class SceneRenderer : IRenderer
 	{
 	public:
 		static int32_t ShadowAtlasSize();
+		enum class RenderDependencyType
+		{
+			DepthPrepass,
+			Main
+		};
+
+		typedef utils::EventDispatcher<const RenderCallbackData&, graph::RenderGraph&> RenderDispatcher;
 
 		SceneRenderer(Scene& scene, Device::ShaderCache* shader_cache, DebugSettings* settings);
 		~SceneRenderer();
@@ -99,6 +115,9 @@ namespace render {
 
 		Device::Texture* GetBlankTexture() const;
 
+		auto AddRenderCallback(RenderDispatcher::Callback callback) { return render_dispatcher.AddCallback(callback); }
+		void AddUserRenderDependency(RenderDependencyType type, graph::DependencyNode& node) { user_dependencies[(uint32_t)type].push_back({ &node }); }
+
 	private:
 		void CreateDrawCalls();
 		void UploadDrawCalls();
@@ -106,7 +125,14 @@ namespace render {
 		void OnRecreateSwapchain(int32_t width, int32_t height);
 
 	private:
+		struct UserRenderDependency
+		{
+			graph::DependencyNode* node;
+		};
+
+		std::array<std::vector<UserRenderDependency>, magic_enum::enum_count<RenderDependencyType>()> user_dependencies;
 		std::unique_ptr<Device::VulkanRenderPass> temp_pass;
+		utils::EventDispatcher<const RenderCallbackData&, graph::RenderGraph&> render_dispatcher;
 
 		Scene& scene;
 
@@ -134,16 +160,10 @@ namespace render {
 
 		std::unique_ptr<graph::RenderGraph> render_graph;
 		
-		Device::ShaderProgram* compute_program;
-		std::unique_ptr<Device::DescriptorSetBindings> compute_bindings;
-		std::unique_ptr<Device::DynamicBuffer<unsigned char>> compute_buffer;
-
 		std::unique_ptr<Device::VulkanRenderTargetAttachment> main_depth_attachment;
 		std::unique_ptr<Device::VulkanRenderTargetAttachment> shadowmap_atlas_attachment;
 		std::unique_ptr<Device::VulkanRenderTargetAttachment> shadowmap_attachment;
 		std::unique_ptr<Device::VulkanRenderTargetAttachment> main_color_attachment[2];
-
-		uint32_t depth_only_fragment_shader_hash;
 
 		std::vector<ShadowCasterData> shadow_casters;
 

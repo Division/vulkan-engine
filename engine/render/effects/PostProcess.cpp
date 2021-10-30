@@ -69,7 +69,7 @@ namespace render::effects
 		attachment_wrappers[1] = graph.RegisterAttachment(*attachments[1]);
 	}
 
-	graph::DependencyNode* PostProcess::AddPostProcess(RenderGraph& graph, const Input& input, ResourceWrapper& destination_target, ResourceWrapper& hdr_buffer, const Device::ResourceBindings& global_bindings, const ConstantBindings& global_constants)
+	graph::DependencyNode* PostProcess::AddPostProcess(RenderGraph& graph, const Input& input, ResourceWrapper& destination_target, const Device::ResourceBindings& global_bindings, const ConstantBindings& global_constants)
 	{
 		auto* destination_render_target = destination_target.GetAttachment();
 
@@ -108,7 +108,6 @@ namespace render::effects
 				const auto* descriptor_set_layout = shader->GetDescriptorSetLayout(0);
 				const DescriptorSetBindings bindings(resource_bindings, *descriptor_set_layout);
 				
-				auto* buffer = hdr_buffer.GetBuffer();
 				auto command_buffer = state.GetCurrentCommandBuffer()->GetCommandBuffer();
 
 				ConstantBindings constants = global_constants;

@@ -335,11 +335,12 @@ namespace Device {
 		graphics_queue = GetDevice().getQueue(graphics_queue_index, 0);
 		present_queue_index = indices.presentFamily.value();
 		present_queue = GetDevice().getQueue(present_queue_index, 0);
-		compute_queue_index = indices.compute_family.value();
+		// Don't support async compute for now
+		compute_queue_index = graphics_queue_index;// indices.compute_family.value();
 		compute_queue = GetDevice().getQueue(compute_queue_index, 0);
 
 		AssignDebugName((uint64_t)(VkQueue)graphics_queue, vk::DebugReportObjectTypeEXT::eQueue, "Graphics Queue");
-		AssignDebugName((uint64_t)(VkQueue)compute_queue, vk::DebugReportObjectTypeEXT::eQueue, "Compute Queue");
+		//AssignDebugName((uint64_t)(VkQueue)compute_queue, vk::DebugReportObjectTypeEXT::eQueue, "Compute Queue");
 		AssignDebugName((uint64_t)(VkQueue)present_queue, vk::DebugReportObjectTypeEXT::eQueue, "Present Queue");
 	}
 

@@ -128,6 +128,7 @@ set(ENGINE_SOURCES
 	render/buffer/VulkanBuffer.cpp
 	render/buffer/DynamicBuffer.h
 	render/buffer/ConstantBuffer.h
+	render/buffer/GPUBuffer.h
 	render/material/Material.h
 	render/material/Material.cpp
 	render/renderer/RenderModeUtils.h

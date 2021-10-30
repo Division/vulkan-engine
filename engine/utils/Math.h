@@ -157,6 +157,7 @@ struct BaseAABB
     T max;
 
     static BaseAABB Empty() { return BaseAABB(T(std::numeric_limits<float>::infinity()), T(-std::numeric_limits<float>::infinity())); }
+    static BaseAABB Infinity() { return BaseAABB(T(-std::numeric_limits<float>::infinity()), T(std::numeric_limits<float>::infinity())); }
 
     BaseAABB() = default;
 

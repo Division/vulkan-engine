@@ -22,9 +22,9 @@ public:
 	};
 
 	virtual ~IGame() = default;
-	virtual void init() = 0;
-	virtual void update(float dt) = 0;
-	virtual IGamePhysicsDelegate* GetPhysicsDelegate() { return nullptr; };
-	virtual void cleanup() = 0;
+	virtual void init() {}
+	virtual void update(float dt) {}
+	virtual IGamePhysicsDelegate* GetPhysicsDelegate() { return nullptr; }
+	virtual void cleanup() {}
 	virtual InitParams GetInitParams() const { return {}; }
 };

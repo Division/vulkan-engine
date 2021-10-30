@@ -96,7 +96,6 @@ namespace render {
 		light_grid = std::make_unique<LightGrid>();
 		shadow_map = std::make_unique<ShadowMap>(ShadowAtlasSize(), ShadowAtlasSize());
 		render_graph = std::make_unique<graph::RenderGraph>();
-		depth_only_fragment_shader_hash = ShaderCache::GetShaderDataHash(ShaderProgramInfo::ShaderData(ShaderProgram::Stage::Fragment, L"shaders/noop.hlsl"));
 		auto* context = Engine::GetVulkanContext();
 		context->AddRecreateSwapchainCallback(std::bind(&SceneRenderer::OnRecreateSwapchain, this, std::placeholders::_1, std::placeholders::_2));
 		shadowmap_atlas_attachment = std::make_unique<VulkanRenderTargetAttachment>("Shadowmap Atlas", VulkanRenderTargetAttachment::Type::Depth, ShadowAtlasSize(), ShadowAtlasSize(), Format::D24_unorm_S8_uint);
@@ -106,8 +105,6 @@ namespace render {
 		global_constant_bindings = std::make_unique<Device::ConstantBindings>();
 
 		brdf_lut = TextureResource::Linear(L"assets/Textures/LUT/ibl_brdf_lut.dds");
-
-		compute_buffer = std::make_unique<DynamicBuffer<unsigned char>>("TestCompute", 128 * 128 * sizeof(vec4), BufferType::Storage);
 
 		uint32_t colors[16];
 		for (auto& color : colors)
@@ -201,6 +198,8 @@ namespace render {
 	void SceneRenderer::RenderScene()
 	{
 		OPTICK_EVENT();
+		for (auto& d : user_dependencies)
+			d.clear();
 
 		time = Engine::Get()->time();
 		global_constant_bindings->Clear();
@@ -303,7 +302,6 @@ namespace render {
 		{
 			graph::DependencyNode* color_output = nullptr;
 			graph::DependencyNode* depth_output = nullptr;
-			graph::DependencyNode* compute_output = nullptr;
 		};
 
 		auto* swapchain = context->GetSwapchain();
@@ -314,29 +312,26 @@ namespace render {
 		auto* main_depth = render_graph->RegisterAttachment(*main_depth_attachment);
 		auto* shadow_map = render_graph->RegisterAttachment(*shadowmap_attachment);
 		auto* shadow_map_atlas = render_graph->RegisterAttachment(*shadowmap_atlas_attachment);
-		auto* compute_buffer_resource = render_graph->RegisterBuffer(*compute_buffer->GetBuffer());
 		post_process->PrepareRendering(*render_graph);
 
 		if (environment_settings->bloom_enabled)
 			bloom->PrepareRendering(*render_graph);
 
-		/*auto compute_pass_info = render_graph->AddPass<PassInfo>("compute pass", ProfilerName::PassCompute, [&](graph::IRenderPassBuilder& builder)
-		{
-			builder.SetCompute();
+		const RenderCallbackData callback_data{
+			*this,
+			*global_constant_bindings,
+			*global_resource_bindings
+		};
 
-			PassInfo result;
-			result.compute_output = builder.AddOutput(*compute_buffer_resource);
-			return result;
-		}, [&](VulkanRenderState& state)
-		{
-			state.RecordCompute(*compute_program, *compute_bindings, uvec3(128, 128, 1));
-		});*/
+		render_dispatcher.Dispatch(callback_data, *render_graph);
 
 		auto depth_pre_pass_info = render_graph->AddPass<PassInfo>("depth pre pass", ProfilerName::PassDepthPrepass, [&](graph::IRenderPassBuilder& builder)
 		{
 			PassInfo result;
 			result.depth_output = builder.AddOutput(*main_depth)->Clear(1.0f);
-			//builder.AddInput(*compute_pass_info.compute_output);
+			for (auto& dependency : user_dependencies[(uint32_t)RenderDependencyType::DepthPrepass])
+				builder.AddInput(*dependency.node);
+
 			return result;
 		}, [&](VulkanRenderState& state)
 		{
@@ -426,6 +421,10 @@ namespace render {
 			builder.AddInput(*depth_pre_pass_info.depth_output, graph::InputUsage::DepthAttachment);
 			builder.AddInput(*shadow_map_info.depth_output);
 			builder.AddInput(*shadow_map_atlas_info.depth_output);
+
+			for (auto& dependency : user_dependencies[(uint32_t)RenderDependencyType::Main])
+				builder.AddInput(*dependency.node);
+
 			result.color_output = builder.AddOutput(*main_offscreen_color[0])->Clear(vec4(0));
 			return result;
 		}, [&](VulkanRenderState& state)
@@ -478,12 +477,11 @@ namespace render {
 		effects::PostProcess::Input post_process_input = {};
 		post_process_input.src_texture = post_process_src;
 		post_process_input.bloom_texture = bloom_texture;
-		auto post_process_result = post_process->AddPostProcess(*render_graph, post_process_input, *main_color, *compute_buffer_resource, GetGlobalResourceBindings(), *global_constant_bindings);
+		auto post_process_result = post_process->AddPostProcess(*render_graph, post_process_input, *main_color, GetGlobalResourceBindings(), *global_constant_bindings);
 
 		auto ui_pass_info = render_graph->AddPass<PassInfo>("Debug UI", ProfilerName::PassDebugUI, [&](graph::IRenderPassBuilder& builder)
 			{
 				PassInfo result;
-				//builder.AddInput(*compute_pass_info.compute_output);
 				result.color_output = builder.AddOutput(*main_color)->PresentSwapchain();
 				return result;
 			}, [&](VulkanRenderState& state)

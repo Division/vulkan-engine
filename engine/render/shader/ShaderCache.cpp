@@ -98,7 +98,6 @@ namespace Device {
 		all_hashes.push_back(source_hash);
 
 		{
-			OPTICK_EVENT("PARSE INCLUDES");
 			size_t offset = 0;
 			std::string_view view((char*)source_data.data(), source_data.size());
 			static const std::string_view include_str{ "#include \"" };

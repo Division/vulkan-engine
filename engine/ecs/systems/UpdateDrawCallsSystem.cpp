@@ -57,6 +57,7 @@ namespace ECS { namespace systems {
 				draw_call->queue = material->GetRenderQueue();
 				draw_call->transform = transform->GetLocalToWorld(); // TODO: move to AddDrawCall
 				draw_call->obb = obb;
+				draw_call->instance_count = mesh_renderer->instance_count;
 			}
 
 			mesh_renderer->draw_calls = std::move(handle);

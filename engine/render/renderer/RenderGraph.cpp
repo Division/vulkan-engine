@@ -82,9 +82,10 @@ namespace render { namespace graph {
 		return node;
 	}
 
-	void RenderGraph::SetCompute()
+	void RenderGraph::SetCompute(bool is_async)
 	{
 		current_render_pass->is_compute = true;
+		current_render_pass->is_async = is_async;
 	}
 
 	void RenderGraph::Prepare()
@@ -95,8 +96,7 @@ namespace render { namespace graph {
 		{
 			auto* pass = render_passes[i].get();
 			pass->index = i;
-			pass->queue_family_index = context->GetQueueFamilyIndex(pass->is_compute ? PipelineBindPoint::Compute : PipelineBindPoint::Graphics);
-
+			pass->queue_family_index = context->GetQueueFamilyIndex((pass->is_compute && pass->is_async) ? PipelineBindPoint::Compute : PipelineBindPoint::Graphics);
 			for (auto* output_node : pass->output_nodes)
 			{
 				AddOutputOperation(*output_node, *pass);

@@ -1,0 +1,12 @@
+[
+    {
+        "type": "copy",
+        "filename": "compute_instances.hlsl",
+        "uid": "68becb4f0bf01536"
+    },
+    {
+        "type": "copy",
+        "filename": "compute_shader.hlsl",
+        "uid": "c7eb1b0ca9e800f5"
+    }
+]

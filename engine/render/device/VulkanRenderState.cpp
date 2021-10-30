@@ -444,12 +444,12 @@ namespace Device {
 		}
 
 		if (mesh->hasIndices())
-			DrawIndexed(*mesh->vertexBuffer(), *mesh->indexBuffer(), 0, mesh->indexCount(), 0, Mesh::IsShortIndexCount(mesh->indexCount()) ? IndexType::UINT16 : IndexType::UINT32);
+			DrawIndexed(*mesh->vertexBuffer(), *mesh->indexBuffer(), 0, mesh->indexCount(), 0, Mesh::IsShortIndexCount(mesh->indexCount()) ? IndexType::UINT16 : IndexType::UINT32, draw_call->instance_count);
 		else
-			Draw(*mesh->vertexBuffer(), mesh->indexCount(), 0);
+			Draw(*mesh->vertexBuffer(), mesh->indexCount(), 0, draw_call->instance_count);
 	}
 
-	void VulkanRenderState::Draw(const VulkanBuffer& buffer, uint32_t vertex_count, uint32_t first_vertex)
+	void VulkanRenderState::Draw(const VulkanBuffer& buffer, uint32_t vertex_count, uint32_t first_vertex, uint32_t instance_count)
 	{
 		UpdateState();
 
@@ -457,10 +457,10 @@ namespace Device {
 		vk::DeviceSize offset = { 0 };
 		vk::Buffer vertex_buffer = buffer.Buffer();
 		command_buffer.bindVertexBuffers(0, 1, &vertex_buffer, &offset);
-		command_buffer.draw(vertex_count, 1, first_vertex, 0);
+		command_buffer.draw(vertex_count, instance_count, first_vertex, 0);
 	}
 
-	void VulkanRenderState::DrawIndexed(const VulkanBuffer& vertex_buffer, const VulkanBuffer& index_buffer, uint32_t vertex_offset, uint32_t index_count, uint32_t first_index, IndexType index_type)
+	void VulkanRenderState::DrawIndexed(const VulkanBuffer& vertex_buffer, const VulkanBuffer& index_buffer, uint32_t vertex_offset, uint32_t index_count, uint32_t first_index, IndexType index_type, uint32_t instance_count)
 	{
 		UpdateState();
 
@@ -470,7 +470,7 @@ namespace Device {
 		vk::Buffer vk_index_buffer = index_buffer.Buffer();
 		command_buffer.bindIndexBuffer(vk_index_buffer, offset, index_type == IndexType::UINT16 ? vk::IndexType::eUint16 : vk::IndexType::eUint32);
 		command_buffer.bindVertexBuffers(0, 1, &vk_vertex_buffer, &offset);
-		command_buffer.drawIndexed(index_count, 1, first_index, vertex_offset, 0);
+		command_buffer.drawIndexed(index_count, instance_count, first_index, vertex_offset, 0);
 	}
 
 	void VulkanRenderState::BeginRecording(PipelineBindPoint bind_point)
@@ -516,19 +516,17 @@ namespace Device {
 		current_frame = (current_frame + 1) % caps::MAX_FRAMES_IN_FLIGHT;
 	}
 
-	void VulkanRenderState::RecordCompute(const ShaderProgram& program, DescriptorSetBindings& bindings, uvec3 group_size)
+	void VulkanRenderState::Dispatch(const ShaderProgram& program, ResourceBindings& bindings, ConstantBindings& constants, uvec3 group_size)
 	{
 		render_pass_started = true;
 
 		VulkanPipelineInitializer compute_pipeline_initializer(&program);
 		current_pipeline = GetPipeline(compute_pipeline_initializer);
-
 		auto command_buffer = GetCurrentCommandBuffer()->GetCommandBuffer();
 		command_buffer.bindPipeline( vk::PipelineBindPoint::eCompute, current_pipeline->GetPipeline());
-		auto* descriptor_set_info = program.GetDescriptorSetLayout(0);
 
-		if (!descriptor_set_info->Empty())
-			SetDescriptorSetBindings(bindings);
+		const DescriptorSetBindings global_shader_bindings(bindings, *program.GetDescriptorSetLayout(DescriptorSetType::Global));
+		SetDescriptorSetBindings(global_shader_bindings, constants);
 
 		vkCmdDispatch(command_buffer, group_size.x, group_size.y, group_size.z);
 

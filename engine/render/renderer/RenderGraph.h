@@ -144,6 +144,7 @@ namespace render { namespace graph {
 		profiler::ProfilerName profiler_name = profiler::ProfilerName::PassUnknown;
 
 		bool is_compute = false;
+		bool is_async = false;
 		uint32_t queue_family_index = -1;
 
 		uvec3 compute_group_size;
@@ -160,7 +161,7 @@ namespace render { namespace graph {
 	public:
 		virtual ~IRenderPassBuilder() {};
 
-		virtual void SetCompute() = 0;
+		virtual void SetCompute(bool is_async) = 0;
 		virtual void AddInput(DependencyNode& node, InputUsage usage = InputUsage::Default) = 0;
 		virtual DependencyNode* AddOutput(ResourceWrapper& resource) = 0;
 	};
@@ -186,7 +187,7 @@ namespace render { namespace graph {
 		void Render();
 
 		// IRenderPassBuilder
-		void SetCompute() override;
+		void SetCompute(bool is_async = false) override;
 		void AddInput(DependencyNode& node, InputUsage usage = InputUsage::Default) override;
 		DependencyNode* AddOutput(ResourceWrapper& render_target) override;
 	private:
