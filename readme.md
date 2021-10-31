@@ -1,8 +1,11 @@
 Engine top down shooter demo video:
 https://www.youtube.com/watch?v=FHfV1GQ4_JA
 
+Compute shader demo video:
+https://www.youtube.com/watch?v=B6pjqZyI28w
+
 Engine roadmap:
-- top down shooter demo
++- top down shooter demo
 - Proper deletion of entities loaded from resource
 - export default materials from fbx (with texture paths)
 - physics rendering interpolation
