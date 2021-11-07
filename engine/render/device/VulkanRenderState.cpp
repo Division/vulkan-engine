@@ -444,9 +444,20 @@ namespace Device {
 		}
 
 		if (mesh->hasIndices())
-			DrawIndexed(*mesh->vertexBuffer(), *mesh->indexBuffer(), 0, mesh->indexCount(), 0, Mesh::IsShortIndexCount(mesh->indexCount()) ? IndexType::UINT16 : IndexType::UINT32, draw_call->instance_count);
+		{
+			const auto index_type = Mesh::IsShortIndexCount(mesh->indexCount()) ? IndexType::UINT16 : IndexType::UINT32;
+			if (draw_call->indirect_buffer)
+				DrawIndexedIndirect(*mesh->vertexBuffer(), *mesh->indexBuffer(), index_type, *draw_call->indirect_buffer, draw_call->indirect_buffer_offset);
+			else
+				DrawIndexed(*mesh->vertexBuffer(), *mesh->indexBuffer(), 0, mesh->indexCount(), 0, index_type, draw_call->instance_count);
+		}
 		else
-			Draw(*mesh->vertexBuffer(), mesh->indexCount(), 0, draw_call->instance_count);
+		{
+			if (draw_call->indirect_buffer)
+				DrawIndirect(*mesh->vertexBuffer(), *draw_call->indirect_buffer, draw_call->indirect_buffer_offset);
+			else
+				Draw(*mesh->vertexBuffer(), mesh->indexCount(), 0, draw_call->instance_count);
+		}
 	}
 
 	void VulkanRenderState::Draw(const VulkanBuffer& buffer, uint32_t vertex_count, uint32_t first_vertex, uint32_t instance_count)
@@ -460,6 +471,17 @@ namespace Device {
 		command_buffer.draw(vertex_count, instance_count, first_vertex, 0);
 	}
 
+	void VulkanRenderState::DrawIndirect(const VulkanBuffer& buffer, VulkanBuffer& indirect_buffer, uint32_t indirect_buffer_offset)
+	{
+		UpdateState();
+
+		auto command_buffer = GetCurrentCommandBuffer()->GetCommandBuffer();
+		vk::DeviceSize offset = { 0 };
+		vk::Buffer vertex_buffer = buffer.Buffer();
+		command_buffer.bindVertexBuffers(0, 1, &vertex_buffer, &offset);
+		command_buffer.drawIndirect(indirect_buffer.Buffer(), indirect_buffer_offset, 1, 0);
+	}
+
 	void VulkanRenderState::DrawIndexed(const VulkanBuffer& vertex_buffer, const VulkanBuffer& index_buffer, uint32_t vertex_offset, uint32_t index_count, uint32_t first_index, IndexType index_type, uint32_t instance_count)
 	{
 		UpdateState();
@@ -471,6 +493,19 @@ namespace Device {
 		command_buffer.bindIndexBuffer(vk_index_buffer, offset, index_type == IndexType::UINT16 ? vk::IndexType::eUint16 : vk::IndexType::eUint32);
 		command_buffer.bindVertexBuffers(0, 1, &vk_vertex_buffer, &offset);
 		command_buffer.drawIndexed(index_count, instance_count, first_index, vertex_offset, 0);
+	}
+
+	void VulkanRenderState::DrawIndexedIndirect(const VulkanBuffer& vertex_buffer, const VulkanBuffer& index_buffer, IndexType index_type, VulkanBuffer& indirect_buffer, uint32_t indirect_buffer_offset)
+	{
+		UpdateState();
+
+		auto command_buffer = GetCurrentCommandBuffer()->GetCommandBuffer();
+		vk::DeviceSize offset = { 0 };
+		vk::Buffer vk_vertex_buffer = vertex_buffer.Buffer();
+		vk::Buffer vk_index_buffer = index_buffer.Buffer();
+		command_buffer.bindIndexBuffer(vk_index_buffer, offset, index_type == IndexType::UINT16 ? vk::IndexType::eUint16 : vk::IndexType::eUint32);
+		command_buffer.bindVertexBuffers(0, 1, &vk_vertex_buffer, &offset);
+		command_buffer.drawIndexedIndirect(indirect_buffer.Buffer(), indirect_buffer_offset, 1, 0);
 	}
 
 	void VulkanRenderState::BeginRecording(PipelineBindPoint bind_point)
@@ -529,6 +564,23 @@ namespace Device {
 		SetDescriptorSetBindings(global_shader_bindings, constants);
 
 		vkCmdDispatch(command_buffer, group_size.x, group_size.y, group_size.z);
+
+		dirty_flags = (uint32_t)DirtyFlags::All;
+	}
+
+	void VulkanRenderState::DispatchIndirect(const ShaderProgram& program, ResourceBindings& bindings, ConstantBindings& constants, VulkanBuffer& buffer, uint32_t offset)
+	{
+		render_pass_started = true;
+
+		VulkanPipelineInitializer compute_pipeline_initializer(&program);
+		current_pipeline = GetPipeline(compute_pipeline_initializer);
+		auto command_buffer = GetCurrentCommandBuffer()->GetCommandBuffer();
+		command_buffer.bindPipeline(vk::PipelineBindPoint::eCompute, current_pipeline->GetPipeline());
+
+		const DescriptorSetBindings global_shader_bindings(bindings, *program.GetDescriptorSetLayout(DescriptorSetType::Global));
+		SetDescriptorSetBindings(global_shader_bindings, constants);
+
+		vkCmdDispatchIndirect(command_buffer, buffer.Buffer(), offset);
 
 		dirty_flags = (uint32_t)DirtyFlags::All;
 	}

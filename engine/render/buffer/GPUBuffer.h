@@ -27,6 +27,10 @@ namespace Device {
 				initializer.SetStorage();
 				break;
 
+			case BufferType::Indirect:
+				initializer.SetIndirect();
+				break;
+
 			case BufferType::Vertex:
 				initializer.SetVertex();
 				break;
@@ -42,11 +46,11 @@ namespace Device {
 		const std::string& GetName() const { return name; }
 		BufferType GetType() const { return type; }
 		const VulkanBuffer::Handle& GetBuffer() const { return buffer; }
-		size_t GetSize() const { return size; }
+		uint32_t GetSize() const { return size; }
 
 	protected:
 		std::string name;
-		size_t size = 0;
+		uint32_t size = 0;
 		VulkanBuffer::Handle buffer;
 		BufferType type;
 	};

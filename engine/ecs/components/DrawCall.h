@@ -12,6 +12,7 @@ namespace Device
 {
 	class ShaderProgram;
 	class DescriptorSet;
+	class VulkanBuffer;
 }
 
 namespace ECS::components {
@@ -29,9 +30,11 @@ namespace ECS::components {
 		Device::DescriptorSet* descriptor_set = nullptr;
 		Device::ShaderProgram* depth_only_shader = nullptr;
 		Device::DescriptorSet* depth_only_descriptor_set = nullptr;
+		Device::VulkanBuffer* indirect_buffer = nullptr;
 		Device::ConstantBindings constants;
 		const Material* material = nullptr;
 		uint32_t instance_count = 1;
+		uint32_t indirect_buffer_offset = 0;
 		uint32_t visible = 0;
 		RenderQueue queue = RenderQueue::Opaque;
 	};

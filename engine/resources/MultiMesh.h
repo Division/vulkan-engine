@@ -51,9 +51,9 @@ namespace Resources
 		static Common::Handle<MultiMesh> Create(const gsl::span<const Common::Handle<Mesh>> meshes, AABB aabb = { -vec3(1), vec3(1) });
 
 		const size_t GetMeshCount() const { return meshes.size(); }
-		const auto& GetMesh(int index) const { return meshes[index]; }
-		const std::string& GetMeshName(int index) const { return mesh_names[index]; }
-		const std::vector<mat4>& GetInvBindPose(int index) const { return inv_bind_poses[index]; };
+		const auto& GetMesh(int index) const { return meshes.at(index); }
+		const std::string& GetMeshName(int index) const { return mesh_names.at(index); }
+		const std::vector<mat4>& GetInvBindPose(int index) const { return inv_bind_poses.at(index); };
 
 	private:
 		std::tuple<Common::Handle<Mesh>, std::string, std::vector<mat4>> LoadMesh(std::istream& stream, const std::string& name);

@@ -1,3 +1,6 @@
+#ifndef _MATERIAL_COMMON_
+#define _MATERIAL_COMMON_
+
 #define PI 3.1415926535
 
 float LogBase(float x, float base)
@@ -206,3 +209,5 @@ float4 GetTBNNormal(VertexData vertex_data, float4 normal_sampled)
 
     return float4(normalize(mul(TBN, normal_tangentspace)), 0);
 }
+
+#endif

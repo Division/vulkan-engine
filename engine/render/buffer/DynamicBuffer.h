@@ -12,11 +12,11 @@ namespace Device {
 	class DynamicBuffer
 	{
 	public:
-		DynamicBuffer(std::string name, size_t size, BufferType type = BufferType::Uniform, bool align = true)
+		DynamicBuffer(std::string name, size_t size, BufferType type = BufferType::Uniform, bool align = true, void* data = nullptr)
 			: name(name), size(size), type(type), alignment(align ? 256 : 1) // TODO: get from API
 		{
 			assert(size >= sizeof(T) && "buffer size must be greater than the element size");
-			auto main_initializer = VulkanBufferInitializer(size).Name("Dynamic " + name);
+			auto main_initializer = VulkanBufferInitializer(size).Name("Dynamic " + name).Data(data);
 
 			switch (type)
 			{
@@ -26,6 +26,10 @@ namespace Device {
 
 			case BufferType::Storage:
 				main_initializer.SetStorage();
+				break;
+
+			case BufferType::Indirect:
+				main_initializer.SetIndirect();
 				break;
 
 			case BufferType::Vertex:

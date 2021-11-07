@@ -41,6 +41,7 @@
 #include "render/effects/PostProcess.h"
 #include "render/effects/Bloom.h"
 #include "render/effects/Blur.h"
+#include "render/effects/GPUParticles.h"
 #include "resources/TextureResource.h"
 #include "render/debug/DebugSettings.h"
 #include "RenderModeUtils.h"
@@ -135,6 +136,7 @@ namespace render {
 		skybox = std::make_unique<effects::Skybox>(*shader_cache);
 
 		post_process = std::make_unique<effects::PostProcess>(*shader_cache, *environment_settings);
+		gpu_particles = std::make_unique<effects::GPUParticles>(*this, *shader_cache, *scene.GetEntityManager());
 		blur = std::make_unique<Blur>(*shader_cache);
 		bloom = std::make_unique<Bloom>(*shader_cache, *blur, *environment_settings);
 	}
@@ -195,7 +197,7 @@ namespace render {
 		return result;
 	}
 
-	void SceneRenderer::RenderScene()
+	void SceneRenderer::RenderScene(float dt)
 	{
 		OPTICK_EVENT();
 		for (auto& d : user_dependencies)
@@ -324,6 +326,8 @@ namespace render {
 		};
 
 		render_dispatcher.Dispatch(callback_data, *render_graph);
+
+		gpu_particles->Update(*render_graph, dt);
 
 		auto depth_pre_pass_info = render_graph->AddPass<PassInfo>("depth pre pass", ProfilerName::PassDepthPrepass, [&](graph::IRenderPassBuilder& builder)
 		{

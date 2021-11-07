@@ -73,6 +73,7 @@ namespace render {
 	{
 		class Skybox;
 		class PostProcess;
+		class GPUParticles;
 	}
 
 	namespace graph
@@ -103,8 +104,9 @@ namespace render {
 		SceneRenderer(Scene& scene, Device::ShaderCache* shader_cache, DebugSettings* settings);
 		~SceneRenderer();
 
-		void RenderScene();
+		void RenderScene(float dt);
 		SceneBuffers* GetSceneBuffers() const { return scene_buffers.get(); }
+		DrawCallManager* GetDrawCallManager() const { return draw_call_manager.get(); }
 		const Device::ResourceBindings& GetGlobalResourceBindings();
 		Device::ShaderCache* GetShaderCache() const { return shader_cache; }
 		auto* GetEnvironmentSettings() const { return environment_settings.get(); }
@@ -172,6 +174,7 @@ namespace render {
 		DebugSettings* debug_settings;
 		std::unique_ptr<effects::Skybox> skybox;
 		std::unique_ptr<effects::PostProcess> post_process;
+		std::unique_ptr<effects::GPUParticles> gpu_particles;
 		std::unique_ptr<Bloom> bloom;
 		std::unique_ptr<Blur> blur;
 		float time;
