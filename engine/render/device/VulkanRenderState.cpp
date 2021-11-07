@@ -202,25 +202,12 @@ namespace Device {
 			update_pipeline = true;
 		}
 
-		if (dirty_flags & (int)DirtyFlags::RenderPass)
+		if (dirty_flags & (int)DirtyFlags::Shader)
 		{
-			auto attachment_count = std::min(current_render_target->GetColorAttachmentCount() + current_render_target->HasDepth() ? 1u : 0u, (uint32_t)clear_values.size());
-
-			vk::RenderPassBeginInfo render_pass_begin_info(
-				current_render_pass->GetRenderPass(),
-				current_render_target->GetFramebuffer(),
-				vk::Rect2D(vk::Offset2D(0, 0), vk::Extent2D(current_render_target->GetWidth(), current_render_target->GetHeight())),
-				attachment_count, clear_values.data()
-			);
-
-			auto command_buffer = GetCurrentCommandBuffer()->GetCommandBuffer();
-			command_buffer.beginRenderPass(render_pass_begin_info, vk::SubpassContents::eInline);
-			render_pass_started = true;
-
 			update_pipeline = true;
 		}
 
-		if (dirty_flags & (int)DirtyFlags::Shader)
+		if (dirty_flags & (int)DirtyFlags::RenderPass)
 		{
 			update_pipeline = true;
 		}
@@ -281,15 +268,6 @@ namespace Device {
 		{
 			current_render_mode = mode;
 			dirty_flags |= (int)DirtyFlags::RenderMode;
-		}
-	}
-
-	void VulkanRenderState::SetRenderPass(const VulkanRenderPass& render_pass)
-	{
-		if (current_render_pass != &render_pass)
-		{
-			dirty_flags |= (int)DirtyFlags::RenderPass;
-			current_render_pass = &render_pass;
 		}
 	}
 
@@ -508,6 +486,38 @@ namespace Device {
 		command_buffer.drawIndexedIndirect(indirect_buffer.Buffer(), indirect_buffer_offset, 1, 0);
 	}
 
+	void VulkanRenderState::BeginRenderPass(const Device::VulkanRenderPass& render_pass)
+	{
+		current_render_pass = &render_pass;
+
+		auto attachment_count = std::min(current_render_target->GetColorAttachmentCount() + current_render_target->HasDepth() ? 1u : 0u, (uint32_t)clear_values.size());
+
+		vk::RenderPassBeginInfo render_pass_begin_info(
+			current_render_pass->GetRenderPass(),
+			current_render_target->GetFramebuffer(),
+			vk::Rect2D(vk::Offset2D(0, 0), vk::Extent2D(current_render_target->GetWidth(), current_render_target->GetHeight())),
+			attachment_count, clear_values.data()
+		);
+
+		auto command_buffer = GetCurrentCommandBuffer()->GetCommandBuffer();
+		command_buffer.beginRenderPass(render_pass_begin_info, vk::SubpassContents::eInline);
+		render_pass_started = true;
+
+		dirty_flags |= (int)DirtyFlags::RenderPass;
+	}
+
+	void VulkanRenderState::EndRenderPass()
+	{
+		if (render_pass_started)
+		{
+			auto command_buffer = GetCurrentCommandBuffer()->GetCommandBuffer();
+			command_buffer.endRenderPass();
+		}
+
+		render_pass_started = false;
+		current_render_pass = nullptr;
+	}
+
 	void VulkanRenderState::BeginRecording(PipelineBindPoint bind_point)
 	{
 		pipeline_bind_point = bind_point;
@@ -530,18 +540,14 @@ namespace Device {
 		global_layout_hash = 0;
 		global_bindings = std::nullopt;
 
-		SetRenderPass(render_pass);
+		BeginRenderPass(render_pass);
 
 		return GetCurrentCommandBuffer();
 	}
 
 	void VulkanRenderState::EndRendering()
 	{
-		if (render_pass_started)
-		{
-			auto command_buffer = GetCurrentCommandBuffer()->GetCommandBuffer();
-			command_buffer.endRenderPass();
-		}
+		EndRenderPass();
 	}
 
 	void VulkanRenderState::EndRecording()

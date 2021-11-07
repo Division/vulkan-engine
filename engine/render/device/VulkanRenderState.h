@@ -206,7 +206,6 @@ namespace Device {
 		~VulkanRenderState();
 
 		void SetRenderMode(const RenderMode& mode);
-		void SetRenderPass(const VulkanRenderPass& render_pass);
 		void SetViewport(vec4 viewport);
 		vec4 GetViewport() const { return current_viewport; };
 		void SetScissor(vec4 scissor);
@@ -230,6 +229,8 @@ namespace Device {
 		VulkanCommandBuffer* GetCurrentCommandBuffer() const;
 		void UpdateGlobalDescriptorSet();
 
+		void BeginRenderPass(const Device::VulkanRenderPass& render_pass);
+		void EndRenderPass();
 		VulkanCommandBuffer* BeginRendering(const VulkanRenderTarget& render_target, const VulkanRenderPass& render_pass);
 		void EndRendering();
 
