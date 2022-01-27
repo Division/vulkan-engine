@@ -6,24 +6,24 @@ Compute shader demo video:
 https://www.youtube.com/watch?v=B6pjqZyI28w
 
 ## How to build
-The easies way to build is to use Visual Studio (open cmake)
+The easies way to build is to use Visual Studio (open cmake)  
 Requires Vulkan SDK
 
 ## How to run demo projects:
 Follow these steps:  
 - Make sure all the executables are built (ProjectManager.exe in particular)
-- Add the following line to the vulkan-engine\bin\create_symlink.bat:  
+- Add the following line to the `vulkan-engine\bin\create_symlink.bat`:  
 ```mklink /D %~dp0\assets %~dp0\..\assets\assets.cache```  
-This step optional but must be done to avoid running ProjectManager.exe as administrator.
-- Execute the batch file ```vulkan-engine\bin\create_symlink.bat```. It should create two symlinks in the vulkan-engine\bin folder: shaders and assets. Asset may not work yet, it's fine.
+This step is optional but must be done to avoid running ProjectManager.exe as administrator.
+- Execute the batch file ```vulkan-engine\bin\create_symlink.bat```. It should create two symlinks in the ```vulkan-engine\bin``` folder: shaders and assets. Asset may not work yet, it's fine.
 - Run ProjectManager project. If you skipped the editing of .bat file the ProjectManager must be run as an administrator in order to create the symlink.
-- In the ProjectManager select Project->Open and select vulkan-engine\assets\assets
-- Select Assets -> Export pending assets to trigger the asset build.
+- In the ProjectManager select `Project -> Open` and select ```vulkan-engine\assets\assets```
+- Select `Assets -> Export` pending assets to trigger the asset build.
 
 It should produce ```vulkan-engine\assets\assets.cache``` folder with engine-readable assets in it.
 
-Check the assets symlink - it should be pointing to vulkan-engine\assets\assets.cache folder.  
-And the shaders symlink must be pointing to vulkan-engine\engine\shaders
+Check the assets symlink - it should be pointing to ```vulkan-engine\assets\assets.cache``` folder.  
+And the shaders symlink must be pointing to ```vulkan-engine\engine\shaders```.
 
 Now demo projects should run without errors
 
