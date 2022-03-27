@@ -71,6 +71,8 @@ void Game::init()
 	material->SetShaderPath(L"shaders/particles/particle_material_default.hlsl");
 	material->SetRenderQueue(RenderQueue::Translucent);
 	emitter->material = material;
+	emitter->emission_rate = 2;
+	emitter->life_duration = 4.0f;
 
 	manager->RemoveComponent<components::MultiMeshRenderer>(box_id);
 

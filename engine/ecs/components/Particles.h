@@ -48,7 +48,13 @@ namespace ECS::components
 			instance_count--;
 		}
 
-		ParticleEmitter(ParticleEmitter&&) = default;
+		ParticleEmitter(ParticleEmitter&& other)
+		{
+			*this = std::move(other);
+			instance_count++;
+		}
+
+		ParticleEmitter& operator=(ParticleEmitter&&) = default;
 
 #pragma pack(push, 1)
 		struct CounterArgumentsData
@@ -92,13 +98,6 @@ namespace ECS::components
 			Device::GPUBuffer& GetAliveIndices() { return pass_counter % 2 == 0 ? alive_indices0 : alive_indices1; }
 			Device::GPUBuffer& GetDrawIndices() { return pass_counter % 2 == 0 ? alive_indices1 : alive_indices0; }
 
-			enum PassType : int
-			{
-				PassTypeEmit = 0,
-				PassTypeUpdate,
-				PassTypeRender
-			};
-
 			GPUData(uint32_t particle_count);
 		};
 
@@ -108,7 +107,10 @@ namespace ECS::components
 
 		std::unique_ptr<GPUData> gpu_data;
 		uint32_t max_particles = 10000;
-		uint32_t emission_rate = 1000;
+		uint32_t emission_rate = 100;
+		float life_duration = 1.0f;
+
+		float time_since_last_emit = 0;
 		bool emission_enabled = true;
 
 		static void Initialize(EntityManager& manager, EntityID id, ParticleEmitter* emitter);

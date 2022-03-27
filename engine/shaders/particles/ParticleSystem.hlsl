@@ -30,11 +30,8 @@ cbuffer GlobalConstants : register(b10, space0)
 groupshared int final_particle_count;
 
 [numthreads(64, 1, 1)]
-void EmitParticlesDirection(uint3 id: SV_DispatchThreadID)
+void EmitParticlesDirection(uint3 id: SV_DispatchThreadID, uint3 groupthread_id : SV_GroupThreadID)
 {
-	final_particle_count = counters[COUNTER_INDEX_ALIVE];
-	AllMemoryBarrierWithGroupSync();
-
 	if (id.x < emit_count)
 	{
 		int available_particle_count;
@@ -47,7 +44,7 @@ void EmitParticlesDirection(uint3 id: SV_DispatchThreadID)
 		{
 			uint particle_index = dead_indices[available_particle_count - 1];
 			uint alive_particle_count;
-			InterlockedAdd(final_particle_count, +1, alive_particle_count);
+			InterlockedAdd(counters[COUNTER_INDEX_ALIVE], +1, alive_particle_count);
 			alive_indices[alive_particle_count] = particle_index;
 
 			particles[particle_index].position = float4(emit_position, 1);
@@ -56,11 +53,10 @@ void EmitParticlesDirection(uint3 id: SV_DispatchThreadID)
 	}
 
 	AllMemoryBarrierWithGroupSync();
-	if (id.x == 0)
+	if (groupthread_id.x == 0)
 	{
-		int num_dispatch_groups = (int)ceil(float(final_particle_count) / 64.0f);
-		counters[COUNTER_INDEX_UPDATE_DISPATCH_GROUPS] = num_dispatch_groups;
-		counters[COUNTER_INDEX_ALIVE] = final_particle_count;
+		int num_dispatch_groups = (int)ceil(float(counters[COUNTER_INDEX_ALIVE]) / 64.0f);
+		InterlockedMax(counters[COUNTER_INDEX_UPDATE_DISPATCH_GROUPS], num_dispatch_groups);
 	}
 
 }
