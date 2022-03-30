@@ -18,10 +18,10 @@ namespace render::effects {
 	GPUParticles::GPUParticles(SceneRenderer& scene_renderer, Device::ShaderCache& shader_cache, ECS::EntityManager& manager)
 		: scene_renderer(scene_renderer), manager(manager)
 	{
-		auto emit_shader_info = ShaderProgramInfo().AddShader(ShaderProgram::Stage::Compute, L"shaders/particles/ParticleSystem.hlsl", "EmitParticlesDirection");
+		auto emit_shader_info = ShaderProgramInfo().AddShader(ShaderProgram::Stage::Compute, L"shaders/particles/particle_system_default.hlsl", "EmitParticles");
 		emit_shader = shader_cache.GetShaderProgram(emit_shader_info);
 
-		auto update_shader_info = ShaderProgramInfo().AddShader(ShaderProgram::Stage::Compute, L"shaders/particles/ParticleSystem.hlsl", "UpdateParticles");
+		auto update_shader_info = ShaderProgramInfo().AddShader(ShaderProgram::Stage::Compute, L"shaders/particles/particle_system_default.hlsl", "UpdateParticles");
 		update_shader = shader_cache.GetShaderProgram(update_shader_info);
 	}
 

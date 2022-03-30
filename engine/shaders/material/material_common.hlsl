@@ -26,6 +26,7 @@ struct VS_in
 {
     float4 position : POSITION;
     uint instance_id : SV_InstanceID;
+    uint vertex_id : SV_VertexID;
 
 #if defined(TEXTURE0) || defined(NORMAL_MAP)
     float2 texcoord0 : TEXCOORD;
@@ -84,6 +85,7 @@ struct VertexData
     float4 frag_coord;
     float linear_depth;
     uint instance_id;
+    uint vertex_id;
 };
 
 float SrgbToLinear(float value)
@@ -102,6 +104,7 @@ VertexData GetDefaultVertexData(VS_in input, float4x4 object_model_matrix, float
     VertexData result;
 
     result.instance_id = input.instance_id;
+    result.vertex_id = input.vertex_id;
     float4x4 model_matrix = object_model_matrix;
     float4x4 normal_matrix = object_normal_matrix;
 #if defined(SKINNING)
@@ -138,7 +141,6 @@ VertexData GetDefaultVertexData(VS_in input, float4x4 object_model_matrix, float
     result.texcoord0 = input.texcoord0;
 #endif
 
-    result.instance_id = input.instance_id;
     result.frag_coord = 0;
 
     return result;
@@ -149,6 +151,7 @@ VertexData GePSVertexData(VS_out input)
     VertexData result;
 
     result.instance_id = input.instance_id;
+    result.vertex_id = 0;
 
 #if !defined(DEPTH_ONLY)
     result.position_worldspace = input.position_worldspace;

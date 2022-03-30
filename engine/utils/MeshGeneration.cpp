@@ -161,3 +161,58 @@ void MeshGeneration::generateQuad(Mesh* mesh, vec2 size, vec2 origin) {
   mesh->setVertices(vertices);
   mesh->setTexCoord0(texCoords);
 }
+
+void MeshGeneration::generateIndexedQuad(Mesh* mesh, vec2 size, vec2 origin) {
+    auto halfSize = vec3(size / 2.0f, 0);
+    auto offset = vec3((vec2(0.5f, 0.5f) - origin) * size, 0);
+
+    std::vector<vec3> vertices = {
+        vec3(-1, 1, 0) * halfSize + offset,
+        vec3(-1, -1, 0) * halfSize + offset,
+        vec3(1, -1, 0) * halfSize + offset,
+        vec3(1, 1, 0) * halfSize + offset,
+    };
+
+
+    std::vector<vec2> texCoords = {
+        vec2(0, 1),
+        vec2(0, 0),
+        vec2(1, 0),
+        vec2(1, 1),
+    };
+
+    std::vector<uint16_t> indices = {
+        0, 1, 2, 2, 3, 0
+    };
+
+    std::reverse(vertices.begin(), vertices.end());
+    std::reverse(texCoords.begin(), texCoords.end());
+    mesh->setVertices(vertices);
+    mesh->setTexCoord0(texCoords);
+    mesh->setIndices(indices);
+}
+
+void MeshGeneration::generateParticleQuad(Mesh* mesh)
+{
+    std::vector<vec3> vertices = {
+        vec3(0),
+        vec3(0),
+        vec3(0),
+        vec3(0),
+    };
+
+    std::vector<vec2> texCoords = {
+        vec2(1, 1),
+        vec2(1, 0),
+        vec2(0, 0),
+        vec2(0, 1),
+    };
+
+    std::vector<uint16_t> indices = {
+        0, 3, 2, 2, 1, 0
+    };
+
+    mesh->setVertices(vertices);
+    mesh->setTexCoord0(texCoords);
+    mesh->setIndices(indices);
+}

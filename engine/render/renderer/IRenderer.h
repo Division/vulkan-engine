@@ -7,6 +7,7 @@ enum class RenderQueue : int {
   Opaque,
   AlphaTest,
   Translucent,
+  Additive,
   Debug,
   UI,
   Count

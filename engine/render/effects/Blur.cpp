@@ -2,6 +2,7 @@
 
 #include "CommonIncludes.h"
 #include "render/renderer/RenderGraph.h"
+#include "render/renderer/SceneRenderer.h"
 #include "render/device/VulkanPipeline.h"
 #include "render/device/VkObjects.h"
 #include "render/device/VulkanRenderTarget.h"
@@ -25,7 +26,7 @@ namespace render
 	using namespace ECS;
 	using namespace profiler;
 
-	Blur::Blur(ShaderCache& shader_cache)
+	Blur::Blur(ShaderCache& shader_cache, RendererResources& render_resources)
 	{
 		auto blur_shader_info = ShaderProgramInfo()
 			.AddShader(ShaderProgram::Stage::Vertex, L"shaders/blur.hlsl", "VSMain")
@@ -33,9 +34,7 @@ namespace render
 
 		shader_blur = shader_cache.GetShaderProgram(blur_shader_info);
 
-		full_screen_quad_mesh = std::make_unique<Mesh>(false);
-		MeshGeneration::generateFullScreenQuad(full_screen_quad_mesh.get());
-		full_screen_quad_mesh->createBuffer();
+		full_screen_quad_mesh = render_resources.full_screen_quad_mesh.get();
 	}
 
 	DependencyNode* Blur::AddOneDirectionBlur(RenderGraph& graph, DependencyNode& src_target_node, ResourceWrapper& destination_target, vec2 blur_direction_sigma)

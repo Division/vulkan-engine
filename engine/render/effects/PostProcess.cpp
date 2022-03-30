@@ -1,6 +1,7 @@
 #include "CommonIncludes.h"
 #include "PostProcess.h"
 #include "render/renderer/RenderGraph.h"
+#include "render/renderer/SceneRenderer.h"
 #include "render/device/VulkanPipeline.h"
 #include "render/device/VkObjects.h"
 #include "render/device/VulkanRenderTarget.h"
@@ -44,7 +45,7 @@ namespace render::effects
 		return it->second;
 	}
 
-	PostProcess::PostProcess(ShaderCache& shader_cache, EnvironmentSettings& environment_settings)
+	PostProcess::PostProcess(ShaderCache& shader_cache, EnvironmentSettings& environment_settings, RendererResources& render_resources)
 		: environment_settings(environment_settings)
 		, shader_cache(shader_cache)
 	{
@@ -54,13 +55,7 @@ namespace render::effects
 
 		PostProcessSettings base;
 
-		//shader = shader_cache.GetShaderProgram(shader_info_base);
-		full_screen_quad_mesh = std::make_unique<Mesh>(false, 3, true, "PostProcess mesh");
-		MeshGeneration::generateFullScreenQuad(full_screen_quad_mesh.get());
-		full_screen_quad_mesh->createBuffer();
-
-		//src_texture_address = shader->GetBindingAddress("src_texture");
-		//hdr_buffer_address = shader->GetBindingAddress("hdr_data");
+		full_screen_quad_mesh = render_resources.full_screen_quad_mesh.get();
 	}
 
 	void PostProcess::PrepareRendering(RenderGraph& graph)

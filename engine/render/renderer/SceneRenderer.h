@@ -89,10 +89,27 @@ namespace render {
 		const Device::ResourceBindings& global_resource_bindings;
 	};
 
+	struct RendererResources
+	{
+		Device::Handle<Device::Texture> blank_texture;
+		Device::Handle<Device::Texture> blank_cube_texture;
+		Resources::Handle<Resources::TextureResource> environment_cubemap;
+		Resources::Handle<Resources::TextureResource> radiance_cubemap;
+		Resources::Handle<Resources::TextureResource> irradiance_cubemap;
+		Resources::Handle<Resources::TextureResource> brdf_lut;
+		std::unique_ptr<Mesh> full_screen_quad_mesh;
+		Common::Handle<Mesh> particle_quad_mesh;
+
+	private:
+		friend class SceneRenderer;
+		RendererResources();
+	};
+
 	class SceneRenderer : IRenderer
 	{
 	public:
 		static int32_t ShadowAtlasSize();
+
 		enum class RenderDependencyType
 		{
 			DepthPrepass,
@@ -120,6 +137,8 @@ namespace render {
 		auto AddRenderCallback(RenderDispatcher::Callback callback) { return render_dispatcher.AddCallback(callback); }
 		void AddUserRenderDependency(RenderDependencyType type, graph::DependencyNode& node) { user_dependencies[(uint32_t)type].push_back({ &node }); }
 
+		const RendererResources& GetRendererResources() const { return *renderer_resources; }
+
 	private:
 		void CreateDrawCalls();
 		void UploadDrawCalls();
@@ -142,12 +161,8 @@ namespace render {
 		std::unique_ptr<ECS::systems::CreateDrawCallsSystem> create_draw_calls_system;
 		std::unique_ptr<ECS::systems::UploadDrawCallsSystem> upload_draw_calls_system;
 		std::unique_ptr<ECS::systems::UploadSkinningSystem> upload_skinning_system;
-		Device::Handle<Device::Texture> blank_texture;
-		Device::Handle<Device::Texture> blank_cube_texture;
-		Resources::Handle<Resources::TextureResource> environment_cubemap;
-		Resources::Handle<Resources::TextureResource> radiance_cubemap;
-		Resources::Handle<Resources::TextureResource> irradiance_cubemap;
-		Resources::Handle<Resources::TextureResource> brdf_lut;
+
+		std::unique_ptr<RendererResources> renderer_resources;
 
 		Device::ShaderCache* shader_cache;
 		std::unique_ptr<ECS::components::DirectionalLight> directional_light;

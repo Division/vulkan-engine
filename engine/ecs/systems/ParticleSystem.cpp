@@ -62,9 +62,6 @@ namespace ECS::systems
 			components::ParticleEmitter::CounterArgumentsData counters(0, particle_emitter->mesh->indexCount());
 			constexpr size_t upload_size = offsetof(components::ParticleEmitter::CounterArgumentsData, alive_count);
 			// Reset counters buffer with default values
-			particle_emitter->gpu_data->pass_counter++;
-			particle_emitter->actual_material->AddExtraBuffer(particle_emitter->gpu_data->GetDrawIndices().GetBuffer(), "draw_indices");
-
 			auto* map = particle_emitter->gpu_data->counters.Map();
 			particle_emitter->gpu_data->counters.SetUploadSize(upload_size);
 			memcpy_s(map, upload_size, &counters, upload_size);
@@ -85,6 +82,7 @@ namespace ECS::systems
 				particle_emitter->time_since_last_emit -= emit_count * time_per_particle;
 			}
 
+			auto actual_emit_shader = particle_emitter->emit_shader ? particle_emitter->emit_shader : &emit_shader;
 			auto emit_pass_info = graph.AddPass<PassInfo>("particles emit", render::profiler::ProfilerName::PassCompute, [&](render::graph::IRenderPassBuilder& builder)
 			{
 				builder.SetCompute(false);
@@ -96,19 +94,22 @@ namespace ECS::systems
 				result.counters = builder.AddOutput(*counters_wrapper);
 					
 				return result;
-			}, [shader = &emit_shader, gpu_data = particle_emitter->gpu_data.get(), emit_count](Device::VulkanRenderState& state)
+			}, [shader = actual_emit_shader, particle_emitter, emit_count](Device::VulkanRenderState& state)
 			{
+				auto gpu_data = particle_emitter->gpu_data.get();
+
 				Device::ResourceBindings bindings;
 				Device::ConstantBindings constants;
 				const float time = Engine::Get()->time();
 				float3 emit_position = vec3(0, 0, 0);
 				float3 emit_direction = vec3(1, 0, 1);
 
-				//uint32_t emit_count = 1;
-
 				constants.AddUIntBinding(&emit_count, "emit_count");
+				constants.AddFloatBinding(&time, "time");
 				constants.AddFloat3Binding(&emit_position, "emit_position");
 				constants.AddFloat3Binding(&emit_direction, "emit_direction");
+				constants.AddFloat3Binding(&particle_emitter->size.Min(), "emit_size_min");
+				constants.AddFloat3Binding(&particle_emitter->size.Max(), "emit_size_max");
 
 				bindings.AddBufferBinding("particles", gpu_data->particles.GetBuffer().get(), gpu_data->particles.GetSize());
 				bindings.AddBufferBinding("dead_indices", gpu_data->dead_indices.GetBuffer().get(), gpu_data->dead_indices.GetSize());
@@ -119,6 +120,7 @@ namespace ECS::systems
 				state.Dispatch(*shader, bindings, constants, uvec3(threads, 1, 1));
 			});
 
+			auto actual_update_shader = particle_emitter->update_shader ? particle_emitter->update_shader : &update_shader;
 			auto update_pass_info = graph.AddPass<PassInfo>("particles update", render::profiler::ProfilerName::PassCompute, [&](render::graph::IRenderPassBuilder& builder)
 			{
 				builder.SetCompute(false);
@@ -134,12 +136,12 @@ namespace ECS::systems
 				result.draw_indices = builder.AddOutput(*draw_indices_wrapper);
 
 				return result;
-			}, [dt, shader = &update_shader, gpu_data = particle_emitter->gpu_data.get(), particle_emitter](Device::VulkanRenderState& state)
+			}, [dt, shader = actual_update_shader, gpu_data = particle_emitter->gpu_data.get(), particle_emitter](Device::VulkanRenderState& state)
 			{
 				Device::ResourceBindings bindings;
 				Device::ConstantBindings constants;
 
-				const float duration_seconds = particle_emitter->life_duration;
+				const float duration_seconds = particle_emitter->life_duration.Max();
 				const float lifetime_rate = 1.0f / duration_seconds;
 
 				constants.AddFloatBinding(&dt, "dt");

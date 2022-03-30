@@ -58,32 +58,28 @@ void Game::init()
 	box_id = scifi_box_handle->Spawn(vec3(0, 0, 0));
 	auto box_transform = manager->GetComponent<components::Transform>(box_id);
 	box_transform->scale = vec3(1.0f);
-	//box_transform->bounds = AABB::Infinity();
+	box_transform->bounds = AABB::Infinity();
 	auto box_renderer = manager->GetComponent<components::MultiMeshRenderer>(box_id);
-	auto mesh = box_renderer->GetMultiMesh()->GetMesh(0);
 
-	auto emitter = manager->AddComponent<components::ParticleEmitter>(box_id);
-	emitter->mesh = mesh;
-	
 	auto material = Material::Create();
 	material->LightingEnabled(false);
-	material->SetColor(vec4(0, 1, 0, 1));
+	material->SetColor(vec4(0.6, 2, 0.6, 0.2));
 	material->SetShaderPath(L"shaders/particles/particle_material_default.hlsl");
-	material->SetRenderQueue(RenderQueue::Translucent);
-	emitter->material = material;
-	emitter->emission_rate = 2;
-	emitter->life_duration = 4.0f;
+	material->SetRenderQueue(RenderQueue::Additive);
+	material->SetTexture0Resource(Resources::TextureResource::SRGB(L"assets/Textures/effects/light.dds"));
+
+	auto emitter_initializer = components::ParticleEmitter::Initializer(10000, material)
+		.SetEmitterGeometry(components::ParticleEmitter::EmitterGeometrySphere())
+		.SetEmissionParams(components::ParticleEmitter::EmissionParams().SetSize({ vec3(0.5f), vec3(2) } ).SetEmissionRate(1000).SetLife({ 2, 4 }))
+		.SetShaderPath(L"shaders/particles/particle_system_default_test.hlsl");
+
+	auto emitter = manager->AddComponent<components::ParticleEmitter>(box_id, emitter_initializer);
 
 	manager->RemoveComponent<components::MultiMeshRenderer>(box_id);
 
-	resolution = 100;
 }
 
 void Game::update(float dt)
 {
 	camera->Update(dt);
-
-	ImGui::Begin("Demo");
-	ImGui::SliderInt("Resolution", &resolution, 0, MAX_RESOLUTION);
-	ImGui::End();
 }

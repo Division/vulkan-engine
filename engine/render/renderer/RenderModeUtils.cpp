@@ -52,6 +52,25 @@ namespace render
 		return mode;
 	}
 
+	Device::RenderMode GetRenderModeForAdditive()
+	{
+		RenderMode mode;
+		mode.SetDepthWriteEnabled(false);
+		mode.SetDepthTestEnabled(true);
+		mode.SetDepthFunc(CompareOp::LessOrEqual);
+		mode.SetAlphaBlendEnabled(true);
+
+		mode.SetSrcBlend(BlendFactor::SrcAlpha);
+		mode.SetBlend(BlendOp::Add);
+		mode.SetDestBlend(BlendFactor::One);
+
+		mode.SetSrcBlendAlpha(BlendFactor::One);
+		mode.SetBlendAlpha(BlendOp::Add);
+		mode.SetDestBlendAlpha(BlendFactor::One);
+
+		return mode;
+	}
+
 	Device::RenderMode GetRenderModeForDebug()
 	{
 		RenderMode mode;
@@ -85,6 +104,7 @@ namespace render
 		GetRenderModeForOpaque(),
 		GetRenderModeForAlphaTest(),
 		GetRenderModeForTranslucent(),
+		GetRenderModeForAdditive(),
 		GetRenderModeForDebug(),
 		GetRenderModeForUI()
 	};
@@ -99,6 +119,7 @@ namespace render
 		{"opaque", RenderQueue::Opaque},
 		{"alphatest", RenderQueue::AlphaTest},
 		{"translucent", RenderQueue::Translucent},
+		{"additive", RenderQueue::Additive},
 		{"debug", RenderQueue::Debug},
 		{"ui", RenderQueue::UI}
 	};

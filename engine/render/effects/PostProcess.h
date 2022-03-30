@@ -23,6 +23,7 @@ namespace Device
 namespace render
 {
 	struct EnvironmentSettings;
+	struct RendererResources;
 };
 
 class Mesh;
@@ -52,7 +53,7 @@ namespace render { namespace effects {
 		};
 #pragma pack(pop)
 
-		PostProcess(Device::ShaderCache& shader_cache, EnvironmentSettings& environment_settings);
+		PostProcess(Device::ShaderCache& shader_cache, EnvironmentSettings& environment_settings, RendererResources& render_resources);
 
 		void PrepareRendering(render::graph::RenderGraph& graph);
 		render::graph::DependencyNode* AddPostProcess(
@@ -77,7 +78,7 @@ namespace render { namespace effects {
 		Device::ShaderProgram::BindingAddress hdr_buffer_address;
 
 		Device::Texture* cubemap_texture = nullptr;
-		std::unique_ptr<Mesh> full_screen_quad_mesh;
+		Mesh* full_screen_quad_mesh;
 		std::unordered_map<PostProcessSettings, Device::ShaderProgram*, PostProcessSettings::Hasher> shaders;
 
 		EnvironmentSettings& environment_settings;

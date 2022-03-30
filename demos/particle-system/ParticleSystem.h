@@ -70,7 +70,6 @@ private:
 	std::unique_ptr<ViewerCamera> camera;
 
 	ECS::EntityID box_id = 0;
-	int32_t resolution = 0;
 
 	ECS::EntityManager* manager = nullptr;
 
