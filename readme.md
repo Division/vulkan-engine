@@ -1,5 +1,6 @@
 ## Demo video:
 Engine top down shooter demo video:
+![Top Down Shooter](demos/top-down-shooter/top-down-shooter-preview.gif)
 https://www.youtube.com/watch?v=FHfV1GQ4_JA
 
 Compute shader demo video:
