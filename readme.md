@@ -28,45 +28,55 @@ And the shaders symlink must be pointing to ```vulkan-engine\engine\shaders```.
 Now demo projects should run without errors
 
 ## Engine roadmap:
-+- top down shooter demo
-- Proper deletion of entities loaded from resource
-- export default materials from fbx (with texture paths)
-- physics rendering interpolation
-- Fix logging, log from multiple threads
-- Fix and migrate lighting, decals, shadowmaps to ECS
-- Handles for all engine resources
-- Use pipelines directly
-- Shader reloading
-- Multithreaded rendering
-- GUI library integration
 
--- Completed -----------------------------------
-+ bloom
-+ Refactored resource and constants binding
-+ bone attachments
-+ fix deadlock: resource loading exception during main thread resolve()
-+ properly handle missing textures
-+ properly export animations in fbx exporter
-+ asset database and UI
-+ export textures
-+ DDS loading
-+ optimize tiled lighting or implement clustered
-+ Image based lighting support
-+ additional parameters for resource handles (e.g. texture srgb)
-+ HLSL includes must be included in hash
-+ FBX mesh export
-+ fix normal mapping
-+ New skinning animation system
-+ Proper alignment of ECS components
-+ Action puzzle demo
-+ Add support for singleton components (store in EntityManager by pointer)
-+ Material resource
-+ Multithreading, job system
-+ Async resource loading
-+ Fix release build settings in cmake
-+ lambda API for ECS
-+ PhysX integration 
-+ Rendering of MultiMesh
-+ Extract assets into a private repo
-+ FBX physics mesh export
-+ GameObject file format
+#### High priority
+- [ ] Attractors for GPU Particle demo
+- [ ] Add GPU particles to the Top Down Shooter demo
+- [ ] Instancing
+- [ ] GPU Culling
+- [ ] Bindless textures
+
+#### Backlog
+- [ ] Proper deletion of entities loaded from resource
+- [ ] export default materials from fbx (with texture paths)
+- [ ] physics rendering interpolation
+- [ ] Fix logging, log from multiple threads
+- [ ] Fix and migrate lighting, decals, shadowmaps to ECS
+- [ ] Handles for all engine resources
+- [ ] Use pipelines directly
+- [ ] Shader reloading
+- [ ] Multithreaded rendering
+- [ ] GUI library integration
+- [ ] Finalize top down shooter demo
+
+#### Completed
+- [x] Basic Top Down Shooter demo
+- [x] bloom
+- [x] Refactored resource and constants binding
+- [x] bone attachments
+- [x] fix deadlock: resource loading exception during main thread resolve()
+- [x] properly handle missing textures
+- [x] properly export animations in fbx exporter
+- [x] asset database and UI
+- [x] export textures
+- [x] DDS loading
+- [x] optimize tiled lighting or implement clustered
+- [x] Image based lighting support
+- [x] additional parameters for resource handles (e.g. texture srgb)
+- [x] HLSL includes must be included in hash
+- [x] FBX mesh export
+- [x] fix normal mapping
+- [x] New skinning animation system
+- [x] Proper alignment of ECS components
+- [x] Action puzzle demo
+- [x] Add support for singleton components (store in EntityManager by pointer)
+- [x] Material resource
+- [x] Multithreading, job system
+- [x] Async resource loading
+- [x] Fix release build settings in cmake
+- [x] lambda API for ECS
+- [x] PhysX integration 
+- [x] Rendering of MultiMesh
+- [x] Extract assets into a private repo
+- [x] FBX physics mesh export
+- [x] GameObject file format
