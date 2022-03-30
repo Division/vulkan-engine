@@ -4,7 +4,7 @@
 https://www.youtube.com/watch?v=FHfV1GQ4_JA
 
 #### Compute shader demo video:
-![Top Down Shooter]("demos/compute/compute-preview.gif")  
+![Compute](demos/compute/compute-preview.gif)  
 https://www.youtube.com/watch?v=B6pjqZyI28w
 
 ## How to build
