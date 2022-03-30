@@ -61,9 +61,8 @@ VS_out GetVSMaterialDefault(VS_in input)
     return GetVSOut(vertex_data, mul(camera.cameraProjectionMatrix, camera.cameraViewMatrix));
 }
 
-float4 GetPSMaterialDefault(VS_out input)
+float4 GetPSMaterialAndVertexDataDefault(VS_out input, out VertexData vertex_data)
 {
-    VertexData vertex_data;
     PBRData pbr_data;
     float4 result_color;
 
@@ -75,4 +74,10 @@ float4 GetPSMaterialDefault(VS_out input)
 #endif
 
     return result_color;
+}
+
+float4 GetPSMaterialDefault(VS_out input)
+{
+    VertexData vertex_data;
+    return GetPSMaterialAndVertexDataDefault(input, vertex_data);
 }

@@ -13,6 +13,7 @@
 #include "render/mesh/Mesh.h"
 #include "render/shader/ShaderCache.h"
 #include "render/renderer/EnvironmentSettings.h"
+#include "render/renderer/SceneRenderer.h"
 #include "utils/MeshGeneration.h"
 #include "ecs/components/DrawCall.h"
 #include "Engine.h"
@@ -25,7 +26,7 @@ namespace render
 	using namespace ECS;
 	using namespace profiler;
 
-	Bloom::Bloom(ShaderCache& shader_cache, Blur& blur, EnvironmentSettings& environment_settings)
+	Bloom::Bloom(ShaderCache& shader_cache, Blur& blur, EnvironmentSettings& environment_settings, RendererResources& render_resources)
 		: environment_settings(environment_settings)
 		, blur(blur)
 	{
@@ -53,9 +54,7 @@ namespace render
 
 		shader_upsample = shader_cache.GetShaderProgram(upsample_info);
 
-		full_screen_quad_mesh = std::make_unique<Mesh>(false, 3, true, "Bloom full screen quad");
-		MeshGeneration::generateFullScreenQuad(full_screen_quad_mesh.get());
-		full_screen_quad_mesh->createBuffer();
+		full_screen_quad_mesh = render_resources.full_screen_quad_mesh.get();
 	}
 
 	void Bloom::PrepareRendering(RenderGraph& graph)

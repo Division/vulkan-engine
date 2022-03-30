@@ -1,3 +1,6 @@
+#ifndef _GLOBAL_
+#define _GLOBAL_
+
 struct EnvironmentSettingsData
 {
     float4x4 direction_light_projection_matrix;
@@ -26,3 +29,5 @@ cbuffer GlobalConstants : register(b1, space0)
     CameraData camera;
     float CurrentTime;
 };
+
+#endif

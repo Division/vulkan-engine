@@ -41,9 +41,11 @@
 #include "render/effects/PostProcess.h"
 #include "render/effects/Bloom.h"
 #include "render/effects/Blur.h"
+#include "render/effects/GPUParticles.h"
 #include "resources/TextureResource.h"
 #include "render/debug/DebugSettings.h"
 #include "RenderModeUtils.h"
+#include "utils/MeshGeneration.h"
 
 #include <functional>
 
@@ -57,53 +59,8 @@ namespace render {
 
 	static const int32_t shadow_atlas_size = 4096;
 
-	int32_t SceneRenderer::ShadowAtlasSize()
+	RendererResources::RendererResources()
 	{
-		return shadow_atlas_size;
-	}
-
-	void SceneRenderer::SetRadianceCubemap(Resources::Handle<Resources::TextureResource> cubemap)
-	{
-		radiance_cubemap = cubemap;
-	}
-
-	void SceneRenderer::SetIrradianceCubemap(Resources::Handle<Resources::TextureResource> cubemap)
-	{
-		irradiance_cubemap = cubemap;
-	}
-
-	SceneRenderer::~SceneRenderer() = default;
-
-	SceneRenderer::SceneRenderer(Scene& scene, ShaderCache* shader_cache, DebugSettings* settings)
-		: scene(scene)
-		, shader_cache(shader_cache)
-		, debug_settings(settings)
-	{
-		scene_buffers = std::make_unique<SceneBuffers>();
-		directional_light = std::make_unique<components::DirectionalLight>();
-		scene.GetEntityManager()->AddStaticComponent(directional_light.get());
-		
-		environment_settings = std::make_unique<EnvironmentSettings>();
-		environment_settings->directional_light = directional_light.get();
-
-		constant_storage = std::make_unique<ConstantBindingStorage>();
-
-		draw_call_manager = std::make_unique<DrawCallManager>(*this);
-		create_draw_calls_system = std::make_unique<systems::CreateDrawCallsSystem>(*scene.GetEntityManager(), *draw_call_manager);
-		upload_draw_calls_system = std::make_unique<systems::UploadDrawCallsSystem>(*draw_call_manager, *scene_buffers);
-		upload_skinning_system = std::make_unique<systems::UploadSkinningSystem>(*draw_call_manager, *scene_buffers);
-
-		light_grid = std::make_unique<LightGrid>();
-		shadow_map = std::make_unique<ShadowMap>(ShadowAtlasSize(), ShadowAtlasSize());
-		render_graph = std::make_unique<graph::RenderGraph>();
-		auto* context = Engine::GetVulkanContext();
-		context->AddRecreateSwapchainCallback(std::bind(&SceneRenderer::OnRecreateSwapchain, this, std::placeholders::_1, std::placeholders::_2));
-		shadowmap_atlas_attachment = std::make_unique<VulkanRenderTargetAttachment>("Shadowmap Atlas", VulkanRenderTargetAttachment::Type::Depth, ShadowAtlasSize(), ShadowAtlasSize(), Format::D24_unorm_S8_uint);
-		shadowmap_attachment = std::make_unique<VulkanRenderTargetAttachment>("Shadowmap", VulkanRenderTargetAttachment::Type::Depth, ShadowAtlasSize(), ShadowAtlasSize(), Format::D24_unorm_S8_uint);
-
-		global_resource_bindings = std::make_unique<Device::ResourceBindings>();
-		global_constant_bindings = std::make_unique<Device::ConstantBindings>();
-
 		brdf_lut = TextureResource::Linear(L"assets/Textures/LUT/ibl_brdf_lut.dds");
 
 		uint32_t colors[16];
@@ -131,12 +88,71 @@ namespace render {
 		}
 
 		blank_cube_texture = Device::Texture::Create(cube_initializer);
+
+		full_screen_quad_mesh = std::make_unique<Mesh>(false, 3, true, "full screen quad");
+		MeshGeneration::generateFullScreenQuad(full_screen_quad_mesh.get());
+		full_screen_quad_mesh->createBuffer();
+
+		particle_quad_mesh = Common::Handle<Mesh>(std::make_unique<Mesh>());
+		MeshGeneration::generateParticleQuad(particle_quad_mesh.get());
+		particle_quad_mesh->createBuffer();
+	}
+
+	int32_t SceneRenderer::ShadowAtlasSize()
+	{
+		return shadow_atlas_size;
+	}
+
+	void SceneRenderer::SetRadianceCubemap(Resources::Handle<Resources::TextureResource> cubemap)
+	{
+		renderer_resources->radiance_cubemap = cubemap;
+	}
+
+	void SceneRenderer::SetIrradianceCubemap(Resources::Handle<Resources::TextureResource> cubemap)
+	{
+		renderer_resources->irradiance_cubemap = cubemap;
+	}
+
+	SceneRenderer::~SceneRenderer() = default;
+
+	SceneRenderer::SceneRenderer(Scene& scene, ShaderCache* shader_cache, DebugSettings* settings)
+		: scene(scene)
+		, shader_cache(shader_cache)
+		, debug_settings(settings)
+	{
+		scene_buffers = std::make_unique<SceneBuffers>();
+		directional_light = std::make_unique<components::DirectionalLight>();
+		scene.GetEntityManager()->AddStaticComponent(directional_light.get());
+		
+		renderer_resources = std::unique_ptr<RendererResources>(new RendererResources());
+
+		environment_settings = std::make_unique<EnvironmentSettings>();
+		environment_settings->directional_light = directional_light.get();
+
+		constant_storage = std::make_unique<ConstantBindingStorage>();
+
+		draw_call_manager = std::make_unique<DrawCallManager>(*this);
+		create_draw_calls_system = std::make_unique<systems::CreateDrawCallsSystem>(*scene.GetEntityManager(), *draw_call_manager);
+		upload_draw_calls_system = std::make_unique<systems::UploadDrawCallsSystem>(*draw_call_manager, *scene_buffers);
+		upload_skinning_system = std::make_unique<systems::UploadSkinningSystem>(*draw_call_manager, *scene_buffers);
+
+		light_grid = std::make_unique<LightGrid>();
+		shadow_map = std::make_unique<ShadowMap>(ShadowAtlasSize(), ShadowAtlasSize());
+		render_graph = std::make_unique<graph::RenderGraph>();
+		auto* context = Engine::GetVulkanContext();
+		context->AddRecreateSwapchainCallback(std::bind(&SceneRenderer::OnRecreateSwapchain, this, std::placeholders::_1, std::placeholders::_2));
+		shadowmap_atlas_attachment = std::make_unique<VulkanRenderTargetAttachment>("Shadowmap Atlas", VulkanRenderTargetAttachment::Type::Depth, ShadowAtlasSize(), ShadowAtlasSize(), Format::D24_unorm_S8_uint);
+		shadowmap_attachment = std::make_unique<VulkanRenderTargetAttachment>("Shadowmap", VulkanRenderTargetAttachment::Type::Depth, ShadowAtlasSize(), ShadowAtlasSize(), Format::D24_unorm_S8_uint);
+
+		global_resource_bindings = std::make_unique<Device::ResourceBindings>();
+		global_constant_bindings = std::make_unique<Device::ConstantBindings>();
 		
 		skybox = std::make_unique<effects::Skybox>(*shader_cache);
 
-		post_process = std::make_unique<effects::PostProcess>(*shader_cache, *environment_settings);
-		blur = std::make_unique<Blur>(*shader_cache);
-		bloom = std::make_unique<Bloom>(*shader_cache, *blur, *environment_settings);
+		post_process = std::make_unique<effects::PostProcess>(*shader_cache, *environment_settings, *renderer_resources);
+		gpu_particles = std::make_unique<effects::GPUParticles>(*this, *shader_cache, *scene.GetEntityManager());
+		blur = std::make_unique<Blur>(*shader_cache, *renderer_resources);
+		bloom = std::make_unique<Bloom>(*shader_cache, *blur, *environment_settings, *renderer_resources);
 	}
 
 	void SceneRenderer::OnRecreateSwapchain(int32_t width, int32_t height)
@@ -195,7 +211,7 @@ namespace render {
 		return result;
 	}
 
-	void SceneRenderer::RenderScene()
+	void SceneRenderer::RenderScene(float dt)
 	{
 		OPTICK_EVENT();
 		for (auto& d : user_dependencies)
@@ -325,6 +341,8 @@ namespace render {
 
 		render_dispatcher.Dispatch(callback_data, *render_graph);
 
+		gpu_particles->Update(*render_graph, dt);
+
 		auto depth_pre_pass_info = render_graph->AddPass<PassInfo>("depth pre pass", ProfilerName::PassDepthPrepass, [&](graph::IRenderPassBuilder& builder)
 		{
 			PassInfo result;
@@ -446,6 +464,12 @@ namespace render {
 				state.RenderDrawCall(draw_call, false);
 			}
 
+			state.SetRenderMode(GetRenderModeForQueue(RenderQueue::Additive));
+			for (auto* draw_call : render_queues[(size_t)RenderQueue::Additive])
+			{
+				state.RenderDrawCall(draw_call, false);
+			}
+
 			// Debug
 			auto debug_mode = GetRenderModeForQueue(RenderQueue::Debug);
 			debug_mode.SetPolygonMode(PolygonMode::Line);
@@ -499,7 +523,7 @@ namespace render {
 
 	Device::Texture* SceneRenderer::GetBlankTexture() const
 	{
-		return blank_texture.get();
+		return renderer_resources->blank_texture.get();
 	}
 
 	const Device::ResourceBindings& SceneRenderer::GetGlobalResourceBindings()
@@ -511,10 +535,10 @@ namespace render {
 			global_resource_bindings->Clear();
 			global_resource_bindings->AddTextureBinding(Device::GetShaderTextureNameHash(ShaderTextureName::ShadowMap), shadowmap_attachment->GetTexture().get());
 			global_resource_bindings->AddTextureBinding(Device::GetShaderTextureNameHash(ShaderTextureName::ShadowMapAtlas), shadowmap_atlas_attachment->GetTexture().get());
-			global_resource_bindings->AddTextureBinding(Device::GetShaderTextureNameHash(ShaderTextureName::EnvironmentCubemap), environment_cubemap ? environment_cubemap->Get().get() : blank_cube_texture.get());
-			global_resource_bindings->AddTextureBinding(Device::GetShaderTextureNameHash(ShaderTextureName::RadianceCubemap), radiance_cubemap ? radiance_cubemap->Get().get() : blank_cube_texture.get());
-			global_resource_bindings->AddTextureBinding(Device::GetShaderTextureNameHash(ShaderTextureName::IrradianceCubemap), irradiance_cubemap ? irradiance_cubemap->Get().get() : blank_cube_texture.get());
-			global_resource_bindings->AddTextureBinding(Device::GetShaderTextureNameHash(ShaderTextureName::BrdfLUT), brdf_lut->Get().get());
+			global_resource_bindings->AddTextureBinding(Device::GetShaderTextureNameHash(ShaderTextureName::EnvironmentCubemap), renderer_resources->environment_cubemap ? renderer_resources->environment_cubemap->Get().get() : renderer_resources->blank_cube_texture.get());
+			global_resource_bindings->AddTextureBinding(Device::GetShaderTextureNameHash(ShaderTextureName::RadianceCubemap), renderer_resources->radiance_cubemap ? renderer_resources->radiance_cubemap->Get().get() : renderer_resources->blank_cube_texture.get());
+			global_resource_bindings->AddTextureBinding(Device::GetShaderTextureNameHash(ShaderTextureName::IrradianceCubemap), renderer_resources->irradiance_cubemap ? renderer_resources->irradiance_cubemap->Get().get() : renderer_resources->blank_cube_texture.get());
+			global_resource_bindings->AddTextureBinding(Device::GetShaderTextureNameHash(ShaderTextureName::BrdfLUT), renderer_resources->brdf_lut->Get().get());
 
 			global_resource_bindings->AddBufferBinding(Device::GetShaderBufferNameHash(ShaderBufferName::Projector), light_grid->GetProjectorBuffer()->GetBuffer(), light_grid->GetProjectorBuffer()->GetSize());
 			global_resource_bindings->AddBufferBinding(Device::GetShaderBufferNameHash(ShaderBufferName::Light), light_grid->GetLightsBuffer()->GetBuffer(), light_grid->GetLightsBuffer()->GetSize());

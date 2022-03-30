@@ -77,6 +77,8 @@ set(ENGINE_SOURCES
 	ecs/components/BoneAttachment.h
 	ecs/components/BehaviourList.h
 	ecs/components/Batching.h
+	ecs/components/Particles.h
+	ecs/components/Particles.cpp
 	ecs/systems/TransformSystem.h
 	ecs/systems/TransformSystem.cpp
 	ecs/systems/RendererSystem.h
@@ -92,6 +94,8 @@ set(ENGINE_SOURCES
 	ecs/systems/BehaviourSystem.h
 	ecs/systems/BatchingSystem.h
 	ecs/systems/BatchingSystem.cpp
+	ecs/systems/ParticleSystem.h
+	ecs/systems/ParticleSystem.cpp
 	memory/Profiler.h
 	memory/Profiler.cpp
 	memory/Allocator.h
@@ -188,6 +192,8 @@ set(ENGINE_SOURCES
 	render/effects/Bloom.cpp
 	render/effects/Blur.h
 	render/effects/Blur.cpp
+	render/effects/GPUParticles.h
+	render/effects/GPUParticles.cpp
 	render/mesh/Mesh.h
 	render/mesh/Mesh.cpp
 	render/texture/Texture.h

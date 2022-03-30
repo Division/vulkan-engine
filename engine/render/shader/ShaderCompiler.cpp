@@ -162,9 +162,9 @@ namespace Device
 			}
 
 			utils::SmallVector<LPCWSTR, 20> args;
-			const std::filesystem::path path = shader_data.path;
+			const std::wstring filename = std::filesystem::path(shader_data.path).filename();
 
-			args.push_back(path.filename().c_str());
+			args.push_back(filename.c_str());
 			args.push_back(L"-E"); args.push_back(entry_point.c_str());
 			args.push_back(L"-T"); args.push_back(stage_to_target.at(shader_data.stage).c_str());
 			args.push_back(L"-Zi");

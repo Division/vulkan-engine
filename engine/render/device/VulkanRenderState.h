@@ -206,7 +206,6 @@ namespace Device {
 		~VulkanRenderState();
 
 		void SetRenderMode(const RenderMode& mode);
-		void SetRenderPass(const VulkanRenderPass& render_pass);
 		void SetViewport(vec4 viewport);
 		vec4 GetViewport() const { return current_viewport; };
 		void SetScissor(vec4 scissor);
@@ -223,15 +222,20 @@ namespace Device {
 		void UpdateState();
 		void RenderDrawCall(const ECS::components::DrawCall* draw_call, bool is_depth);
 		void DrawIndexed(const VulkanBuffer& vertex_buffer, const VulkanBuffer& index_buffer, uint32_t vertex_offset, uint32_t index_count, uint32_t first_index, IndexType index_type, uint32_t instance_count = 1);
+		void DrawIndexedIndirect(const VulkanBuffer& vertex_buffer, const VulkanBuffer& index_buffer, IndexType index_type, VulkanBuffer& indirect_buffer, uint32_t indirect_buffer_offset);
 		void Draw(const VulkanBuffer& buffer, uint32_t vertexCount, uint32_t firstVertex, uint32_t instance_count = 1);
+		void DrawIndirect(const VulkanBuffer& buffer, VulkanBuffer& indirect_buffer, uint32_t indirect_buffer_offset);
 
 		VulkanCommandBuffer* GetCurrentCommandBuffer() const;
 		void UpdateGlobalDescriptorSet();
 
+		void BeginRenderPass(const Device::VulkanRenderPass& render_pass);
+		void EndRenderPass();
 		VulkanCommandBuffer* BeginRendering(const VulkanRenderTarget& render_target, const VulkanRenderPass& render_pass);
 		void EndRendering();
 
 		void Dispatch(const ShaderProgram& program, ResourceBindings& bindings, ConstantBindings& constants, uvec3 group_size);
+		void DispatchIndirect(const ShaderProgram& program, ResourceBindings& bindings, ConstantBindings& constants, VulkanBuffer& buffer, uint32_t offset);
 
 		void BeginRecording(PipelineBindPoint bind_point);
 		void EndRecording();

@@ -23,16 +23,18 @@ class Mesh;
 
 namespace render
 {
+	struct RendererResources;
+
 	class Blur
 	{
 	public:
-		Blur(Device::ShaderCache& shader_cache);
+		Blur(Device::ShaderCache& shader_cache, RendererResources& render_resources);
 
 		graph::DependencyNode* AddOneDirectionBlur(graph::RenderGraph& graph, graph::DependencyNode& src_target_node, graph::ResourceWrapper& destination_target, vec2 blur_direction_sigma);
 		graph::DependencyNode* AddFullBlur(graph::RenderGraph& graph, graph::DependencyNode& src_target_node, graph::ResourceWrapper& intermediate_target, graph::ResourceWrapper& destination_target, float sigma);
 
 	private:
-		std::unique_ptr<Mesh> full_screen_quad_mesh;
+		Mesh* full_screen_quad_mesh;
 		Device::ShaderProgram* shader_blur;
 	};
 

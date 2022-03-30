@@ -19,21 +19,18 @@ namespace Device
 	class ConstantBindings;
 }
 
-namespace render
-{
-	struct EnvironmentSettings;
-};
-
 class Mesh;
 
 namespace render
 {
 	class Blur;
+	struct EnvironmentSettings;
+	struct RendererResources;
 
 	class Bloom
 	{
 	public:
-		Bloom(Device::ShaderCache& shader_cache, Blur& blur, EnvironmentSettings& environment_settings);
+		Bloom(Device::ShaderCache& shader_cache, Blur& blur, EnvironmentSettings& environment_settings, RendererResources& render_resources);
 
 		void PrepareRendering(render::graph::RenderGraph& graph);
 		graph::DependencyNode* AddBloom(graph::RenderGraph& graph, graph::DependencyNode& src_target_node, graph::ResourceWrapper& destination_target);
@@ -57,7 +54,7 @@ namespace render
 		};
 
 		std::vector<Mip> mips;
-		std::unique_ptr<Mesh> full_screen_quad_mesh;
+		Mesh* full_screen_quad_mesh;
 		Device::ShaderProgram* shader_prefilter;
 		Device::ShaderProgram* shader_blur_h;
 		Device::ShaderProgram* shader_blur_v;

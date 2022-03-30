@@ -84,6 +84,7 @@ namespace render { namespace graph {
 
 	void RenderGraph::SetCompute(bool is_async)
 	{
+		assert(!is_async); // async not supported yet
 		current_render_pass->is_compute = true;
 		current_render_pass->is_async = is_async;
 	}

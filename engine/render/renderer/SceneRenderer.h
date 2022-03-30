@@ -73,6 +73,7 @@ namespace render {
 	{
 		class Skybox;
 		class PostProcess;
+		class GPUParticles;
 	}
 
 	namespace graph
@@ -88,10 +89,27 @@ namespace render {
 		const Device::ResourceBindings& global_resource_bindings;
 	};
 
+	struct RendererResources
+	{
+		Device::Handle<Device::Texture> blank_texture;
+		Device::Handle<Device::Texture> blank_cube_texture;
+		Resources::Handle<Resources::TextureResource> environment_cubemap;
+		Resources::Handle<Resources::TextureResource> radiance_cubemap;
+		Resources::Handle<Resources::TextureResource> irradiance_cubemap;
+		Resources::Handle<Resources::TextureResource> brdf_lut;
+		std::unique_ptr<Mesh> full_screen_quad_mesh;
+		Common::Handle<Mesh> particle_quad_mesh;
+
+	private:
+		friend class SceneRenderer;
+		RendererResources();
+	};
+
 	class SceneRenderer : IRenderer
 	{
 	public:
 		static int32_t ShadowAtlasSize();
+
 		enum class RenderDependencyType
 		{
 			DepthPrepass,
@@ -103,8 +121,9 @@ namespace render {
 		SceneRenderer(Scene& scene, Device::ShaderCache* shader_cache, DebugSettings* settings);
 		~SceneRenderer();
 
-		void RenderScene();
+		void RenderScene(float dt);
 		SceneBuffers* GetSceneBuffers() const { return scene_buffers.get(); }
+		DrawCallManager* GetDrawCallManager() const { return draw_call_manager.get(); }
 		const Device::ResourceBindings& GetGlobalResourceBindings();
 		Device::ShaderCache* GetShaderCache() const { return shader_cache; }
 		auto* GetEnvironmentSettings() const { return environment_settings.get(); }
@@ -117,6 +136,8 @@ namespace render {
 
 		auto AddRenderCallback(RenderDispatcher::Callback callback) { return render_dispatcher.AddCallback(callback); }
 		void AddUserRenderDependency(RenderDependencyType type, graph::DependencyNode& node) { user_dependencies[(uint32_t)type].push_back({ &node }); }
+
+		const RendererResources& GetRendererResources() const { return *renderer_resources; }
 
 	private:
 		void CreateDrawCalls();
@@ -140,12 +161,8 @@ namespace render {
 		std::unique_ptr<ECS::systems::CreateDrawCallsSystem> create_draw_calls_system;
 		std::unique_ptr<ECS::systems::UploadDrawCallsSystem> upload_draw_calls_system;
 		std::unique_ptr<ECS::systems::UploadSkinningSystem> upload_skinning_system;
-		Device::Handle<Device::Texture> blank_texture;
-		Device::Handle<Device::Texture> blank_cube_texture;
-		Resources::Handle<Resources::TextureResource> environment_cubemap;
-		Resources::Handle<Resources::TextureResource> radiance_cubemap;
-		Resources::Handle<Resources::TextureResource> irradiance_cubemap;
-		Resources::Handle<Resources::TextureResource> brdf_lut;
+
+		std::unique_ptr<RendererResources> renderer_resources;
 
 		Device::ShaderCache* shader_cache;
 		std::unique_ptr<ECS::components::DirectionalLight> directional_light;
@@ -172,6 +189,7 @@ namespace render {
 		DebugSettings* debug_settings;
 		std::unique_ptr<effects::Skybox> skybox;
 		std::unique_ptr<effects::PostProcess> post_process;
+		std::unique_ptr<effects::GPUParticles> gpu_particles;
 		std::unique_ptr<Bloom> bloom;
 		std::unique_ptr<Blur> blur;
 		float time;
