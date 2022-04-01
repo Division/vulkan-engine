@@ -1,7 +1,7 @@
 #include "shaders/includes/global.hlsl"
 #include "shaders/includes/random.hlsl"
 #include "shaders/includes/math_defines.hlsl"
-#include "shaders/particles/particle_material_common.hlsl"
+#include "shaders/particles/particle_common.hlsl"
 
 RWStructuredBuffer<Particle> particles : register(u4, space0);
 RWStructuredBuffer<uint> dead_indices : register(u5, space0);
@@ -17,21 +17,67 @@ Texture2D noise : register(t9, space0);
 
 cbuffer GlobalConstants : register(b10, space0)
 {
-	uint emit_count;
-	float3 emit_position;
-	float3 emit_direction;
-
-	float4 color;
-	float3 emit_size_min;
-	float3 emit_size_max;
-	float angle;
-
 	float time;
 	float dt;
-	float lifetime_rate;
+
+	// Emit
+	uint emitter_id;
+	uint emit_count;
+	float3 emit_position;
+	float3 emit_offset; // e.g. for line emitter
+	float  emit_radius;
+	float3 emit_direction;
+	float2 emit_cone_angle;
+	float2 emit_size;
+	float2 emit_life;
+	float2 emit_angle;
+	float4 emit_color;
 };
 
-groupshared int final_particle_count;
+
+#ifndef EMIT_FUNCTION
+	#define EMIT_FUNCTION EmitParticleDefault
+#endif
+
+#ifndef PROCESS_FUNCTION
+	#define PROCESS_FUNCTION ProcessParticle
+#endif
+
+Particle EmitParticleDefault(ParticleEmitData data)
+{
+	Particle particle;
+
+	//float random_angle = get_random_number(make_random_seed(uint2(random_quantize(data.time / 3600.0f), data.particle_index + data.emitter_id))) * PI * 2.0f;
+	particle.position = float4(GetParticleRandomPosition(data), 1);
+	particle.velocity.xyz = GetParticleRandomDirection(data);
+	particle.color = data.emit_color;
+	particle.life = 0;
+	particle.max_life = data.emit_life.x + (data.emit_life.y - data.emit_life.x) * get_random_number(make_random_seed(uint2(random_quantize(data.time / 8400.0f), data.particle_index + data.emitter_id + 2000)));
+	particle.size.xyz = data.emit_size.x + (data.emit_size.y - data.emit_size.x) * get_random_number(make_random_seed(uint2(random_quantize(data.time / 7200.0f), data.particle_index + data.emitter_id + 1000)));
+
+	return particle;
+}
+ 
+ParticleEmitData GetParticleEmitData(uint particle_index)
+{
+	ParticleEmitData data;
+
+	data.particles = particles;
+	data.emitter_id = emitter_id;
+	data.particle_index = particle_index;
+	data.time = time;
+	data.emit_position = emit_position;
+	data.emit_offset = emit_offset;
+	data.emit_radius = emit_radius;
+	data.emit_direction = emit_direction;
+	data.emit_cone_angle = emit_cone_angle;
+	data.emit_size = emit_size;
+	data.emit_life = emit_life;
+	data.emit_angle = emit_angle;
+	data.emit_color = emit_color;
+
+	return data;
+}
 
 [numthreads(64, 1, 1)]
 void EmitParticles(uint3 id: SV_DispatchThreadID, uint3 groupthread_id : SV_GroupThreadID)
@@ -51,12 +97,7 @@ void EmitParticles(uint3 id: SV_DispatchThreadID, uint3 groupthread_id : SV_Grou
 			InterlockedAdd(counters[COUNTER_INDEX_ALIVE], +1, alive_particle_count);
 			alive_indices[alive_particle_count] = particle_index;
 
-			float random_angle = get_random_number(make_random_seed(uint2(random_quantize(time / 3600.0f), id.x))) * PI * 2.0f;
-
-			particles[particle_index].position = float4(emit_position, 1);
-			particles[particle_index].velocity = float4(cos(random_angle), 0, sin(random_angle), 0) * 5.0f;
-			particles[particle_index].color = color;
-			particles[particle_index].size = emit_size_min + (emit_size_max - emit_size_min) * get_random_number(make_random_seed(uint2(random_quantize(time / 7200.0f), id.x + 1000)));
+			particles[particle_index] = EMIT_FUNCTION(GetParticleEmitData(particle_index));
 		}
 	}
 
@@ -70,19 +111,19 @@ void EmitParticles(uint3 id: SV_DispatchThreadID, uint3 groupthread_id : SV_Grou
 
 }
 
-ParticleUpdateData GetParticleUpdateData()
+ParticleUpdateData GetParticleUpdateData(uint particle_index)
 {
 	ParticleUpdateData data;
 
 	data.particles = particles;
-	data.color = color;
-	data.size_min = emit_size_min;
-	data.size_max = emit_size_max;
+	data.particle_index = particle_index;
 	data.time = time;
-	data.lifetime_rate = lifetime_rate;
+	data.dt = dt;
 
 	return data;
 }
+
+groupshared int final_particle_count;
 
 [numthreads(64, 1, 1)]
 void UpdateParticles(uint3 id: SV_DispatchThreadID)
@@ -94,10 +135,10 @@ void UpdateParticles(uint3 id: SV_DispatchThreadID)
 	{
 		int particle_index = alive_indices[id.x];
 
-		ParticleUpdateData data = GetParticleUpdateData();
-		ProcessParticle(data, dt, particle_index);
+		ParticleUpdateData data = GetParticleUpdateData(particle_index);
+		PROCESS_FUNCTION(data);
 
-		if (particles[particle_index].velocity.w < 1.0f)
+		if (particles[particle_index].life < particles[particle_index].max_life)
 		{
 			int current_instance;
 			InterlockedAdd(counters[COUNTER_INDEX_INSTANCE_COUNT], +1, current_instance);

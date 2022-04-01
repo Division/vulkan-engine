@@ -74,10 +74,10 @@ namespace ECS::systems
 			auto counters_wrapper = graph.RegisterBuffer(*particle_emitter->gpu_data->counters.GetBuffer());
 
 			uint32_t emit_count = 0;
-			if (particle_emitter->emission_enabled && particle_emitter->emission_rate > 0)
+			if (particle_emitter->emission_enabled && particle_emitter->emission_params.emission_rate > 0)
 			{
 				particle_emitter->time_since_last_emit += dt;
-				const float time_per_particle = 1.0f / (float)particle_emitter->emission_rate;
+				const float time_per_particle = 1.0f / (float)particle_emitter->emission_params.emission_rate;
 				emit_count = floorf(particle_emitter->time_since_last_emit / time_per_particle);
 				particle_emitter->time_since_last_emit -= emit_count * time_per_particle;
 			}
@@ -99,17 +99,14 @@ namespace ECS::systems
 				auto gpu_data = particle_emitter->gpu_data.get();
 
 				Device::ResourceBindings bindings;
-				Device::ConstantBindings constants;
 				const float time = Engine::Get()->time();
 				float3 emit_position = vec3(0, 0, 0);
 				float3 emit_direction = vec3(1, 0, 1);
 
+				Device::ConstantBindings constants;
 				constants.AddUIntBinding(&emit_count, "emit_count");
 				constants.AddFloatBinding(&time, "time");
-				constants.AddFloat3Binding(&emit_position, "emit_position");
-				constants.AddFloat3Binding(&emit_direction, "emit_direction");
-				constants.AddFloat3Binding(&particle_emitter->size.Min(), "emit_size_min");
-				constants.AddFloat3Binding(&particle_emitter->size.Max(), "emit_size_max");
+				particle_emitter->FlushEmitConstants(constants, &emit_position);
 
 				bindings.AddBufferBinding("particles", gpu_data->particles.GetBuffer().get(), gpu_data->particles.GetSize());
 				bindings.AddBufferBinding("dead_indices", gpu_data->dead_indices.GetBuffer().get(), gpu_data->dead_indices.GetSize());
@@ -141,7 +138,7 @@ namespace ECS::systems
 				Device::ResourceBindings bindings;
 				Device::ConstantBindings constants;
 
-				const float duration_seconds = particle_emitter->life_duration.Max();
+				const float duration_seconds = particle_emitter->emission_params.life.Max();
 				const float lifetime_rate = 1.0f / duration_seconds;
 
 				constants.AddFloatBinding(&dt, "dt");

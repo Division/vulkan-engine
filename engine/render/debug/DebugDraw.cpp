@@ -42,9 +42,9 @@ namespace render {
 
     void DebugDraw::DrawAxis(vec3 position, quat rotation, float size)
     {
-        const vec3 x = rotation * vec3(1, 0, 0);
-        const vec3 y = rotation * vec3(0, 1, 0);
-        const vec3 z = rotation * vec3(0, 0, 1);
+        const vec3 x = rotation * vec3(1, 0, 0) * size;
+        const vec3 y = rotation * vec3(0, 1, 0) * size;
+        const vec3 z = rotation * vec3(0, 0, 1) * size;
 
         DrawLine(position, position + x, vec4(1, 0, 0, 1));
         DrawLine(position, position + y, vec4(0, 1, 0, 1));

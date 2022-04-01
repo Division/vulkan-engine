@@ -2,23 +2,41 @@
 #define _PARTICLE_COMMON_
 
 #include "shaders/material/material_common.hlsl"
+#include "shaders/includes/random.hlsl"
 
 struct Particle
 {
 	float4 position;
-	float4 velocity;
 	float4 color;
+	float3 velocity;
+    float life;
 	float3 size;
+    float max_life;
+};
+
+struct ParticleEmitData
+{
+    RWStructuredBuffer<Particle> particles;
+    float time;
+    uint emitter_id;
+    uint particle_index;
+    float3 emit_position;
+    float3 emit_offset;
+    float  emit_radius;
+    float3 emit_direction;
+    float2 emit_cone_angle;
+    float2 emit_size;
+    float2 emit_life;
+    float2 emit_angle;
+    float4 emit_color;
 };
 
 struct ParticleUpdateData
 {
 	RWStructuredBuffer<Particle> particles;
-	float4 color;
-	float3 size_min;
-	float3 size_max;
+    uint particle_index;
 	float time;
-	float lifetime_rate;
+	float dt;
 };
 
 static const float3 PARTICLE_BILLBOARD[] =
@@ -28,6 +46,29 @@ static const float3 PARTICLE_BILLBOARD[] =
 	float3(-1, -1,  0),
 	float3(-1,  1,  0)
 };
+
+float3 GetParticleRandomPosition(ParticleEmitData data)
+{
+    float3 float_seed3 = data.time * 0.0001f * data.emit_position;
+    uint uint_seed = make_random_seed(uint2(data.emitter_id, data.particle_index));
+
+#if defined(EMITTER_GEOMETRY_LINE)
+    return random_point_on_line(data.emit_position, data.emit_position + data.emit_offset, make_random_seed(random_quantize3(float_seed3)) + uint_seed);
+#elif defined(EMITTER_GEOMETRY_SPHERE)
+    return random_point_on_sphere(data.emit_position, data.emit_radius, random_quantize3(float_seed3) + uint_seed);
+#else
+    return data.emit_position;
+#endif
+}
+
+float3 GetParticleRandomDirection(ParticleEmitData data)
+{
+    float3 float_seed3 = data.time * 0.000215f * data.emit_position;
+    uint2 seed = make_random_seed(random_quantize3(float_seed3)) + make_random_seed(uint2(data.emitter_id, data.particle_index));
+    float3 direction = random_direction_in_cone(data.emit_direction, data.emit_cone_angle.x, seed);
+    float speed = 5;
+    return direction * speed;
+}
 
 VertexData GetDefaultParticleQuadVertexData(VS_in input)
 {
@@ -59,7 +100,7 @@ VS_out GetParticleQuadVSOut(VertexData data, Particle particle, float4x4 view_ma
 #endif
 
     float4 position_worldspace = float4(particle.position.xyz, 1);
-    float4 position_viewspace = mul(view_matrix, position_worldspace) + float4(PARTICLE_BILLBOARD[data.vertex_id] * particle.size, 0);
+    float4 position_viewspace = mul(view_matrix, position_worldspace) + float4(PARTICLE_BILLBOARD[data.vertex_id] * particle.size.xyz, 0);
 
 #if !defined(DEPTH_ONLY)
     result.position_worldspace = position_worldspace;

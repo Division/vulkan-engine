@@ -32,6 +32,7 @@ namespace ECS::components
 	{
 	private:
 		static inline std::atomic_uint32_t instance_count;
+		static inline std::atomic_uint32_t id_counter = 0;
 
 	public:
 		template<typename T> struct ParamRange : protected std::pair<T, T>
@@ -51,36 +52,32 @@ namespace ECS::components
 
 		struct EmitterGeometryLine
 		{
-			vec3 direction = vec3(1, 0, 0);
-			float length = 1;
+			vec3 offset;
 		};
 
-		struct EmitterGeometryCone
-		{
-			vec3 direction = vec3(1, 0, 0);
-			float half_angle = M_PI / 2.0;
-		};
-
-		enum class EmitterType
+		enum class EmitterGeometryType
 		{
 			Sphere,
 			Line,
-			Cone
 		};
 
-		typedef std::variant<EmitterGeometrySphere, EmitterGeometryLine, EmitterGeometryCone> EmitterGeometryUnion;
+		typedef std::variant<EmitterGeometrySphere, EmitterGeometryLine> EmitterGeometryUnion;
 
 		struct EmissionParams
 		{
 			EmissionParams& SetEmissionRate(uint32_t value) { emission_rate = value; return *this; }
 			EmissionParams& SetLife(ParamRange<float> value) { life = value; return *this; }
-			EmissionParams& SetSize(ParamRange<vec3> value) { size = value; return *this; }
+			EmissionParams& SetSize(ParamRange<float> value) { size = value; return *this; }
+			EmissionParams& SetDirection(vec3 value) { direction = value; return *this; }
+			EmissionParams& SetConeAngle(float value) { cone_angle = value; return *this; }
 			EmissionParams& SetColor(vec4 value) { color = value; return *this; }
 			EmissionParams& SetAngle(ParamRange<float> value) { angle = value; return *this; }
 
 			uint32_t emission_rate = 300;
-			ParamRange<float> life = ParamRange<float>(0, 0);
-			ParamRange<vec3> size = ParamRange<vec3>(vec3(1), vec3(1));
+			ParamRange<float> life = ParamRange<float>(0.5f, 1.0f);
+			ParamRange<float> size = ParamRange<float>(float(1), float(1));
+			vec3 direction = vec3(0, 1, 0);
+			float cone_angle = M_PI / 8;
 			vec4 color = vec4(1, 1, 1, 1);
 			ParamRange<float> angle = ParamRange<float>(0, M_PI * 2);
 		};
@@ -103,9 +100,14 @@ namespace ECS::components
 			Common::Handle<Mesh> mesh;
 		};
 
+		static_assert(std::variant_size_v<EmitterGeometryUnion> == magic_enum::enum_count<EmitterGeometryType>());
+		EmitterGeometryType GetEmitterGeometryType() const { return (EmitterGeometryType)emitter_geometry.index(); }
+
 		static uint32_t GetCount() { return instance_count.load(); }
 
 		friend class systems::GPUParticleUpdateSystem;
+
+		std::vector<Device::ShaderProgramInfo::Macro> GetMacros() const;
 
 		ParticleEmitter(const Initializer& initializer);
 
@@ -119,6 +121,8 @@ namespace ECS::components
 			*this = std::move(other);
 			instance_count++;
 		}
+
+		void FlushEmitConstants(Device::ConstantBindings& bindings, vec3* emit_position);
 
 		ParticleEmitter& operator=(ParticleEmitter&&) = default;
 
@@ -166,6 +170,7 @@ namespace ECS::components
 			GPUData(uint32_t particle_count);
 		};
 
+		uint32_t id = 0;
 		render::DrawCallManager::Handle draw_calls;
 		render::MaterialUnion material;
 		Common::Handle<Mesh> mesh;
@@ -178,12 +183,9 @@ namespace ECS::components
 
 		std::unique_ptr<GPUData> gpu_data;
 		uint32_t max_particles = 10000;
-		uint32_t emission_rate = 100;
-		vec4 color = vec4(0);
 
-		ParamRange<vec3> size;
-		ParamRange<float> angle;
-		ParamRange<float> life_duration;
+		EmitterGeometryUnion emitter_geometry;
+		EmissionParams emission_params;
 
 		float time_since_last_emit = 0;
 		bool emission_enabled = true;

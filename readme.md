@@ -1,5 +1,5 @@
 ## Demo video:
-#### Engine top down shooter demo video:
+#### Top down shooter demo video:
 ![Top Down Shooter](demos/top-down-shooter/top-down-shooter-preview.gif)  
 https://www.youtube.com/watch?v=FHfV1GQ4_JA
 
@@ -8,6 +8,9 @@ https://www.youtube.com/watch?v=FHfV1GQ4_JA
 https://www.youtube.com/watch?v=B6pjqZyI28w
 
 ## How to build
+This repository contains submodules. Make sure to download them after cloning:
+```git submodule update --init --recursive```  
+
 The easies way to build is to use Visual Studio (open cmake)  
 Requires Vulkan SDK
 
@@ -18,7 +21,7 @@ Follow these steps:
 ```mklink /D %~dp0\assets %~dp0\..\assets\assets.cache```  
 This step is optional but must be done to avoid running ProjectManager.exe as administrator.
 - Execute the batch file ```vulkan-engine\bin\create_symlink.bat```. It should create two symlinks in the ```vulkan-engine\bin``` folder: shaders and assets. Asset may not work yet, it's fine.
-- Run ProjectManager project. If you skipped the editing of .bat file the ProjectManager must be run as an administrator in order to create the symlink.
+- Run ProjectManager project. If you skipped the editing of the .bat file the ProjectManager must be run as an administrator in order to create the symlink.
 - In the ProjectManager select `Project -> Open` and select ```vulkan-engine\assets\assets```
 - Select `Assets -> Export` pending assets to trigger the asset build.
 

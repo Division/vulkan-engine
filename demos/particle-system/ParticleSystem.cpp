@@ -70,8 +70,7 @@ void Game::init()
 
 	auto emitter_initializer = components::ParticleEmitter::Initializer(10000, material)
 		.SetEmitterGeometry(components::ParticleEmitter::EmitterGeometrySphere())
-		.SetEmissionParams(components::ParticleEmitter::EmissionParams().SetSize({ vec3(0.5f), vec3(2) } ).SetEmissionRate(1000).SetLife({ 2, 4 }))
-		.SetShaderPath(L"shaders/particles/particle_system_default_test.hlsl");
+		.SetEmissionParams(components::ParticleEmitter::EmissionParams().SetSize({ 0.5f, 2 }).SetEmissionRate(1000).SetLife({ 0.5f, 4 }).SetConeAngle(M_PI / 2));
 
 	auto emitter = manager->AddComponent<components::ParticleEmitter>(box_id, emitter_initializer);
 
@@ -81,5 +80,7 @@ void Game::init()
 
 void Game::update(float dt)
 {
+	Engine::Get()->GetDebugDraw()->DrawAxis(vec3(0), glm::quat(), 15);
+
 	camera->Update(dt);
 }

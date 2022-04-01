@@ -1,5 +1,5 @@
 #include "shaders/material/material_default.hlsl"
-#include "shaders/particles/particle_material_common.hlsl"
+#include "shaders/particles/particle_common.hlsl"
 
 RWStructuredBuffer<Particle> particles : register(u6, space1);
 RWStructuredBuffer<uint> draw_indices : register(u7, space1);
@@ -18,7 +18,7 @@ float4 ps_main(VS_out input) : SV_TARGET
 	float4 value = GetPSMaterialAndVertexDataDefault(input, vertex_data);
 
 	Particle particle = particles[draw_indices[vertex_data.instance_id]];
-	value.a *= saturate(1.0f - particle.velocity.w);
+	value.a *= saturate(1.0f - particle.life / particle.max_life);
 
 	return value;
 }
