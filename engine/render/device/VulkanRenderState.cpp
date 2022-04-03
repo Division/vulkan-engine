@@ -591,6 +591,14 @@ namespace Device {
 		dirty_flags = (uint32_t)DirtyFlags::All;
 	}
 
+	void VulkanRenderState::Copy(const VulkanBuffer& src, const VulkanBuffer& dst, vk::BufferCopy copy_region)
+	{
+		//if (copy_region == vk::BufferCopy{ 0, 0, 0 })
+			//copy_region = vk::BufferCopy(0, 0, size);
+
+		GetCurrentCommandBuffer()->GetCommandBuffer().copyBuffer(src.Buffer(), dst.Buffer(), { copy_region });
+	}
+
 	VulkanPipeline* VulkanRenderState::GetPipeline(const VulkanPipelineInitializer& initializer)
 	{
 		auto iter = pipeline_cache.find(initializer.GetHash());

@@ -27,7 +27,7 @@ namespace Device {
 
 		if (initializer.data)
 		{
-			if (usage & VK_BUFFER_USAGE_TRANSFER_SRC_BIT)
+			if (usage & VK_BUFFER_USAGE_TRANSFER_SRC_BIT && initializer.memory_usage == VMA_MEMORY_USAGE_CPU_ONLY)
 			{
 				// Write data to staging buffer
 				void* staging_data = Map();

@@ -7,6 +7,7 @@
 #include <magic_enum/magic_enum.hpp>
 #include "resources/MaterialResource.h"
 #include "render/renderer/DrawCallManager.h"
+#include "render/material/Material.h"
 
 namespace Device
 {
@@ -63,11 +64,18 @@ namespace ECS::components
 
 		typedef std::variant<EmitterGeometrySphere, EmitterGeometryLine> EmitterGeometryUnion;
 
+		struct ExtraBindings
+		{
+			render::ResourceBindingStorage resources;
+			render::ConstantBindingStorage constants;
+		};
+
 		struct EmissionParams
 		{
 			EmissionParams& SetEmissionRate(uint32_t value) { emission_rate = value; return *this; }
 			EmissionParams& SetLife(ParamRange<float> value) { life = value; return *this; }
 			EmissionParams& SetSize(ParamRange<float> value) { size = value; return *this; }
+			EmissionParams& SetSpeed(ParamRange<float> value) { speed = value; return *this; }
 			EmissionParams& SetDirection(vec3 value) { direction = value; return *this; }
 			EmissionParams& SetConeAngle(float value) { cone_angle = value; return *this; }
 			EmissionParams& SetColor(vec4 value) { color = value; return *this; }
@@ -76,10 +84,11 @@ namespace ECS::components
 			uint32_t emission_rate = 300;
 			ParamRange<float> life = ParamRange<float>(0.5f, 1.0f);
 			ParamRange<float> size = ParamRange<float>(float(1), float(1));
+			ParamRange<float> speed = ParamRange<float>(float(1), float(1));
+			ParamRange<float> angle = ParamRange<float>(0, M_PI * 2);
 			vec3 direction = vec3(0, 1, 0);
 			float cone_angle = M_PI / 8;
 			vec4 color = vec4(1, 1, 1, 1);
-			ParamRange<float> angle = ParamRange<float>(0, M_PI * 2);
 		};
 
 		struct Initializer
@@ -90,7 +99,9 @@ namespace ECS::components
 			Initializer& SetEmissionParams(EmissionParams value) { params = value; return *this; };
 			Initializer& SetEmitterGeometry(EmitterGeometryUnion value) { emitter_geometry = value; return *this; };
 			Initializer& SetMesh(Common::Handle<Mesh> value) { mesh = value; return *this; };
+			Initializer& SetExtraBindings(ExtraBindings value) { extra_bindings = std::move(value); return *this; };
 
+			ExtraBindings extra_bindings;
 			std::wstring emit_shader_path;
 			std::wstring update_shader_path;
 			uint32_t max_particles = 10000;
@@ -123,6 +134,8 @@ namespace ECS::components
 		}
 
 		void FlushEmitConstants(Device::ConstantBindings& bindings, vec3* emit_position);
+		void FlushExtraConstants(Device::ConstantBindings& bindings);
+		void FlushExtraResources(Device::ResourceBindings& bindings);
 
 		ParticleEmitter& operator=(ParticleEmitter&&) = default;
 
@@ -146,6 +159,7 @@ namespace ECS::components
 			// Persistent counters
 			int32_t alive_count = 0; 
 			int32_t dead_count = 0;
+			int32_t alive_count_after_simulation = 0;
 			//////////////////////
 
 			CounterArgumentsData(int32_t capacity, int32_t index_count)
@@ -186,6 +200,7 @@ namespace ECS::components
 
 		EmitterGeometryUnion emitter_geometry;
 		EmissionParams emission_params;
+		ExtraBindings extra_bindings;
 
 		float time_since_last_emit = 0;
 		bool emission_enabled = true;

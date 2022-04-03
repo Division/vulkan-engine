@@ -120,6 +120,11 @@ namespace render
 		AddConstant(Device::ShaderProgram::GetParameterNameHash(name), value);
 	}
 
+	void ConstantBindingStorage::AddUIntConstant(const char* name, uint32_t value)
+	{
+		AddConstant(Device::ShaderProgram::GetParameterNameHash(name), value);
+	}
+
 	void ConstantBindingStorage::AddFloat2Constant(const char* name, vec2 value)
 	{
 		AddConstant(Device::ShaderProgram::GetParameterNameHash(name), value);
@@ -185,6 +190,53 @@ namespace render
 			auto& constant = GetConstantByIndex(i);
 			bindings.AddDataBinding(constant.data, constant.size, constant.name_hash);
 		}
+	}
+
+
+	void ResourceBindingStorage::AddTexture(const char* name, Resources::TextureResource::Handle texture)
+	{
+		ResourceBinding value{ Device::ShaderProgram::GetParameterNameHash(name), texture };
+		AddResourceBinding(value);
+	}
+
+	void ResourceBindingStorage::AddTexture(const char* name, Device::Handle<Device::Texture> texture)
+	{
+		ResourceBinding value{ Device::ShaderProgram::GetParameterNameHash(name), texture };
+		AddResourceBinding(value);
+	}
+
+	void ResourceBindingStorage::AddBuffer(const char* name, Device::Handle<Device::VulkanBuffer> buffer)
+	{
+		ResourceBinding value{ Device::ShaderProgram::GetParameterNameHash(name), buffer };
+		AddResourceBinding(value);
+	}
+
+	void ResourceBindingStorage::AddResourceBinding(const ResourceBinding& value)
+	{
+		assert(!value.resource.valueless_by_exception());
+		auto it = std::find_if(resource_bindings.begin(), resource_bindings.end(), [hash = value.name_hash](const ResourceBinding& binding) { return binding.name_hash == hash; });
+		if (it != resource_bindings.end())
+			*it = value;
+		else
+			resource_bindings.push_back(value);
+	}
+
+	void ResourceBindingStorage::Flush(Device::ResourceBindings& bindings) const
+	{
+		for (auto& resource : resource_bindings)
+		{
+			switch (resource.resource.index())
+			{
+			case 0: bindings.AddTextureBinding(resource.name_hash, std::get<0>(resource.resource)->Get().get()); break;
+			case 1: bindings.AddTextureBinding(resource.name_hash, std::get<1>(resource.resource).get()); break;
+			case 2: bindings.AddBufferBinding(resource.name_hash, std::get<2>(resource.resource).get(), std::get<2>(resource.resource)->Size()); break;
+			}
+		}
+	}
+
+	void ResourceBindingStorage::Clear()
+	{
+		resource_bindings.clear();
 	}
 }
 
@@ -335,37 +387,26 @@ void Material::VertexColorEnabled(bool vertex_color_enabled_)
 
 void Material::AddExtraTexture(Resources::TextureResource::Handle texture, const char* name)
 {
-	ExtraResourceBinding value{ Device::ShaderProgram::GetParameterNameHash(name), texture };
-	AddExtraResourceBinding(value);
+	extra_resource_bindings.AddTexture(name, texture);
+	SetBindingsDirty();
 }
 
 void Material::AddExtraTexture(Device::Handle<Device::Texture> texture, const char* name)
 {
-	ExtraResourceBinding value{ Device::ShaderProgram::GetParameterNameHash(name), texture };
-	AddExtraResourceBinding(value);
+	extra_resource_bindings.AddTexture(name, texture);
+	SetBindingsDirty();
 }
 
 void Material::AddExtraBuffer(Device::Handle<Device::VulkanBuffer> buffer, const char* name)
 {
-	ExtraResourceBinding value{ Device::ShaderProgram::GetParameterNameHash(name), buffer };
-	AddExtraResourceBinding(value);
-}
-
-void Material::AddExtraResourceBinding(const ExtraResourceBinding& value)
-{
-	assert(!value.resource.valueless_by_exception());
-	auto it = std::find_if(extra_resource_bindings.begin(), extra_resource_bindings.end(), [hash = value.name_hash](const ExtraResourceBinding& binding) { return binding.name_hash == hash; });
-	if (it != extra_resource_bindings.end())
-		*it = value;
-	else
-		extra_resource_bindings.push_back(value);
-
+	extra_resource_bindings.AddBuffer(name, buffer);
 	SetBindingsDirty();
 }
 
 void Material::ClearExtraResources()
 {
-	extra_resource_bindings.clear();
+	extra_resource_bindings.Clear();
+	SetBindingsDirty();
 }
 
 void Material::AddFloatConstant(const char* name, float value)
@@ -476,15 +517,7 @@ void Material::UpdateBindings() const
 	if (has_normal_map)
 		resource_bindings.AddTextureBinding(Device::GetShaderTextureNameHash(ShaderTextureName::NormalMap), GetNormalMap());
 
-	for (auto& extra_texture : extra_resource_bindings)
-	{
-		if (extra_texture.resource.index() == 0)
-			resource_bindings.AddTextureBinding(extra_texture.name_hash, std::get<0>(extra_texture.resource)->Get().get());
-		else if (extra_texture.resource.index() == 0)
-			resource_bindings.AddTextureBinding(extra_texture.name_hash, std::get<1>(extra_texture.resource).get());
-		else
-			resource_bindings.AddBufferBinding(extra_texture.name_hash, std::get<2>(extra_texture.resource).get(), std::get<2>(extra_texture.resource)->Size());
-	}
+	extra_resource_bindings.Flush(resource_bindings);
 
 	bindings_dirty = false;
 }

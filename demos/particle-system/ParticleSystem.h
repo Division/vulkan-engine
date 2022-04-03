@@ -36,22 +36,6 @@ namespace ECS::components
 	struct DeltaTime;
 }
 
-namespace Device
-{
-	class GPUBuffer;
-}
-
-namespace Resources
-{
-	class TextureResource;
-	class MultiMesh;
-	class PhysCollider;
-	class MaterialResource;
-	class EntityResource;
-	class SkeletonResource;
-	class SkeletalAnimationResource;
-}
-
 class Game : public IGame {
 public:
 	Game();
@@ -61,21 +45,14 @@ public:
 
 private:
 	void OnRender(const render::RenderCallbackData&, render::graph::RenderGraph& graph);
-
+	ECS::EntityID CreateSphere(vec4 color);
 private:
-	struct Handles;
-	std::unique_ptr<Device::GPUBuffer> compute_buffer;
-	Device::ShaderProgram* compute_program;
-	std::unique_ptr<Handles> handles;
+	struct GPUResources;
+
+	std::unique_ptr<GPUResources> gpu_resources;
 	std::unique_ptr<ViewerCamera> camera;
-
-	ECS::EntityID box_id = 0;
-
+	ECS::EntityID particle_system_id = 0;
 	ECS::EntityManager* manager = nullptr;
-
-	Resources::Handle<Resources::EntityResource> animated_entity;
-
-	Resources::Handle<Resources::SkeletalAnimationResource> animation;
-
+	std::vector<ECS::EntityID> spheres;
 	bool camera_control = false;
 };

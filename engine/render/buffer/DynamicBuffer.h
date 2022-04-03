@@ -18,28 +18,23 @@ namespace Device {
 			assert(size >= sizeof(T) && "buffer size must be greater than the element size");
 			auto main_initializer = VulkanBufferInitializer(size).Name("Dynamic " + name).Data(data);
 
-			switch (type)
-			{
-			case BufferType::Uniform:
+			const uint32_t type_uint = (uint32_t)type;
+
+			if (type_uint & (uint32_t)BufferType::Uniform)
 				main_initializer.SetUniform();
-				break;
-
-			case BufferType::Storage:
+			else if (type_uint & (uint32_t)BufferType::Storage)
 				main_initializer.SetStorage();
-				break;
-
-			case BufferType::Indirect:
+			else if (type_uint & (uint32_t)BufferType::Indirect)
 				main_initializer.SetIndirect();
-				break;
-
-			case BufferType::Vertex:
+			else if (type_uint & (uint32_t)BufferType::Vertex)
 				main_initializer.SetVertex();
-				break;
-
-			case BufferType::Index:
+			else if (type_uint & (uint32_t)BufferType::Index)
 				main_initializer.SetIndex();
-				break;
-			}
+
+			if (type_uint & (uint32_t)BufferType::TransferSrc)
+				main_initializer.Usage(VkBufferUsageFlagBits::VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
+			if (type_uint & (uint32_t)BufferType::TransferDst)
+				main_initializer.Usage(VkBufferUsageFlagBits::VK_BUFFER_USAGE_TRANSFER_DST_BIT);
 
 			buffer = VulkanBuffer::Create(main_initializer);
 
@@ -50,7 +45,7 @@ namespace Device {
 
 		const std::string& GetName() const { return name; }
 		BufferType GetType() const { return type; }
-		VulkanBuffer* GetBuffer() const { return buffer.get(); }
+		const VulkanBuffer::Handle& GetBuffer() const { return buffer; }
 		size_t GetElementSize() const { return sizeof(T); }
 
 		void* Map()

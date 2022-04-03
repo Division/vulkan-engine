@@ -29,7 +29,7 @@ namespace Device {
 			DynamicBuffer::Unmap();
 		}
 
-		VulkanBuffer* GetBuffer() const { return DynamicBuffer::GetBuffer(); }
+		VulkanBuffer* GetBuffer() const { return DynamicBuffer::GetBuffer().get(); }
 
 		void Upload()
 		{

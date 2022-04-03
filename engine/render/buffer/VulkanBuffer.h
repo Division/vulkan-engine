@@ -4,13 +4,15 @@
 
 namespace Device {
 
-	enum BufferType : int
+	enum BufferType : uint32_t
 	{
-		Uniform,
-		Storage,
-		Indirect,
-		Vertex,
-		Index
+		Uniform = 1 << 0,
+		Storage = 1 << 1,
+		Indirect = 1 << 2,
+		Vertex = 1 << 3,
+		Index = 1 << 4,
+		TransferSrc = 1 << 5,
+		TransferDst = 1 << 6
 	};
 
 	struct VulkanBufferInitializer {

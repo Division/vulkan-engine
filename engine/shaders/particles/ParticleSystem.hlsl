@@ -12,6 +12,7 @@ Texture2D noise : register(t9, space0);
 
 #define COUNTER_INDEX_ALIVE 8
 #define COUNTER_INDEX_DEAD 9
+#define COUNTER_INDEX_ALIVE_AFTER_SIMULATION 10
 #define COUNTER_INDEX_UPDATE_DISPATCH_GROUPS 0
 #define COUNTER_INDEX_INSTANCE_COUNT 4
 
@@ -29,6 +30,7 @@ cbuffer GlobalConstants : register(b10, space0)
 	float3 emit_direction;
 	float2 emit_cone_angle;
 	float2 emit_size;
+	float2 emit_speed;
 	float2 emit_life;
 	float2 emit_angle;
 	float4 emit_color;
@@ -72,9 +74,22 @@ ParticleEmitData GetParticleEmitData(uint particle_index)
 	data.emit_direction = emit_direction;
 	data.emit_cone_angle = emit_cone_angle;
 	data.emit_size = emit_size;
+	data.emit_speed = emit_speed;
 	data.emit_life = emit_life;
 	data.emit_angle = emit_angle;
 	data.emit_color = emit_color;
+
+	return data;
+}
+
+ParticleUpdateData GetParticleUpdateData(uint particle_index)
+{
+	ParticleUpdateData data;
+
+	data.particles = particles;
+	data.particle_index = particle_index;
+	data.time = time;
+	data.dt = dt;
 
 	return data;
 }
@@ -98,6 +113,10 @@ void EmitParticles(uint3 id: SV_DispatchThreadID, uint3 groupthread_id : SV_Grou
 			alive_indices[alive_particle_count] = particle_index;
 
 			particles[particle_index] = EMIT_FUNCTION(GetParticleEmitData(particle_index));
+
+			ParticleUpdateData data = GetParticleUpdateData(particle_index);
+			data.dt = dt * (float)id.x / (float)emit_count;
+			PROCESS_FUNCTION(data);
 		}
 	}
 
@@ -105,22 +124,11 @@ void EmitParticles(uint3 id: SV_DispatchThreadID, uint3 groupthread_id : SV_Grou
 	if (groupthread_id.x == 0)
 	{
 		counters[COUNTER_INDEX_INSTANCE_COUNT] = 0;
+		counters[COUNTER_INDEX_ALIVE_AFTER_SIMULATION] = 0;
 		int num_dispatch_groups = (int)ceil(float(counters[COUNTER_INDEX_ALIVE]) / 64.0f);
 		InterlockedMax(counters[COUNTER_INDEX_UPDATE_DISPATCH_GROUPS], num_dispatch_groups);
 	}
 
-}
-
-ParticleUpdateData GetParticleUpdateData(uint particle_index)
-{
-	ParticleUpdateData data;
-
-	data.particles = particles;
-	data.particle_index = particle_index;
-	data.time = time;
-	data.dt = dt;
-
-	return data;
 }
 
 groupshared int final_particle_count;
@@ -128,10 +136,7 @@ groupshared int final_particle_count;
 [numthreads(64, 1, 1)]
 void UpdateParticles(uint3 id: SV_DispatchThreadID)
 {
-	final_particle_count = counters[COUNTER_INDEX_ALIVE];
-	AllMemoryBarrierWithGroupSync();
-
-	if (id.x < final_particle_count)
+	if (id.x < counters[COUNTER_INDEX_ALIVE])
 	{
 		int particle_index = alive_indices[id.x];
 
@@ -142,16 +147,14 @@ void UpdateParticles(uint3 id: SV_DispatchThreadID)
 		{
 			int current_instance;
 			InterlockedAdd(counters[COUNTER_INDEX_INSTANCE_COUNT], +1, current_instance);
+			InterlockedAdd(counters[COUNTER_INDEX_ALIVE_AFTER_SIMULATION], +1);
 			draw_indices[current_instance] = particle_index;
-			alive_indices[current_instance] = particle_index;
 		}
 		else
 		{
 			int dead_index;
 			InterlockedAdd(counters[COUNTER_INDEX_DEAD], +1, dead_index);
 			dead_indices[dead_index] = particle_index;
-
-			InterlockedAdd(counters[COUNTER_INDEX_ALIVE], -1);
 		}
 	}
 }

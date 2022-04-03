@@ -18,7 +18,13 @@
         "type": "fbx",
         "filename": "figures.fbx",
         "uid": "3ee877fe1f012888",
-        "export_type": "Mesh"
+        "export_type": "Mesh",
+        "animation_type": "Normal"
+    },
+    {
+        "type": "copy",
+        "filename": "sphere.entity",
+        "uid": "79c9cd0c2a5e2e3e"
     },
     {
         "type": "copy",

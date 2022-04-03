@@ -1,0 +1,17 @@
+[
+  {
+    "id": "sphere",
+    "components": [
+      {
+        "type": "Transform"
+      },
+      {
+        "type": "MultiMeshRenderer",
+        "path": "assets/Entities/Basic/sphere.mesh",
+        "materials": [
+          "assets/Entities/Basic/white.mat"
+        ]
+      }
+    ]
+  }
+]

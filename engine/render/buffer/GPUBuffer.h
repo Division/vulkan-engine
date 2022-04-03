@@ -12,33 +12,28 @@ namespace Device {
 	class GPUBuffer : public NonCopyable
 	{
 	public:
-		GPUBuffer(std::string name, size_t size, BufferType type = BufferType::Uniform, void* data = nullptr)
+		GPUBuffer(std::string name, size_t size, BufferType type = BufferType::Uniform, const void* data = nullptr)
 			: name(name), size(size), type(type)
 		{
 			auto initializer = VulkanBufferInitializer(size).Name("GPU Buffer " + name).Data(data);
 
-			switch (type)
-			{
-			case BufferType::Uniform:
+			const uint32_t type_uint = (uint32_t)type;
+
+			if (type_uint & (uint32_t)BufferType::Uniform)
 				initializer.SetUniform();
-				break;
-
-			case BufferType::Storage:
+			else if (type_uint & (uint32_t)BufferType::Storage)
 				initializer.SetStorage();
-				break;
-
-			case BufferType::Indirect:
+			else if (type_uint & (uint32_t)BufferType::Indirect)
 				initializer.SetIndirect();
-				break;
-
-			case BufferType::Vertex:
+			else if (type_uint & (uint32_t)BufferType::Vertex)
 				initializer.SetVertex();
-				break;
-
-			case BufferType::Index:
+			else if (type_uint & (uint32_t)BufferType::Index)
 				initializer.SetIndex();
-				break;
-			}
+
+			if (type_uint & (uint32_t)BufferType::TransferSrc)
+				initializer.Usage(VkBufferUsageFlagBits::VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
+			if (type_uint & (uint32_t)BufferType::TransferDst)
+				initializer.Usage(VkBufferUsageFlagBits::VK_BUFFER_USAGE_TRANSFER_DST_BIT);
 
 			buffer = VulkanBuffer::Create(initializer);
 		}

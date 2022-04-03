@@ -54,9 +54,12 @@ namespace ECS::components
 	ParticleEmitter::GPUData::GPUData(uint32_t particle_count)
 		: particles("particles data", particle_count * sizeof(ParticleData), Device::BufferType::Storage)
 		, dead_indices("particles dead indices", particle_count * sizeof(uint32_t), Device::BufferType::Storage, GetSequentialIndices(particle_count).data())
-		, alive_indices("particles alive indices", particle_count * sizeof(uint32_t), Device::BufferType::Storage)
-		, draw_indices("particles draw indices", particle_count * sizeof(uint32_t), Device::BufferType::Storage)
-		, counters("particles counters", sizeof(CounterArgumentsData), Device::BufferType::Indirect, false, &CounterArgumentsData(particle_count, 6))
+		, alive_indices("particles alive indices", particle_count * sizeof(uint32_t), (Device::BufferType)((uint32_t)Device::BufferType::Storage | (uint32_t)Device::BufferType::TransferDst))
+		, draw_indices("particles draw indices", particle_count * sizeof(uint32_t), (Device::BufferType)((uint32_t)Device::BufferType::Storage | (uint32_t)Device::BufferType::TransferSrc))
+		, counters("particles counters", sizeof(CounterArgumentsData), 
+			(Device::BufferType)((uint32_t)Device::BufferType::Indirect | (uint32_t)Device::BufferType::TransferDst | (uint32_t)Device::BufferType::TransferSrc), 
+			false, &CounterArgumentsData(particle_count, 6)
+		)
 	{
 	}
 
@@ -71,6 +74,7 @@ namespace ECS::components
 		emitter_geometry = initializer.emitter_geometry;
 
 		emission_params = initializer.params;
+		extra_bindings = initializer.extra_bindings;
 
 		instance_count++;
 	}
@@ -94,7 +98,18 @@ namespace ECS::components
 		bindings.AddFloat2Binding(reinterpret_cast<vec2*>(&emission_params.size), "emit_size");
 		bindings.AddFloat2Binding(reinterpret_cast<vec2*>(&emission_params.angle), "emit_angle");
 		bindings.AddFloat2Binding(reinterpret_cast<vec2*>(&emission_params.life), "emit_life");
+		bindings.AddFloat2Binding(reinterpret_cast<vec2*>(&emission_params.speed), "emit_speed");
 		bindings.AddFloat4Binding(&emission_params.color, "emit_color");
+	}
+
+	void ParticleEmitter::FlushExtraConstants(Device::ConstantBindings& bindings)
+	{
+		extra_bindings.constants.Flush(bindings);
+	}
+
+	void ParticleEmitter::FlushExtraResources(Device::ResourceBindings& bindings)
+	{
+		extra_bindings.resources.Flush(bindings);
 	}
 
 	std::vector<Device::ShaderProgramInfo::Macro> ParticleEmitter::GetMacros() const

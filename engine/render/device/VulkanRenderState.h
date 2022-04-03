@@ -226,6 +226,8 @@ namespace Device {
 		void Draw(const VulkanBuffer& buffer, uint32_t vertexCount, uint32_t firstVertex, uint32_t instance_count = 1);
 		void DrawIndirect(const VulkanBuffer& buffer, VulkanBuffer& indirect_buffer, uint32_t indirect_buffer_offset);
 
+		void Copy(const VulkanBuffer& src, const VulkanBuffer& dst, vk::BufferCopy copy_region);
+
 		VulkanCommandBuffer* GetCurrentCommandBuffer() const;
 		void UpdateGlobalDescriptorSet();
 

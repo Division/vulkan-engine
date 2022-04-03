@@ -33,6 +33,7 @@ namespace render
 		};
 
 		void AddFloatConstant(const char* name, float value);
+		void AddUIntConstant(const char* name, uint32_t value);
 		std::optional<float> GetFloatConstant(const char* name);
 		void AddFloat2Constant(const char* name, vec2 value);
 		std::optional<vec2> GetFloat2Constant(const char* name);
@@ -65,6 +66,32 @@ namespace render
 
 		uint16_t constant_count = 0;
 		mutable utils::SmallVector<uint8_t, 64> data;
+	};
+
+	class ResourceBindingStorage
+	{
+	public:
+		void AddTexture(const char* name, Resources::TextureResource::Handle texture);
+		void AddTexture(const char* name, Device::Handle<Device::Texture> texture);
+		void AddBuffer(const char* name, Device::Handle<Device::VulkanBuffer> buffer);
+		void Clear();
+
+		void Flush(Device::ResourceBindings& bindings) const;
+
+		const auto& GetBindings() const { return resource_bindings; }
+
+	private:
+		struct ResourceBinding
+		{
+			uint32_t name_hash;
+			std::variant<Resources::TextureResource::Handle, Device::Handle<Device::Texture>, Device::Handle<Device::VulkanBuffer>> resource;
+		};
+
+		void AddResourceBinding(const ResourceBinding& value);
+
+	private:
+		//utils::SmallVector<ResourceBinding, 8> resource_bindings;
+		std::vector<ResourceBinding> resource_bindings;
 	};
 }
 
@@ -163,10 +190,9 @@ protected:
 		std::variant<Resources::TextureResource::Handle, Device::Handle<Device::Texture>, Device::Handle<Device::VulkanBuffer>> resource;
 	};
 
-	void AddExtraResourceBinding(const ExtraResourceBinding& value);
-
 protected:
 	render::ConstantBindingStorage constant_storage;
+	render::ResourceBindingStorage extra_resource_bindings;
 
 	mutable bool caps_dirty = true;
 	mutable bool shader_hash_dirty = true;
@@ -177,7 +203,6 @@ protected:
 
 	mutable bool bindings_dirty = true;
 	mutable Device::ResourceBindings resource_bindings;
-	std::vector<ExtraResourceBinding> extra_resource_bindings;
 
 	mutable bool constants_dirty = true;
 	mutable Device::ConstantBindings constant_bindings;
