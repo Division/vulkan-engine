@@ -1,8 +1,10 @@
 #include "VulkanUtils.h"
 #include "VulkanContext.h"
 #include "VkObjects.h"
+#include "render/buffer/VulkanBuffer.h"
+#include "render/device/VulkanRenderState.h"
 
-namespace Device { namespace VulkanUtils {
+namespace Device::VulkanUtils {
 
 	const std::vector<const char*> VALIDATION_LAYERS = {
 		"VK_LAYER_KHRONOS_validation"
@@ -194,4 +196,49 @@ namespace Device { namespace VulkanUtils {
 		return indices.IsComplete() && extensionsSupported && swapChainAdequate && supportedFeatures.samplerAnisotropy;
 	}
 
-} }
+	vk::BufferMemoryBarrier BufferTransition(VulkanBuffer& buffer, vk::AccessFlags before, vk::AccessFlags after)
+	{
+		return vk::BufferMemoryBarrier(
+			before, after, VK_QUEUE_FAMILY_IGNORED, VK_QUEUE_FAMILY_IGNORED,
+			buffer.Buffer(), 0, buffer.Size()
+		);
+	}
+
+	void FullBarrier(VulkanRenderState& state)
+	{
+		vk::MemoryBarrier memoryBarrier((vk::AccessFlagBits)(
+				   VK_ACCESS_INDIRECT_COMMAND_READ_BIT |
+				   VK_ACCESS_INDEX_READ_BIT |
+				   VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT |
+				   VK_ACCESS_UNIFORM_READ_BIT |
+				   VK_ACCESS_INPUT_ATTACHMENT_READ_BIT |
+				   VK_ACCESS_SHADER_READ_BIT |
+				   VK_ACCESS_SHADER_WRITE_BIT |
+				   VK_ACCESS_COLOR_ATTACHMENT_READ_BIT |
+				   VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT |
+				   VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT |
+				   VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT |
+				   VK_ACCESS_TRANSFER_READ_BIT |
+				   VK_ACCESS_TRANSFER_WRITE_BIT |
+				   VK_ACCESS_HOST_READ_BIT |
+				   VK_ACCESS_HOST_WRITE_BIT),
+			(vk::AccessFlagBits)(VK_ACCESS_INDIRECT_COMMAND_READ_BIT |
+				   VK_ACCESS_INDEX_READ_BIT |
+				   VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT |
+				   VK_ACCESS_UNIFORM_READ_BIT |
+				   VK_ACCESS_INPUT_ATTACHMENT_READ_BIT |
+				   VK_ACCESS_SHADER_READ_BIT |
+				   VK_ACCESS_SHADER_WRITE_BIT |
+				   VK_ACCESS_COLOR_ATTACHMENT_READ_BIT |
+				   VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT |
+				   VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT |
+				   VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT |
+				   VK_ACCESS_TRANSFER_READ_BIT |
+				   VK_ACCESS_TRANSFER_WRITE_BIT |
+				   VK_ACCESS_HOST_READ_BIT |
+				   VK_ACCESS_HOST_WRITE_BIT));
+
+		state.Barrier({ &memoryBarrier, 1 });
+	}
+
+}

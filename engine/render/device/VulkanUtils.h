@@ -5,10 +5,11 @@
 namespace Device {
 
 	class VulkanContext;
-
+	class VulkanBuffer;
+	class VulkanRenderState;
 }
 
-namespace Device { namespace VulkanUtils {
+namespace Device::VulkanUtils {
 
 	struct QueueFamilyIndices {
 		std::optional<uint32_t> graphicsFamily;
@@ -37,4 +38,7 @@ namespace Device { namespace VulkanUtils {
 	QueueFamilyIndices FindQueueFamilies(VkPhysicalDevice device, VkSurfaceKHR surface);
 	SwapChainSupportDetails QuerySwapChainSupport(VkPhysicalDevice device, VkSurfaceKHR surface);
 
-} }
+	vk::BufferMemoryBarrier BufferTransition(VulkanBuffer& buffer, vk::AccessFlags before, vk::AccessFlags after);
+
+	void FullBarrier(VulkanRenderState& state);
+}

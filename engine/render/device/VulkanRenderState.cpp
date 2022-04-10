@@ -557,7 +557,7 @@ namespace Device {
 		current_frame = (current_frame + 1) % caps::MAX_FRAMES_IN_FLIGHT;
 	}
 
-	void VulkanRenderState::Dispatch(const ShaderProgram& program, ResourceBindings& bindings, ConstantBindings& constants, uvec3 group_size)
+	void VulkanRenderState::Dispatch(const ShaderProgram& program, const ResourceBindings& bindings, const ConstantBindings& constants, uvec3 group_size)
 	{
 		render_pass_started = true;
 
@@ -574,7 +574,7 @@ namespace Device {
 		dirty_flags = (uint32_t)DirtyFlags::All;
 	}
 
-	void VulkanRenderState::DispatchIndirect(const ShaderProgram& program, ResourceBindings& bindings, ConstantBindings& constants, VulkanBuffer& buffer, uint32_t offset)
+	void VulkanRenderState::DispatchIndirect(const ShaderProgram& program, const ResourceBindings& bindings, const ConstantBindings& constants, const VulkanBuffer& buffer, uint32_t offset)
 	{
 		render_pass_started = true;
 
@@ -591,11 +591,26 @@ namespace Device {
 		dirty_flags = (uint32_t)DirtyFlags::All;
 	}
 
+	void VulkanRenderState::Barrier(gsl::span<const vk::BufferMemoryBarrier> barriers, vk::PipelineStageFlags srcStageMask, vk::PipelineStageFlags dstStageMask, vk::DependencyFlags flags)
+	{
+		auto command_buffer = GetCurrentCommandBuffer()->GetCommandBuffer();
+		command_buffer.pipelineBarrier(srcStageMask, dstStageMask, flags, nullptr, { (uint32_t)barriers.size(), barriers.data() }, nullptr);
+	}
+
+	void VulkanRenderState::Barrier(gsl::span<const vk::ImageMemoryBarrier> barriers, vk::PipelineStageFlags srcStageMask, vk::PipelineStageFlags dstStageMask, vk::DependencyFlags flags)
+	{
+		auto command_buffer = GetCurrentCommandBuffer()->GetCommandBuffer();
+		command_buffer.pipelineBarrier(srcStageMask, dstStageMask, flags, nullptr, nullptr, { (uint32_t)barriers.size(), barriers.data() });
+	}
+
+	void VulkanRenderState::Barrier(gsl::span<const vk::MemoryBarrier> barriers, vk::PipelineStageFlags srcStageMask, vk::PipelineStageFlags dstStageMask, vk::DependencyFlags flags)
+	{
+		auto command_buffer = GetCurrentCommandBuffer()->GetCommandBuffer();
+		command_buffer.pipelineBarrier(srcStageMask, dstStageMask, flags, { (uint32_t)barriers.size(), barriers.data() }, nullptr, nullptr);
+	}
+
 	void VulkanRenderState::Copy(const VulkanBuffer& src, const VulkanBuffer& dst, vk::BufferCopy copy_region)
 	{
-		//if (copy_region == vk::BufferCopy{ 0, 0, 0 })
-			//copy_region = vk::BufferCopy(0, 0, size);
-
 		GetCurrentCommandBuffer()->GetCommandBuffer().copyBuffer(src.Buffer(), dst.Buffer(), { copy_region });
 	}
 

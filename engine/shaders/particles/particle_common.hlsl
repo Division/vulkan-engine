@@ -4,6 +4,13 @@
 #include "shaders/material/material_common.hlsl"
 #include "shaders/includes/random.hlsl"
 
+#define COUNTER_INDEX_ALIVE 11
+#define COUNTER_INDEX_DEAD 12
+#define COUNTER_INDEX_ALIVE_AFTER_SIMULATION 13
+#define COUNTER_INDEX_UPDATE_DISPATCH_GROUPS 0
+#define COUNTER_INDEX_PRESORT_DISPATCH_GROUPS 8
+#define COUNTER_INDEX_INSTANCE_COUNT 4
+
 struct Particle
 {
 	float4 position;
@@ -70,6 +77,14 @@ float3 GetParticleRandomDirection(ParticleEmitData data)
     float3 direction = random_direction_in_cone(data.emit_direction, data.emit_cone_angle.x, seed);
     float speed = data.emit_speed.x + (data.emit_speed.y - data.emit_speed.x) * get_random_number(make_random_seed(seed));
     return direction * speed;
+}
+
+float3 GetParticleRandomColor(ParticleEmitData data)
+{
+    float3 float_seed3 = data.time * 0.00356f * data.emit_position;
+    //uint2 seed = uint2(make_random_seed(random_quantize3(float_seed3)), make_random_seed(uint2(data.emitter_id, data.particle_index)));
+    uint3 seed = uint3(make_random_seed(random_quantize3(float_seed3)) * 2, data.particle_index * 2, data.emitter_id);
+    return get_random_number3(seed);
 }
 
 VertexData GetDefaultParticleQuadVertexData(VS_in input)

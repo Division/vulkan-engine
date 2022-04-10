@@ -8,6 +8,7 @@ namespace Device
 	class VulkanRenderState;
 	class ShaderProgram;
 	class ShaderCache;
+	class ConstantBindings;
 }
 
 namespace ECS
@@ -17,7 +18,7 @@ namespace ECS
 
 namespace ECS::systems
 {
-	class ParticleEmitSystem;
+	class GPUParticleUpdateSystem;
 }
 
 namespace render::graph
@@ -30,23 +31,25 @@ namespace render
 {
 	class SceneRenderer;
 	class DrawCallManager;
+	class BitonicSort;
 }
 
 namespace render::effects {
 
+
 	class GPUParticles
 	{
 	public:
-		GPUParticles(SceneRenderer& scene_renderer, Device::ShaderCache& shader_cache, ECS::EntityManager& manager);
+		GPUParticles(SceneRenderer& scene_renderer, BitonicSort& bitonic_sort, ECS::EntityManager& manager);
 		~GPUParticles();
 
-		void Update(graph::RenderGraph& graph, float dt);
+		void Update(graph::RenderGraph& graph, const Device::ConstantBindings& global_constants, float dt);
 
 	private:
+		std::unique_ptr<ECS::systems::GPUParticleUpdateSystem> particle_update_system;
 		SceneRenderer& scene_renderer;
+		BitonicSort& bitonic_sort;
 		ECS::EntityManager& manager;
-		Device::ShaderProgram* emit_shader;
-		Device::ShaderProgram* update_shader;
 	};
 
 }

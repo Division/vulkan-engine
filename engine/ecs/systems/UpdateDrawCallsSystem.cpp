@@ -16,11 +16,6 @@ namespace ECS { namespace systems {
 		return (*mesh_renderer->materials)[std::min(index, mesh_renderer->materials->size() - 1)];
 	};
 
-	const Material::Handle& GetMaterialResource(MultiMeshRenderer* mesh_renderer, size_t index)
-	{
-		return (*mesh_renderer->material_resources)[std::min(index, mesh_renderer->material_resources->size() - 1)]->Get();
-	};
-
 	void CreateDrawCallsSystem::Process(Chunk* chunk)
 	{
 		OPTICK_EVENT();
@@ -41,8 +36,6 @@ namespace ECS { namespace systems {
 			auto handle = draw_call_manager.CreateHandle();
 			auto* transform = transform_fetcher.GetComponent(i);
 			auto obb = transform->GetOBB();
-
-			auto get_material_function = mesh_renderer->material_resources ? &GetMaterialResource : &GetMaterial;
 
 			for (int j = 0; j < mesh_renderer->GetMultiMesh()->GetMeshCount(); j++)
 			{

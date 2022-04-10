@@ -15,20 +15,16 @@ namespace render::effects {
 
 	GPUParticles::~GPUParticles() = default;
 	
-	GPUParticles::GPUParticles(SceneRenderer& scene_renderer, Device::ShaderCache& shader_cache, ECS::EntityManager& manager)
-		: scene_renderer(scene_renderer), manager(manager)
+	GPUParticles::GPUParticles(SceneRenderer& scene_renderer, BitonicSort& bitonic_sort, ECS::EntityManager& manager)
+		: scene_renderer(scene_renderer), manager(manager), bitonic_sort(bitonic_sort)
 	{
-		auto emit_shader_info = ShaderProgramInfo().AddShader(ShaderProgram::Stage::Compute, L"shaders/particles/particle_system_default.hlsl", "EmitParticles");
-		emit_shader = shader_cache.GetShaderProgram(emit_shader_info);
-
-		auto update_shader_info = ShaderProgramInfo().AddShader(ShaderProgram::Stage::Compute, L"shaders/particles/particle_system_default.hlsl", "UpdateParticles");
-		update_shader = shader_cache.GetShaderProgram(update_shader_info);
+		particle_update_system = std::make_unique<systems::GPUParticleUpdateSystem>(manager, scene_renderer, bitonic_sort);
 	}
 
-	void GPUParticles::Update(graph::RenderGraph& graph, float dt)
+	void GPUParticles::Update(graph::RenderGraph& graph, const Device::ConstantBindings& global_constants, float dt)
 	{
 		auto emitters = manager.GetChunkListsWithComponent<components::ParticleEmitter>();
-		systems::GPUParticleUpdateSystem(manager, scene_renderer, *scene_renderer.GetDrawCallManager(), graph, *emit_shader, *update_shader).ProcessChunks(emitters);
+		particle_update_system->ProcessChunks(emitters, global_constants, graph);
 	}
 
 }

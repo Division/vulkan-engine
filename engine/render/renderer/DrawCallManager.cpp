@@ -134,7 +134,6 @@ namespace render {
 		components::DrawCall* draw_call;
 		EntityID entity;
 		{
-			OPTICK_EVENT("INIT1");
 			entity = manager->CreateEntity();
 
 			if (initializer.has_skinning)
@@ -162,6 +161,7 @@ namespace render {
 
 		auto material_resource_bindings = initializer.material.GetResourceBindings();
 		material_resource_bindings.Merge(scene_renderer.GetGlobalResourceBindings());
+		material_resource_bindings.Merge(initializer.resources);
 
 		const DescriptorSetBindings depth_bindings(material_resource_bindings, *depth_descriptor_set);
 		const DescriptorSetBindings bindings(material_resource_bindings, *descriptor_set);

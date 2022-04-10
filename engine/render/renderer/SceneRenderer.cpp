@@ -42,6 +42,8 @@
 #include "render/effects/Bloom.h"
 #include "render/effects/Blur.h"
 #include "render/effects/GPUParticles.h"
+#include "render/effects/BitonicSort.h"
+
 #include "resources/TextureResource.h"
 #include "render/debug/DebugSettings.h"
 #include "RenderModeUtils.h"
@@ -150,7 +152,8 @@ namespace render {
 		skybox = std::make_unique<effects::Skybox>(*shader_cache);
 
 		post_process = std::make_unique<effects::PostProcess>(*shader_cache, *environment_settings, *renderer_resources);
-		gpu_particles = std::make_unique<effects::GPUParticles>(*this, *shader_cache, *scene.GetEntityManager());
+		bitonic_sort = std::make_unique<BitonicSort>(*shader_cache);
+		gpu_particles = std::make_unique<effects::GPUParticles>(*this, *bitonic_sort, *scene.GetEntityManager());
 		blur = std::make_unique<Blur>(*shader_cache, *renderer_resources);
 		bloom = std::make_unique<Bloom>(*shader_cache, *blur, *environment_settings, *renderer_resources);
 	}
@@ -341,7 +344,7 @@ namespace render {
 
 		render_dispatcher.Dispatch(callback_data, *render_graph);
 
-		gpu_particles->Update(*render_graph, dt);
+		gpu_particles->Update(*render_graph, *global_constant_bindings, dt);
 
 		auto depth_pre_pass_info = render_graph->AddPass<PassInfo>("depth pre pass", ProfilerName::PassDepthPrepass, [&](graph::IRenderPassBuilder& builder)
 		{

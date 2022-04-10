@@ -27,12 +27,12 @@ namespace Device {
 
 		struct TextureResourceBinding : public Base
 		{
-			Texture* texture = nullptr;
+			const Texture* texture = nullptr;
 		};
 
 		struct BufferResourceBinding : public Base
 		{
-			VulkanBuffer* buffer = nullptr;
+			const VulkanBuffer* buffer = nullptr;
 			uint32_t size = 0;
 			uint32_t dynamic_offset = 0;
 		};
@@ -42,12 +42,12 @@ namespace Device {
 			ConstantBuffer* constant_buffer = nullptr;
 		};
 		
-		void AddTextureBinding(const std::string& name, Texture* texture);
-		void AddTextureBinding(uint32_t name_hash, Texture* texture);
-		Texture* GetTextureBinding(uint32_t name_hash) const;
+		void AddTextureBinding(const std::string& name, const Texture* texture);
+		void AddTextureBinding(uint32_t name_hash, const Texture* texture);
+		const Texture* GetTextureBinding(uint32_t name_hash) const;
 
-		void AddBufferBinding(const std::string& name, VulkanBuffer* buffer, uint32_t size, uint32_t dynamic_offset = 0);
-		void AddBufferBinding(uint32_t name_hash, VulkanBuffer* buffer, uint32_t size, uint32_t dynamic_offset = 0);
+		void AddBufferBinding(const std::string& name, const VulkanBuffer* buffer, uint32_t size, uint32_t dynamic_offset = 0);
+		void AddBufferBinding(uint32_t name_hash, const VulkanBuffer* buffer, uint32_t size, uint32_t dynamic_offset = 0);
 		std::optional<BufferResourceBinding> GetBufferBinding(uint32_t name_hash) const;
 
 		void AddDynamicBufferBinding(const std::string& name, ConstantBuffer* buffer);

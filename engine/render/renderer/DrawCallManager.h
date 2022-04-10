@@ -56,9 +56,11 @@ namespace render {
 		{}
 
 		DrawCallInitializer& SetHasSkinning(bool value) { has_skinning = value; return *this; }
+		DrawCallInitializer& SetResources(const Device::ResourceBindings& value) { resources = value; return *this; }
 
 		const Mesh& const mesh;
 		const Material& const material;
+		Device::ResourceBindings resources; // Draw call may specify extra resources in addition to material and global ones
 		bool has_skinning = false;
 	};
 

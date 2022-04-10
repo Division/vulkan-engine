@@ -6,6 +6,8 @@ namespace ECS::components
 {
 	namespace
 	{
+		constexpr wchar_t* DEFAULT_SHADER_PATH = L"shaders/particles/particle_system_default.hlsl";
+
 #pragma pack(push, 1)
 		struct ParticleData
 		{
@@ -28,8 +30,9 @@ namespace ECS::components
 		}
 	}
 
-	ParticleEmitter::Initializer::Initializer(uint32_t max_particles, render::MaterialUnion material)
+	ParticleEmitter::Initializer::Initializer(uint32_t max_particles, bool sort, render::MaterialUnion material)
 		: max_particles(max_particles)
+		, sort(sort)
 		, params(params)
 	{
 		this->material = material.Get();
@@ -51,7 +54,7 @@ namespace ECS::components
 		return *this;
 	}
 
-	ParticleEmitter::GPUData::GPUData(uint32_t particle_count)
+	ParticleEmitter::GPUData::GPUData(uint32_t particle_count, bool sort)
 		: particles("particles data", particle_count * sizeof(ParticleData), Device::BufferType::Storage)
 		, dead_indices("particles dead indices", particle_count * sizeof(uint32_t), Device::BufferType::Storage, GetSequentialIndices(particle_count).data())
 		, alive_indices("particles alive indices", particle_count * sizeof(uint32_t), (Device::BufferType)((uint32_t)Device::BufferType::Storage | (uint32_t)Device::BufferType::TransferDst))
@@ -61,6 +64,8 @@ namespace ECS::components
 			false, &CounterArgumentsData(particle_count, 6)
 		)
 	{
+		if (sort)
+			sorted_indices = std::make_unique<Device::GPUBuffer>("particles sorted indices", particle_count * sizeof(uvec2), (Device::BufferType)((uint32_t)Device::BufferType::Storage));
 	}
 
 	ParticleEmitter::ParticleEmitter(const Initializer& initializer)
@@ -68,6 +73,7 @@ namespace ECS::components
 		max_particles = initializer.max_particles;
 		material = initializer.material;
 		mesh = initializer.mesh;
+		sort = initializer.sort;
 
 		emit_shader_path = initializer.emit_shader_path;
 		update_shader_path = initializer.update_shader_path;
@@ -129,7 +135,7 @@ namespace ECS::components
 	{
 		emitter->id = ++ParticleEmitter::id_counter;
 
-		emitter->gpu_data = std::make_unique<GPUData>(emitter->max_particles);
+		emitter->gpu_data = std::make_unique<GPUData>(emitter->max_particles, emitter->sort);
 
 		std::vector<Device::ShaderProgramInfo::Macro> defines;
 
@@ -138,17 +144,24 @@ namespace ECS::components
 			emitter->mesh = Engine::Get()->GetSceneRenderer()->GetRendererResources().particle_quad_mesh;
 		}
 
-		if (!emitter->emit_shader_path.empty())
+		const wchar_t* emit_shader_path = emitter->emit_shader_path.empty() ? DEFAULT_SHADER_PATH : emitter->emit_shader_path.c_str();
+		const wchar_t* update_shader_path = emitter->update_shader_path.empty() ? DEFAULT_SHADER_PATH : emitter->update_shader_path.c_str();
+
 		{
-			auto shader_info = Device::ShaderProgramInfo().AddShader(Device::ShaderProgram::Stage::Compute, emitter->emit_shader_path, "EmitParticles", emitter->GetMacros());
+			auto shader_info = Device::ShaderProgramInfo().AddShader(Device::ShaderProgram::Stage::Compute, emit_shader_path, "EmitParticles", emitter->GetMacros());
 			emitter->emit_shader = Engine::Get()->GetShaderCache()->GetShaderProgram(shader_info);
 		}
 
-		if (!emitter->update_shader_path.empty())
 		{
-			auto shader_info = Device::ShaderProgramInfo().AddShader(Device::ShaderProgram::Stage::Compute, emitter->update_shader_path, "UpdateParticles", emitter->GetMacros());
+			auto shader_info = Device::ShaderProgramInfo().AddShader(Device::ShaderProgram::Stage::Compute, update_shader_path, "UpdateParticles", emitter->GetMacros());
 			emitter->update_shader = Engine::Get()->GetShaderCache()->GetShaderProgram(shader_info);
 		}
+
+		if (!emitter->emit_shader)
+			throw std::runtime_error("Emit shader not found");
+
+		if (!emitter->update_shader)
+			throw std::runtime_error("Update shader not found");
 	}
 
 }

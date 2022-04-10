@@ -5,6 +5,7 @@
 #include "render/shader/Shader.h"
 #include "render/shader/ShaderBindings.h"
 #include "render/renderer/IRenderer.h"
+#include <gsl/span>
 
 class Mesh;
 
@@ -226,6 +227,9 @@ namespace Device {
 		void Draw(const VulkanBuffer& buffer, uint32_t vertexCount, uint32_t firstVertex, uint32_t instance_count = 1);
 		void DrawIndirect(const VulkanBuffer& buffer, VulkanBuffer& indirect_buffer, uint32_t indirect_buffer_offset);
 
+		void Barrier(gsl::span<const vk::BufferMemoryBarrier> barriers, vk::PipelineStageFlags srcStageMask = vk::PipelineStageFlagBits::eAllCommands, vk::PipelineStageFlags dstStageMask = vk::PipelineStageFlagBits::eAllCommands, vk::DependencyFlags flags = {});
+		void Barrier(gsl::span<const vk::ImageMemoryBarrier> barriers, vk::PipelineStageFlags srcStageMask = vk::PipelineStageFlagBits::eAllCommands, vk::PipelineStageFlags dstStageMask = vk::PipelineStageFlagBits::eAllCommands, vk::DependencyFlags flags = {});
+		void Barrier(gsl::span<const vk::MemoryBarrier> barriers, vk::PipelineStageFlags srcStageMask = vk::PipelineStageFlagBits::eAllCommands, vk::PipelineStageFlags dstStageMask = vk::PipelineStageFlagBits::eAllCommands, vk::DependencyFlags flags = {});
 		void Copy(const VulkanBuffer& src, const VulkanBuffer& dst, vk::BufferCopy copy_region);
 
 		VulkanCommandBuffer* GetCurrentCommandBuffer() const;
@@ -236,8 +240,8 @@ namespace Device {
 		VulkanCommandBuffer* BeginRendering(const VulkanRenderTarget& render_target, const VulkanRenderPass& render_pass);
 		void EndRendering();
 
-		void Dispatch(const ShaderProgram& program, ResourceBindings& bindings, ConstantBindings& constants, uvec3 group_size);
-		void DispatchIndirect(const ShaderProgram& program, ResourceBindings& bindings, ConstantBindings& constants, VulkanBuffer& buffer, uint32_t offset);
+		void Dispatch(const ShaderProgram& program, const ResourceBindings& bindings, const ConstantBindings& constants, uvec3 group_size);
+		void DispatchIndirect(const ShaderProgram& program, const ResourceBindings& bindings, const ConstantBindings& constants, const VulkanBuffer& buffer, uint32_t offset);
 
 		void BeginRecording(PipelineBindPoint bind_point);
 		void EndRecording();

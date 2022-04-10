@@ -1,7 +1,7 @@
 ## Demo videos:
 | Top down shooter | Compute shader | Particle system |
 | :---:  | :---:  | :---:  |
-| [VIDEO](https://www.youtube.com/watch?v=FHfV1GQ4_JA) ![Top Down Shooter](demos/top-down-shooter/top-down-shooter-preview.gif) | [VIDEO](https://www.youtube.com/watch?v=B6pjqZyI28w) ![Compute](demos/compute/compute-preview.gif) | [VIDEO](https://www.youtube.com/watch?v=7sWa6p2tLHo) ![Compute](demos/particle-system/particle-attractor-preview.gif) |
+| [YOUTUBE LINK](https://www.youtube.com/watch?v=FHfV1GQ4_JA) ![Top Down Shooter](demos/top-down-shooter/top-down-shooter-preview.gif) | [YOUTUBE LINK](https://www.youtube.com/watch?v=B6pjqZyI28w) ![Compute](demos/compute/compute-preview.gif) | [YOUTUBE LINK](https://www.youtube.com/watch?v=7sWa6p2tLHo) ![Particle system](demos/particle-system/particle-attractor-preview.gif) |
 
 ## How to build
 This repository contains submodules. Make sure to download them after cloning:  
@@ -50,6 +50,7 @@ Now demo projects should run without errors
 - [ ] Finalize top down shooter demo
 
 #### Completed
+- [x] Bitonic sort for particles
 - [x] Attractors for GPU Particle demo
 - [x] Basic Top Down Shooter demo
 - [x] bloom

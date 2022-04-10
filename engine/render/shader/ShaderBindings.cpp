@@ -9,12 +9,12 @@
 
 namespace Device {
 
-	void ResourceBindings::AddTextureBinding(const std::string& name, Texture* texture)
+	void ResourceBindings::AddTextureBinding(const std::string& name, const Texture* texture)
 	{
 		AddTextureBinding(ShaderProgram::GetParameterNameHash(name), texture);
 	}
 
-	void ResourceBindings::AddTextureBinding(uint32_t name_hash, Texture* texture)
+	void ResourceBindings::AddTextureBinding(uint32_t name_hash, const Texture* texture)
 	{
 		auto index = GetTextureBindingIndex(name_hash);
 		if (index == (uint32_t)-1)
@@ -27,7 +27,7 @@ namespace Device {
 		texture_bindings[index].texture = texture;
 	}
 
-	Texture* ResourceBindings::GetTextureBinding(uint32_t name_hash) const
+	const Texture* ResourceBindings::GetTextureBinding(uint32_t name_hash) const
 	{
 		auto index = GetTextureBindingIndex(name_hash);
 		return index < texture_bindings.size() ? texture_bindings[index].texture : nullptr;
@@ -39,12 +39,12 @@ namespace Device {
 		return it == texture_bindings.end() ? -1 : std::distance(texture_bindings.begin(), it);
 	}
 
-	void ResourceBindings::AddBufferBinding(const std::string& name, VulkanBuffer* buffer, uint32_t size, uint32_t dynamic_offset)
+	void ResourceBindings::AddBufferBinding(const std::string& name, const VulkanBuffer* buffer, uint32_t size, uint32_t dynamic_offset)
 	{
 		AddBufferBinding(ShaderProgram::GetParameterNameHash(name), buffer, size, dynamic_offset);
 	}
 
-	void ResourceBindings::AddBufferBinding(uint32_t name_hash, VulkanBuffer* buffer, uint32_t size, uint32_t dynamic_offset)
+	void ResourceBindings::AddBufferBinding(uint32_t name_hash, const VulkanBuffer* buffer, uint32_t size, uint32_t dynamic_offset)
 	{
 		auto index = GetBufferBindingIndex(name_hash);
 		if (index == (uint32_t)-1)

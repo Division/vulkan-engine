@@ -8,13 +8,6 @@ RWStructuredBuffer<uint> dead_indices : register(u5, space0);
 RWStructuredBuffer<uint> alive_indices : register(u6, space0);
 RWStructuredBuffer<uint> draw_indices : register(u7, space0);
 RWStructuredBuffer<int> counters : register(u8, space0);
-Texture2D noise : register(t9, space0);
-
-#define COUNTER_INDEX_ALIVE 8
-#define COUNTER_INDEX_DEAD 9
-#define COUNTER_INDEX_ALIVE_AFTER_SIMULATION 10
-#define COUNTER_INDEX_UPDATE_DISPATCH_GROUPS 0
-#define COUNTER_INDEX_INSTANCE_COUNT 4
 
 cbuffer GlobalConstants : register(b10, space0)
 {

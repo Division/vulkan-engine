@@ -93,7 +93,7 @@ namespace ECS::components
 
 		struct Initializer
 		{
-			Initializer(uint32_t max_particles = 10000, render::MaterialUnion material = render::MaterialUnion());
+			Initializer(uint32_t max_particles = 10000, bool sort = false, render::MaterialUnion material = render::MaterialUnion());
 			Initializer& SetShaderPath(std::wstring update_shader, std::wstring emit_shader = L"");
 			Initializer& SetMaxParticles(uint32_t value) { max_particles = value; return *this; };
 			Initializer& SetEmissionParams(EmissionParams value) { params = value; return *this; };
@@ -101,6 +101,7 @@ namespace ECS::components
 			Initializer& SetMesh(Common::Handle<Mesh> value) { mesh = value; return *this; };
 			Initializer& SetExtraBindings(ExtraBindings value) { extra_bindings = std::move(value); return *this; };
 
+			bool sort;
 			ExtraBindings extra_bindings;
 			std::wstring emit_shader_path;
 			std::wstring update_shader_path;
@@ -142,19 +143,25 @@ namespace ECS::components
 #pragma pack(push, 1)
 		struct CounterArgumentsData
 		{
-			/// DispatchIndirect args for Update()
+			/// DispatchIndirect args for Update
 			int32_t groupsX = 0;
 			int32_t groupsY = 1;
 			int32_t groupsZ = 1;
 			//////////////////////////////////////
 
-			/// DrawIndexedIndirect args for Render()
+			/// DrawIndexedIndirect args for Render
 			int32_t indexCount = 6;
 			int32_t instanceCount = 0;
 			int32_t firstIndex = 0;
 			int32_t vertexOffset = 0;
 			int32_t firstInstance = 0;
 			/////////////////////////////////////////
+
+			/// DispatchIndirect args for PreSort
+			int32_t preSortGroupsX = 0;
+			int32_t preSortGroupsY = 1;
+			int32_t preSortGroupsZ = 1;
+			//////////////////////////////////////
 
 			// Persistent counters
 			int32_t alive_count = 0; 
@@ -176,12 +183,13 @@ namespace ECS::components
 			Device::GPUBuffer dead_indices;
 			Device::GPUBuffer alive_indices;
 			Device::GPUBuffer draw_indices;
+			std::unique_ptr<Device::GPUBuffer> sorted_indices;
 			Device::DynamicBuffer<uint8_t> counters;
 
 			Device::GPUBuffer& GetAliveIndices() { return alive_indices; }
 			Device::GPUBuffer& GetDrawIndices() { return draw_indices; }
 
-			GPUData(uint32_t particle_count);
+			GPUData(uint32_t particle_count, bool sort);
 		};
 
 		uint32_t id = 0;
@@ -197,6 +205,7 @@ namespace ECS::components
 
 		std::unique_ptr<GPUData> gpu_data;
 		uint32_t max_particles = 10000;
+		bool sort = false;
 
 		EmitterGeometryUnion emitter_geometry;
 		EmissionParams emission_params;

@@ -112,12 +112,13 @@ void Game::init()
 
 	auto material = Material::Create();
 	material->LightingEnabled(false);
-	material->SetColor(vec4(0.6, 0.4, 2.6, 0.8));
+	material->SetColor(vec4(0.6, 0.4, 2.6, 0.6));
 	material->SetShaderPath(L"shaders/particles/particle_material_default.hlsl");
 	material->SetRenderQueue(RenderQueue::Additive);
+	//material->SetRenderQueue(RenderQueue::Translucent);
 	material->SetTexture0Resource(Resources::TextureResource::SRGB(L"assets/Textures/effects/light.dds"));
 
-	auto emitter_initializer = components::ParticleEmitter::Initializer(1000000, material)
+	auto emitter_initializer = components::ParticleEmitter::Initializer(1000000, false, material)
 		.SetExtraBindings({ particle_resources, particle_constants })
 		.SetEmitterGeometry(components::ParticleEmitter::EmitterGeometrySphere())
 		.SetShaderPath(L"shaders/particles/attractors_particle_system.hlsl")
@@ -129,6 +130,18 @@ void Game::init()
 			.SetSpeed({ 4, 20 })
 		);
 		
+	/*auto emitter_initializer = components::ParticleEmitter::Initializer(10000, true, material)
+		.SetExtraBindings({ particle_resources, particle_constants })
+		.SetEmitterGeometry(components::ParticleEmitter::EmitterGeometrySphere())
+		//.SetShaderPath(L"shaders/particles/default_particle_system.hlsl")
+		.SetEmissionParams(components::ParticleEmitter::EmissionParams()
+			.SetSize({ 2.0f, 2.0f })
+			.SetEmissionRate(1500)
+			.SetLife({ 8, 8 })
+			.SetConeAngle(M_PI)
+			.SetSpeed({ 4, 20 })
+		);*/
+
 	manager->AddComponent<components::ParticleEmitter>(particle_system_id, emitter_initializer);
 }
 

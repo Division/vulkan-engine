@@ -58,6 +58,7 @@ namespace render {
 	class DrawCallManager;
 	struct DebugSettings;
 	struct EnvironmentSettings;
+	class BitonicSort;
 	class Bloom;
 	class Blur;
 	class ConstantBindingStorage;
@@ -189,6 +190,7 @@ namespace render {
 		DebugSettings* debug_settings;
 		std::unique_ptr<effects::Skybox> skybox;
 		std::unique_ptr<effects::PostProcess> post_process;
+		std::unique_ptr<BitonicSort> bitonic_sort;
 		std::unique_ptr<effects::GPUParticles> gpu_particles;
 		std::unique_ptr<Bloom> bloom;
 		std::unique_ptr<Blur> blur;

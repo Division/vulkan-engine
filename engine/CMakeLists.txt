@@ -192,6 +192,8 @@ set(ENGINE_SOURCES
 	render/effects/Bloom.cpp
 	render/effects/Blur.h
 	render/effects/Blur.cpp
+	render/effects/BitonicSort.h
+	render/effects/BitonicSort.cpp
 	render/effects/GPUParticles.h
 	render/effects/GPUParticles.cpp
 	render/mesh/Mesh.h
