@@ -22,6 +22,7 @@
 #include "render/renderer/RenderGraph.h"
 #include "render/buffer/GPUBuffer.h"
 #include "render/device/VulkanRenderState.h"
+#include "render/effects/GPUParticles.h"
 #include "imgui/imgui.h"
 
 using namespace System;
@@ -44,6 +45,7 @@ namespace
 struct Game::GPUResources
 {
 	Device::DynamicBuffer<ParticleAttractor> attractors_buffer;
+	const render::GPUParticles::EmitterGPUData* gpu_data = nullptr;
 
 	std::vector<ParticleAttractor> attractors = {
 		{ { 1, 0, 0 }, 150 * 2 },
@@ -54,6 +56,24 @@ struct Game::GPUResources
 	GPUResources()
 		: attractors_buffer("attractors buffer", 20 * sizeof(ParticleAttractor), Device::BufferType::Storage, false)
 	{
+		auto material = Material::Create();
+		material->LightingEnabled(false);
+		material->SetColor(vec4(0.6, 0.4, 2.6, 0.6));
+		material->SetShaderPath(L"shaders/particles/particle_material_default.hlsl");
+		material->SetRenderQueue(RenderQueue::Additive);
+		//material->SetRenderQueue(RenderQueue::Translucent);
+		material->SetTexture0Resource(Resources::TextureResource::SRGB(L"assets/Textures/effects/light.dds"));
+
+		render::ConstantBindingStorage particle_constants;
+		render::ResourceBindingStorage particle_resources;
+		particle_constants.AddUIntConstant("attractor_count", attractors.size());
+		particle_resources.AddBuffer("attractors", attractors_buffer.GetBuffer());
+
+		auto initializer = render::GPUParticles::EmitterGPUData::Initializer("default", 1000000, false, material)
+			.SetExtraBindings({ particle_resources, particle_constants })
+			.SetShaderPath(L"shaders/particles/attractors_particle_system.hlsl");
+
+		gpu_data = Engine::Get()->GetSceneRenderer()->GetGPUParticles().CreateGPUData(initializer);
 	}
 };
 
@@ -96,8 +116,6 @@ void Game::init()
 		spheres.push_back(CreateSphere(gpu_resources->attractors[i].power > 0 ? vec4(0.3, 4, 0.3, 1) : vec4(4, 0.3, 0.3, 1)));
 	}
 
-	//attractors_buffer = std::make_unique<Device::DynamicBuffer>("attractors buffer", attractors.size() * sizeof(ParticleAttractor), Device::BufferType::Storage, attractors.data());
-
 	render::ConstantBindingStorage particle_constants;
 	render::ResourceBindingStorage particle_resources;
 	particle_constants.AddUIntConstant("attractor_count", gpu_resources->attractors.size());
@@ -110,18 +128,8 @@ void Game::init()
 		transform->position = vec3(0, 0, 0);
 	}
 
-	auto material = Material::Create();
-	material->LightingEnabled(false);
-	material->SetColor(vec4(0.6, 0.4, 2.6, 0.6));
-	material->SetShaderPath(L"shaders/particles/particle_material_default.hlsl");
-	material->SetRenderQueue(RenderQueue::Additive);
-	//material->SetRenderQueue(RenderQueue::Translucent);
-	material->SetTexture0Resource(Resources::TextureResource::SRGB(L"assets/Textures/effects/light.dds"));
-
-	auto emitter_initializer = components::ParticleEmitter::Initializer(1000000, false, material)
-		.SetExtraBindings({ particle_resources, particle_constants })
+	auto emitter_initializer = components::ParticleEmitter::Initializer(*gpu_resources->gpu_data)
 		.SetEmitterGeometry(components::ParticleEmitter::EmitterGeometrySphere())
-		.SetShaderPath(L"shaders/particles/attractors_particle_system.hlsl")
 		.SetEmissionParams(components::ParticleEmitter::EmissionParams()
 			.SetSize({ 0.02f, 0.04f })
 			.SetEmissionRate(150000)
@@ -130,8 +138,7 @@ void Game::init()
 			.SetSpeed({ 4, 20 })
 		);
 		
-	/*auto emitter_initializer = components::ParticleEmitter::Initializer(10000, true, material)
-		.SetExtraBindings({ particle_resources, particle_constants })
+	/*auto emitter_initializer = components::ParticleEmitter::Initializer(*gpu_resources->gpu_data)
 		.SetEmitterGeometry(components::ParticleEmitter::EmitterGeometrySphere())
 		//.SetShaderPath(L"shaders/particles/default_particle_system.hlsl")
 		.SetEmissionParams(components::ParticleEmitter::EmissionParams()

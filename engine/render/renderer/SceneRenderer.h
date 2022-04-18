@@ -74,6 +74,9 @@ namespace render {
 	{
 		class Skybox;
 		class PostProcess;
+	}
+	namespace GPUParticles
+	{
 		class GPUParticles;
 	}
 
@@ -139,6 +142,7 @@ namespace render {
 		void AddUserRenderDependency(RenderDependencyType type, graph::DependencyNode& node) { user_dependencies[(uint32_t)type].push_back({ &node }); }
 
 		const RendererResources& GetRendererResources() const { return *renderer_resources; }
+		const GPUParticles::GPUParticles& GetGPUParticles() const { return *gpu_particles; }
 
 	private:
 		void CreateDrawCalls();
@@ -191,7 +195,7 @@ namespace render {
 		std::unique_ptr<effects::Skybox> skybox;
 		std::unique_ptr<effects::PostProcess> post_process;
 		std::unique_ptr<BitonicSort> bitonic_sort;
-		std::unique_ptr<effects::GPUParticles> gpu_particles;
+		std::unique_ptr<GPUParticles::GPUParticles> gpu_particles;
 		std::unique_ptr<Bloom> bloom;
 		std::unique_ptr<Blur> blur;
 		float time;

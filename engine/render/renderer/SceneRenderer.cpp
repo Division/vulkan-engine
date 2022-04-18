@@ -153,7 +153,7 @@ namespace render {
 
 		post_process = std::make_unique<effects::PostProcess>(*shader_cache, *environment_settings, *renderer_resources);
 		bitonic_sort = std::make_unique<BitonicSort>(*shader_cache);
-		gpu_particles = std::make_unique<effects::GPUParticles>(*this, *bitonic_sort, *scene.GetEntityManager());
+		gpu_particles = std::make_unique<GPUParticles::GPUParticles>(*this, *bitonic_sort, *scene.GetEntityManager());
 		blur = std::make_unique<Blur>(*shader_cache, *renderer_resources);
 		bloom = std::make_unique<Bloom>(*shader_cache, *blur, *environment_settings, *renderer_resources);
 	}

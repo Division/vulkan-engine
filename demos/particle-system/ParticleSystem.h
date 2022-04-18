@@ -18,8 +18,7 @@ class ViewerCamera;
 namespace render
 {
 	class MaterialList;
-	struct RenderCallbackData;
-	
+
 	namespace graph
 	{
 		class RenderGraph;
@@ -44,7 +43,6 @@ public:
 	void update(float dt) override;
 
 private:
-	void OnRender(const render::RenderCallbackData&, render::graph::RenderGraph& graph);
 	ECS::EntityID CreateSphere(vec4 color);
 private:
 	struct GPUResources;
