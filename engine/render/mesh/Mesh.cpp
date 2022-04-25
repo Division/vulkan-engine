@@ -37,6 +37,18 @@ namespace
 
     const int ORIGIN_SIZE = 3 * 4;
     const Device::Format ORIGIN_FORMAT = Device::Format::R32G32B32_float;
+
+    uint32_t GetIndexSize(bool is_short_index)
+    {
+        return is_short_index ? sizeof(uint16_t) : sizeof(uint32_t);
+    }
+
+    uint32_t GetIndex(uint32_t index, gsl::span<const uint8_t> indices, bool is_short_index)
+    {
+        const uint8_t* ptr = &indices[(size_t)index * GetIndexSize(is_short_index)];
+        return is_short_index ? reinterpret_cast<const uint16_t&>(*ptr) : reinterpret_cast<const uint32_t&>(*ptr);
+    }
+
 }
 
 Mesh::Layout::Layout(uint32_t flags)
@@ -104,7 +116,7 @@ Mesh::Mesh(uint32_t flags, uint8_t* vertices, uint32_t vertex_count, uint8_t* in
     layout = Layout(flags).GetVertexLayout();
 
     uint32_t index_count = triangle_count * 3;
-    uses_short_indices = IsShortIndexCount(index_count);
+    uses_short_indices = IsShortIndexCount(vertex_count);
 
     const size_t vertex_data_size = vertex_count * _strideBytes;
 
@@ -253,21 +265,29 @@ void Mesh::_updateFaceCount() {
   if (!_hasIndices) {
     _faceCount = (int)floor((float)_vertexCount/ (float)_componentCount);
   } else {
-    _faceCount = (int)floor((float)_indices.size() / (float)_componentCount);
+    _faceCount = (int)floor((float)_indices.size() / GetIndexSize(UsesShortIndexes()) / (float)_componentCount);
   }
 }
 
-void Mesh::setIndices(const uint16_t *indices, int indexCount) {
-  _indices.resize(indexCount);
-  memcpy(&_indices[0], indices, sizeof(uint16_t) * indexCount);
+void Mesh::setIndices(gsl::span<const uint16_t> indices) {
   _hasIndices = true;
+  uses_short_indices = true;
+
+  const uint32_t index_size = GetIndexSize(uses_short_indices);
+  _indices.resize(indices.size() * index_size);
+  memcpy_s(_indices.data(), _indices.size(), indices.data(), indices.size() * index_size);
   _updateFaceCount();
 }
 
-void Mesh::setIndices(const std::vector<uint16_t> &indices) {
-  _indices.assign(indices.begin(), indices.end()); // will be copied
-  _hasIndices = true;
-  _updateFaceCount();
+void Mesh::setIndices(gsl::span<const uint32_t> indices)
+{
+    _hasIndices = true;
+    uses_short_indices = false;
+
+    const uint32_t index_size = GetIndexSize(uses_short_indices);
+    _indices.resize(indices.size() * index_size);
+    memcpy_s(_indices.data(), _indices.size(), indices.data(), indices.size() * index_size);
+    _updateFaceCount();
 }
 
 void Mesh::createBuffer() {
@@ -341,12 +361,12 @@ void Mesh::createBuffer() {
 
     if (_hasNormals) {
         auto& normal = mesh_layout.GetNormal(bufferData, i);
-        normal = Vector4_A2R10G10B10(_normals[i * 3], _normals[i * 3 + 1], _normals[i * 3 + 2], 0);
+        normal = Vector4_A2R10G10B10::FromSignedNormalizedFloat(vec4(_normals[i * 3], _normals[i * 3 + 1], _normals[i * 3 + 2], 0));
     }
 
     if (_hasTBN) {
         auto& tangent = mesh_layout.GetTangent(bufferData, i);
-        tangent = Vector4_A2R10G10B10(_tangents[i * 3], _tangents[i * 3 + 1], _tangents[i * 3 + 2], 0);
+        tangent = Vector4_A2R10G10B10::FromSignedNormalizedFloat(vec4(_tangents[i * 3], _tangents[i * 3 + 1], _tangents[i * 3 + 2], 0));
     }
 
     if (_hasTexCoord0) {
@@ -373,8 +393,7 @@ void Mesh::createBuffer() {
   _vertexBuffer = Device::VulkanBuffer::Create(vertex_initializer);
 
   if (_hasIndices) {
-    unsigned int indexSize = (unsigned int)_indices.size() * (unsigned int)sizeof(uint16_t);
-	auto index_initializer = Device::VulkanBufferInitializer(indexSize)
+	auto index_initializer = Device::VulkanBufferInitializer((unsigned int)_indices.size())
 		.SetIndex()
 		.MemoryUsage(VMA_MEMORY_USAGE_GPU_ONLY)
 		.Data(_indices.data())
@@ -384,8 +403,6 @@ void Mesh::createBuffer() {
 
   _calculateAABB();
 
-  
-
   // Free data arrays
     std::vector<float>().swap(_vertices);
     std::vector<float>().swap(_normals);
@@ -394,7 +411,7 @@ void Mesh::createBuffer() {
     std::vector<Vector4b>().swap(_weights);
     std::vector<Vector4b>().swap(_jointIndices);
     std::vector<float>().swap(_colors);
-    std::vector<uint16_t>().swap(_indices);
+    std::vector<uint8_t>().swap(_indices);
 }
 
 void Mesh::_prepareVAO() {
@@ -419,9 +436,9 @@ void Mesh::calculateNormals() {
 
   for (int i = 0; i < _faceCount; i++) {
     int faceOffset = i * 3;
-    int indexA = _hasIndices ? _indices[faceOffset] * 3 : faceOffset * 3;
-    int indexB = _hasIndices ? _indices[faceOffset + 1] * 3 : faceOffset * 3 + 3;
-    int indexC = _hasIndices ? _indices[faceOffset + 2] * 3 : faceOffset * 3 + 6;
+    int indexA = _hasIndices ? GetIndex(faceOffset + 0, _indices, uses_short_indices) * 3 : faceOffset * 3;
+    int indexB = _hasIndices ? GetIndex(faceOffset + 1, _indices, uses_short_indices) * 3: faceOffset * 3 + 3;
+    int indexC = _hasIndices ? GetIndex(faceOffset + 2, _indices, uses_short_indices) * 3: faceOffset * 3 + 6;
 
     vec3 a(_vertices[indexA], _vertices[indexA + 1], _vertices[indexA + 2]);
     vec3 b(_vertices[indexB], _vertices[indexB + 1], _vertices[indexB + 2]);
@@ -456,13 +473,13 @@ void Mesh::calculateTBN() {
 
   for (int i = 0; i < _faceCount; i++) {
     int faceOffset = i * 3;
-    int indexA = _hasIndices ? _indices[faceOffset] * 3 : faceOffset * 3;
-    int indexB = _hasIndices ? _indices[faceOffset + 1] * 3 : faceOffset * 3 + 3;
-    int indexC = _hasIndices ? _indices[faceOffset + 2] * 3 : faceOffset * 3 + 6;
+    int indexA = _hasIndices ? GetIndex(faceOffset + 0, _indices, uses_short_indices) * 3 : faceOffset * 3;
+    int indexB = _hasIndices ? GetIndex(faceOffset + 1, _indices, uses_short_indices) * 3 : faceOffset * 3 + 3;
+    int indexC = _hasIndices ? GetIndex(faceOffset + 2, _indices, uses_short_indices) * 3 : faceOffset * 3 + 6;
 
-    int indexUVA = _hasIndices ? _indices[faceOffset] * 2 : faceOffset * 2;
-    int indexUVB = _hasIndices ? _indices[faceOffset + 1] * 2 : faceOffset * 2 + 2;
-    int indexUVC = _hasIndices ? _indices[faceOffset + 2] * 2 : faceOffset * 2 + 4;
+    int indexUVA = _hasIndices ? GetIndex(faceOffset + 0, _indices, uses_short_indices) * 2 : faceOffset * 2;
+    int indexUVB = _hasIndices ? GetIndex(faceOffset + 1, _indices, uses_short_indices) * 2 : faceOffset * 2 + 2;
+    int indexUVC = _hasIndices ? GetIndex(faceOffset + 2, _indices, uses_short_indices) * 2 : faceOffset * 2 + 4;
 
     vec3 a(_vertices[indexA], _vertices[indexA + 1], _vertices[indexA + 2]);
     vec3 b(_vertices[indexB], _vertices[indexB + 1], _vertices[indexB + 2]);

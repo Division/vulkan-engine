@@ -38,6 +38,7 @@ const std::map<std::string, ShaderBufferName> SHADER_BUFFER_NAMES =
 	{ "Projectors", ShaderBufferName::Projector },
 	{ "LightGrid", ShaderBufferName::LightGrid },
 	{ "LightIndices", ShaderBufferName::LightIndices },
+	{ "DrawCallInstances", ShaderBufferName::PerInstanceConstants },
 	{ "Default", ShaderBufferName::Default },
 	{ "DefaultStorage", ShaderBufferName::DefaultStorage }
 };

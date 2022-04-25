@@ -39,6 +39,10 @@ namespace Device {
 		data.size = (uint32_t)compiler.get_declared_struct_size(type);
 
 		unsigned member_count = type.member_types.size();
+#if defined(DEBUG_OUTPUT)
+		std::cout << "Uniform buffer " << data.name << ", (" << data.binding << ", " << data.set << ")\n";
+#endif
+
 		for (unsigned i = 0; i < member_count; i++)
 		{
 			BufferMember member;
@@ -48,12 +52,12 @@ namespace Device {
 			member.offset = compiler.type_struct_member_offset(type, i);
 			member.name_hash = ShaderProgram::GetParameterNameHash(member.name);
 
+#if defined(DEBUG_OUTPUT)
+			std::cout << "    name = " << member.name << ", name hash = " << member.name_hash << ", offset = " << member.offset << ", size = " << member.size << "\n";
+#endif
+
 			data.members.emplace_back(std::move(member));
 		}
-
-		#if defined(DEBUG_OUTPUT)
-		std::cout << "Uniform buffer " << data.name << ", (" << data.binding << ", " << data.set << ")\n";
-		#endif
 
 		return data;
 	}
@@ -69,38 +73,46 @@ namespace Device {
 		auto it = SHADER_BUFFER_NAMES.find(ConvertHLSLName(ssbo.name));
 		data.storage_buffer_name = it == SHADER_BUFFER_NAMES.end() ? ShaderBufferName::DefaultStorage : it->second;
 
-		const auto& type = compiler.get_type(ssbo.base_type_id);
-		data.size = (uint32_t)compiler.get_declared_struct_size(type);
-		
-		// Can't know size for sure, go with maximum
-		if (data.size == 0)
-			data.size = 65535;
+		auto type = compiler.get_type(ssbo.base_type_id);
 
-		unsigned member_count = type.member_types.size();
+		if (type.member_types.size() != 1)
+			throw std::runtime_error("StructuredBuffer must be a struct of 1 element");
+		
+		data.size = (uint32_t)compiler.get_declared_struct_size_runtime_array(type, 1);
+		type = compiler.get_type(type.member_types[0]);
+
+		const unsigned member_count = type.member_types.size();
+#if defined(DEBUG_OUTPUT)
+		std::cout << "Storage buffer " << data.name << ", (" << data.binding << ", " << data.set << "), members = " << member_count << ", size = " << data.size << ":\n" << std::flush;
+#endif
+
 		for (unsigned i = 0; i < member_count; i++)
 		{
 			BufferMember member;
 
 			member.name = compiler.get_member_name(type.self, i);
-			if (member.name == "")
+			if (member.name == "") // TODO: remove
 			{
 				assert(member_count == 1); // Unnamed member, assuming default member name to be the buffer name
 				member.name = data.name;
 			}
 
 			member.size = compiler.get_declared_struct_member_size(type, i);
-			if (member.size == 0)
-				member.size = 65535;
 
 			member.offset = compiler.type_struct_member_offset(type, i);
 			member.name_hash = ShaderProgram::GetParameterNameHash(member.name);
 
+			const auto struct_size = compiler.get_declared_struct_size(type);
+
+#if defined(DEBUG_OUTPUT)
+			std::cout << "    name = " << member.name << ", struct size = " << struct_size << ", offset = " << member.offset << ", size = " << member.size << "\n";
+#endif
+
 			data.members.emplace_back(std::move(member));
 		}
 
-		#if defined(DEBUG_OUTPUT)
-		std::cout << "Storage buffer " << data.name << ", (" << data.binding << ", " << data.set << ")\n";
-		#endif
+		if (data.size == 0)
+			throw std::runtime_error("structured buffer size not found");
 
 		return data;
 	}
@@ -109,6 +121,8 @@ namespace Device {
 		: compiler(spirv_data, count)
 	{
 		#if defined(DEBUG_OUTPUT)
+		static std::mutex mutex;
+		std::scoped_lock lock(mutex);
 		std::cout << "Reflection start\n";
 		#endif
 

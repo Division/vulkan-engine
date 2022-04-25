@@ -16,6 +16,7 @@ add_subdirectory(engine)
 
 if (VK_ENGINE_BUILD_DEMOS)
 	add_subdirectory(demos/action-puzzle)
+	add_subdirectory(demos/islands)
 	add_subdirectory(demos/skinning)
 	add_subdirectory(demos/compute)
 	add_subdirectory(demos/particle-system)

@@ -40,6 +40,7 @@ enum class ShaderBufferName : uint32_t
 	Projector,
 	LightIndices, // SSBO
 	LightGrid, // SSBO
+	PerInstanceConstants, // SSBO
 	Default,
 	DefaultStorage,
 	Unknown,

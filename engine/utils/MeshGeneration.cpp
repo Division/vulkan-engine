@@ -6,15 +6,19 @@
 #include <vector>
 #include <algorithm>
 
-uint32_t sign(float v)
+namespace
 {
-    return v > 0 ? 1 : -1;
+    uint32_t sign(float v)
+    {
+        return v > 0 ? 1 : -1;
+    }
+
+    uint32_t sign01(float v)
+    {
+        return (sign(v) + 1) / 2;
+    }
 }
 
-uint32_t sign01(float v)
-{
-    return (sign(v) + 1) / 2;
-}
 
 void MeshGeneration::generateSphere(Mesh* mesh, int parallelCount, int meridianCount, float radius) {
   std::vector<vec3> vertices;

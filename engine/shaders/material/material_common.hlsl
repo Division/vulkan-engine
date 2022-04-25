@@ -11,6 +11,13 @@ float LogBase(float x, float base)
 SamplerState SamplerLinearWrap;
 SamplerState SamplerLinearClamp;
 
+struct PushConstants
+{
+    uint instance_offset;
+};
+
+[[vk::push_constant]] PushConstants push_constants;
+
 #if defined(SKINNING)
 StructuredBuffer<float4x4> SkinningMatrices : register(t9, space0);
 
@@ -21,6 +28,17 @@ cbuffer SkinningOffset : register(b4, space1)
 
 #endif
 
+struct DrawCallInstance
+{
+    float4x4 model_matrix;
+    float4x4 normal_matrix;
+    float4 aabb;
+    uint material_index;
+    uint skinning_offset;
+    uint2 filler;
+};
+
+StructuredBuffer<DrawCallInstance> DrawCallInstances : register(space0);
 
 struct VS_in
 {

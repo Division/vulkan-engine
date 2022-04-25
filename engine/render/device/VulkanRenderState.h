@@ -19,6 +19,10 @@ namespace ECS
 
 class VertexLayout;
 
+namespace render::BatchRenderer
+{
+	class Batch;
+}
 
 namespace Device {
 
@@ -217,11 +221,13 @@ namespace Device {
 		void SetDescriptorSet(const DescriptorSet& descriptor_set, uint32_t index, uint32_t dynamic_offset_count, const uint32_t* dynamic_offsets);
 		void RemoveGlobalBindings();
 		void SetClearValue(uint32_t index, vk::ClearValue value);
-		void PushConstants(ShaderProgram::Stage stage, uint32_t offset, uint32_t size, void* data);
+		void PushConstants(ShaderProgram::Stage stage, uint32_t offset, uint32_t size, const void* data);
 		const VulkanPipeline* GetCurrentPipeline() const { return current_pipeline; }
 
 		void UpdateState();
 		void RenderDrawCall(const ECS::components::DrawCall* draw_call, bool is_depth);
+		void RenderBatch(const render::BatchRenderer::Batch* batch, bool is_depth);
+
 		void DrawIndexed(const VulkanBuffer& vertex_buffer, const VulkanBuffer& index_buffer, uint32_t vertex_offset, uint32_t index_count, uint32_t first_index, IndexType index_type, uint32_t instance_count = 1);
 		void DrawIndexedIndirect(const VulkanBuffer& vertex_buffer, const VulkanBuffer& index_buffer, IndexType index_type, VulkanBuffer& indirect_buffer, uint32_t indirect_buffer_offset);
 		void Draw(const VulkanBuffer& buffer, uint32_t vertexCount, uint32_t firstVertex, uint32_t instance_count = 1);

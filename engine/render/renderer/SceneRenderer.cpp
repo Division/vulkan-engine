@@ -549,6 +549,7 @@ namespace render {
 			global_resource_bindings->AddBufferBinding(Device::GetShaderBufferNameHash(ShaderBufferName::LightGrid), light_grid->GetLightGridBuffer()->GetBuffer().get(), light_grid->GetLightGridBuffer()->GetSize());
 
 			global_resource_bindings->AddBufferBinding(Device::GetShaderBufferNameHash(ShaderBufferName::SkinningMatrices), scene_buffers->GetSkinningMatricesBuffer()->GetBuffer(), scene_buffers->GetSkinningMatricesBuffer()->GetSize());
+			global_resource_bindings->AddBufferBinding(Device::GetShaderBufferNameHash(ShaderBufferName::PerInstanceConstants), scene_buffers->GetDrawCallInstancesBuffer()->GetBuffer(), scene_buffers->GetDrawCallInstancesBuffer()->GetSize());
 
 			global_bindings_dirty = false;
 		}

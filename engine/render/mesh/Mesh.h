@@ -119,8 +119,8 @@ public:
   void setCorners(const std::vector<vec2> &corners);
   void setCorners(const float *components, int count);
 
-  void setIndices(const uint16_t *indices, int indexCount);
-  void setIndices(const std::vector<uint16_t> &indices);
+  void setIndices(gsl::span<const uint16_t> indices);
+  void setIndices(gsl::span<const uint32_t> indices);
 
   void calculateNormals();
   void calculateTBN();
@@ -246,7 +246,7 @@ private:
   std::vector<uint8_t> index_data;
 
   // Attrib data
-  std::vector<uint16_t> _indices;
+  std::vector<uint8_t> _indices;
   std::vector<float> _vertices;
   std::vector<float> _normals;
   std::vector<float> _tangents;

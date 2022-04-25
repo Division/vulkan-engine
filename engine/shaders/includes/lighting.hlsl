@@ -51,7 +51,7 @@ cbuffer Projectors : register(b6, space0)
 
 StructuredBuffer<LightGridItem> LightGrid : register(t7, space0);
 
-StructuredBuffer<uint> LightIndices : register(t8, space0);;
+StructuredBuffer<uint> LightIndices : register(t8, space0);
 
 #define CLUSTER_COUNT_X 4.0f
 #define CLUSTER_COUNT_Y 4.0f

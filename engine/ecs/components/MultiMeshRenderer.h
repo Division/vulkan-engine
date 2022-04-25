@@ -8,6 +8,7 @@
 #include "utils/DataStructures.h"
 #include "render/renderer/DrawCallManager.h"
 #include "utils/Math.h"
+#include "Transform.h"
 
 class Mesh;
 class Material;
@@ -66,7 +67,17 @@ namespace ECS::components
 				auto used_index = std::min(index, material_resources->size() - 1);
 				return (*material_resources)[used_index]->Get();
 			}
-		};
+		}
+
+		static void Initialize(EntityManager& manager, EntityID id, MultiMeshRenderer* multi_mesh)
+		{
+			auto transform = manager.GetComponent<Transform>(id);
+			if (transform)
+			{
+				transform->bounds = multi_mesh->GetMultiMesh()->GetBounds();
+			}
+		}
+
 	};
 
 }

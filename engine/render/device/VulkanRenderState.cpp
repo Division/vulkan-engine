@@ -14,6 +14,7 @@
 #include "render/shader/ShaderResource.h"
 #include "render/shader/ShaderDefines.h"
 #include "render/mesh/Mesh.h"
+#include "render/renderer/BatchRenderer.h"
 #include "render/texture/Texture.h"
 #include "ecs/components/DrawCall.h"
 
@@ -367,27 +368,21 @@ namespace Device {
 		command_buffer.bindDescriptorSets((vk::PipelineBindPoint)pipeline_bind_point, current_pipeline->GetPipelineLayout(), index, 1u, &descriptor_set.GetVKDescriptorSet(), dynamic_offset_count, dynamic_offsets);
 	}
 
-	void VulkanRenderState::PushConstants(ShaderProgram::Stage stage, uint32_t offset, uint32_t size, void* data)
+	void VulkanRenderState::PushConstants(ShaderProgram::Stage stage, uint32_t offset, uint32_t size, const void* data)
 	{
 		UpdateState();
 		
 		auto command_buffer = GetCurrentCommandBuffer()->GetCommandBuffer();
-		vk::ShaderStageFlags vk_stage;
+		vk::ShaderStageFlags vk_stage = {};
 
-		switch (stage)
-		{
-		case ShaderProgram::Stage::Compute:
-			vk_stage = vk::ShaderStageFlagBits::eCompute;
-			break;
+		if ((uint32_t)stage & (uint32_t)ShaderProgram::Stage::Compute)
+			vk_stage |= vk::ShaderStageFlagBits::eCompute;
 
-		case ShaderProgram::Stage::Fragment:
-			vk_stage = vk::ShaderStageFlagBits::eFragment;
-			break;
+		if ((uint32_t)stage & (uint32_t)ShaderProgram::Stage::Fragment)
+			vk_stage |= vk::ShaderStageFlagBits::eFragment;
 
-		case ShaderProgram::Stage::Vertex:
-			vk_stage = vk::ShaderStageFlagBits::eVertex;
-			break;
-		}
+		if ((uint32_t)stage & (uint32_t)ShaderProgram::Stage::Vertex)
+			vk_stage |= vk::ShaderStageFlagBits::eVertex;
 
 		command_buffer.pushConstants(current_pipeline->GetPipelineLayout(), vk_stage, offset, size, data);
 	}
@@ -403,6 +398,11 @@ namespace Device {
 
 		SetShader(*shader);
 		UpdateState();
+
+		/*
+		const uint32_t index_offset = batch->index_offset;
+		PushConstants((ShaderProgram::Stage)((uint32_t)ShaderProgram::Stage::Vertex | (uint32_t)ShaderProgram::Stage::Fragment), 0, sizeof(index_offset), &index_offset);
+		*/
 
 		auto command_buffer = GetCurrentCommandBuffer()->GetCommandBuffer();
 		if (draw_call->descriptor_set)
@@ -435,6 +435,37 @@ namespace Device {
 				DrawIndirect(*mesh->vertexBuffer(), *draw_call->indirect_buffer, draw_call->indirect_buffer_offset);
 			else
 				Draw(*mesh->vertexBuffer(), mesh->indexCount(), 0, draw_call->instance_count);
+		}
+	}
+
+	void VulkanRenderState::RenderBatch(const render::BatchRenderer::Batch* batch, bool is_depth)
+	{
+		auto* shader = batch->shader;
+		if (!shader->Ready())
+			return;
+
+		auto* mesh = batch->mesh;
+		SetVertexLayout(mesh->GetVertexLayout());
+
+		SetShader(*shader);
+		
+		const uint32_t index_offset = batch->index_offset;
+		PushConstants((ShaderProgram::Stage)((uint32_t)ShaderProgram::Stage::Vertex | (uint32_t)ShaderProgram::Stage::Fragment), 0, sizeof(index_offset), &index_offset);
+	
+		auto command_buffer = GetCurrentCommandBuffer()->GetCommandBuffer();
+		if (batch->descriptor_set)
+		{
+			SetDescriptorSet(*batch->descriptor_set, DescriptorSetType::Object, 0, nullptr);
+		}
+
+		if (mesh->hasIndices())
+		{
+			const auto index_type = Mesh::IsShortIndexCount(mesh->indexCount()) ? IndexType::UINT16 : IndexType::UINT32;
+			DrawIndexed(*mesh->vertexBuffer(), *mesh->indexBuffer(), 0, mesh->indexCount(), 0, index_type, 1);
+		}
+		else
+		{
+			Draw(*mesh->vertexBuffer(), mesh->indexCount(), 0, 1);
 		}
 	}
 

@@ -54,6 +54,7 @@ namespace Resources
 		const auto& GetMesh(int index) const { return meshes.at(index); }
 		const std::string& GetMeshName(int index) const { return mesh_names.at(index); }
 		const std::vector<mat4>& GetInvBindPose(int index) const { return inv_bind_poses.at(index); };
+		const AABB& GetBounds() const { return aabb; }
 
 	private:
 		std::tuple<Common::Handle<Mesh>, std::string, std::vector<mat4>> LoadMesh(std::istream& stream, const std::string& name);

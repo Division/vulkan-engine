@@ -9,6 +9,7 @@ namespace Device {
 	class ConstantBuffer : protected DynamicBuffer<uint8_t>
 	{
 		std::mutex mutex;
+		uint32_t alignment = 1;
 
 	public:
 		struct Allocation
@@ -21,6 +22,7 @@ namespace Device {
 		ConstantBuffer(std::string name, size_t size, BufferType type = BufferType::Uniform)
 			: DynamicBuffer<uint8_t>(name, size, type, false)
 		{
+			alignment = type == BufferType::Uniform ? 256 : 1;
 			DynamicBuffer::Map();
 		}
 
@@ -50,7 +52,7 @@ namespace Device {
 			std::scoped_lock lock(mutex);
 
 			assert(mapped_pointer);
-			size_t pointer = AlignMemory((size_t)mapped_pointer + upload_data_size, 256);
+			size_t pointer = AlignMemory((size_t)mapped_pointer + upload_data_size, alignment);
 			upload_data_size = pointer - (size_t)mapped_pointer + allocation_size;
 			if (upload_data_size > size)
 				throw std::runtime_error("Constant buffer overflow");

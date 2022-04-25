@@ -135,6 +135,7 @@ set(ENGINE_SOURCES
 	render/buffer/GPUBuffer.h
 	render/material/Material.h
 	render/material/Material.cpp
+	render/renderer/BatchRenderer.cpp
 	render/renderer/RenderModeUtils.h
 	render/renderer/RenderModeUtils.cpp
 	render/renderer/IRenderer.h

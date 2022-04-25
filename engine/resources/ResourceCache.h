@@ -10,6 +10,7 @@
 #include <optick/src/optick.h>
 #include <mutex>
 #include "utils/NonCopyable.h"
+#include <string_view>
 
 namespace Resources
 {
@@ -232,6 +233,7 @@ namespace Resources
 
 		explicit Handle(const std::wstring& filename) : Handle(ResourceBase::WCharInitializer(filename.c_str())) {}
 		explicit Handle(const wchar_t* filename) : Handle(ResourceBase::WCharInitializer(filename)) {}
+		explicit Handle(const std::wstring_view filename) : Handle(ResourceBase::WCharInitializer(filename.data())) {}
 
 		Handle(const Handle& other)
 		{
