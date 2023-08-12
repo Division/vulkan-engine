@@ -1,5 +1,11 @@
 [
     {
+        "type": "texture",
+        "filename": "blue_noise_512.png",
+        "uid": "2b2b5ee43b99fd87",
+        "compression_type": "BC7"
+    },
+    {
         "type": "copy",
         "filename": "brdf_lut.ktx",
         "uid": "6a90cf1eb7e8ceac"

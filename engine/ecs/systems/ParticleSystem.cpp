@@ -232,9 +232,8 @@ namespace ECS::systems
 					const uint32_t alive_count_offset = offsetof(components::ParticleEmitter::CounterArgumentsData, alive_count_after_simulation);
 					bitonic_sort.Process(state, *gpu_data->sorted_indices->GetBuffer().get(), *gpu_data->counters.GetBuffer().get(), alive_count_offset, true, ascending);
 
-					const vk::MemoryBarrier asd = vk::MemoryBarrier(vk::AccessFlagBits::eShaderWrite, vk::AccessFlagBits::eShaderRead | vk::AccessFlagBits::eShaderWrite);
 					state.DispatchIndirect(*output_sorted_shader, resources, sort_constants, *gpu_data->counters.GetBuffer().get(), 0);
-					state.Barrier({ &asd, 1 }, vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eComputeShader);
+					state.Barrier({ &compute_read_read_write_barrier, 1 }, vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eComputeShader);
 				}
 			});
 

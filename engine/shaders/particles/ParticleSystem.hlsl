@@ -45,7 +45,9 @@ Particle EmitParticleDefault(ParticleEmitData data)
 	//float random_angle = get_random_number(make_random_seed(uint2(random_quantize(data.time / 3600.0f), data.particle_index + data.emitter_id))) * PI * 2.0f;
 	particle.position = float4(GetParticleRandomPosition(data), 1);
 	particle.velocity.xyz = GetParticleRandomDirection(data);
-	particle.color = data.emit_color;
+	//particle.color = data.emit_color;
+	particle.color = float4(GetParticleRandomColor(data), 1);
+	
 	particle.life = 0;
 	particle.max_life = data.emit_life.x + (data.emit_life.y - data.emit_life.x) * get_random_number(make_random_seed(uint2(random_quantize(data.time / 8400.0f), data.particle_index + data.emitter_id + 2000)));
 	particle.size.xyz = data.emit_size.x + (data.emit_size.y - data.emit_size.x) * get_random_number(make_random_seed(uint2(random_quantize(data.time / 7200.0f), data.particle_index + data.emitter_id + 1000)));

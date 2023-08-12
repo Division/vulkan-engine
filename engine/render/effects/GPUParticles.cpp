@@ -25,6 +25,7 @@ namespace render::effects {
 	{
 		auto emitters = manager.GetChunkListsWithComponent<components::ParticleEmitter>();
 		particle_update_system->ProcessChunks(emitters, global_constants, graph);
+		//systems::GPUParticleUpdateSystem(manager, scene_renderer, global_constants, bitonic_sort, *scene_renderer.GetDrawCallManager(), graph).ProcessChunks(emitters);
 	}
 
 }
