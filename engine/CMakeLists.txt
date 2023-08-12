@@ -51,6 +51,30 @@ set(ENGINE_SOURCES
 	lib/ktx/vk_funcs.c
 	lib/half/half.h
 	lib/half/half.cpp
+	lib/RenderPipelineShaders/src/core/rps_core.cpp
+	lib/RenderPipelineShaders/src/core/rps_device.cpp
+	lib/RenderPipelineShaders/src/core/rps_graph.cpp
+	lib/RenderPipelineShaders/src/core/rps_result.cpp
+	lib/RenderPipelineShaders/src/frontend/rps_builder.cpp
+	lib/RenderPipelineShaders/src/runtime/common/rps_access.cpp
+	lib/RenderPipelineShaders/src/runtime/common/rps_format.cpp
+	lib/RenderPipelineShaders/src/runtime/common/rps_null_runtime_backend.cpp
+	lib/RenderPipelineShaders/src/runtime/common/rps_null_runtime_device.cpp
+	lib/RenderPipelineShaders/src/runtime/common/rps_render_graph.cpp
+	lib/RenderPipelineShaders/src/runtime/common/rps_render_graph_builder.cpp
+	lib/RenderPipelineShaders/src/runtime/common/rps_render_graph_diagnostics.cpp
+	lib/RenderPipelineShaders/src/runtime/common/rps_rpsl_host.cpp
+	lib/RenderPipelineShaders/src/runtime/common/rps_rpsl_host_dll.c
+	lib/RenderPipelineShaders/src/runtime/common/rps_rpsl_host_intrinsics.c
+	lib/RenderPipelineShaders/src/runtime/common/rps_runtime_backend.cpp
+	lib/RenderPipelineShaders/src/runtime/common/rps_runtime_device.cpp
+	lib/RenderPipelineShaders/src/runtime/common/rps_subprogram.cpp
+	lib/RenderPipelineShaders/src/runtime/common/rps_subprogram.cpp
+	lib/RenderPipelineShaders/src/runtime/vk/rps_vk_built_in_nodes.cpp
+	lib/RenderPipelineShaders/src/runtime/vk/rps_vk_formats.cpp
+	lib/RenderPipelineShaders/src/runtime/vk/rps_vk_runtime_backend.cpp
+	lib/RenderPipelineShaders/src/runtime/vk/rps_vk_runtime_device.cpp
+	test_triangle.rpsl.g.c
 	Engine.h
 	Engine.cpp
 	Handle.h
@@ -295,6 +319,8 @@ add_subdirectory(lib/ozz-animation)
 add_library(vk_engine ${ENGINE_SOURCES})
 target_compile_definitions(vk_engine PUBLIC VK_USE_PLATFORM_WIN32_KHR)
 target_include_directories(vk_engine PUBLIC ./ lib)
+target_include_directories(vk_engine PUBLIC ./ lib/RenderPipelineShaders/include)
+target_include_directories(vk_engine PUBLIC ./ lib/RenderPipelineShaders/src)
 target_include_directories(vk_engine PUBLIC Vulkan::Vulkan)
 target_include_directories(vk_engine PUBLIC ozz_animation)
 target_link_libraries(vk_engine glfw)

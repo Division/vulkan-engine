@@ -246,6 +246,8 @@ namespace Device {
 		void BeginRecording(PipelineBindPoint bind_point);
 		void EndRecording();
 
+		vk::CommandBuffer getRecorderCommandBuffer() const { return recordedCommandBuffer; }
+
 	private:
 		VulkanPipeline* GetPipeline(const VulkanPipelineInitializer& initializer);
 		vk::Sampler GetSampler(const SamplerMode& sampler_mode);
@@ -277,6 +279,8 @@ namespace Device {
 		std::unordered_map<uint32_t, std::unique_ptr<VulkanCommandPool>> command_pools;
 		vk::UniqueDescriptorPool descriptor_pool;
 		std::unordered_map<uint32_t, std::array<VulkanCommandBuffer*, caps::MAX_FRAMES_IN_FLIGHT>> command_buffers;
+
+		vk::CommandBuffer recordedCommandBuffer;
 	};
 
 }

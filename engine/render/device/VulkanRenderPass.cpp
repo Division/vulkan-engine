@@ -17,8 +17,16 @@ namespace Device {
 
 	VulkanRenderPass::VulkanRenderPass(const VulkanRenderPassInitializer& initializer)
 	{
-		has_depth = initializer.has_depth;
 		hash = initializer.GetHash();
+
+		if (initializer.referencedPass)
+		{
+			referencedPass = initializer.referencedPass;
+			isReference = true;
+			return;
+		}
+
+		has_depth = initializer.has_depth;
 
 		std::vector<vk::AttachmentDescription> attachments;
 		std::vector<vk::AttachmentReference> attachment_references;

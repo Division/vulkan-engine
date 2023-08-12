@@ -490,7 +490,7 @@ namespace Device {
 	{
 		current_render_pass = &render_pass;
 
-		auto attachment_count = std::min(current_render_target->GetColorAttachmentCount() + current_render_target->HasDepth() ? 1u : 0u, (uint32_t)clear_values.size());
+		auto attachment_count = std::min(current_render_target->GetColorAttachmentCount() + (current_render_target->HasDepth() ? 1u : 0u), (uint32_t)clear_values.size());
 
 		vk::RenderPassBeginInfo render_pass_begin_info(
 			current_render_pass->GetRenderPass(),
@@ -554,6 +554,7 @@ namespace Device {
 	{
 		auto command_buffer = GetCurrentCommandBuffer()->GetCommandBuffer();
 		command_buffer.end();
+		recordedCommandBuffer = command_buffer;
 		current_frame = (current_frame + 1) % caps::MAX_FRAMES_IN_FLIGHT;
 	}
 

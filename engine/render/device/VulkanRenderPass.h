@@ -23,6 +23,11 @@ namespace Device {
 			}
 		}
 
+		explicit VulkanRenderPassInitializer(vk::RenderPass renderPass)
+		{
+			referencedPass = renderPass;
+		}
+
 		VulkanRenderPassInitializer() = default;
 
 		VulkanRenderPassInitializer& AddColorAttachment(Format format)
@@ -60,6 +65,11 @@ namespace Device {
 
 		uint32_t GetHash() const
 		{
+			if (referencedPass)
+			{
+				return FastHash(&referencedPass, sizeof(referencedPass));
+			}
+
 			uint32_t color_attachments_hash = 0;
 			uint32_t depth_attachment_hash = 0;
 			if (has_depth)
@@ -78,6 +88,7 @@ namespace Device {
 		vk::AttachmentDescription* current_attachment = nullptr;
 		std::vector<vk::AttachmentDescription> color_attachments;
 		vk::AttachmentDescription depth_attachment;
+		vk::RenderPass referencedPass;
 		bool has_depth = false;
 	};
 
@@ -86,17 +97,19 @@ namespace Device {
 	public:
 		VulkanRenderPass(const VulkanRenderPassInitializer& initializer);
 
-		vk::RenderPass GetRenderPass() const { return render_pass.get(); }
+		vk::RenderPass GetRenderPass() const { return isReference ? referencedPass : render_pass.get(); }
 
-		bool HasDepth() const { return has_depth; }
-		Format GetDepthFormat() const { return (Format)depth_format; }
+		bool HasDepth() const { assert(!isReference); return has_depth; }
+		Format GetDepthFormat() const { assert(!isReference); return (Format)depth_format; }
 
 		uint32_t GetHash() const { return hash; };
 
 	private:
 		static std::atomic_int counter;
+		bool isReference = false;
 		uint32_t hash;
 		vk::UniqueRenderPass render_pass;
+		vk::RenderPass referencedPass;
 		bool has_depth;
 		vk::Format depth_format = vk::Format::eD24UnormS8Uint;
 	};

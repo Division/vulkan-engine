@@ -138,7 +138,6 @@ namespace Device {
 			uploads_copy = std::move(current_frame_uploads);
 		}
 
-		auto* context = Engine::GetVulkanContext();
 		auto command_buffer = command_buffers[current_frame]->GetCommandBuffer();
 
 		VkCommandBufferBeginInfo begin_info = {};
@@ -152,6 +151,7 @@ namespace Device {
 
 		vkEndCommandBuffer(command_buffer);
 		
+		auto* context = Engine::GetVulkanContext();
 		auto graphicsQueue = context->GetGraphicsQueue();
 		vk::SubmitInfo submitInfo(0, nullptr, nullptr, 1, &command_buffer);
 		((vk::Queue)graphicsQueue).submit(1u, &submitInfo, vk::Fence());

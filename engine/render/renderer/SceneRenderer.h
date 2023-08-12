@@ -9,6 +9,8 @@
 #include "utils/EventDispatcher.h"
 #include <magic_enum/magic_enum.hpp>
 
+#include <rps/rps.h>
+
 class Scene;
 class IShadowCaster;
 
@@ -21,6 +23,7 @@ namespace Device
 {
 	class VulkanRenderTargetAttachment;
 	class VulkanRenderPass;
+	class VulkanRenderTarget;
 	class ShaderProgram;
 	class DescriptorSetBindings;
 	class ResourceBindings;
@@ -134,7 +137,6 @@ namespace render {
 		LightGrid& GetLightGrid() { return *light_grid; }
 		void SetRadianceCubemap(Resources::Handle<Resources::TextureResource> cubemap);
 		void SetIrradianceCubemap(Resources::Handle<Resources::TextureResource> cubemap);
-		ConstantBindingStorage& GetConstantStorage() const { return *constant_storage; }
 
 		Device::Texture* GetBlankTexture() const;
 
@@ -145,16 +147,23 @@ namespace render {
 		const GPUParticles::GPUParticles& GetGPUParticles() const { return *gpu_particles; }
 
 	private:
+		void DrawTriangleWithRPSCb(const RpsCmdCallbackContext* pContext);
 		void CreateDrawCalls();
 		void UploadDrawCalls();
 		void UpdateGlobalBindings();
 		void OnRecreateSwapchain(int32_t width, int32_t height);
 
 	private:
+		std::array<std::unique_ptr<Device::VulkanRenderTarget>, 3> vulkanRT;
+		std::unique_ptr<Device::VulkanRenderPass> vulkanPass;
+
 		struct UserRenderDependency
 		{
 			graph::DependencyNode* node;
 		};
+
+		RpsDevice      m_rpsDevice      = {};
+		RpsRenderGraph m_rpsRenderGraph = {};
 
 		std::array<std::vector<UserRenderDependency>, magic_enum::enum_count<RenderDependencyType>()> user_dependencies;
 		std::unique_ptr<Device::VulkanRenderPass> temp_pass;
@@ -190,7 +199,6 @@ namespace render {
 		std::vector<ShadowCasterData> shadow_casters;
 
 		std::unique_ptr<EnvironmentSettings> environment_settings;
-		std::unique_ptr<ConstantBindingStorage> constant_storage;
 		DebugSettings* debug_settings;
 		std::unique_ptr<effects::Skybox> skybox;
 		std::unique_ptr<effects::PostProcess> post_process;

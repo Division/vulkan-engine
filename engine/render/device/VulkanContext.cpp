@@ -429,42 +429,15 @@ namespace Device {
 		vk::PipelineStageFlags color_wait_mask = vk::PipelineStageFlagBits::eColorAttachmentOutput;
 		SemaphoreList wait_semaphores;
 
-		for (int i = 0; i < frame_command_buffers.size(); i++)
-		{
-			bool is_last = i == frame_command_buffers.size() - 1;
-			bool is_first = i == 0;
-
-			auto& data = frame_command_buffers[i];
-			vk::SubmitInfo submit_info;
-			if (data.wait_semaphores.semaphores.size())
-			{
-				submit_info.waitSemaphoreCount = data.wait_semaphores.semaphores.size();
-				submit_info.pWaitDstStageMask = data.wait_semaphores.stage_flags.data();
-				submit_info.setPWaitSemaphores(data.wait_semaphores.semaphores.data());
-			}
-
-			if (is_first)
-			{
-				submit_info.waitSemaphoreCount = 1;
-				submit_info.pWaitDstStageMask = &color_wait_mask;
-				submit_info.setPWaitSemaphores(&image_available_semaphone);
-			}
-
-			auto signal_semaphore = is_last ? render_finished_semaphore : data.signal_semaphore;
-			vk::Fence fence = is_last ? current_fence : nullptr;
-
-			if (signal_semaphore)
-			{
-				submit_info.signalSemaphoreCount = 1;
-				submit_info.setPSignalSemaphores(&signal_semaphore);
-			}
-
-			submit_info.commandBufferCount = 1;
-			submit_info.setPCommandBuffers(&data.command_buffer);
-
-			auto queue = GetQueue(data.queue);
-			queue.submit(1, &submit_info, fence);
-		}
+		vk::SubmitInfo submit_info;
+		auto cb = render_states[current_render_state-1]->getRecorderCommandBuffer();
+		submit_info.pCommandBuffers = &cb;
+		submit_info.setCommandBufferCount(1);
+		submit_info.setPWaitSemaphores(&image_available_semaphone);
+		submit_info.setWaitSemaphoreCount(1);
+		submit_info.setPSignalSemaphores(&render_finished_semaphore);
+		submit_info.setSignalSemaphoreCount(1);
+		GetQueue(PipelineBindPoint::Graphics).submit(1, &submit_info, current_fence);
 
 		vk::SwapchainKHR swapChains[] = { swapchain->GetSwapchain() };
 		vk::PresentInfoKHR presentInfo(1, &render_finished_semaphore, 1, swapChains, &imageIndex);

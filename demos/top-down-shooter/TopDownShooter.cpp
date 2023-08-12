@@ -229,7 +229,7 @@ void Game::update(float dt)
 		last_player_position = player_transform->position;
 	}
 
-	Engine::Get()->GetSceneRenderer()->GetConstantStorage().AddFloat3Constant("player_position", last_player_position);
+	//Engine::Get()->GetSceneRenderer()->GetConstantStorage().AddFloat3Constant("player_position", last_player_position);
 
 	ground_items->Update(dt);
 
