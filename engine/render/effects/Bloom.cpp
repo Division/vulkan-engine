@@ -3,7 +3,6 @@
 #include "CommonIncludes.h"
 #include "render/renderer/RenderGraph.h"
 #include "render/device/VulkanPipeline.h"
-#include "render/device/VkObjects.h"
 #include "render/device/VulkanRenderTarget.h"
 #include "render/device/VulkanRenderState.h"
 #include "render/device/VulkanDescriptorCache.h"

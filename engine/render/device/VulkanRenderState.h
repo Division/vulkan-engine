@@ -26,7 +26,6 @@ namespace Device {
 	class VulkanPipeline;
 	struct VulkanPipelineInitializer;
 	class VulkanCommandPool;
-	class VulkanCommandBuffer;
 	class VulkanRenderPass;
 	class VulkanRenderTarget;
 	class Texture;
@@ -187,6 +186,29 @@ namespace Device {
 		const ShaderProgram::DescriptorSetLayout& GetLayout() const { return *layout; }
 	};
 
+
+	class VulkanCommandPool : NonCopyable
+	{
+	public:
+		VulkanCommandPool(uint32_t queue_family, const std::string name);
+		virtual ~VulkanCommandPool();
+
+		vk::CommandPool GetCommandPool() const { return command_pool.get(); }
+		vk::CommandBuffer GetCommandBuffer();
+		void NextFrame();
+		const std::string& GetName() const { return name; }
+
+	private:
+		typedef std::vector<vk::CommandBuffer> CommandBufferList;
+
+		std::string name;
+		vk::UniqueCommandPool command_pool;
+		std::array<CommandBufferList, caps::MAX_FRAMES_IN_FLIGHT> allocated_command_buffers;
+		uint32_t current_frame_allocated_buffers;
+		uint32_t current_frame;
+	};
+
+
 	class VulkanRenderState : NonCopyable
 	{
 	public:
@@ -224,7 +246,7 @@ namespace Device {
 		void Barrier(gsl::span<const vk::MemoryBarrier> barriers, vk::PipelineStageFlags srcStageMask = vk::PipelineStageFlagBits::eAllCommands, vk::PipelineStageFlags dstStageMask = vk::PipelineStageFlagBits::eAllCommands, vk::DependencyFlags flags = {});
 		void Copy(const VulkanBuffer& src, const VulkanBuffer& dst, vk::BufferCopy copy_region);
 
-		VulkanCommandBuffer* GetCurrentCommandBuffer() const;
+		vk::CommandBuffer GetCurrentCommandBuffer() const;
 
 		void BeginRenderPass(const VulkanRenderPass& render_pass, const VulkanRenderTarget& render_target);
 		void EndRenderPass();
@@ -255,7 +277,7 @@ namespace Device {
 		std::array<vk::ClearValue, caps::max_color_attachments + 1> clear_values;
 
 		std::unordered_map<uint32_t, std::unique_ptr<VulkanCommandPool>> command_pools;
-		std::unordered_map<uint32_t, std::array<VulkanCommandBuffer*, caps::MAX_FRAMES_IN_FLIGHT>> command_buffers;
+		std::unordered_map<uint32_t, std::array<vk::CommandBuffer, caps::MAX_FRAMES_IN_FLIGHT>> command_buffers;
 
 		vk::CommandBuffer recordedCommandBuffer;
 	};

@@ -129,8 +129,6 @@ set(ENGINE_SOURCES
 	memory/Containers.h
 	render/device/Resource.h
 	render/device/Resource.cpp
-	render/device/VkObjects.h
-	render/device/VkObjects.cpp
 	render/device/VulkanContext.h
 	render/device/VulkanContext.cpp
 	render/device/VulkanDescriptorCache.h

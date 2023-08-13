@@ -9,7 +9,6 @@
 #include "render/device/VulkanRenderState.h"
 #include "render/device/VulkanPipeline.h"
 #include "render/device/VulkanDescriptorCache.h"
-#include "render/device/VkObjects.h"
 #include "render/device/Types.h"
 #include "render/shader/Shader.h"
 #include "render/shader/ShaderCache.h"

@@ -1,7 +1,6 @@
 #include "VulkanRenderState.h"
 #include "VulkanDescriptorCache.h"
 #include "Engine.h"
-#include "render/device/VkObjects.h"
 #include "utils/Math.h"
 #include "render/mesh/Mesh.h"
 #include "render/buffer/VulkanBuffer.h"
@@ -128,6 +127,55 @@ namespace Device {
 		return hash;
 	}
 
+
+	VulkanCommandPool::VulkanCommandPool(uint32_t queue_family, const std::string name)
+		: current_frame_allocated_buffers(0)
+		, name(std::move(name))
+	{
+		vk::CommandPoolCreateInfo pool_info({ vk::CommandPoolCreateFlagBits::eResetCommandBuffer }, queue_family);
+		command_pool = Engine::GetVulkanDevice().createCommandPoolUnique(pool_info);
+		if (name.size())
+			Engine::GetVulkanContext()->AssignDebugName((uint64_t)(VkCommandPool)command_pool.get(), vk::DebugReportObjectTypeEXT::eCommandPool, ("[CommandPool] " + name).c_str());
+	}
+
+	VulkanCommandPool::~VulkanCommandPool()
+	{
+		for (int i = 0; i < caps::MAX_FRAMES_IN_FLIGHT; i++)
+			for (auto commandBuffer : allocated_command_buffers[i])
+				Engine::GetVulkanDevice().freeCommandBuffers(GetCommandPool(), 1, &commandBuffer);
+	}
+
+	vk::CommandBuffer VulkanCommandPool::GetCommandBuffer()
+	{
+		vk::CommandBuffer result;
+		auto& list = allocated_command_buffers[current_frame % caps::MAX_FRAMES_IN_FLIGHT];
+		if (list.size() > current_frame_allocated_buffers)
+		{
+			result = list[current_frame_allocated_buffers];
+		}
+		else 
+		{
+			vk::CommandBufferAllocateInfo alloc_info(GetCommandPool(), vk::CommandBufferLevel::ePrimary, 1);
+			auto device = (vk::Device)Engine::GetVulkanDevice();
+			result = device.allocateCommandBuffers(alloc_info)[0];
+			if (GetName().size())
+				Engine::GetVulkanContext()->AssignDebugName((uint64_t)(VkCommandBuffer)result, vk::DebugReportObjectTypeEXT::eCommandBuffer, ("[CommandBuffer] " + GetName()).c_str());
+
+			list.push_back(result);
+		}
+		
+		current_frame_allocated_buffers += 1;
+		return result;
+	}
+
+
+	void VulkanCommandPool::NextFrame()
+	{
+		current_frame += 1;
+		current_frame_allocated_buffers = 0;
+	}
+
+
 	VulkanRenderState::VulkanRenderState() 
 	{
 		auto context = Engine::Get()->GetContext();
@@ -166,7 +214,7 @@ namespace Device {
 
 	}
 
-	VulkanCommandBuffer* VulkanRenderState::GetCurrentCommandBuffer() const 
+	vk::CommandBuffer VulkanRenderState::GetCurrentCommandBuffer() const 
 	{ 
 		auto* context = Engine::Get()->GetContext();
 		return command_buffers.at(context->GetQueueFamilyIndex(pipeline_bind_point))[current_frame]; 
@@ -182,7 +230,7 @@ namespace Device {
 		if (current_pipeline == &pipeline)
 			return;
 
-		auto command_buffer = GetCurrentCommandBuffer()->GetCommandBuffer();
+		auto command_buffer = GetCurrentCommandBuffer();
 		command_buffer.bindPipeline((vk::PipelineBindPoint)pipeline_bind_point, pipeline.GetPipeline());
 		current_pipeline = &pipeline;
 	}
@@ -212,7 +260,7 @@ namespace Device {
 		assert(current_pipeline);
 		auto descriptor_cache = Engine::GetVulkanContext()->GetDescriptorCache();
 		auto descriptor_set = descriptor_cache->GetDescriptorSet(bindings);
-		auto command_buffer = GetCurrentCommandBuffer()->GetCommandBuffer();
+		auto command_buffer = GetCurrentCommandBuffer();
 		const auto descriptor_set_index = bindings.GetDescriptorSetLayout().set_index;
 
 		auto& dynamic_buffer_bindings = bindings.GetDynamicBufferBindings();
@@ -231,13 +279,13 @@ namespace Device {
 	{
 		assert(current_pipeline);
 
-		auto command_buffer = GetCurrentCommandBuffer()->GetCommandBuffer();
+		auto command_buffer = GetCurrentCommandBuffer();
 		command_buffer.bindDescriptorSets((vk::PipelineBindPoint)pipeline_bind_point, current_pipeline->GetPipelineLayout(), index, 1u, &descriptor_set.GetVKDescriptorSet(), dynamic_offset_count, dynamic_offsets);
 	}
 
 	void VulkanRenderState::PushConstants(ShaderProgram::Stage stage, uint32_t offset, uint32_t size, void* data)
 	{
-		auto command_buffer = GetCurrentCommandBuffer()->GetCommandBuffer();
+		auto command_buffer = GetCurrentCommandBuffer();
 		vk::ShaderStageFlags vk_stage;
 
 		switch (stage)
@@ -270,7 +318,7 @@ namespace Device {
 	//	SetShader(*shader);
 	//	UpdateState();
 
-	//	auto command_buffer = GetCurrentCommandBuffer()->GetCommandBuffer();
+	//	auto command_buffer = GetCurrentCommandBuffer();
 	//	if (draw_call->descriptor_set)
 	//	{
 	//		auto descriptor_set = is_depth ? draw_call->depth_only_descriptor_set : draw_call->descriptor_set;
@@ -306,7 +354,7 @@ namespace Device {
 
 	void VulkanRenderState::Draw(const VulkanBuffer& buffer, uint32_t vertex_count, uint32_t first_vertex, uint32_t instance_count)
 	{
-		auto command_buffer = GetCurrentCommandBuffer()->GetCommandBuffer();
+		auto command_buffer = GetCurrentCommandBuffer();
 		vk::DeviceSize offset = { 0 };
 		vk::Buffer vertex_buffer = buffer.Buffer();
 		command_buffer.bindVertexBuffers(0, 1, &vertex_buffer, &offset);
@@ -315,7 +363,7 @@ namespace Device {
 
 	void VulkanRenderState::DrawIndirect(const VulkanBuffer& buffer, VulkanBuffer& indirect_buffer, uint32_t indirect_buffer_offset)
 	{
-		auto command_buffer = GetCurrentCommandBuffer()->GetCommandBuffer();
+		auto command_buffer = GetCurrentCommandBuffer();
 		vk::DeviceSize offset = { 0 };
 		vk::Buffer vertex_buffer = buffer.Buffer();
 		command_buffer.bindVertexBuffers(0, 1, &vertex_buffer, &offset);
@@ -325,7 +373,7 @@ namespace Device {
 	void VulkanRenderState::DrawIndexed(const VulkanBuffer& vertex_buffer, const VulkanBuffer& index_buffer, uint32_t vertex_offset, uint32_t index_count, uint32_t first_index, IndexType index_type, uint32_t instance_count)
 	{
 		assert(current_pipeline);
-		auto command_buffer = GetCurrentCommandBuffer()->GetCommandBuffer();
+		auto command_buffer = GetCurrentCommandBuffer();
 		vk::DeviceSize offset = { 0 };
 		vk::Buffer vk_vertex_buffer = vertex_buffer.Buffer();
 		vk::Buffer vk_index_buffer = index_buffer.Buffer();
@@ -337,7 +385,7 @@ namespace Device {
 	void VulkanRenderState::DrawIndexedIndirect(const VulkanBuffer& vertex_buffer, const VulkanBuffer& index_buffer, IndexType index_type, VulkanBuffer& indirect_buffer, uint32_t indirect_buffer_offset)
 	{
 		assert(current_pipeline);
-		auto command_buffer = GetCurrentCommandBuffer()->GetCommandBuffer();
+		auto command_buffer = GetCurrentCommandBuffer();
 		vk::DeviceSize offset = { 0 };
 		vk::Buffer vk_vertex_buffer = vertex_buffer.Buffer();
 		vk::Buffer vk_index_buffer = index_buffer.Buffer();
@@ -357,7 +405,7 @@ namespace Device {
 			attachment_count, clear_values.data()
 		);
 
-		auto command_buffer = GetCurrentCommandBuffer()->GetCommandBuffer();
+		auto command_buffer = GetCurrentCommandBuffer();
 		command_buffer.beginRenderPass(render_pass_begin_info, vk::SubpassContents::eInline);
 		render_pass_started = true;
 	}
@@ -365,7 +413,7 @@ namespace Device {
 	void VulkanRenderState::EndRenderPass()
 	{
 		assert(render_pass_started);
-		auto command_buffer = GetCurrentCommandBuffer()->GetCommandBuffer();
+		auto command_buffer = GetCurrentCommandBuffer();
 		command_buffer.endRenderPass();
 		render_pass_started = false;
 	}
@@ -376,13 +424,13 @@ namespace Device {
 		render_pass_started = false;
 		pipeline_bind_point = bind_point;
 		auto begin_info = vk::CommandBufferBeginInfo();
-		auto command_buffer = GetCurrentCommandBuffer()->GetCommandBuffer();
+		auto command_buffer = GetCurrentCommandBuffer();
 		command_buffer.begin(begin_info);
 	}
 
 	void VulkanRenderState::EndRecording()
 	{
-		auto command_buffer = GetCurrentCommandBuffer()->GetCommandBuffer();
+		auto command_buffer = GetCurrentCommandBuffer();
 		command_buffer.end();
 		recordedCommandBuffer = command_buffer;
 		current_frame = (current_frame + 1) % caps::MAX_FRAMES_IN_FLIGHT;
@@ -394,7 +442,7 @@ namespace Device {
 
 		VulkanPipelineInitializer compute_pipeline_initializer(&program);
 		current_pipeline = GetOrCreatePipeline(compute_pipeline_initializer);
-		auto command_buffer = GetCurrentCommandBuffer()->GetCommandBuffer();
+		auto command_buffer = GetCurrentCommandBuffer();
 		command_buffer.bindPipeline( vk::PipelineBindPoint::eCompute, current_pipeline->GetPipeline());
 
 		const DescriptorSetBindings global_shader_bindings(bindings, *program.GetDescriptorSetLayout(DescriptorSetType::Global));
@@ -410,7 +458,7 @@ namespace Device {
 		VulkanPipelineInitializer compute_pipeline_initializer(&program);
 		current_pipeline = GetOrCreatePipeline(compute_pipeline_initializer);
 
-		auto command_buffer = GetCurrentCommandBuffer()->GetCommandBuffer();
+		auto command_buffer = GetCurrentCommandBuffer();
 		command_buffer.bindPipeline(vk::PipelineBindPoint::eCompute, current_pipeline->GetPipeline());
 
 		const DescriptorSetBindings global_shader_bindings(bindings, *program.GetDescriptorSetLayout(DescriptorSetType::Global));
@@ -421,25 +469,25 @@ namespace Device {
 
 	void VulkanRenderState::Barrier(gsl::span<const vk::BufferMemoryBarrier> barriers, vk::PipelineStageFlags srcStageMask, vk::PipelineStageFlags dstStageMask, vk::DependencyFlags flags)
 	{
-		auto command_buffer = GetCurrentCommandBuffer()->GetCommandBuffer();
+		auto command_buffer = GetCurrentCommandBuffer();
 		command_buffer.pipelineBarrier(srcStageMask, dstStageMask, flags, nullptr, { (uint32_t)barriers.size(), barriers.data() }, nullptr);
 	}
 
 	void VulkanRenderState::Barrier(gsl::span<const vk::ImageMemoryBarrier> barriers, vk::PipelineStageFlags srcStageMask, vk::PipelineStageFlags dstStageMask, vk::DependencyFlags flags)
 	{
-		auto command_buffer = GetCurrentCommandBuffer()->GetCommandBuffer();
+		auto command_buffer = GetCurrentCommandBuffer();
 		command_buffer.pipelineBarrier(srcStageMask, dstStageMask, flags, nullptr, nullptr, { (uint32_t)barriers.size(), barriers.data() });
 	}
 
 	void VulkanRenderState::Barrier(gsl::span<const vk::MemoryBarrier> barriers, vk::PipelineStageFlags srcStageMask, vk::PipelineStageFlags dstStageMask, vk::DependencyFlags flags)
 	{
-		auto command_buffer = GetCurrentCommandBuffer()->GetCommandBuffer();
+		auto command_buffer = GetCurrentCommandBuffer();
 		command_buffer.pipelineBarrier(srcStageMask, dstStageMask, flags, { (uint32_t)barriers.size(), barriers.data() }, nullptr, nullptr);
 	}
 
 	void VulkanRenderState::Copy(const VulkanBuffer& src, const VulkanBuffer& dst, vk::BufferCopy copy_region)
 	{
-		GetCurrentCommandBuffer()->GetCommandBuffer().copyBuffer(src.Buffer(), dst.Buffer(), { copy_region });
+		GetCurrentCommandBuffer().copyBuffer(src.Buffer(), dst.Buffer(), { copy_region });
 	}
 
 	VulkanPipeline* VulkanRenderState::GetOrCreatePipeline(const VulkanPipelineInitializer& initializer)

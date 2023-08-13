@@ -1,7 +1,6 @@
 #include "Profiler.h"
 #include "CommonIncludes.h"
 #include "Engine.h"
-#include "render/device/VkObjects.h"
 #include "render/device/VulkanContext.h"
 #include <mutex>
 
@@ -30,7 +29,7 @@ namespace render::profiler
 					pool = device.createQueryPoolUnique(pool_info);
 		}
 
-		void StartMeasurement(Device::VulkanCommandBuffer& command_buffer, uint32_t pass_index, ProfilerName id)
+		void StartMeasurement(vk::CommandBuffer command_buffer, uint32_t pass_index, ProfilerName id)
 		{
 			ProfilerQuery query(id, pass_index);
 			auto& frame = frames[current_frame];
@@ -43,15 +42,15 @@ namespace render::profiler
 			}
 
 			auto device = Engine::Get()->GetVulkanDevice();
-			command_buffer.GetCommandBuffer().resetQueryPool(query_pool, 0, 2);
-			command_buffer.GetCommandBuffer().writeTimestamp(vk::PipelineStageFlagBits::eBottomOfPipe, query_pool, 0);
+			command_buffer.resetQueryPool(query_pool, 0, 2);
+			command_buffer.writeTimestamp(vk::PipelineStageFlagBits::eBottomOfPipe, query_pool, 0);
 		}
 
-		void FinishMeasurement(Device::VulkanCommandBuffer& command_buffer, uint32_t pass_index, ProfilerName id)
+		void FinishMeasurement(vk::CommandBuffer command_buffer, uint32_t pass_index, ProfilerName id)
 		{
 			auto& frame = frames[current_frame];
 			auto query_pool = frame.query_pools[pass_index].get();
-			command_buffer.GetCommandBuffer().writeTimestamp(vk::PipelineStageFlagBits::eTopOfPipe, query_pool, 1);
+			command_buffer.writeTimestamp(vk::PipelineStageFlagBits::eTopOfPipe, query_pool, 1);
 		}
 
 		void GetProfilerTimings(ProfilerTimings& out_timings)
@@ -125,12 +124,12 @@ namespace render::profiler
 		profiler->Update();
 	}
 
-	void StartMeasurement(Device::VulkanCommandBuffer& command_buffer, uint32_t pass_index, ProfilerName id)
+	void StartMeasurement(vk::CommandBuffer command_buffer, uint32_t pass_index, ProfilerName id)
 	{
 		profiler->StartMeasurement(command_buffer, pass_index, id);
 	}
 
-	void FinishMeasurement(Device::VulkanCommandBuffer& command_buffer, uint32_t pass_index, ProfilerName id)
+	void FinishMeasurement(vk::CommandBuffer command_buffer, uint32_t pass_index, ProfilerName id)
 	{
 		profiler->FinishMeasurement(command_buffer, pass_index, id);
 	}

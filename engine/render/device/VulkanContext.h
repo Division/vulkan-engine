@@ -89,9 +89,9 @@ namespace Device {
 		void WaitForRenderFence();
 		void Present();
 
-		void BeginDebugMarker(VulkanCommandBuffer& command_buffer, const char* string);
-		void InsertDebugMarker(VulkanCommandBuffer& command_buffer, const char* string);
-		void EndDebugMarker(VulkanCommandBuffer& command_buffer);
+		void BeginDebugMarker(vk::CommandBuffer command_buffer, const char* string);
+		void InsertDebugMarker(vk::CommandBuffer command_buffer, const char* string);
+		void EndDebugMarker(vk::CommandBuffer command_buffer);
 		void AssignDebugName(uint64_t id, vk::DebugReportObjectTypeEXT type, const char* name);
 
 		RpsDevice GetRpsDevice() const { return rpsDevice; }

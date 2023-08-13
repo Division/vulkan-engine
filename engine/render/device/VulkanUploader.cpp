@@ -4,7 +4,7 @@
 #include "CommonIncludes.h"
 #include "VulkanUploader.h"
 #include "VulkanContext.h"
-#include "VkObjects.h"
+#include "VulkanRenderState.h"
 
 namespace Device {
 
@@ -138,7 +138,7 @@ namespace Device {
 			uploads_copy = std::move(current_frame_uploads);
 		}
 
-		auto command_buffer = command_buffers[current_frame]->GetCommandBuffer();
+		auto command_buffer = command_buffers[current_frame];
 
 		VkCommandBufferBeginInfo begin_info = {};
 		begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;

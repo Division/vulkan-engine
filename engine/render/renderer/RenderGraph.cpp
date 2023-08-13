@@ -6,7 +6,6 @@
 #include "render/device/VulkanSwapchain.h"
 #include "render/device/VulkanRenderState.h"
 #include "render/device/VulkanContext.h"
-#include "render/device/VkObjects.h"
 #include "render/debug/Profiler.h"
 #include "render/texture/Texture.h"
 #include "lib/optick/src/optick.h"
@@ -385,7 +384,7 @@ namespace render { namespace graph {
 
 	void RenderGraph::ApplyPreBarriers(Pass& pass, VulkanRenderState& state)
 	{
-		auto command_buffer = state.GetCurrentCommandBuffer()->GetCommandBuffer();
+		auto command_buffer = state.GetCurrentCommandBuffer();
 
 		for (auto* node : pass.output_nodes)
 		{
@@ -402,7 +401,7 @@ namespace render { namespace graph {
 
 	void RenderGraph::ApplyPostBarriers(Pass& pass, VulkanRenderState& state)
 	{
-		auto command_buffer = state.GetCurrentCommandBuffer()->GetCommandBuffer();
+		auto command_buffer = state.GetCurrentCommandBuffer();
 		for (auto* node : pass.output_nodes)
 		{
 			if (node->should_transfer_ownership)

@@ -7,7 +7,6 @@
 namespace Device {
 
 	class VulkanBuffer;
-	class VulkanCommandBuffer;
 	class VulkanCommandPool;
 
 	class VulkanUploader
@@ -61,7 +60,7 @@ namespace Device {
 		std::vector<std::unique_ptr<UploadBase>> current_frame_uploads;
 
 		std::unique_ptr<VulkanCommandPool> command_pool;
-		VulkanCommandBuffer* command_buffers[caps::MAX_FRAMES_IN_FLIGHT];
+		vk::CommandBuffer command_buffers[caps::MAX_FRAMES_IN_FLIGHT];
 		unsigned current_frame = 0;
 	};
 

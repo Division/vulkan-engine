@@ -160,7 +160,7 @@ namespace render {
 		auto* descriptor_set = draw_call->shader->GetDescriptorSetLayout(DescriptorSetType::Object);
 
 		auto material_resource_bindings = initializer.material.GetResourceBindings();
-		material_resource_bindings.Merge(scene_renderer.GetGlobalResourceBindings());
+		//material_resource_bindings.Merge(scene_renderer.GetGlobalResourceBindings());
 		material_resource_bindings.Merge(initializer.resources);
 
 		const DescriptorSetBindings depth_bindings(material_resource_bindings, *depth_descriptor_set);

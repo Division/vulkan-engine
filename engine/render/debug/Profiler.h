@@ -3,11 +3,7 @@
 #include <stdint.h>
 #include <array>
 #include <string>
-
-namespace Device
-{
-	class VulkanCommandBuffer;
-}
+#include <vulkan/vulkan.hpp>
 
 namespace render::profiler
 {
@@ -38,7 +34,7 @@ namespace render::profiler
 	void Initialize();
 	void Deinitialize();
 	void Update();
-	void StartMeasurement(Device::VulkanCommandBuffer& command_buffer, uint32_t pass_index, ProfilerName id);
-	void FinishMeasurement(Device::VulkanCommandBuffer& command_buffer, uint32_t pass_index, ProfilerName id);
+	void StartMeasurement(vk::CommandBuffer command_buffer, uint32_t pass_index, ProfilerName id);
+	void FinishMeasurement(vk::CommandBuffer command_buffer, uint32_t pass_index, ProfilerName id);
 	void GetProfilerTimings(ProfilerTimings& out_timings);
 }

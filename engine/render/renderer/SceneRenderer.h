@@ -131,7 +131,6 @@ namespace render {
 		void RenderScene(float dt);
 		SceneBuffers* GetSceneBuffers() const { return scene_buffers.get(); }
 		DrawCallManager* GetDrawCallManager() const { return draw_call_manager.get(); }
-		const Device::ResourceBindings& GetGlobalResourceBindings();
 		Device::ShaderCache* GetShaderCache() const { return shader_cache; }
 		auto* GetEnvironmentSettings() const { return environment_settings.get(); }
 		LightGrid& GetLightGrid() { return *light_grid; }
@@ -185,7 +184,6 @@ namespace render {
 		std::unique_ptr<Device::ConstantBindings> global_constant_bindings;
 		bool global_bindings_dirty = true;
 		uint32_t global_shader_binding_camera_index;
-		std::mutex global_bindings_mutex;
 
 		std::unique_ptr<graph::RenderGraph> render_graph;
 		

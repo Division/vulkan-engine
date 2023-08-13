@@ -18,7 +18,6 @@
 #include "render/device/VulkanPipeline.h"
 #include "render/device/VulkanRenderState.h"
 #include "render/device/VulkanRenderTarget.h"
-#include "render/device/VkObjects.h"
 #include "loader/TextureLoader.h"
 #include "render/shading/LightGrid.h"
 #include "render/texture/Texture.h"
@@ -357,7 +356,7 @@ namespace render {
 				state->BeginRecording(Device::PipelineBindPoint::Graphics);
 				RpsRenderGraphRecordCommandInfo recordInfo = {};
 
-				auto commandBuffer = state->GetCurrentCommandBuffer()->GetCommandBuffer();
+				auto commandBuffer = state->GetCurrentCommandBuffer();
 				recordInfo.pUserContext = state;
 				recordInfo.cmdBeginIndex = batch.cmdBegin;
 				recordInfo.numCmds = batch.numCmds;
@@ -376,33 +375,6 @@ namespace render {
 	Device::Texture* SceneRenderer::GetBlankTexture() const
 	{
 		return renderer_resources->blank_texture.get();
-	}
-
-	const Device::ResourceBindings& SceneRenderer::GetGlobalResourceBindings()
-	{
-		std::scoped_lock lock(global_bindings_mutex);
-
-		if (global_bindings_dirty)
-		{
-			global_resource_bindings->Clear();
-			//global_resource_bindings->AddTextureBinding(Device::GetShaderTextureNameHash(ShaderTextureName::ShadowMap), shadowmap_attachment->GetTexture().get());
-			//global_resource_bindings->AddTextureBinding(Device::GetShaderTextureNameHash(ShaderTextureName::ShadowMapAtlas), shadowmap_atlas_attachment->GetTexture().get());
-			//global_resource_bindings->AddTextureBinding(Device::GetShaderTextureNameHash(ShaderTextureName::EnvironmentCubemap), renderer_resources->environment_cubemap ? renderer_resources->environment_cubemap->Get().get() : renderer_resources->blank_cube_texture.get());
-			//global_resource_bindings->AddTextureBinding(Device::GetShaderTextureNameHash(ShaderTextureName::RadianceCubemap), renderer_resources->radiance_cubemap ? renderer_resources->radiance_cubemap->Get().get() : renderer_resources->blank_cube_texture.get());
-			//global_resource_bindings->AddTextureBinding(Device::GetShaderTextureNameHash(ShaderTextureName::IrradianceCubemap), renderer_resources->irradiance_cubemap ? renderer_resources->irradiance_cubemap->Get().get() : renderer_resources->blank_cube_texture.get());
-			//global_resource_bindings->AddTextureBinding(Device::GetShaderTextureNameHash(ShaderTextureName::BrdfLUT), renderer_resources->brdf_lut->Get().get());
-
-			//global_resource_bindings->AddBufferBinding(Device::GetShaderBufferNameHash(ShaderBufferName::Projector), light_grid->GetProjectorBuffer()->GetBuffer().get(), light_grid->GetProjectorBuffer()->GetSize());
-			//global_resource_bindings->AddBufferBinding(Device::GetShaderBufferNameHash(ShaderBufferName::Light), light_grid->GetLightsBuffer()->GetBuffer().get(), light_grid->GetLightsBuffer()->GetSize());
-			//global_resource_bindings->AddBufferBinding(Device::GetShaderBufferNameHash(ShaderBufferName::LightIndices), light_grid->GetLightIndexBuffer()->GetBuffer().get(), light_grid->GetLightIndexBuffer()->GetSize());
-			//global_resource_bindings->AddBufferBinding(Device::GetShaderBufferNameHash(ShaderBufferName::LightGrid), light_grid->GetLightGridBuffer()->GetBuffer().get(), light_grid->GetLightGridBuffer()->GetSize());
-
-			//global_resource_bindings->AddBufferBinding(Device::GetShaderBufferNameHash(ShaderBufferName::SkinningMatrices), scene_buffers->GetSkinningMatricesBuffer()->GetBuffer(), scene_buffers->GetSkinningMatricesBuffer()->GetSize());
-
-			global_bindings_dirty = false;
-		}
-
-		return *global_resource_bindings;
 	}
 
 	void SceneRenderer::UpdateGlobalBindings()

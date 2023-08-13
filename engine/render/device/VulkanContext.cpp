@@ -1,6 +1,5 @@
 #include "VulkanContext.h"
 #include "VulkanUtils.h"
-#include "VkObjects.h"
 #include "VulkanUploader.h"
 #include "VulkanCaps.h"
 #include "VulkanRenderPass.h"
@@ -93,31 +92,31 @@ namespace Device {
 		return result;
 	}
 
-	void VulkanContext::BeginDebugMarker(VulkanCommandBuffer& command_buffer, const char* string)
+	void VulkanContext::BeginDebugMarker(vk::CommandBuffer command_buffer, const char* string)
 	{
 		if (ENABLE_VALIDATION_LAYERS)
 		{
 			vk::DebugMarkerMarkerInfoEXT info;
 			info.setPMarkerName(string);
-			debug_marker_begin_callback(command_buffer.GetCommandBuffer(), (VkDebugMarkerMarkerInfoEXT*)&info);
+			debug_marker_begin_callback(command_buffer, (VkDebugMarkerMarkerInfoEXT*)&info);
 		}
 	}
 
-	void VulkanContext::InsertDebugMarker(VulkanCommandBuffer& command_buffer, const char* string)
+	void VulkanContext::InsertDebugMarker(vk::CommandBuffer command_buffer, const char* string)
 	{
 		if (ENABLE_VALIDATION_LAYERS)
 		{
 			vk::DebugMarkerMarkerInfoEXT info;
 			info.setPMarkerName(string);
-			debug_marker_insert_callback(command_buffer.GetCommandBuffer(), (VkDebugMarkerMarkerInfoEXT*)&info);
+			debug_marker_insert_callback(command_buffer, (VkDebugMarkerMarkerInfoEXT*)&info);
 		}
 	}
 
-	void VulkanContext::EndDebugMarker(VulkanCommandBuffer& command_buffer)
+	void VulkanContext::EndDebugMarker(vk::CommandBuffer command_buffer)
 	{
 		if (ENABLE_VALIDATION_LAYERS)
 		{
-			debug_marker_end_callback(command_buffer.GetCommandBuffer());
+			debug_marker_end_callback(command_buffer);
 		}
 	}
 
