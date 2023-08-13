@@ -473,16 +473,16 @@ namespace render { namespace graph {
 		context->EndDebugMarker(*command_buffer);
 		state->EndRecording();
 
-		FrameCommandBufferData data(
-			command_buffer->GetCommandBuffer(),
-			pass->signal_semaphore,
-			std::move(pass->wait_semaphores),
-			binding_point
-		);
+		//FrameCommandBufferData data(
+		//	command_buffer->GetCommandBuffer(),
+		//	pass->signal_semaphore,
+		//	std::move(pass->wait_semaphores),
+		//	binding_point
+		//);
 
-		data.command_buffer = command_buffer->GetCommandBuffer();
-		data.queue = binding_point;
-		context->AddFrameCommandBuffer(data);
+		//data.command_buffer = command_buffer->GetCommandBuffer();
+		//data.queue = binding_point;
+		//context->AddFrameCommandBuffer(data);
 	}
 
 	void RenderGraph::RecordCommandBuffers()

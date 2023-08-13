@@ -108,7 +108,7 @@ namespace Device {
 			image_sharing_mode = vk::SharingMode::eExclusive;
 		}
 
-		vk::ImageUsageFlags image_usage_flags = vk::ImageUsageFlagBits::eColorAttachment;
+		vk::ImageUsageFlags image_usage_flags = vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eTransferSrc | vk::ImageUsageFlagBits::eTransferDst;
 		vk::SurfaceTransformFlagBitsKHR pre_transform = vk::SurfaceTransformFlagBitsKHR(support.capabilities.currentTransform);
 		vk::CompositeAlphaFlagBitsKHR composite_alpha = vk::CompositeAlphaFlagBitsKHR::eOpaque;
 		image_format = vk::Format(surfaceFormat.format);

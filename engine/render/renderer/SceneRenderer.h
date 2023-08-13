@@ -155,14 +155,12 @@ namespace render {
 
 	private:
 		std::array<std::unique_ptr<Device::VulkanRenderTarget>, 3> vulkanRT;
-		std::unique_ptr<Device::VulkanRenderPass> vulkanPass;
 
 		struct UserRenderDependency
 		{
 			graph::DependencyNode* node;
 		};
 
-		RpsDevice      m_rpsDevice      = {};
 		RpsRenderGraph m_rpsRenderGraph = {};
 
 		std::array<std::vector<UserRenderDependency>, magic_enum::enum_count<RenderDependencyType>()> user_dependencies;

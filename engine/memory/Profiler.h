@@ -11,6 +11,7 @@ namespace Memory {
 		Render = 0,
 		JobSystem,
 		Texture,
+		RenderGraph,
 		ECS,
 		Physics,
 		UnknownResource,

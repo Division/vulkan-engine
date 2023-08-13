@@ -16,6 +16,23 @@ namespace Device {
 
 	const bool ENABLE_VALIDATION_LAYERS = true;
 
+	FrameCommandBufferData::FrameCommandBufferData(
+		const VulkanRenderState& state,
+		const RpsCommandBatch& batch,
+		const uint32_t* pWaitSemaphoreIndices)
+		:
+		command_buffer(state.getRecorderCommandBuffer()),
+		bindPoint(state.getPipelineBindPoint()),
+		rpsBatch(batch)
+	{
+		waitSemaphoreIndices.resize(batch.numWaitFences);
+		for (uint32_t i = 0; i < batch.numWaitFences; i++)
+		{
+			waitSemaphoreIndices[i] = *(pWaitSemaphoreIndices + i);
+		}
+	};
+
+
 	VulkanContext::VulkanContext(GLFWwindow* window) : window(window)
 	{
 		OPTICK_EVENT();
@@ -41,6 +58,8 @@ namespace Device {
 		vmaCreateAllocator(&allocatorInfo, &allocator);
 
 		descriptor_cache = std::make_unique<VulkanDescriptorCache>(device);
+
+		CreateRPSDevice();
 	}
 
 	void VulkanContext::initialize() // todo: remove
@@ -365,6 +384,88 @@ namespace Device {
             }
         }
     }
+	
+	
+	static void* CountedMalloc(void* pContext, size_t size, size_t alignment)
+	{
+		return _aligned_malloc(size, alignment);
+	}
+
+	static void CountedFree(void* pContext, void* ptr)
+	{
+		_aligned_free(ptr);
+	}
+
+	static void* CountedRealloc(
+		void* pContext, void* oldBuffer, size_t oldSize, size_t newSize, size_t alignment)
+	{
+		void* pNewBuffer = oldBuffer;
+
+		if (newSize > oldSize)
+		{
+			pNewBuffer = CountedMalloc(pContext, newSize, alignment);
+			if (oldBuffer)
+			{
+				memcpy(pNewBuffer, oldBuffer, std::min(oldSize, newSize));
+				CountedFree(pContext, oldBuffer);
+			}
+		}
+
+		return pNewBuffer;
+	}
+	
+	static void PrintToStdErr(void* pCtx, const char* formatString, ...)
+	{
+		va_list args;
+		va_start(args, formatString);
+#if _MSC_VER
+		vfprintf_s(stderr, formatString, args);
+#else
+		vfprintf(stderr, formatString, args);
+#endif
+		va_end(args);
+
+		fflush(stderr);
+
+		// TODO: Currently rpsTestPrintDebugString only implemented for WIN32.
+#if defined(_MSC_VER) && defined(_WIN32)
+		char buf[4096];
+
+		va_start(args, formatString);
+		vsprintf_s(buf, formatString, args);
+		va_end(args);
+		std::cout << buf;
+#endif
+	}
+
+
+	void VulkanContext::CreateRPSDevice()
+	{
+		RpsDeviceCreateInfo createInfo = {};
+		createInfo.allocator.pfnAlloc = CountedMalloc;
+		createInfo.allocator.pfnFree  = CountedFree;
+		createInfo.allocator.pfnRealloc = CountedRealloc;
+		createInfo.printer.pfnPrintf  = PrintToStdErr;
+        RpsVKRuntimeDeviceCreateInfo vkRuntimeDeviceCreateInfo = {};
+        vkRuntimeDeviceCreateInfo.pDeviceCreateInfo            = &createInfo;
+        vkRuntimeDeviceCreateInfo.hVkDevice                    = GetDevice();
+        vkRuntimeDeviceCreateInfo.hVkPhysicalDevice            = GetPhysicalDevice();
+        vkRuntimeDeviceCreateInfo.flags                        = RPS_VK_RUNTIME_FLAG_DONT_FLIP_VIEWPORT;
+
+        RpsRuntimeDeviceCreateInfo runtimeDeviceCreateInfo     = {};
+        runtimeDeviceCreateInfo.pUserContext                   = this;
+        //runtimeDeviceCreateInfo.callbacks.pfnRecordDebugMarker = &RecordDebugMarker;
+        //runtimeDeviceCreateInfo.callbacks.pfnSetDebugName      = &SetDebugName;
+
+        vkRuntimeDeviceCreateInfo.pRuntimeCreateInfo = &runtimeDeviceCreateInfo;
+
+        RpsResult result = rpsVKRuntimeDeviceCreate(&vkRuntimeDeviceCreateInfo, &rpsDevice);
+		if (result != RPS_OK)
+		{
+			throw std::runtime_error("Failed creating RpsDevice");
+		}
+	}
+
 
 	vk::Queue VulkanContext::GetQueue(PipelineBindPoint bind_point)
 	{
@@ -412,8 +513,7 @@ namespace Device {
 		vk::Semaphore image_available_semaphone = GetImageAvailableSemaphore();
 		vk::Semaphore render_finished_semaphore = GetRenderFinishedSemaphore();
 
-		uint32_t imageIndex;
-		VkResult result = vkAcquireNextImageKHR(device, swapchain->GetSwapchain(), std::numeric_limits<uint64_t>::max(), image_available_semaphone, VK_NULL_HANDLE, &imageIndex);
+		VkResult result = vkAcquireNextImageKHR(device, swapchain->GetSwapchain(), std::numeric_limits<uint64_t>::max(), image_available_semaphone, VK_NULL_HANDLE, &swapchainImageIndex);
 
 		if (result == VK_ERROR_OUT_OF_DATE_KHR) {
 			RecreateSwapChain();
@@ -427,20 +527,61 @@ namespace Device {
 
 		GetUploader()->ProcessUpload();
 		vk::PipelineStageFlags color_wait_mask = vk::PipelineStageFlagBits::eColorAttachmentOutput;
-		SemaphoreList wait_semaphores;
 
-		vk::SubmitInfo submit_info;
-		auto cb = render_states[current_render_state-1]->getRecorderCommandBuffer();
-		submit_info.pCommandBuffers = &cb;
-		submit_info.setCommandBufferCount(1);
-		submit_info.setPWaitSemaphores(&image_available_semaphone);
-		submit_info.setWaitSemaphoreCount(1);
-		submit_info.setPSignalSemaphores(&render_finished_semaphore);
-		submit_info.setSignalSemaphoreCount(1);
-		GetQueue(PipelineBindPoint::Graphics).submit(1, &submit_info, current_fence);
+		utils::SmallVector<vk::Semaphore, 32> waitSemaphores;
+
+		for (int i = 0; i < frame_command_buffers.size(); i++)
+		{
+			bool is_last = i == frame_command_buffers.size() - 1;
+			bool is_first = i == 0;
+
+			auto& data = frame_command_buffers[i];
+
+			const vk::PipelineStageFlags submitWaitStage = vk::PipelineStageFlagBits::eBottomOfPipe;
+
+			waitSemaphores.clear();
+
+			// Wait for swapchain
+			if (is_first)
+			{
+				waitSemaphores.push_back(image_available_semaphone);
+			}
+
+			for (uint32_t i = 0; i < data.waitSemaphoreIndices.size(); i++)
+			{
+				waitSemaphores.push_back(queueSemaphores[data.waitSemaphoreIndices[i]]);
+			}
+
+			vk::Fence submitFence = VK_NULL_HANDLE;
+
+			utils::SmallVector<vk::Semaphore, 2> signalSemaphores;
+
+			if (is_last)
+			{
+				signalSemaphores.push_back(render_finished_semaphore);
+				submitFence = current_fence;
+			}
+
+			if (data.rpsBatch.signalFenceIndex != UINT32_MAX)
+			{
+				signalSemaphores.push_back(queueSemaphores[data.rpsBatch.signalFenceIndex]);
+			}
+
+			vk::SubmitInfo submitInfo = {};
+			submitInfo.commandBufferCount = 1;
+			submitInfo.pCommandBuffers = &data.command_buffer;
+			submitInfo.pWaitSemaphores = waitSemaphores.data();
+			submitInfo.waitSemaphoreCount = (uint32_t)waitSemaphores.size();
+			submitInfo.pSignalSemaphores = signalSemaphores.data();
+			submitInfo.signalSemaphoreCount = (uint32_t)signalSemaphores.size();
+			submitInfo.pWaitDstStageMask = &submitWaitStage;
+
+			auto queue = GetQueue(data.bindPoint);
+			queue.submit(1, &submitInfo, submitFence);
+		}
 
 		vk::SwapchainKHR swapChains[] = { swapchain->GetSwapchain() };
-		vk::PresentInfoKHR presentInfo(1, &render_finished_semaphore, 1, swapChains, &imageIndex);
+		vk::PresentInfoKHR presentInfo(1, &render_finished_semaphore, 1, swapChains, &swapchainImageIndex);
 		auto present_result = GetPresentQueue().presentKHR(&presentInfo);
 
 		///////
@@ -457,7 +598,7 @@ namespace Device {
 		}
 
 		frame_command_buffers.clear();
-		currentFrame = (currentFrame + 1) % caps::MAX_FRAMES_IN_FLIGHT;
+		currentFrame = currentFrame + 1;
 		current_render_state = 0;
 
 		profiler::Update();
@@ -468,4 +609,20 @@ namespace Device {
 		recreate_swapchain_callbacks.push_back(callback);
 	}
 
+    void VulkanContext::ReserveSemaphores(uint32_t numSyncs)
+    {
+        const uint32_t oldSize = uint32_t(queueSemaphores.size());
+        if (numSyncs > oldSize)
+        {
+            queueSemaphores.resize(numSyncs, VK_NULL_HANDLE);
+        }
+
+        VkSemaphoreCreateInfo semaphoreCI = {VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO};
+
+        for (size_t i = oldSize; i < numSyncs; i++)
+        {
+			auto result = vkCreateSemaphore(device, &semaphoreCI, nullptr, &queueSemaphores[i]);
+			assert(result == VK_SUCCESS);
+        }
+    }
 }

@@ -229,21 +229,21 @@ namespace Device {
 			UpdateGlobalDescriptorSet();
 		}
 
-		if (dirty_flags & (int)DirtyFlags::Viewport)
-		{
-			assert(current_viewport.w > 0 && current_viewport.z > 0);
-			auto command_buffer = GetCurrentCommandBuffer()->GetCommandBuffer();
-			vk::Viewport viewport(current_viewport.x, current_viewport.y, current_viewport.z, current_viewport.w, 0.0f, 1.0f);
-			command_buffer.setViewport(0, 1, &viewport);
-		}
+		//if (dirty_flags & (int)DirtyFlags::Viewport)
+		//{
+		//	assert(current_viewport.w > 0 && current_viewport.z > 0);
+		//	auto command_buffer = GetCurrentCommandBuffer()->GetCommandBuffer();
+		//	vk::Viewport viewport(current_viewport.x, current_viewport.y, current_viewport.z, current_viewport.w, 0.0f, 1.0f);
+		//	command_buffer.setViewport(0, 1, &viewport);
+		//}
 
-		if (dirty_flags & (int)DirtyFlags::Scissor)
-		{
-			assert(current_scissor.w > 0 && current_scissor.z > 0);
-			auto command_buffer = GetCurrentCommandBuffer()->GetCommandBuffer();
-			vk::Rect2D scissor(vk::Offset2D(current_scissor.x, current_scissor.y), vk::Extent2D(current_scissor.z, current_scissor.w));
-			command_buffer.setScissor(0, 1, &scissor);
-		}
+		//if (dirty_flags & (int)DirtyFlags::Scissor)
+		//{
+		//	assert(current_scissor.w > 0 && current_scissor.z > 0);
+		//	auto command_buffer = GetCurrentCommandBuffer()->GetCommandBuffer();
+		//	vk::Rect2D scissor(vk::Offset2D(current_scissor.x, current_scissor.y), vk::Extent2D(current_scissor.z, current_scissor.w));
+		//	command_buffer.setScissor(0, 1, &scissor);
+		//}
 
 		dirty_flags = 0;
 	}
@@ -520,6 +520,16 @@ namespace Device {
 
 	void VulkanRenderState::BeginRecording(PipelineBindPoint bind_point)
 	{
+		dirty_flags = (uint32_t)DirtyFlags::All;
+		current_render_pass = nullptr;
+		current_render_mode = RenderMode();
+		current_vertex_layout = nullptr;
+		current_shader = nullptr;
+		current_pipeline = nullptr;
+		current_render_target = nullptr;
+		render_pass_started = false;
+		global_layout_hash = 0;
+		global_bindings = std::nullopt;
 		pipeline_bind_point = bind_point;
 		auto begin_info = vk::CommandBufferBeginInfo();
 		auto command_buffer = GetCurrentCommandBuffer()->GetCommandBuffer();
@@ -528,18 +538,6 @@ namespace Device {
 
 	VulkanCommandBuffer* VulkanRenderState::BeginRendering(const VulkanRenderTarget& render_target, const VulkanRenderPass& render_pass)
 	{
-		dirty_flags = (uint32_t)DirtyFlags::All;
-		pipeline_bind_point = PipelineBindPoint::Graphics;
-		current_render_pass = nullptr;
-		current_render_mode = RenderMode();
-		current_vertex_layout = nullptr;
-		current_shader = nullptr;
-		current_pipeline = nullptr;
-		current_render_target = &render_target;
-		render_pass_started = false;
-		global_layout_hash = 0;
-		global_bindings = std::nullopt;
-
 		BeginRenderPass(render_pass);
 
 		return GetCurrentCommandBuffer();

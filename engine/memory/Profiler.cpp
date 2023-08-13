@@ -7,7 +7,7 @@ namespace Memory {
 	namespace Profiler
 	{
 
-		std::array<std::string, Tag::Count> tag_names = { "Render", "JobSystem", "Texture", "ECS", "Physics", "Resource", "Unknown" };
+		std::array<std::string, Tag::Count> tag_names = { "Render", "JobSystem", "Texture", "RenderGraph", "ECS", "Physics", "Resource", "Unknown" };
 		Snapshot snapshot;
 
 		struct ProfilerData

@@ -3,15 +3,19 @@
 #include "CommonIncludes.h"
 #include "Types.h"
 #include "render/debug/Profiler.h"
+#include "rps/rps.h"
+#include "utils/DataStructures.h"
+#include "VulkanCaps.h"
+#include "rps/runtime/vk/rps_vk_runtime.h"
+
 
 namespace Device {
 
-	class VulkanCommandBuffer;
+	class VulkanRenderState;
 	class VulkanUploader;
 	class VulkanRenderPass;
 	class VulkanSwapchain;
 	class VulkanRenderTarget;
-	class VulkanRenderState;
 	class VulkanDescriptorCache;
 	
 	struct SemaphoreList
@@ -25,20 +29,14 @@ namespace Device {
 		FrameCommandBufferData() = default;
 
 		FrameCommandBufferData(
-			vk::CommandBuffer command_buffer,
-			vk::Semaphore signal_semaphore,
-			SemaphoreList wait_semaphores,
-			PipelineBindPoint queue) 
-		: command_buffer(command_buffer)
-		, signal_semaphore(signal_semaphore)
-		, wait_semaphores(std::move(wait_semaphores))
-		, queue(queue)
-		{}
+			const VulkanRenderState& state,
+			const RpsCommandBatch& batch,
+			const uint32_t* pWaitSemaphoreIndices);
 
 		vk::CommandBuffer command_buffer;
-		vk::Semaphore signal_semaphore;
-		SemaphoreList wait_semaphores;
-		PipelineBindPoint queue;
+		PipelineBindPoint bindPoint;
+		RpsCommandBatch rpsBatch;
+		utils::SmallVector<uint32_t, 32> waitSemaphoreIndices;
 	};
 
 	class VulkanContext : public NonCopyable
@@ -70,10 +68,11 @@ namespace Device {
 		uint32_t GetQueueFamilyIndex(PipelineBindPoint);
 
 		size_t GetCurrentFrame() const { return currentFrame; }
+		uint32_t GetSwapchainImageIndex() const { return swapchainImageIndex; }
 		uint32_t GetSwapchainImageCount() const;
-		VkFence GetInFlightFence() const { return inFlightFences[currentFrame]; }
-		VkSemaphore GetRenderFinishedSemaphore() const { return renderFinishedSemaphores[currentFrame]; }
-		VkSemaphore GetImageAvailableSemaphore() const { return imageAvailableSemaphores[currentFrame]; }
+		VkFence GetInFlightFence() const { return inFlightFences[currentFrame % caps::MAX_FRAMES_IN_FLIGHT]; }
+		VkSemaphore GetRenderFinishedSemaphore() const { return renderFinishedSemaphores[currentFrame % caps::MAX_FRAMES_IN_FLIGHT]; }
+		VkSemaphore GetImageAvailableSemaphore() const { return imageAvailableSemaphores[currentFrame % caps::MAX_FRAMES_IN_FLIGHT]; }
 		VulkanRenderState* GetRenderState();
 		VulkanDescriptorCache* GetDescriptorCache() const { return descriptor_cache.get(); }
 
@@ -83,6 +82,7 @@ namespace Device {
 		void AddRecreateSwapchainCallback(RecreateSwapchainCallback callback);
 
 		void Cleanup();
+		void ReserveSemaphores(uint32_t numSyncs);
 
 		void WindowResized();
 		void RecreateSwapChain();
@@ -93,6 +93,9 @@ namespace Device {
 		void InsertDebugMarker(VulkanCommandBuffer& command_buffer, const char* string);
 		void EndDebugMarker(VulkanCommandBuffer& command_buffer);
 		void AssignDebugName(uint64_t id, vk::DebugReportObjectTypeEXT type, const char* name);
+
+		RpsDevice GetRpsDevice() const { return rpsDevice; }
+
 	private:
 		static VKAPI_ATTR VkBool32 VKAPI_CALL DebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData);
 
@@ -100,6 +103,7 @@ namespace Device {
 		void PickPhysicalDevice();
 		void CreateLogicalDevice();
 		void CreateSyncObjects();
+		void CreateRPSDevice();
 		void SetupDebugMessenger();
 		void SetupDebugMarker();
 		void SetupDebugName();
@@ -131,6 +135,7 @@ namespace Device {
 		uint32_t current_render_state = 0;
 		std::vector<VkSemaphore> imageAvailableSemaphores;
 		std::vector<VkSemaphore> renderFinishedSemaphores;
+		std::vector<VkSemaphore> queueSemaphores;
 		std::vector<VkFence> inFlightFences;
 		std::vector<FrameCommandBufferData> frame_command_buffers;
 		
@@ -138,7 +143,10 @@ namespace Device {
 
 		bool framebuffer_resized = false;
 		size_t currentFrame = 0;
+		uint32_t swapchainImageIndex = 0;
 		VmaAllocator allocator;
+
+		RpsDevice rpsDevice;
 
 		// Debug
 		VkDebugUtilsMessengerEXT debug_messenger;

@@ -235,6 +235,8 @@ namespace Device {
 		VulkanCommandBuffer* GetCurrentCommandBuffer() const;
 		void UpdateGlobalDescriptorSet();
 
+		void SetCurrentRenderPass(const Device::VulkanRenderPass& render_pass) { current_render_pass = &render_pass; }
+
 		void BeginRenderPass(const Device::VulkanRenderPass& render_pass);
 		void EndRenderPass();
 		VulkanCommandBuffer* BeginRendering(const VulkanRenderTarget& render_target, const VulkanRenderPass& render_pass);
@@ -246,6 +248,7 @@ namespace Device {
 		void BeginRecording(PipelineBindPoint bind_point);
 		void EndRecording();
 
+		PipelineBindPoint getPipelineBindPoint() const { return pipeline_bind_point; };
 		vk::CommandBuffer getRecorderCommandBuffer() const { return recordedCommandBuffer; }
 
 	private:
