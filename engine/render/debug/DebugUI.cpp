@@ -186,111 +186,111 @@ namespace render {
 
 		void SetupRenderState(ImDrawData* draw_data, VulkanRenderState& state)
 		{
-			state.SetShader(*shader);
+			//state.SetShader(*shader);
 
-			RenderMode mode;
-			mode.SetDepthTestEnabled(false);
-			mode.SetDepthWriteEnabled(false);
-			mode.SetPrimitiveTopology(PrimitiveTopology::TriangleList);
-			mode.SetPolygonMode(PolygonMode::Fill);
-			mode.SetCullMode(CullMode::None);
-			
-			mode.SetAlphaBlendEnabled(true);
-			mode.SetSrcBlend(BlendFactor::SrcAlpha);
-			mode.SetDestBlend(BlendFactor::OneMinusSrcAlpha);
-			mode.SetBlend(BlendOp::Add);
+			//RenderMode mode;
+			//mode.SetDepthTestEnabled(false);
+			//mode.SetDepthWriteEnabled(false);
+			//mode.SetPrimitiveTopology(PrimitiveTopology::TriangleList);
+			//mode.SetPolygonMode(PolygonMode::Fill);
+			//mode.SetCullMode(CullMode::None);
+			//
+			//mode.SetAlphaBlendEnabled(true);
+			//mode.SetSrcBlend(BlendFactor::SrcAlpha);
+			//mode.SetDestBlend(BlendFactor::OneMinusSrcAlpha);
+			//mode.SetBlend(BlendOp::Add);
 
-			mode.SetSrcBlendAlpha(BlendFactor::OneMinusSrcAlpha);
-			mode.SetDestBlendAlpha(BlendFactor::Zero);
-			mode.SetBlendAlpha(BlendOp::Add);
+			//mode.SetSrcBlendAlpha(BlendFactor::OneMinusSrcAlpha);
+			//mode.SetDestBlendAlpha(BlendFactor::Zero);
+			//mode.SetBlendAlpha(BlendOp::Add);
 
-			state.SetRenderMode(mode);
-			state.SetVertexLayout(vertex_layout);
-			state.RemoveGlobalBindings();
+			//state.SetRenderMode(mode);
+			//state.SetVertexLayout(vertex_layout);
+			//state.RemoveGlobalBindings();
 
-			state.UpdateState();
+			//state.UpdateState();
 
-			auto command_buffer = state.GetCurrentCommandBuffer()->GetCommandBuffer();
-			float scale[2];
-			scale[0] = 2.0f / draw_data->DisplaySize.x;
-			scale[1] = 2.0f / draw_data->DisplaySize.y;
-			float translate[2];
-			translate[0] = -1.0f - draw_data->DisplayPos.x * scale[0];
-			translate[1] = -1.0f - draw_data->DisplayPos.y * scale[1];
+			//auto command_buffer = state.GetCurrentCommandBuffer()->GetCommandBuffer();
+			//float scale[2];
+			//scale[0] = 2.0f / draw_data->DisplaySize.x;
+			//scale[1] = 2.0f / draw_data->DisplaySize.y;
+			//float translate[2];
+			//translate[0] = -1.0f - draw_data->DisplayPos.x * scale[0];
+			//translate[1] = -1.0f - draw_data->DisplayPos.y * scale[1];
 
-			state.PushConstants(ShaderProgram::Stage::Vertex, sizeof(float) * 0, sizeof(float) * 2, scale);
-			state.PushConstants(ShaderProgram::Stage::Vertex, sizeof(float) * 2, sizeof(float) * 2, translate);
-			state.SetDescriptorSet(*descriptor_set, 0, 0, nullptr);
+			//state.PushConstants(ShaderProgram::Stage::Vertex, sizeof(float) * 0, sizeof(float) * 2, scale);
+			//state.PushConstants(ShaderProgram::Stage::Vertex, sizeof(float) * 2, sizeof(float) * 2, translate);
+			//state.SetDescriptorSet(*descriptor_set, 0, 0, nullptr);
 		}
 
 		void Render(VulkanRenderState& state)
 		{
-			auto* draw_data = ImGui::GetDrawData();
-			float fb_width = state.GetViewport().z;
-			float fb_height = state.GetViewport().w;
+			//auto* draw_data = ImGui::GetDrawData();
+			//float fb_width = state.GetViewport().z;
+			//float fb_height = state.GetViewport().w;
 
-			SetupRenderState(draw_data, state);
-			
-			// Will project scissor/clipping rectangles into framebuffer space
-			ImVec2 clip_off = draw_data->DisplayPos;         // (0,0) unless using multi-viewports
-			ImVec2 clip_scale = draw_data->FramebufferScale; // (1,1) unless using retina display which are often (2,2)
+			//SetupRenderState(draw_data, state);
+			//
+			//// Will project scissor/clipping rectangles into framebuffer space
+			//ImVec2 clip_off = draw_data->DisplayPos;         // (0,0) unless using multi-viewports
+			//ImVec2 clip_scale = draw_data->FramebufferScale; // (1,1) unless using retina display which are often (2,2)
 
-															 // Render command lists
-															 // (Because we merged all buffers into a single one, we maintain our own offset into them)
-			int global_vtx_offset = 0;
-			int global_idx_offset = 0;
-			for (int n = 0; n < draw_data->CmdListsCount; n++)
-			{
-				const ImDrawList* cmd_list = draw_data->CmdLists[n];
-				for (int cmd_i = 0; cmd_i < cmd_list->CmdBuffer.Size; cmd_i++)
-				{
-					const ImDrawCmd* pcmd = &cmd_list->CmdBuffer[cmd_i];
-					if (pcmd->UserCallback != NULL)
-					{
-						// User callback, registered via ImDrawList::AddCallback()
-						// (ImDrawCallback_ResetRenderState is a special callback value used by the user to request the renderer to reset render state.)
-						if (pcmd->UserCallback == ImDrawCallback_ResetRenderState)
-							SetupRenderState(draw_data, state);
-						else
-							pcmd->UserCallback(cmd_list, pcmd);
-					}
-					else
-					{
-						// Project scissor/clipping rectangles into framebuffer space
-						ImVec4 clip_rect;
-						clip_rect.x = (pcmd->ClipRect.x - clip_off.x) * clip_scale.x;
-						clip_rect.y = (pcmd->ClipRect.y - clip_off.y) * clip_scale.y;
-						clip_rect.z = (pcmd->ClipRect.z - clip_off.x) * clip_scale.x;
-						clip_rect.w = (pcmd->ClipRect.w - clip_off.y) * clip_scale.y;
+			//												 // Render command lists
+			//												 // (Because we merged all buffers into a single one, we maintain our own offset into them)
+			//int global_vtx_offset = 0;
+			//int global_idx_offset = 0;
+			//for (int n = 0; n < draw_data->CmdListsCount; n++)
+			//{
+			//	const ImDrawList* cmd_list = draw_data->CmdLists[n];
+			//	for (int cmd_i = 0; cmd_i < cmd_list->CmdBuffer.Size; cmd_i++)
+			//	{
+			//		const ImDrawCmd* pcmd = &cmd_list->CmdBuffer[cmd_i];
+			//		if (pcmd->UserCallback != NULL)
+			//		{
+			//			// User callback, registered via ImDrawList::AddCallback()
+			//			// (ImDrawCallback_ResetRenderState is a special callback value used by the user to request the renderer to reset render state.)
+			//			if (pcmd->UserCallback == ImDrawCallback_ResetRenderState)
+			//				SetupRenderState(draw_data, state);
+			//			else
+			//				pcmd->UserCallback(cmd_list, pcmd);
+			//		}
+			//		else
+			//		{
+			//			// Project scissor/clipping rectangles into framebuffer space
+			//			ImVec4 clip_rect;
+			//			clip_rect.x = (pcmd->ClipRect.x - clip_off.x) * clip_scale.x;
+			//			clip_rect.y = (pcmd->ClipRect.y - clip_off.y) * clip_scale.y;
+			//			clip_rect.z = (pcmd->ClipRect.z - clip_off.x) * clip_scale.x;
+			//			clip_rect.w = (pcmd->ClipRect.w - clip_off.y) * clip_scale.y;
 
-						if (clip_rect.x < fb_width && clip_rect.y < fb_height && clip_rect.z >= 0.0f && clip_rect.w >= 0.0f)
-						{
-							// Negative offsets are illegal for vkCmdSetScissor
-							if (clip_rect.x < 0.0f)
-								clip_rect.x = 0.0f;
-							if (clip_rect.y < 0.0f)
-								clip_rect.y = 0.0f;
+			//			if (clip_rect.x < fb_width && clip_rect.y < fb_height && clip_rect.z >= 0.0f && clip_rect.w >= 0.0f)
+			//			{
+			//				// Negative offsets are illegal for vkCmdSetScissor
+			//				if (clip_rect.x < 0.0f)
+			//					clip_rect.x = 0.0f;
+			//				if (clip_rect.y < 0.0f)
+			//					clip_rect.y = 0.0f;
 
-							// Apply scissor/clipping rectangle
-							vec4 scissor;
-							scissor.x = (int32_t)(clip_rect.x);
-							scissor.y = (int32_t)(clip_rect.y);
-							scissor.z = (uint32_t)(clip_rect.z - clip_rect.x);
-							scissor.w = (uint32_t)(clip_rect.w - clip_rect.y);
-							if (scissor.z == 0 || scissor.w == 0)
-								continue;
+			//				// Apply scissor/clipping rectangle
+			//				vec4 scissor;
+			//				scissor.x = (int32_t)(clip_rect.x);
+			//				scissor.y = (int32_t)(clip_rect.y);
+			//				scissor.z = (uint32_t)(clip_rect.z - clip_rect.x);
+			//				scissor.w = (uint32_t)(clip_rect.w - clip_rect.y);
+			//				if (scissor.z == 0 || scissor.w == 0)
+			//					continue;
 
-							state.SetScissor(scissor);
+			//				state.SetScissor(scissor);
 
-							// Draw
-							auto index_type = sizeof(ImDrawIdx) == 2 ? IndexType::UINT16 : IndexType::UINT32;
-							state.DrawIndexed(*vertex_buffers[0]->GetBuffer(), *index_buffers[0]->GetBuffer(), pcmd->VtxOffset + global_vtx_offset, pcmd->ElemCount, pcmd->IdxOffset + global_idx_offset, index_type);
-						}
-					}
-				}
-				global_idx_offset += cmd_list->IdxBuffer.Size;
-				global_vtx_offset += cmd_list->VtxBuffer.Size;
-			}
+			//				// Draw
+			//				auto index_type = sizeof(ImDrawIdx) == 2 ? IndexType::UINT16 : IndexType::UINT32;
+			//				state.DrawIndexed(*vertex_buffers[0]->GetBuffer(), *index_buffers[0]->GetBuffer(), pcmd->VtxOffset + global_vtx_offset, pcmd->ElemCount, pcmd->IdxOffset + global_idx_offset, index_type);
+			//			}
+			//		}
+			//	}
+			//	global_idx_offset += cmd_list->IdxBuffer.Size;
+			//	global_vtx_offset += cmd_list->VtxBuffer.Size;
+			//}
 		}
 
 		void Deinitialize()

@@ -429,60 +429,60 @@ namespace render { namespace graph {
 
 	void RenderGraph::RecordPass(Pass* pass)
 	{
-		OPTICK_EVENT_DYNAMIC(pass->name.c_str());
-		bool is_graphics = !pass->is_compute;
-		PipelineBindPoint binding_point = is_graphics ? PipelineBindPoint::Graphics : PipelineBindPoint::Compute;
+		//OPTICK_EVENT_DYNAMIC(pass->name.c_str());
+		//bool is_graphics = !pass->is_compute;
+		//PipelineBindPoint binding_point = is_graphics ? PipelineBindPoint::Graphics : PipelineBindPoint::Compute;
 
-		auto* context = Engine::GetVulkanContext();
-		auto* state = context->GetRenderState();
-		state->BeginRecording(binding_point);
-		ApplyPreBarriers(*pass, *state);
-		auto* command_buffer = state->GetCurrentCommandBuffer();
+		//auto* context = Engine::GetVulkanContext();
+		//auto* state = context->GetRenderState();
+		//state->BeginRecording(binding_point);
+		//ApplyPreBarriers(*pass, *state);
+		//auto* command_buffer = state->GetCurrentCommandBuffer();
 
-		context->BeginDebugMarker(*command_buffer, pass->name.c_str());
-		profiler::StartMeasurement(*command_buffer, pass->index, pass->profiler_name);
+		//context->BeginDebugMarker(*command_buffer, pass->name.c_str());
+		//profiler::StartMeasurement(*command_buffer, pass->index, pass->profiler_name);
 
-		if (is_graphics)
-		{
-			auto initializer = GetPassInitializer(pass);
-			auto* vulkan_pass = GetRenderPass(std::get<0>(initializer));
-			auto* vulkan_render_target = GetRenderTarget(std::get<1>(initializer));
-			auto viewport = vec4(0, 0, std::get<2>(initializer));
+		//if (is_graphics)
+		//{
+		//	auto initializer = GetPassInitializer(pass);
+		//	auto* vulkan_pass = GetRenderPass(std::get<0>(initializer));
+		//	auto* vulkan_render_target = GetRenderTarget(std::get<1>(initializer));
+		//	auto viewport = vec4(0, 0, std::get<2>(initializer));
 
-			uint32_t attach_index = 0;
-			for (auto* output : pass->output_nodes)
-			{
-				if (output->resource->type == ResourceType::Attachment)
-					state->SetClearValue(attach_index++, output->clear_value);
-			}
+		//	uint32_t attach_index = 0;
+		//	for (auto* output : pass->output_nodes)
+		//	{
+		//		if (output->resource->type == ResourceType::Attachment)
+		//			state->SetClearValue(attach_index++, output->clear_value);
+		//	}
 
-			state->SetScissor(viewport);
-			state->SetViewport(viewport);
+		//	state->SetScissor(viewport);
+		//	state->SetViewport(viewport);
 
-			state->BeginRendering(*vulkan_render_target, *vulkan_pass);
-		}
+		//	state->BeginRendering(*vulkan_render_target, *vulkan_pass);
+		//}
 
-		pass->record_callback(*state);
+		//pass->record_callback(*state);
 
-		if (is_graphics)
-			state->EndRendering();
+		//if (is_graphics)
+		//	state->EndRendering();
 
-		ApplyPostBarriers(*pass, *state);
-		
-		profiler::FinishMeasurement(*command_buffer, pass->index, pass->profiler_name);
-		context->EndDebugMarker(*command_buffer);
-		state->EndRecording();
+		//ApplyPostBarriers(*pass, *state);
+		//
+		//profiler::FinishMeasurement(*command_buffer, pass->index, pass->profiler_name);
+		//context->EndDebugMarker(*command_buffer);
+		//state->EndRecording();
 
-		//FrameCommandBufferData data(
-		//	command_buffer->GetCommandBuffer(),
-		//	pass->signal_semaphore,
-		//	std::move(pass->wait_semaphores),
-		//	binding_point
-		//);
+		////FrameCommandBufferData data(
+		////	command_buffer->GetCommandBuffer(),
+		////	pass->signal_semaphore,
+		////	std::move(pass->wait_semaphores),
+		////	binding_point
+		////);
 
-		//data.command_buffer = command_buffer->GetCommandBuffer();
-		//data.queue = binding_point;
-		//context->AddFrameCommandBuffer(data);
+		////data.command_buffer = command_buffer->GetCommandBuffer();
+		////data.queue = binding_point;
+		////context->AddFrameCommandBuffer(data);
 	}
 
 	void RenderGraph::RecordCommandBuffers()

@@ -31,17 +31,17 @@ namespace render { namespace effects {
 
 	void Skybox::Render(Device::VulkanRenderState& state)
 	{
-		RenderMode mode;
-		mode.SetDepthWriteEnabled(false);
-		mode.SetDepthTestEnabled(false);
-		mode.SetCullMode(CullMode::Front);
+		//RenderMode mode;
+		//mode.SetDepthWriteEnabled(false);
+		//mode.SetDepthTestEnabled(false);
+		//mode.SetCullMode(CullMode::Front);
 
-		state.SetRenderMode(mode);
-		components::DrawCall draw_call;
-		draw_call.shader = shader;
-		draw_call.mesh = cube_mesh.get();
-		draw_call.descriptor_set = nullptr;
-		state.RenderDrawCall(&draw_call, false);
+		//state.SetRenderMode(mode);
+		//components::DrawCall draw_call;
+		//draw_call.shader = shader;
+		//draw_call.mesh = cube_mesh.get();
+		//draw_call.descriptor_set = nullptr;
+		//state.RenderDrawCall(&draw_call, false);
 	}
 
 } }

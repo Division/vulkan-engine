@@ -86,43 +86,43 @@ namespace render
 			return result;
 		}, [&, src_low_res_node](VulkanRenderState& state)
 		{
-			RenderMode mode;
-			mode.SetDepthWriteEnabled(false);
-			mode.SetDepthTestEnabled(false);
-			mode.SetPolygonMode(PolygonMode::Fill);
-			mode.SetPrimitiveTopology(PrimitiveTopology::TriangleList);
+			//RenderMode mode;
+			//mode.SetDepthWriteEnabled(false);
+			//mode.SetDepthTestEnabled(false);
+			//mode.SetPolygonMode(PolygonMode::Fill);
+			//mode.SetPrimitiveTopology(PrimitiveTopology::TriangleList);
 
-			ResourceBindings resource_bindings;
-			resource_bindings.AddTextureBinding("src_texture", src_target_node.resource->GetAttachment()->GetTexture().get());
-			if (src_low_res_node)
-				resource_bindings.AddTextureBinding("src_texture_low", src_low_res_node->resource->GetAttachment()->GetTexture().get());
+			//ResourceBindings resource_bindings;
+			//resource_bindings.AddTextureBinding("src_texture", src_target_node.resource->GetAttachment()->GetTexture().get());
+			//if (src_low_res_node)
+			//	resource_bindings.AddTextureBinding("src_texture_low", src_low_res_node->resource->GetAttachment()->GetTexture().get());
 
-			const auto* descriptor_set_layout = shader.GetDescriptorSetLayout(0);
-			const DescriptorSetBindings bindings(resource_bindings, *descriptor_set_layout);
+			//const auto* descriptor_set_layout = shader.GetDescriptorSetLayout(0);
+			//const DescriptorSetBindings bindings(resource_bindings, *descriptor_set_layout);
 
-			auto command_buffer = state.GetCurrentCommandBuffer()->GetCommandBuffer();
+			//auto command_buffer = state.GetCurrentCommandBuffer()->GetCommandBuffer();
 
-			ConstantBindings constants;
-			constants.AddFloatBinding(&environment_settings.bloom_threshold, "bloom_threshold");
-			constants.AddFloatBinding(&environment_settings.bloom_strength, "bloom_strength");
-			constants.AddFloatBinding(&environment_settings.bloom_scatter, "Scatter");
-			constants.AddFloatBinding(&environment_settings.bloom_clamp_max, "ClampMax");
-			const float4 low_tex_size = src_low_res_node ? src_low_res_node->resource->GetAttachment()->GetTexSize() : float4(0);
-			constants.AddFloat4Binding(&low_tex_size, "low_tex_size");
-			float ThresholdKnee = environment_settings.bloom_threshold / 2.0f;
-			constants.AddFloatBinding(&ThresholdKnee, "ThresholdKnee");
+			//ConstantBindings constants;
+			//constants.AddFloatBinding(&environment_settings.bloom_threshold, "bloom_threshold");
+			//constants.AddFloatBinding(&environment_settings.bloom_strength, "bloom_strength");
+			//constants.AddFloatBinding(&environment_settings.bloom_scatter, "Scatter");
+			//constants.AddFloatBinding(&environment_settings.bloom_clamp_max, "ClampMax");
+			//const float4 low_tex_size = src_low_res_node ? src_low_res_node->resource->GetAttachment()->GetTexSize() : float4(0);
+			//constants.AddFloat4Binding(&low_tex_size, "low_tex_size");
+			//float ThresholdKnee = environment_settings.bloom_threshold / 2.0f;
+			//constants.AddFloatBinding(&ThresholdKnee, "ThresholdKnee");
 
-			const vec2 texel_size = vec2(1.0f) / vec2(src_target_node.resource->GetAttachment()->GetWidth(), src_target_node.resource->GetAttachment()->GetHeight());
-			constants.AddFloat2Binding(&texel_size, "texel_size");
-			state.SetGlobalBindings(resource_bindings, constants);
+			//const vec2 texel_size = vec2(1.0f) / vec2(src_target_node.resource->GetAttachment()->GetWidth(), src_target_node.resource->GetAttachment()->GetHeight());
+			//constants.AddFloat2Binding(&texel_size, "texel_size");
+			//state.SetGlobalBindings(resource_bindings, constants);
 
-			state.SetRenderMode(mode);
-			state.SetShader(shader);
-			state.SetVertexLayout(full_screen_quad_mesh->GetVertexLayout());
-			state.UpdateState();
-			state.SetDescriptorSetBindings(bindings, constants);
+			//state.SetRenderMode(mode);
+			//state.SetShader(shader);
+			//state.SetVertexLayout(full_screen_quad_mesh->GetVertexLayout());
+			//state.UpdateState();
+			//state.SetDescriptorSetBindings(bindings, constants);
 
-			state.Draw(*full_screen_quad_mesh->vertexBuffer(), full_screen_quad_mesh->indexCount(), 0);
+			//state.Draw(*full_screen_quad_mesh->vertexBuffer(), full_screen_quad_mesh->indexCount(), 0);
 		});
 		
 		return pass_info.color_output;

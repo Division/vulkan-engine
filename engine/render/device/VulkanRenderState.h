@@ -206,22 +206,14 @@ namespace Device {
 		VulkanRenderState();
 		~VulkanRenderState();
 
-		void SetRenderMode(const RenderMode& mode);
-		void SetViewport(vec4 viewport);
-		vec4 GetViewport() const { return current_viewport; };
-		void SetScissor(vec4 scissor);
-		void SetShader(const ShaderProgram& program);
-		void SetVertexLayout(const VertexLayout& layout);
-		void SetGlobalBindings(const ResourceBindings& global_bindings, const ConstantBindings& global_constants = {});
+		void BindPipeline(const VulkanPipeline& pipeline);
 		void SetDescriptorSetBindings(const DescriptorSetBindings& bindings, const ConstantBindings& constant_bindings = {});
 		void SetDescriptorSet(const DescriptorSet& descriptor_set, uint32_t index, uint32_t dynamic_offset_count, const uint32_t* dynamic_offsets);
-		void RemoveGlobalBindings();
 		void SetClearValue(uint32_t index, vk::ClearValue value);
 		void PushConstants(ShaderProgram::Stage stage, uint32_t offset, uint32_t size, void* data);
 		const VulkanPipeline* GetCurrentPipeline() const { return current_pipeline; }
 
-		void UpdateState();
-		void RenderDrawCall(const ECS::components::DrawCall* draw_call, bool is_depth);
+		//void RenderDrawCall(const ECS::components::DrawCall* draw_call, bool is_depth);
 		void DrawIndexed(const VulkanBuffer& vertex_buffer, const VulkanBuffer& index_buffer, uint32_t vertex_offset, uint32_t index_count, uint32_t first_index, IndexType index_type, uint32_t instance_count = 1);
 		void DrawIndexedIndirect(const VulkanBuffer& vertex_buffer, const VulkanBuffer& index_buffer, IndexType index_type, VulkanBuffer& indirect_buffer, uint32_t indirect_buffer_offset);
 		void Draw(const VulkanBuffer& buffer, uint32_t vertexCount, uint32_t firstVertex, uint32_t instance_count = 1);
@@ -233,13 +225,9 @@ namespace Device {
 		void Copy(const VulkanBuffer& src, const VulkanBuffer& dst, vk::BufferCopy copy_region);
 
 		VulkanCommandBuffer* GetCurrentCommandBuffer() const;
-		void UpdateGlobalDescriptorSet();
 
-		void SetCurrentRenderPass(const Device::VulkanRenderPass& render_pass) { current_render_pass = &render_pass; }
-
-		void BeginRenderPass(const Device::VulkanRenderPass& render_pass);
+		void BeginRenderPass(const VulkanRenderPass& render_pass, const VulkanRenderTarget& render_target);
 		void EndRenderPass();
-		VulkanCommandBuffer* BeginRendering(const VulkanRenderTarget& render_target, const VulkanRenderPass& render_pass);
 		void EndRendering();
 
 		void Dispatch(const ShaderProgram& program, const ResourceBindings& bindings, const ConstantBindings& constants, uvec3 group_size);
@@ -252,35 +240,21 @@ namespace Device {
 		vk::CommandBuffer getRecorderCommandBuffer() const { return recordedCommandBuffer; }
 
 	private:
-		VulkanPipeline* GetPipeline(const VulkanPipelineInitializer& initializer);
+		VulkanPipeline* GetOrCreatePipeline(const VulkanPipelineInitializer& initializer);
 		vk::Sampler GetSampler(const SamplerMode& sampler_mode);
 
-		std::optional<ResourceBindings> global_bindings;
-		std::optional<ConstantBindings> global_constants;
-
-		uint32_t global_layout_hash = 0;
 		PipelineBindPoint pipeline_bind_point = PipelineBindPoint::Graphics;
 
-		uint32_t dirty_flags = 0;
 		uint32_t current_frame = 0;
 		bool render_pass_started = false;
 
-		RenderMode current_render_mode;
-		const VertexLayout* current_vertex_layout = nullptr;
-		const VulkanRenderTarget* current_render_target = nullptr;
-		const VulkanRenderPass* current_render_pass = nullptr;
-		const ShaderProgram* current_shader = nullptr;
 		const VulkanPipeline* current_pipeline = nullptr;
-		vec4 current_viewport;
-		vec4 current_scissor;
 
 		std::unordered_map<uint32_t, vk::UniqueSampler> sampler_cache;
-		std::unordered_map<uint32_t, vk::DescriptorSet> descriptor_set_cache;
 		std::unordered_map<uint32_t, std::unique_ptr<VulkanPipeline>> pipeline_cache;
 		std::array<vk::ClearValue, caps::max_color_attachments + 1> clear_values;
 
 		std::unordered_map<uint32_t, std::unique_ptr<VulkanCommandPool>> command_pools;
-		vk::UniqueDescriptorPool descriptor_pool;
 		std::unordered_map<uint32_t, std::array<VulkanCommandBuffer*, caps::MAX_FRAMES_IN_FLIGHT>> command_buffers;
 
 		vk::CommandBuffer recordedCommandBuffer;

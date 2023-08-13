@@ -88,37 +88,37 @@ namespace render::effects
 				return result;
 			}, [&, shader](VulkanRenderState& state)
 			{
-				RenderMode mode;
-				mode.SetDepthWriteEnabled(false);
-				mode.SetDepthTestEnabled(false);
-				mode.SetPolygonMode(PolygonMode::Fill);
-				mode.SetPrimitiveTopology(PrimitiveTopology::TriangleList);
+				//RenderMode mode;
+				//mode.SetDepthWriteEnabled(false);
+				//mode.SetDepthTestEnabled(false);
+				//mode.SetPolygonMode(PolygonMode::Fill);
+				//mode.SetPrimitiveTopology(PrimitiveTopology::TriangleList);
 
-				ResourceBindings resource_bindings;
-				resource_bindings.AddTextureBinding("src_texture", input.src_texture->resource->GetAttachment()->GetTexture().get());
-				if (input.bloom_texture)
-					resource_bindings.AddTextureBinding("bloom_texture", input.bloom_texture->resource->GetAttachment()->GetTexture().get());
+				//ResourceBindings resource_bindings;
+				//resource_bindings.AddTextureBinding("src_texture", input.src_texture->resource->GetAttachment()->GetTexture().get());
+				//if (input.bloom_texture)
+				//	resource_bindings.AddTextureBinding("bloom_texture", input.bloom_texture->resource->GetAttachment()->GetTexture().get());
 
 
-				const auto* descriptor_set_layout = shader->GetDescriptorSetLayout(0);
-				const DescriptorSetBindings bindings(resource_bindings, *descriptor_set_layout);
-				
-				auto command_buffer = state.GetCurrentCommandBuffer()->GetCommandBuffer();
+				//const auto* descriptor_set_layout = shader->GetDescriptorSetLayout(0);
+				//const DescriptorSetBindings bindings(resource_bindings, *descriptor_set_layout);
+				//
+				//auto command_buffer = state.GetCurrentCommandBuffer()->GetCommandBuffer();
 
-				ConstantBindings constants = global_constants;
-				constants.AddFloatBinding(&environment_settings.exposure, "exposure");
-				constants.AddFloatBinding(&environment_settings.bloom_strength, "bloom_strength"); 
-				const vec4 bloom_tex_size = input.bloom_texture ? input.bloom_texture->resource->GetAttachment()->GetTexSize() : vec4(0);
-				constants.AddFloat4Binding(&bloom_tex_size, "bloom_tex_size");
-				state.SetGlobalBindings(global_bindings, constants);
+				//ConstantBindings constants = global_constants;
+				//constants.AddFloatBinding(&environment_settings.exposure, "exposure");
+				//constants.AddFloatBinding(&environment_settings.bloom_strength, "bloom_strength"); 
+				//const vec4 bloom_tex_size = input.bloom_texture ? input.bloom_texture->resource->GetAttachment()->GetTexSize() : vec4(0);
+				//constants.AddFloat4Binding(&bloom_tex_size, "bloom_tex_size");
+				//state.SetGlobalBindings(global_bindings, constants);
 
-				state.SetRenderMode(mode);
-				state.SetShader(*shader);
-				state.SetVertexLayout(full_screen_quad_mesh->GetVertexLayout());
-				state.UpdateState();
+				//state.SetRenderMode(mode);
+				//state.SetShader(*shader);
+				//state.SetVertexLayout(full_screen_quad_mesh->GetVertexLayout());
+				//state.UpdateState();
 
-				state.SetDescriptorSetBindings(bindings, constants);
-				state.Draw(*full_screen_quad_mesh->vertexBuffer(), full_screen_quad_mesh->indexCount(), 0);
+				//state.SetDescriptorSetBindings(bindings, constants);
+				//state.Draw(*full_screen_quad_mesh->vertexBuffer(), full_screen_quad_mesh->indexCount(), 0);
 			});
 
 		current_target = (current_target + 1) % attachments.size();

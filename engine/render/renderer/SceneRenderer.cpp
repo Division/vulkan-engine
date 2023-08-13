@@ -156,19 +156,15 @@ namespace render {
 		VkRenderPass renderPassFromRps = {};
 		rpsVKGetCmdRenderPass(pContext, &renderPassFromRps);
 		auto renderPass = Device::VulkanRenderPass(Device::VulkanRenderPassInitializer(renderPassFromRps));
-		state.SetCurrentRenderPass(renderPass);
 
 		uint32_t num = 0;
 		ConstantBindings constants;
 		constants.AddUIntBinding(&num, "exposure");
 
-		state.SetRenderMode(mode);
-		state.SetShader(*shader);
-
 		auto full_screen_quad_mesh = GetRendererResources().full_screen_quad_mesh.get();
-		state.SetVertexLayout(full_screen_quad_mesh->GetVertexLayout());
-		state.UpdateState();
 
+		static VulkanPipeline pipeline(VulkanPipelineInitializer(shader, &renderPass, &full_screen_quad_mesh->GetVertexLayout(), &mode));
+		state.BindPipeline(pipeline);
 		state.SetDescriptorSetBindings(bindings, constants);
 		state.Draw(*full_screen_quad_mesh->vertexBuffer(), full_screen_quad_mesh->indexCount(), 0);
 
