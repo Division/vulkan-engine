@@ -50,12 +50,8 @@
 
 #include <functional>
 
-#include "rps/runtime/vk/rps_vk_runtime.h"
-
 using namespace Device;
 using namespace Resources;
-
-RPS_DECLARE_RPSL_ENTRY(test_triangle, main);
 
 namespace render {
 
@@ -122,56 +118,6 @@ namespace render {
 
 	SceneRenderer::~SceneRenderer() = default;
 
-    void SceneRenderer::DrawTriangleWithRPSCb(const RpsCmdCallbackContext* pContext)
-    {
-        //if (m_psoWithRps == VK_NULL_HANDLE)
-        //{
-        //    VkRenderPass renderPassFromRps = {};
-        //    REQUIRE_RPS_OK(rpsVKGetCmdRenderPass(pContext, &renderPassFromRps));
-
-        //    m_psoWithRps = CreateVkPipeline(renderPassFromRps);
-        //}
-
-        //DrawTriangle(rpsVKCommandBufferFromHandle(pContext->hCommandBuffer), m_psoWithRps);
-		auto info = ShaderProgramInfo()
-			.AddShader(ShaderProgram::Stage::Vertex, L"shaders/postprocess/postprocess.hlsl", "vs_main")
-			.AddShader(ShaderProgram::Stage::Fragment, L"shaders/postprocess/postprocess.hlsl", "ps_main");
-		auto shader = shader_cache->GetShaderProgram(info);
-
-
-		RenderMode mode;
-		mode.SetDepthWriteEnabled(false);
-		mode.SetDepthTestEnabled(false);
-		mode.SetPolygonMode(PolygonMode::Fill);
-		mode.SetPrimitiveTopology(PrimitiveTopology::TriangleList);
-
-		ResourceBindings resource_bindings;
-
-		const auto* descriptor_set_layout = shader->GetDescriptorSetLayout(0);
-		const DescriptorSetBindings bindings(resource_bindings, *descriptor_set_layout);
-		
-		auto& state = *static_cast<VulkanRenderState*>(pContext->pUserRecordContext);
-
-		VkRenderPass renderPassFromRps = {};
-		rpsVKGetCmdRenderPass(pContext, &renderPassFromRps);
-		auto renderPass = Device::VulkanRenderPass(Device::VulkanRenderPassInitializer(renderPassFromRps));
-
-		uint32_t num = 0;
-		ConstantBindings constants;
-		constants.AddUIntBinding(&num, "exposure");
-
-		auto full_screen_quad_mesh = GetRendererResources().full_screen_quad_mesh.get();
-
-		static VulkanPipeline pipeline(VulkanPipelineInitializer(shader, &renderPass, &full_screen_quad_mesh->GetVertexLayout(), &mode));
-		state.BindPipeline(pipeline);
-		state.SetDescriptorSetBindings(bindings, constants);
-		state.Draw(*full_screen_quad_mesh->vertexBuffer(), full_screen_quad_mesh->indexCount(), 0);
-
-		scene_buffers->GetConstantBuffer()->Upload();
-		scene_buffers->GetSkinningMatricesBuffer()->Upload();
-    }
-
-
 	SceneRenderer::SceneRenderer(Scene& scene, ShaderCache* shader_cache, DebugSettings* settings)
 		: scene(scene)
 		, shader_cache(shader_cache)
@@ -209,14 +155,6 @@ namespace render {
 		gpu_particles = std::make_unique<GPUParticles::GPUParticles>(*this, *bitonic_sort, *scene.GetEntityManager());
 		blur = std::make_unique<Blur>(*shader_cache, *renderer_resources);
 		bloom = std::make_unique<Bloom>(*shader_cache, *blur, *environment_settings, *renderer_resources);
-
-
-        RpsRenderGraphCreateInfo renderGraphInfo            = {};
-        renderGraphInfo.mainEntryCreateInfo.hRpslEntryPoint = RPS_ENTRY_REF(test_triangle, main);
-        rpsRenderGraphCreate(Engine::GetVulkanContext()->GetRpsDevice(), &renderGraphInfo, &m_rpsRenderGraph);
-
-        rpsProgramBindNode(
-            rpsRenderGraphGetMainEntry(m_rpsRenderGraph), "Triangle", &SceneRenderer::DrawTriangleWithRPSCb, this);
 	}
 
 	void SceneRenderer::OnRecreateSwapchain(int32_t width, int32_t height)
@@ -295,56 +233,33 @@ namespace render {
 															  : RPS_GPU_COMPLETED_FRAME_INDEX_NONE;
     }
 
-	void SceneRenderer::RenderScene(float dt)
+	void SceneRenderer::RenderSceneGraph(RpsRenderGraph graph, gsl::span<const RpsConstant> args, gsl::span<const RpsRuntimeResource const*> resources)
 	{
 		OPTICK_EVENT();
 
-		auto context = Engine::GetVulkanContext();
-		auto swapchain = context->GetSwapchain();
-
-        if (m_rpsRenderGraph != RPS_NULL_HANDLE)
+        if (graph != RPS_NULL_HANDLE)
         {
-			RpsRuntimeResource backBufferResources[16] = {};
-
-			for (uint32_t i = 0; i < swapchain->GetImages().size(); i++)
-			{
-				backBufferResources[i] = { swapchain->GetImages()[i] };
-			}
-			const RpsRuntimeResource* argResources[] = { backBufferResources };
-
-			RpsResourceDesc backBufferDesc = {};
-			backBufferDesc.type = RPS_RESOURCE_TYPE_IMAGE_2D;
-			backBufferDesc.temporalLayers = uint32_t(swapchain->GetImages().size());
-			backBufferDesc.image.arrayLayers = 1;
-			backBufferDesc.image.mipLevels = 1;
-			backBufferDesc.image.format = rpsFormatFromVK((VkFormat)swapchain->GetImageFormat());
-			backBufferDesc.image.width = swapchain->GetWidth();
-			backBufferDesc.image.height = swapchain->GetHeight();
-			backBufferDesc.image.sampleCount = 1;
-
-			RpsConstant argData[] = { &backBufferDesc };
-
-			const uint64_t gpuCompletedFrameIndex = CalcGuaranteedCompletedFrameIndexForRps();
+			assert(args.size() == resources.size());
 
 			RpsRenderGraphUpdateInfo updateInfo = {};
-			updateInfo.frameIndex = context->GetCurrentFrame();
-			updateInfo.gpuCompletedFrameIndex = gpuCompletedFrameIndex;
-			updateInfo.numArgs = 1;
-			updateInfo.ppArgs = argData;
-			updateInfo.ppArgResources = argResources;
-
+			updateInfo.numArgs = std::min(args.size(), resources.size());
+			updateInfo.ppArgs = args.data();
+			updateInfo.ppArgResources = resources.data();
+			updateInfo.frameIndex = Engine::GetVulkanContext()->GetCurrentFrame();
+			updateInfo.gpuCompletedFrameIndex = CalcGuaranteedCompletedFrameIndexForRps();
 			updateInfo.diagnosticFlags = RPS_DIAGNOSTIC_ENABLE_RUNTIME_DEBUG_NAMES;
-			if (context->GetCurrentFrame() < context->GetSwapchainImageCount())
+			if (Engine::GetVulkanContext()->GetCurrentFrame() < Engine::GetVulkanContext()->GetSwapchainImageCount())
 			{
 				updateInfo.diagnosticFlags = RPS_DIAGNOSTIC_ENABLE_ALL;
 			}
 
-			rpsRenderGraphUpdate(m_rpsRenderGraph, &updateInfo);
+			rpsRenderGraphUpdate(graph, &updateInfo);
 
 			RpsRenderGraphBatchLayout batchLayout = {};
-			RpsResult                 result = rpsRenderGraphGetBatchLayout(m_rpsRenderGraph, &batchLayout);
+			RpsResult                 result = rpsRenderGraphGetBatchLayout(graph, &batchLayout);
 			assert(result == RPS_OK);
 
+			auto context = Engine::GetVulkanContext();
 			context->ReserveSemaphores(batchLayout.numFenceSignals);
 
 			for (uint32_t iBatch = 0; iBatch < batchLayout.numCmdBatches; iBatch++)
@@ -362,7 +277,7 @@ namespace render {
 				recordInfo.numCmds = batch.numCmds;
 				recordInfo.hCmdBuffer = rpsVKCommandBufferToHandle(commandBuffer);
 
-				result = rpsRenderGraphRecordCommands(m_rpsRenderGraph, &recordInfo);
+				result = rpsRenderGraphRecordCommands(graph, &recordInfo);
 				assert(result == RPS_OK);
 
 				state->EndRecording();

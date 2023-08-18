@@ -128,7 +128,7 @@ namespace render {
 		SceneRenderer(Scene& scene, Device::ShaderCache* shader_cache, DebugSettings* settings);
 		~SceneRenderer();
 
-		void RenderScene(float dt);
+		void RenderSceneGraph(RpsRenderGraph graph, gsl::span<const RpsConstant> args, gsl::span<const RpsRuntimeResource const*> resources);
 		SceneBuffers* GetSceneBuffers() const { return scene_buffers.get(); }
 		DrawCallManager* GetDrawCallManager() const { return draw_call_manager.get(); }
 		Device::ShaderCache* GetShaderCache() const { return shader_cache; }
@@ -146,7 +146,6 @@ namespace render {
 		const GPUParticles::GPUParticles& GetGPUParticles() const { return *gpu_particles; }
 
 	private:
-		void DrawTriangleWithRPSCb(const RpsCmdCallbackContext* pContext);
 		void CreateDrawCalls();
 		void UploadDrawCalls();
 		void UpdateGlobalBindings();
@@ -159,8 +158,6 @@ namespace render {
 		{
 			graph::DependencyNode* node;
 		};
-
-		RpsRenderGraph m_rpsRenderGraph = {};
 
 		std::array<std::vector<UserRenderDependency>, magic_enum::enum_count<RenderDependencyType>()> user_dependencies;
 		std::unique_ptr<Device::VulkanRenderPass> temp_pass;

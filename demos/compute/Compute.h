@@ -52,21 +52,25 @@ namespace Resources
 	class SkeletalAnimationResource;
 }
 
+struct RpsCmdCallbackContext;
+
 class Game : public IGame {
 public:
 	Game();
 	~Game();
 	void init() override;
 	void update(float dt) override;
-
+	void render() override;
 private:
 	void OnRender(const render::RenderCallbackData&, render::graph::RenderGraph& graph);
 
+	void DrawTriangle(const RpsCmdCallbackContext* pContext);
+
 private:
-	struct Handles;
+	struct Data;
 	std::unique_ptr<Device::GPUBuffer> compute_buffer;
 	Device::ShaderProgram* compute_program;
-	std::unique_ptr<Handles> handles;
+	std::unique_ptr<Data> data;
 	std::unique_ptr<ViewerCamera> camera;
 
 	ECS::EntityID box_id = 0;

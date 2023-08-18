@@ -175,7 +175,7 @@ void Engine::MainLoop()
 		render::DebugUI::Update(dt);
 
 		context->WaitForRenderFence();
-		scene_renderer->RenderScene(dt);
+		game->render();
 		context->Present();
 
 		Common::Releaser::GetReleaser().Swap();

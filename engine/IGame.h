@@ -2,6 +2,7 @@
 
 #include <memory>
 #include <physx/PxPhysicsAPI.h>
+#include <rps/rps.h>
 
 class IGamePhysicsDelegate
 {
@@ -24,6 +25,7 @@ public:
 	virtual ~IGame() = default;
 	virtual void init() {}
 	virtual void update(float dt) {}
+	virtual void render() {}
 	virtual IGamePhysicsDelegate* GetPhysicsDelegate() { return nullptr; }
 	virtual void cleanup() {}
 	virtual InitParams GetInitParams() const { return {}; }

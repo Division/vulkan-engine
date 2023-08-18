@@ -19,18 +19,34 @@
 #include "utils/Math.h"
 #include "render/renderer/EnvironmentSettings.h"
 #include "render/renderer/RenderGraph.h"
+#include "render/renderer/SceneBuffers.h"
 #include "render/buffer/GPUBuffer.h"
 #include "render/device/VulkanRenderState.h"
 #include "imgui/imgui.h"
+#include "rps/runtime/vk/rps_vk_runtime.h"
+
+#include "render/device/VulkanContext.h"
+#include "render/buffer/VulkanBuffer.h"
+#include "render/device/VulkanUploader.h"
+#include "render/device/VulkanUtils.h"
+#include "render/device/VulkanRenderPass.h"
+#include "render/device/VulkanSwapchain.h"
+#include "render/device/VulkanPipeline.h"
+#include "render/device/VulkanRenderState.h"
+#include "render/device/VulkanRenderTarget.h"
+
+RPS_DECLARE_RPSL_ENTRY(test_triangle, main);
+
 
 using namespace System;
 using namespace ECS;
 using namespace ECS::systems;
 using namespace physx;
+using namespace Device;
 
-struct Game::Handles
+struct Game::Data
 {
-	render::SceneRenderer::RenderDispatcher::Handle render_callback;
+	RpsRenderGraph rpsRenderGraph = {};
 };
 
 namespace
@@ -49,15 +65,89 @@ void Game::init()
 	auto* engine = Engine::Get();
 	manager = engine->GetEntityManager();
 
+	data = std::make_unique<Data>();
+
 	camera = std::make_unique<ViewerCamera>();
 	Engine::Get()->GetScene()->GetCamera()->Transform().position = vec3(0, 2, -4);
+
+	RpsRenderGraphCreateInfo renderGraphInfo            = {};
+	renderGraphInfo.mainEntryCreateInfo.hRpslEntryPoint = RPS_ENTRY_REF(test_triangle, main);
+	rpsRenderGraphCreate(Engine::GetVulkanContext()->GetRpsDevice(), &renderGraphInfo, &data->rpsRenderGraph);
+
+	rpsProgramBindNode(rpsRenderGraphGetMainEntry(data->rpsRenderGraph), "Triangle", &Game::DrawTriangle, this);
 }
 
-void Game::OnRender(const render::RenderCallbackData& data, render::graph::RenderGraph& graph)
+void Game::DrawTriangle(const RpsCmdCallbackContext* pContext)
 {
+	auto info = ShaderProgramInfo()
+		.AddShader(ShaderProgram::Stage::Vertex, L"shaders/postprocess/postprocess.hlsl", "vs_main")
+		.AddShader(ShaderProgram::Stage::Fragment, L"shaders/postprocess/postprocess.hlsl", "ps_main");
+	auto shader = Engine::Get()->GetShaderCache()->GetShaderProgram(info);
+
+
+	RenderMode mode;
+	mode.SetDepthWriteEnabled(false);
+	mode.SetDepthTestEnabled(false);
+	mode.SetPolygonMode(PolygonMode::Fill);
+	mode.SetPrimitiveTopology(PrimitiveTopology::TriangleList);
+
+	ResourceBindings resource_bindings;
+
+	const auto* descriptor_set_layout = shader->GetDescriptorSetLayout(0);
+	const DescriptorSetBindings bindings(resource_bindings, *descriptor_set_layout);
+
+	auto& state = *static_cast<VulkanRenderState*>(pContext->pUserRecordContext);
+
+	VkRenderPass renderPassFromRps = {};
+	rpsVKGetCmdRenderPass(pContext, &renderPassFromRps);
+	auto renderPass = Device::VulkanRenderPass(Device::VulkanRenderPassInitializer(renderPassFromRps));
+
+	uint32_t num = 0;
+	ConstantBindings constants;
+	constants.AddUIntBinding(&num, "exposure");
+
+	auto full_screen_quad_mesh = Engine::Get()->GetSceneRenderer()->GetRendererResources().full_screen_quad_mesh.get();
+
+	static VulkanPipeline pipeline(VulkanPipelineInitializer(shader, &renderPass, &full_screen_quad_mesh->GetVertexLayout(), &mode));
+	state.BindPipeline(pipeline);
+	state.SetDescriptorSetBindings(bindings, constants);
+	state.Draw(*full_screen_quad_mesh->vertexBuffer(), full_screen_quad_mesh->indexCount(), 0);
+
+	auto* scene_buffers = Engine::Get()->GetSceneRenderer()->GetSceneBuffers();
+	scene_buffers->GetConstantBuffer()->Upload();
+	scene_buffers->GetSkinningMatricesBuffer()->Upload();
 }
 
 void Game::update(float dt)
 {
 	camera->Update(dt);
 }
+
+
+void Game::render()
+{
+	auto swapchain = Engine::GetVulkanContext()->GetSwapchain();
+
+	RpsRuntimeResource backBufferResources[16] = {};
+
+	for (uint32_t i = 0; i < swapchain->GetImages().size(); i++)
+	{
+		backBufferResources[i] = { swapchain->GetImages()[i] };
+	}
+	const RpsRuntimeResource* argResources[] = { backBufferResources };
+
+	RpsResourceDesc backBufferDesc = {};
+	backBufferDesc.type = RPS_RESOURCE_TYPE_IMAGE_2D;
+	backBufferDesc.temporalLayers = uint32_t(swapchain->GetImages().size());
+	backBufferDesc.image.arrayLayers = 1;
+	backBufferDesc.image.mipLevels = 1;
+	backBufferDesc.image.format = rpsFormatFromVK((VkFormat)swapchain->GetImageFormat());
+	backBufferDesc.image.width = swapchain->GetWidth();
+	backBufferDesc.image.height = swapchain->GetHeight();
+	backBufferDesc.image.sampleCount = 1;
+
+	const RpsConstant argData[] = { &backBufferDesc };
+
+	Engine::Get()->GetSceneRenderer()->RenderSceneGraph(data->rpsRenderGraph, argData, argResources);
+}
+
