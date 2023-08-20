@@ -174,15 +174,13 @@ namespace Device {
 	class DescriptorSet
 	{
 		const ShaderProgram::DescriptorSetLayout* layout;
-		DescriptorSetBindings bindings;
 		vk::DescriptorSet vulkan_descriptor_set;
 
 	public:
-		DescriptorSet(const DescriptorSetBindings& bindings, const ShaderProgram::DescriptorSetLayout* layout, vk::DescriptorSet vk_descriptor_set)
-			: layout(layout), bindings(bindings), vulkan_descriptor_set(vk_descriptor_set) {}
+		DescriptorSet(const ShaderProgram::DescriptorSetLayout* layout, vk::DescriptorSet vk_descriptor_set)
+			: layout(layout), vulkan_descriptor_set(vk_descriptor_set) {}
 
 		vk::DescriptorSet GetVKDescriptorSet() const { return vulkan_descriptor_set; }
-		const DescriptorSetBindings& GetBindings() const { return bindings; };
 		const ShaderProgram::DescriptorSetLayout& GetLayout() const { return *layout; }
 	};
 

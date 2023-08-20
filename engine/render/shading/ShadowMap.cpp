@@ -23,11 +23,11 @@ namespace render {
 	void ShadowMap::SetupShadowCasters(std::vector<ShadowCasterData>& shadow_casters) {
 		unsigned int index = 0;
 
-		for (auto& caster : shadow_casters) {
-			vec4 viewport = (vec4)getCellPixelRect(index);
-			caster.light->viewport = viewport;
-			index++;
-		}
+		//for (auto& caster : shadow_casters) {
+		//	//vec4 viewport = (vec4)getCellPixelRect(index);
+		//	//caster.light->viewport = viewport;
+		//	index++;
+		//}
 	}
 
 	Rect ShadowMap::getCellPixelRect(unsigned int index) {

@@ -18,26 +18,17 @@
 #include "objects/Camera.h"
 #include "utils/Math.h"
 #include "render/renderer/EnvironmentSettings.h"
-#include "render/renderer/RenderGraph.h"
 #include "render/renderer/SceneBuffers.h"
 #include "render/buffer/GPUBuffer.h"
 #include "render/device/VulkanRenderState.h"
 #include "imgui/imgui.h"
 #include "rps/runtime/vk/rps_vk_runtime.h"
 
-#include "render/device/VulkanContext.h"
-#include "render/buffer/VulkanBuffer.h"
-#include "render/device/VulkanUploader.h"
-#include "render/device/VulkanUtils.h"
-#include "render/device/VulkanRenderPass.h"
-#include "render/device/VulkanSwapchain.h"
-#include "render/device/VulkanPipeline.h"
-#include "render/device/VulkanRenderState.h"
-#include "render/device/VulkanRenderTarget.h"
+#include "render/device/Device.h"
+#include "modules/blur/Blur.h"
 
 RPS_DECLARE_RPSL_ENTRY(test_triangle, main);
-
-
+   
 using namespace System;
 using namespace ECS;
 using namespace ECS::systems;
@@ -47,25 +38,26 @@ using namespace Device;
 struct Game::Data
 {
 	RpsRenderGraph rpsRenderGraph = {};
+	std::unique_ptr<Modules::Blur> blur;
 };
 
 namespace
 {
 	constexpr uint32_t MAX_RESOLUTION = 200;
 }
-
+   
 Game::Game() = default;
 Game::~Game() = default;
-
+  
 void Game::init()
 {
 	OPTICK_EVENT();
 
-
 	auto* engine = Engine::Get();
 	manager = engine->GetEntityManager();
-
+     
 	data = std::make_unique<Data>();
+	data->blur = std::make_unique<Modules::Blur>("resources/compute/");
 
 	camera = std::make_unique<ViewerCamera>();
 	Engine::Get()->GetScene()->GetCamera()->Transform().position = vec3(0, 2, -4);
@@ -75,7 +67,7 @@ void Game::init()
 	rpsRenderGraphCreate(Engine::GetVulkanContext()->GetRpsDevice(), &renderGraphInfo, &data->rpsRenderGraph);
 
 	rpsProgramBindNode(rpsRenderGraphGetMainEntry(data->rpsRenderGraph), "Triangle", &Game::DrawTriangle, this);
-}
+} 
 
 void Game::DrawTriangle(const RpsCmdCallbackContext* pContext)
 {
@@ -116,7 +108,7 @@ void Game::DrawTriangle(const RpsCmdCallbackContext* pContext)
 	auto* scene_buffers = Engine::Get()->GetSceneRenderer()->GetSceneBuffers();
 	scene_buffers->GetConstantBuffer()->Upload();
 	scene_buffers->GetSkinningMatricesBuffer()->Upload();
-}
+} 
 
 void Game::update(float dt)
 {

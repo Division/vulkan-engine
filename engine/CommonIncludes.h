@@ -30,6 +30,9 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
+#include <gsl/gsl>
+#include <tl/expected.hpp>
+
 #define STBI_ONLY_PNG
 #define STBI_ONLY_JPEG
 #include "stb/stb_image.h"

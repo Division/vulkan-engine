@@ -1,54 +1,29 @@
 #include "SceneRenderer.h"
-#include "ecs/ECS.h"
-#include "ecs/components/MultiMeshRenderer.h"
-#include "ecs/components/Transform.h"
-#include "ecs/components/Light.h"
-#include "ecs/systems/RendererSystem.h"
-#include "ecs/systems/UpdateDrawCallsSystem.h"
 #include "scene/Scene.h"
-#include "render/device/VulkanUtils.h"
+#include "render/device/Device.h"
 #include "CommonIncludes.h"
 #include "Engine.h"
-#include "render/device/VulkanContext.h"
-#include "render/buffer/VulkanBuffer.h"
-#include "render/device/VulkanUploader.h"
-#include "render/device/VulkanUtils.h"
-#include "render/device/VulkanRenderPass.h"
-#include "render/device/VulkanSwapchain.h"
-#include "render/device/VulkanPipeline.h"
-#include "render/device/VulkanRenderState.h"
-#include "render/device/VulkanRenderTarget.h"
 #include "loader/TextureLoader.h"
-#include "render/shading/LightGrid.h"
 #include "render/texture/Texture.h"
-#include "render/shading/ShadowMap.h"
 #include "render/mesh/Mesh.h"
-#include "render/shading/IShadowCaster.h"
 #include "render/shader/ShaderCache.h"
-#include "render/shader/ShaderResource.h"
-#include "render/shader/ShaderBindings.h"
-#include "render/shader/ShaderDefines.h"
-#include "render/renderer/RenderGraph.h"
-#include "render/material/Material.h"
-#include "render/buffer/DynamicBuffer.h"
 #include "render/debug/DebugDraw.h"
 #include "render/debug/DebugUI.h"
 #include "EnvironmentSettings.h"
 #include "SceneBuffers.h"
 #include "objects/Camera.h"
-#include "render/effects/Skybox.h"
-#include "render/effects/PostProcess.h"
-#include "render/effects/Bloom.h"
-#include "render/effects/Blur.h"
-#include "render/effects/GPUParticles.h"
-#include "render/effects/BitonicSort.h"
 
 #include "resources/TextureResource.h"
 #include "render/debug/DebugSettings.h"
 #include "RenderModeUtils.h"
 #include "utils/MeshGeneration.h"
+#include "loader/FileLoader.h"
 
 #include <functional>
+#include "system/System.h"
+
+#define USE_RPSL_JIT 1
+#include "afx_common_helpers.hpp"
 
 using namespace Device;
 using namespace Resources;
@@ -56,11 +31,6 @@ using namespace Resources;
 namespace render {
 
 	using namespace ECS;
-	using namespace profiler;
-
-	static const int32_t shadow_atlas_size = 4096;
-
-	
 
 	RendererResources::RendererResources()
 	{
@@ -84,10 +54,10 @@ namespace render {
 		{
 			cube_initializer.AddCopy(
 				vk::BufferImageCopy(0, 0, 0,
-					vk::ImageSubresourceLayers(vk::ImageAspectFlagBits::eColor, 0, i, 1),
-					vk::Offset3D(0, 0, 0),
-					vk::Extent3D(4, 4, 1)
-				));
+vk::ImageSubresourceLayers(vk::ImageAspectFlagBits::eColor, 0, i, 1),
+vk::Offset3D(0, 0, 0),
+vk::Extent3D(4, 4, 1)
+));
 		}
 
 		blank_cube_texture = Device::Texture::Create(cube_initializer);
@@ -99,11 +69,6 @@ namespace render {
 		particle_quad_mesh = Common::Handle<Mesh>(std::make_unique<Mesh>());
 		MeshGeneration::generateParticleQuad(particle_quad_mesh.get());
 		particle_quad_mesh->createBuffer();
-	}
-
-	int32_t SceneRenderer::ShadowAtlasSize()
-	{
-		return shadow_atlas_size;
 	}
 
 	void SceneRenderer::SetRadianceCubemap(Resources::Handle<Resources::TextureResource> cubemap)
@@ -124,73 +89,17 @@ namespace render {
 		, debug_settings(settings)
 	{
 		scene_buffers = std::make_unique<SceneBuffers>();
-		directional_light = std::make_unique<components::DirectionalLight>();
-		scene.GetEntityManager()->AddStaticComponent(directional_light.get());
-		
 		renderer_resources = std::unique_ptr<RendererResources>(new RendererResources());
 
 		environment_settings = std::make_unique<EnvironmentSettings>();
-		environment_settings->directional_light = directional_light.get();
-
-		draw_call_manager = std::make_unique<DrawCallManager>(*this);
-		create_draw_calls_system = std::make_unique<systems::CreateDrawCallsSystem>(*scene.GetEntityManager(), *draw_call_manager);
-		upload_draw_calls_system = std::make_unique<systems::UploadDrawCallsSystem>(*draw_call_manager, *scene_buffers);
-		upload_skinning_system = std::make_unique<systems::UploadSkinningSystem>(*draw_call_manager, *scene_buffers);
-
-		light_grid = std::make_unique<LightGrid>();
-		shadow_map = std::make_unique<ShadowMap>(ShadowAtlasSize(), ShadowAtlasSize());
-		render_graph = std::make_unique<graph::RenderGraph>();
 		auto* context = Engine::GetVulkanContext();
 		context->AddRecreateSwapchainCallback(std::bind(&SceneRenderer::OnRecreateSwapchain, this, std::placeholders::_1, std::placeholders::_2));
-		shadowmap_atlas_attachment = std::make_unique<VulkanRenderTargetAttachment>("Shadowmap Atlas", VulkanRenderTargetAttachment::Type::Depth, ShadowAtlasSize(), ShadowAtlasSize(), Format::D24_unorm_S8_uint);
-		shadowmap_attachment = std::make_unique<VulkanRenderTargetAttachment>("Shadowmap", VulkanRenderTargetAttachment::Type::Depth, ShadowAtlasSize(), ShadowAtlasSize(), Format::D24_unorm_S8_uint);
-
-		global_resource_bindings = std::make_unique<Device::ResourceBindings>();
-		global_constant_bindings = std::make_unique<Device::ConstantBindings>();
-		
-		skybox = std::make_unique<effects::Skybox>(*shader_cache);
-
-		post_process = std::make_unique<effects::PostProcess>(*shader_cache, *environment_settings, *renderer_resources);
-		bitonic_sort = std::make_unique<BitonicSort>(*shader_cache);
-		gpu_particles = std::make_unique<GPUParticles::GPUParticles>(*this, *bitonic_sort, *scene.GetEntityManager());
-		blur = std::make_unique<Blur>(*shader_cache, *renderer_resources);
-		bloom = std::make_unique<Bloom>(*shader_cache, *blur, *environment_settings, *renderer_resources);
 	}
 
 	void SceneRenderer::OnRecreateSwapchain(int32_t width, int32_t height)
 	{
-		render_graph->ClearCache();
-
-		main_depth_attachment = std::make_unique<VulkanRenderTargetAttachment>("Main Depth", VulkanRenderTargetAttachment::Type::Depth, width, height, Format::D24_unorm_S8_uint);
-		main_color_attachment[0] = std::make_unique<VulkanRenderTargetAttachment>("Main Color 0", VulkanRenderTargetAttachment::Type::Color, width, height, Format::R16G16B16A16_float);
-		main_color_attachment[1] = std::make_unique<VulkanRenderTargetAttachment>("Main Color 1", VulkanRenderTargetAttachment::Type::Color, width, height, Format::R16G16B16A16_float);
-		post_process->OnRecreateSwapchain(width, height);
-		bloom->OnRecreateSwapchain(width, height);
-
-		auto swapchain = Engine::GetVulkanContext()->GetSwapchain();
-
-		for (uint32_t i = 0; i < caps::MAX_FRAMES_IN_FLIGHT; i++)
-		{
-			vulkanRT[i] = std::make_unique<Device::VulkanRenderTarget>(Device::VulkanRenderTargetInitializer(swapchain)
-				.AddAttachment(*swapchain->GetColorAttachment(i))
-				.AddAttachment(*main_depth_attachment));
-		}
 	}
 
-	void SceneRenderer::CreateDrawCalls()
-	{
-		auto* entity_manager = scene.GetEntityManager();
-		auto list = entity_manager->GetChunkLists([=](ChunkList* chunk_list) {
-			return chunk_list->HasComponent(GetComponentHash<components::MultiMeshRenderer>());
-		});
-		create_draw_calls_system->ProcessChunks(list);
-	}
-
-	void SceneRenderer::UploadDrawCalls()
-	{
-		upload_draw_calls_system->ProcessChunks(draw_call_manager->GetDrawCallChunks());
-		upload_skinning_system->ProcessChunks(draw_call_manager->GetSkinningChunks());
-	}
 
 	static ShaderBufferStruct::Camera GetCameraData(ICameraParamsProvider* camera, uvec2 screen_size)
 	{
@@ -209,29 +118,89 @@ namespace render {
 	{
 		ShaderBufferStruct::EnvironmentSettings result;
 
-		result.direction_light_enabled = settings.directional_light && settings.directional_light->enabled;
-		if (result.direction_light_enabled)
-		{
-			result.direction_light_color = settings.directional_light->color;
-			result.direction_light_direction = settings.directional_light->transform.Forward();
-			result.direction_light_projection_matrix = settings.directional_light->cameraViewProjectionMatrix();
-			result.direction_light_cast_shadows = settings.directional_light->cast_shadows;
-		}
-
+		result.direction_light_enabled = false;
 		result.environment_brightness = settings.environment_brightness;
 		result.exposure = settings.exposure;
 		return result;
 	}
 
-    static uint64_t CalcGuaranteedCompletedFrameIndexForRps() 
-    {
+	static uint64_t CalcGuaranteedCompletedFrameIndexForRps()
+	{
 		auto context = Engine::GetVulkanContext();
-        // For VK we wait for swapchain before submitting, so max queued frame count is swapChainImages + 1.
-        const uint32_t maxQueuedFrames = uint32_t(context->GetSwapchainImageCount() + 1);
+		// For VK we wait for swapchain before submitting, so max queued frame count is swapChainImages + 1.
+		const uint32_t maxQueuedFrames = uint32_t(context->GetSwapchainImageCount() + 1);
 
-        return (context->GetCurrentFrame() > maxQueuedFrames) ? context->GetCurrentFrame() - maxQueuedFrames
-															  : RPS_GPU_COMPLETED_FRAME_INDEX_NONE;
-    }
+		return (context->GetCurrentFrame() > maxQueuedFrames) ? context->GetCurrentFrame() - maxQueuedFrames
+			: RPS_GPU_COMPLETED_FRAME_INDEX_NONE;
+	}
+
+
+	tl::expected<RpsRenderGraph, std::string> SceneRenderer::LoadGraph(const char* path, bool compile)
+	{
+		std::error_code err;
+		auto currentWorkingDir = std::filesystem::current_path(err);
+
+		std::filesystem::path byteCodePath = std::filesystem::path(currentWorkingDir).append(path);
+		if (byteCodePath.extension() != ".llvm.bc")
+			byteCodePath.replace_extension(".llvm.bc");
+
+		if (compile)
+		{
+			std::filesystem::path srcPath = std::filesystem::path(currentWorkingDir).append(path);
+			if (srcPath.extension() != ".rpsl")
+				srcPath.replace_extension(".rpsl");
+
+			constexpr char* COMPILER_PATH = "rps/rps-hlslc.exe";
+			std::stringstream commandline;
+
+			commandline << COMPILER_PATH << " " << srcPath << " -O3 -rps-target-dll -rps-bc -m " << srcPath.filename().replace_extension("") << " -od " << srcPath.parent_path();
+
+			if (!::System::LaunchProcess(commandline.str().c_str()))
+			{
+				return tl::unexpected(std::string("Error compiling ") + srcPath.string());
+			}
+		}
+
+        const char*      argv[] = {""};
+        RpsAfxJITHelper  jit(_countof(argv), argv);
+
+        int32_t jitStartupResult = jit.pfnRpsJITStartup(1, argv);
+		if (jitStartupResult != 0)
+		{
+			return tl::unexpected("JIT startup failed");
+		}
+        //RpsJITModule hJITModule = jit.LoadBitcode("D:\\code\\AMD\\RenderPipelineShaders\\build\\tests\\console\\test_rpsl_jit.llvm.bc");
+        RpsJITModule hJITModule = jit.LoadBitcode(byteCodePath.string().c_str());
+		if (!hJITModule)
+		{
+			return tl::unexpected("Failed loading jit bitcode");
+		}
+
+        auto moduleName = jit.GetModuleName(hJITModule);
+        auto entryNameTable = jit.GetEntryNameTable(hJITModule);
+
+        char         nameBuf[256];
+        RpsRpslEntry hRpslEntry = jit.GetEntryPoint(
+            hJITModule, rpsMakeRpslEntryName(nameBuf, std::size(nameBuf), moduleName, entryNameTable[0]));
+
+		if (hRpslEntry == nullptr)
+		{
+			return tl::unexpected("Failed obtaining RpsRpsEntry");
+		}
+
+        RpsRenderGraphCreateInfo renderGraphCreateInfo            = {};
+        renderGraphCreateInfo.scheduleInfo.scheduleFlags          = RPS_SCHEDULE_DISABLE_DEAD_CODE_ELIMINATION_BIT;
+        renderGraphCreateInfo.mainEntryCreateInfo.hRpslEntryPoint = hRpslEntry;
+
+        RpsRenderGraph renderGraph = {};
+		if (rpsRenderGraphCreate(Engine::GetVulkanContext()->GetRpsDevice(), &renderGraphCreateInfo, &renderGraph) != RPS_OK)
+		{
+			return tl::unexpected("Failed to create render graph");
+		}
+
+		return renderGraph;
+	}
+
 
 	void SceneRenderer::RenderSceneGraph(RpsRenderGraph graph, gsl::span<const RpsConstant> args, gsl::span<const RpsRuntimeResource const*> resources)
 	{
@@ -290,11 +259,6 @@ namespace render {
 	Device::Texture* SceneRenderer::GetBlankTexture() const
 	{
 		return renderer_resources->blank_texture.get();
-	}
-
-	void SceneRenderer::UpdateGlobalBindings()
-	{
-		global_bindings_dirty = true;
 	}
 
 }

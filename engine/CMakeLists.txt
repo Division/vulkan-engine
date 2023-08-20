@@ -4,7 +4,7 @@ cmake_policy(SET CMP0002 NEW)
 set(CMAKE_POLICY_DEFAULT_CMP0077 NEW)
 project(vk_engine)
 
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "cmake")
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake" PARENT_SCOPE)
 
 set(ENGINE_SOURCES 
 	lib/VulkanMemoryAllocator/vk_mem_alloc.h
@@ -74,7 +74,6 @@ set(ENGINE_SOURCES
 	lib/RenderPipelineShaders/src/runtime/vk/rps_vk_formats.cpp
 	lib/RenderPipelineShaders/src/runtime/vk/rps_vk_runtime_backend.cpp
 	lib/RenderPipelineShaders/src/runtime/vk/rps_vk_runtime_device.cpp
-	test_triangle.rpsl.g.c
 	Engine.h
 	Engine.cpp
 	Handle.h
@@ -167,8 +166,8 @@ set(ENGINE_SOURCES
 	render/renderer/SceneRenderer.cpp
 	render/renderer/SceneBuffers.h
 	render/renderer/SceneBuffers.cpp
-	render/renderer/RenderGraph.h
-	render/renderer/RenderGraph.cpp
+	
+	
 	render/renderer/Synchronization.h
 	render/renderer/Synchronization.cpp
 	render/renderer/EnvironmentSettings.h
@@ -206,24 +205,13 @@ set(ENGINE_SOURCES
 	render/shading/LightGrid.cpp
 	render/shading/ShadowMap.h
 	render/shading/ShadowMap.cpp
-	render/effects/Skybox.h
-	render/effects/Skybox.cpp
-	render/effects/PostProcess.h
-	render/effects/PostProcess.cpp
-	render/effects/Bloom.h
-	render/effects/Bloom.cpp
-	render/effects/Blur.h
-	render/effects/Blur.cpp
-	render/effects/BitonicSort.h
-	render/effects/BitonicSort.cpp
-	render/effects/GPUParticles.h
-	render/effects/GPUParticles.cpp
 	render/mesh/Mesh.h
 	render/mesh/Mesh.cpp
 	render/texture/Texture.h
 	render/texture/Texture.cpp
 	render/animation/SkeletalAnimation.h
 	render/animation/SkeletalAnimation.cpp
+	render/device/Device.h 
 	scene/Scene.h
 	scene/Scene.cpp
 	scene/Behaviour.h
@@ -268,6 +256,8 @@ set(ENGINE_SOURCES
 	system/FileSystem.cpp
 	system/Dialogs.h
 	system/Dialogs.cpp
+	system/System.h 
+	system/System.cpp
 	utils/Math.h
 	utils/DataStructures.h
 	utils/StringUtils.h
@@ -279,8 +269,7 @@ set(ENGINE_SOURCES
 	utils/CapsSet.h
 	utils/Frustum.h
 	utils/JsonUtils.h
-	utils/EventDispatcher.h
-)
+	utils/EventDispatcher.h)
 
 find_package(Vulkan REQUIRED)
 

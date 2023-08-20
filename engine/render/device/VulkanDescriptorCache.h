@@ -14,6 +14,19 @@ namespace Device {
 	class SamplerMode;
 	class DescriptorSet;
 
+	class VulkanDescriptorPool
+	{
+	public:
+		vk::DescriptorSet AllocateDescriptorSet(vk::DescriptorSetLayout layout);
+		void Reset();
+
+		~VulkanDescriptorPool();
+
+	private:
+		uint32_t current = 0;
+		std::vector<vk::UniqueDescriptorPool> poolList;
+	};
+
 	class VulkanDescriptorCache
 	{
 	public:
@@ -30,10 +43,12 @@ namespace Device {
 		};
 
 		vk::DescriptorSet CreateDescriptorSet(DescriptorSetData& data, uint32_t hash, const ShaderProgram::DescriptorSetLayout& descriptor_set);
+		//vk::DescriptorSet AllocateFrameDescriptorSet()
 
 	private:
 		std::unordered_map<uint32_t, std::unique_ptr<DescriptorSet>> set_map;
 		std::unordered_map<uint32_t, vk::UniqueSampler> sampler_cache;
+		std::array<VulkanDescriptorPool, caps::MAX_FRAMES_IN_FLIGHT> frameDescriptors;
 		vk::UniqueDescriptorPool descriptor_pool;
 		std::mutex mutex;
 		std::mutex mutex_sampler;

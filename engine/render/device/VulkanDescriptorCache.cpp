@@ -8,6 +8,80 @@
 
 namespace Device {
 
+	namespace
+	{
+		uint32_t defaultFrameDynamicDescriptorPoolMaxSets = 1024;
+		std::vector<vk::DescriptorPoolSize> defaultFrameDynamicDescriptorPoolSizes = {
+			{vk::DescriptorType::eSampler, 64},
+			{vk::DescriptorType::eCombinedImageSampler, 512},
+			{vk::DescriptorType::eCombinedImageSampler, 512},
+			{vk::DescriptorType::eStorageImage, 256},
+			{vk::DescriptorType::eUniformTexelBuffer, 256},
+			{vk::DescriptorType::eStorageTexelBuffer, 256},
+			{vk::DescriptorType::eUniformBuffer, 1024},
+			{vk::DescriptorType::eStorageBuffer, 512},
+			{vk::DescriptorType::eUniformBufferDynamic, 128},
+			{vk::DescriptorType::eStorageBufferDynamic, 128},
+			{vk::DescriptorType::eInputAttachment, 64},
+	#if 0 // Not using these:
+			{ VK_DESCRIPTOR_TYPE_INLINE_UNIFORM_BLOCK_EXT,   0 },
+			{ VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR, 0 },
+	#endif
+		};
+	}
+
+	vk::DescriptorSet VulkanDescriptorPool::AllocateDescriptorSet(vk::DescriptorSetLayout layout)
+	{
+		vk::DescriptorSetAllocateInfo info = {};
+		info.descriptorSetCount = 1;
+		info.pSetLayouts = &layout;
+
+        for (uint32_t iTry = 0; iTry < 2; iTry++)
+        {
+            if (!poolList.empty())
+            {
+				VkDescriptorSet set = {};
+                info.descriptorPool = *poolList[current];
+				VkDescriptorSetAllocateInfo& vkInfo = info;
+                auto result = vkAllocateDescriptorSets(Engine::GetVulkanContext()->GetDevice(), &vkInfo, &set);
+				if (result == VK_SUCCESS)
+					return set;
+				else if (result == VK_ERROR_OUT_OF_POOL_MEMORY)
+					current++;
+				else
+					throw std::runtime_error("failed allocating descriptor");
+            }
+
+            if (iTry == 0)
+            {
+                if (current == poolList.size())
+                {
+                    vk::DescriptorPoolCreateInfo dpInfo = {};
+                    dpInfo.maxSets = defaultFrameDynamicDescriptorPoolMaxSets;
+                    dpInfo.pPoolSizes = defaultFrameDynamicDescriptorPoolSizes.data();
+                    dpInfo.poolSizeCount = (uint32_t)defaultFrameDynamicDescriptorPoolSizes.size();
+
+					auto pool = Engine::GetVulkanContext()->GetDevice().createDescriptorPoolUnique(dpInfo);
+                    poolList.push_back(std::move(pool));
+                }
+            }
+        }
+
+		throw std::runtime_error("failed creating frame descriptor set");
+	}
+
+	VulkanDescriptorPool::~VulkanDescriptorPool() = default;
+
+
+	void VulkanDescriptorPool::Reset()
+	{
+		current = 0;
+		for (auto& pool : poolList)
+		{
+			Engine::GetVulkanContext()->GetDevice().resetDescriptorPool(*pool, {});
+		}
+	}
+
 	VulkanDescriptorCache::VulkanDescriptorCache(vk::Device device)
 	{
 		const unsigned max_count = 10000;
@@ -78,7 +152,7 @@ namespace Device {
 		auto vk_descriptor_set = CreateDescriptorSet(set_data, hash, descriptor_set_layout);
 		{
 			std::lock_guard<std::mutex> lock(mutex);
-			auto it = set_map.insert(std::make_pair(hash, std::make_unique<DescriptorSet>(bindings, &descriptor_set_layout, vk_descriptor_set)));
+			auto it = set_map.insert(std::make_pair(hash, std::make_unique<DescriptorSet>(&descriptor_set_layout, vk_descriptor_set)));
 			return it.first->second.get();
 		}
 	}
