@@ -30,7 +30,7 @@ namespace render {
 			std::unique_ptr<DynamicBuffer<char>> index_buffers[2];
 			uint32_t current_buffer = 0;
 			ShaderProgram* shader = nullptr;
-			DescriptorSet* descriptor_set = nullptr;
+			DescriptorSet descriptor_set;
 			VertexLayout vertex_layout;
 			bool engine_stats_visible = true;
 			bool main_widget_visible = true;

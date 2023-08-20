@@ -156,7 +156,7 @@ namespace render {
             components::DrawCall draw_call;
             draw_call.shader = shader;
             draw_call.mesh = line_mesh.get();
-            draw_call.descriptor_set = nullptr;
+            draw_call.descriptor_set = {};
             line_draw_calls.push_back(draw_call);
         }
 
@@ -170,7 +170,7 @@ namespace render {
             components::DrawCall draw_call;
             draw_call.shader = shader;
             draw_call.mesh = point_mesh.get();
-            draw_call.descriptor_set = nullptr;
+            draw_call.descriptor_set = {};
             point_draw_calls.push_back(draw_call);
         }
 

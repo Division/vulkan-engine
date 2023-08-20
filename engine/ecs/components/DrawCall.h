@@ -4,6 +4,7 @@
 #include "render/renderer/IRenderer.h"
 #include "render/shader/ShaderBufferStruct.h"
 #include "render/shader/ShaderBindings.h"
+#include "render/device/VulkanRenderState.h"
 #include "render/material/Material.h"
 #include "utils/Math.h"
 #include "utils/DataStructures.h"
@@ -27,9 +28,9 @@ namespace ECS::components {
 		mat4 transform;
 		mat4 normal_transform;
 		Device::ShaderProgram* shader = nullptr;
-		Device::DescriptorSet* descriptor_set = nullptr;
+		Device::DescriptorSet descriptor_set;
 		Device::ShaderProgram* depth_only_shader = nullptr;
-		Device::DescriptorSet* depth_only_descriptor_set = nullptr;
+		Device::DescriptorSet depth_only_descriptor_set;
 		Device::VulkanBuffer* indirect_buffer = nullptr;
 		Device::ConstantBindings constants;
 		const Material* material = nullptr;

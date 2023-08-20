@@ -259,7 +259,7 @@ namespace Device {
 	{
 		assert(current_pipeline);
 		auto descriptor_cache = Engine::GetVulkanContext()->GetDescriptorCache();
-		auto descriptor_set = descriptor_cache->GetDescriptorSet(bindings);
+		auto descriptor_set = descriptor_cache->GetFrameDescriptorSet(bindings);
 		auto command_buffer = GetCurrentCommandBuffer();
 		const auto descriptor_set_index = bindings.GetDescriptorSetLayout().set_index;
 
@@ -272,7 +272,7 @@ namespace Device {
 			dynamic_offsets.push_back(offset);
 		}
 
-		command_buffer.bindDescriptorSets((vk::PipelineBindPoint)pipeline_bind_point, current_pipeline->GetPipelineLayout(), descriptor_set_index, 1u, &descriptor_set->GetVKDescriptorSet(), dynamic_offsets.size(), dynamic_offsets.data());
+		command_buffer.bindDescriptorSets((vk::PipelineBindPoint)pipeline_bind_point, current_pipeline->GetPipelineLayout(), descriptor_set_index, 1u, &descriptor_set.GetVKDescriptorSet(), dynamic_offsets.size(), dynamic_offsets.data());
 	}
 
 	void VulkanRenderState::SetDescriptorSet(const DescriptorSet& descriptor_set, uint32_t index, uint32_t dynamic_offset_count, const uint32_t* dynamic_offsets)

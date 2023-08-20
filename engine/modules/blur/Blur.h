@@ -1,5 +1,7 @@
 #pragma once
 
+#include <rps/rps.h>
+
 namespace Device
 {
 	class ShaderCache;
@@ -8,7 +10,6 @@ namespace Device
 }
 
 class Mesh;
-struct RpsCmdCallbackContext;
 
 namespace Modules
 {
@@ -19,9 +20,14 @@ namespace Modules
 	public:
 		Blur(const char* shader_dir);
 
-		void Render(const RpsCmdCallbackContext* pContext);
+		// To be passed into rpsProgramBindNodeSubprogram.
+		// Add this node to your rpsl:
+		// graphics node Blur(rtv backBuffer : SV_Target0, float sigma, srv srcTexture);
+		RpsSubprogram GetSubprogram() const { return program; }
 
 	private:
+		void Render(const RpsCmdCallbackContext* pContext);
+		RpsSubprogram program;
 		Mesh* full_screen_quad_mesh;
 		Device::ShaderProgram* shader_blur;
 	};

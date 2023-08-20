@@ -14,7 +14,7 @@ namespace Device {
 		std::vector<vk::DescriptorPoolSize> defaultFrameDynamicDescriptorPoolSizes = {
 			{vk::DescriptorType::eSampler, 64},
 			{vk::DescriptorType::eCombinedImageSampler, 512},
-			{vk::DescriptorType::eCombinedImageSampler, 512},
+			{vk::DescriptorType::eSampledImage, 512},
 			{vk::DescriptorType::eStorageImage, 256},
 			{vk::DescriptorType::eUniformTexelBuffer, 256},
 			{vk::DescriptorType::eStorageTexelBuffer, 256},
@@ -70,9 +70,6 @@ namespace Device {
 		throw std::runtime_error("failed creating frame descriptor set");
 	}
 
-	VulkanDescriptorPool::~VulkanDescriptorPool() = default;
-
-
 	void VulkanDescriptorPool::Reset()
 	{
 		current = 0;
@@ -105,7 +102,7 @@ namespace Device {
 		descriptor_pool = device.createDescriptorPoolUnique(descriptor_pool_info);
 	}
 
-	DescriptorSet* VulkanDescriptorCache::GetDescriptorSet(const DescriptorSetBindings& bindings)
+	DescriptorSet VulkanDescriptorCache::GetDescriptorSet(const DescriptorSetBindings& bindings)
 	{
 		OPTICK_EVENT();
 
@@ -115,23 +112,7 @@ namespace Device {
 
 		assert(descriptor_set_layout.layout);
 
-		memset(set_data.texture_bindings.data(), 0, sizeof(set_data.texture_bindings));
-		memset(set_data.buffer_bindings.data(), 0, sizeof(set_data.buffer_bindings));
-
-		//assert(descriptor_set.bindings.size() == bindings.GetBufferBindings().size() + bindings.GetTextureBindings().size());
-
-		// Getting hash for descriptor sets
-		for (auto& binding : bindings.GetTextureBindings())
-		{
-			set_data.texture_bindings[binding.index] = vk::DescriptorImageInfo(vk::Sampler(), binding.texture->GetImageView());
-		}
-
-		for (auto& binding : bindings.GetBufferBindings())
-		{
-			set_data.buffer_bindings[binding.index].buffer = binding.buffer;
-			set_data.buffer_bindings[binding.index].offset = binding.offset;
-			set_data.buffer_bindings[binding.index].range = binding.size;
-		}
+		PopulateDescriptorSetData(set_data, bindings);
 
 		uint32_t hashes[] =
 		{
@@ -146,33 +127,53 @@ namespace Device {
 			std::lock_guard<std::mutex> lock(mutex);
 			auto iter = set_map.find(hash);
 			if (iter != set_map.end())
-				return iter->second.get();
+				return *iter->second;
 		}
 
-		auto vk_descriptor_set = CreateDescriptorSet(set_data, hash, descriptor_set_layout);
-		{
-			std::lock_guard<std::mutex> lock(mutex);
-			auto it = set_map.insert(std::make_pair(hash, std::make_unique<DescriptorSet>(&descriptor_set_layout, vk_descriptor_set)));
-			return it.first->second.get();
-		}
-	}
-
-	vk::DescriptorSet VulkanDescriptorCache::CreateDescriptorSet(DescriptorSetData& data, uint32_t hash, const ShaderProgram::DescriptorSetLayout& descriptor_set)
-	{
-		auto& layout = descriptor_set.layout.get();
-
-		vk::DescriptorSet result;
+		auto& layout = descriptor_set_layout.layout.get();
+		vk::DescriptorSet vk_descriptor_set;
 		vk::DescriptorSetAllocateInfo alloc_info(descriptor_pool.get(), 1, &layout);
 
 		auto& device = Engine::GetVulkanDevice();
-		device.allocateDescriptorSets(&alloc_info, &result);
-		// todo: handle failure
+		device.allocateDescriptorSets(&alloc_info, &vk_descriptor_set);
+		UpdateDescriptorSet(vk_descriptor_set, set_data, descriptor_set_layout);
+		{
+			std::lock_guard<std::mutex> lock(mutex);
+			auto it = set_map.insert(std::make_pair(hash, std::make_unique<DescriptorSet>(&descriptor_set_layout, vk_descriptor_set)));
+			return *it.first->second;
+		}
+	}
 
+
+	void VulkanDescriptorCache::PopulateDescriptorSetData(DescriptorSetData& data, const DescriptorSetBindings& bindings)
+	{
+		memset(data.texture_bindings.data(), 0, sizeof(data.texture_bindings));
+		memset(data.buffer_bindings.data(), 0, sizeof(data.buffer_bindings));
+
+		//assert(descriptor_set.bindings.size() == bindings.GetBufferBindings().size() + bindings.GetTextureBindings().size());
+
+		// Getting hash for descriptor sets
+		for (auto& binding : bindings.GetTextureBindings())
+		{
+			data.texture_bindings[binding.index] = vk::DescriptorImageInfo(vk::Sampler(), binding.image_view);
+		}
+
+		for (auto& binding : bindings.GetBufferBindings())
+		{
+			data.buffer_bindings[binding.index].buffer = binding.buffer;
+			data.buffer_bindings[binding.index].offset = binding.offset;
+			data.buffer_bindings[binding.index].range = binding.size;
+		}
+	}
+
+
+	void VulkanDescriptorCache::UpdateDescriptorSet(vk::DescriptorSet descriptor_set, DescriptorSetData& data, const ShaderProgram::DescriptorSetLayout& layout)
+	{
 		utils::SmallVector<vk::WriteDescriptorSet, 15> writes;
 
-		for (int i = 0; i < descriptor_set.bindings.size(); i++)
+		for (int i = 0; i < layout.bindings.size(); i++)
 		{
-			auto& binding = descriptor_set.bindings[i];
+			auto& binding = layout.bindings[i];
 
 			auto binding_index = binding.address.binding;
 
@@ -198,7 +199,7 @@ namespace Device {
 					type = vk::DescriptorType::eSampler;
 
 				writes.push_back(vk::WriteDescriptorSet(
-					result,
+					descriptor_set,
 					binding_index, 0, 1, type,
 					&data.texture_bindings[binding_index]
 				));
@@ -227,7 +228,7 @@ namespace Device {
 				auto& binding_data = data.buffer_bindings[binding_index];
 				
 				writes.push_back(vk::WriteDescriptorSet(
-					result,
+					descriptor_set,
 					binding_index, 0, 1, buffer_descriptor_type,
 					nullptr, &binding_data
 				));
@@ -239,9 +240,20 @@ namespace Device {
 			}
 		}
 
-		device.updateDescriptorSets(writes.size(), writes.data(), 0, nullptr);
+		Engine::GetVulkanContext()->GetDevice().updateDescriptorSets(writes.size(), writes.data(), 0, nullptr);
+	}
 
-		return result;
+
+	DescriptorSet VulkanDescriptorCache::GetFrameDescriptorSet(const DescriptorSetBindings& bindings)
+	{
+		static thread_local DescriptorSetData set_data;
+		PopulateDescriptorSetData(set_data, bindings);
+
+		const auto& descriptor_set_layout = bindings.GetDescriptorSetLayout();
+		vk::DescriptorSet descriptor_set = frame_descriptors[Engine::GetVulkanContext()->GetCurrentFrameRollOver()].AllocateDescriptorSet(*descriptor_set_layout.layout);
+
+		UpdateDescriptorSet(descriptor_set, set_data, descriptor_set_layout);
+		return DescriptorSet(&descriptor_set_layout, descriptor_set);
 	}
 
 
@@ -298,6 +310,11 @@ namespace Device {
 		}
 
 		return result;
+	}
+	
+	void VulkanDescriptorCache::ResetFrameDescriptors()
+	{
+		frame_descriptors[Engine::GetVulkanContext()->GetCurrentFrameRollOver()].Reset();
 	}
 
 }

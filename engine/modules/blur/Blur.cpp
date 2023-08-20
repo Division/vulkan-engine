@@ -13,6 +13,8 @@
 #include <algorithm>
 #include <filesystem>
 
+RPS_DECLARE_RPSL_ENTRY(blur, blur);
+
 namespace Modules
 {
 	using namespace Device;
@@ -28,6 +30,14 @@ namespace Modules
 		shader_blur = Engine::Get()->GetShaderCache()->GetShaderProgram(blur_shader_info);
 
 		full_screen_quad_mesh = Engine::Get()->GetSceneRenderer()->GetRendererResources().full_screen_quad_mesh.get();
+
+        RpsProgramCreateInfo programCreateInfo = {};
+        programCreateInfo.hRpslEntryPoint      = RPS_ENTRY_REF(blur, blur);
+
+        RpsResult result = rpsProgramCreate(Engine::GetVulkanContext()->GetRpsDevice(), &programCreateInfo, &program);
+		assert(result == RPS_OK);
+		result = rpsProgramBindNode(program, "RenderBlur", &Blur::Render, this);
+		assert(result == RPS_OK);
 	}
 
 	void Blur::Render(const RpsCmdCallbackContext* pContext)
@@ -43,8 +53,13 @@ namespace Modules
 		std::vector<float> gaussian_values(16, 0.0f);
 		std::vector<vec4> sample_offsets(16, vec4(0.0f));
 
-		const vec2 blur_direction_sigma = *rpsCmdGetArg<vec2, 1>(pContext);
-		const vec2 viewport_size = *rpsCmdGetArg<vec2, 2>(pContext);
+		// Arguments
+		const uvec2 viewport_size = *rpsCmdGetArg<uvec2, 1>(pContext);
+		const vec2 blur_direction_sigma = *rpsCmdGetArg<vec2, 2>(pContext);
+		VkImageView srcImageView = {};
+		if (rpsVKGetCmdArgImageView(pContext, 3, &srcImageView) != RPS_OK)
+			throw std::runtime_error("failed getting arg");
+
 		const float min_sigma = 0.5f;
 		const float max_sigma = 4.0f;
 		const float sigma = std::max(min_sigma, std::min(std::max(blur_direction_sigma.x, blur_direction_sigma.y), max_sigma));
@@ -77,9 +92,11 @@ namespace Modules
 		constants.AddDataBinding(gaussian_values.data(), gaussian_values.size() * sizeof(float), "blur_weights");
 
 		ResourceBindings resource_bindings;
-		//resource_bindings.AddTextureBinding("src_texture", src_target_node.resource->GetAttachment()->GetTexture().get());
+
+		resource_bindings.AddImageViewBinding("src_texture", srcImageView);
 		const auto* descriptor_set_layout = shader_blur->GetDescriptorSetLayout(0);
 		const DescriptorSetBindings bindings(resource_bindings, *descriptor_set_layout);
+
 		state.SetDescriptorSetBindings(bindings, constants);
 
 		state.Draw(*full_screen_quad_mesh->vertexBuffer(), full_screen_quad_mesh->indexCount(), 0);

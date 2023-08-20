@@ -47,7 +47,10 @@ namespace
 }
    
 Game::Game() = default;
-Game::~Game() = default;
+Game::~Game()
+{
+	rpsRenderGraphDestroy(data->rpsRenderGraph);
+}
   
 void Game::init()
 {
@@ -67,7 +70,8 @@ void Game::init()
 	rpsRenderGraphCreate(Engine::GetVulkanContext()->GetRpsDevice(), &renderGraphInfo, &data->rpsRenderGraph);
 
 	rpsProgramBindNode(rpsRenderGraphGetMainEntry(data->rpsRenderGraph), "Triangle", &Game::DrawTriangle, this);
-} 
+	rpsProgramBindNodeSubprogram(rpsRenderGraphGetMainEntry(data->rpsRenderGraph), "Blur", data->blur->GetSubprogram());
+}
 
 void Game::DrawTriangle(const RpsCmdCallbackContext* pContext)
 {
@@ -108,7 +112,7 @@ void Game::DrawTriangle(const RpsCmdCallbackContext* pContext)
 	auto* scene_buffers = Engine::Get()->GetSceneRenderer()->GetSceneBuffers();
 	scene_buffers->GetConstantBuffer()->Upload();
 	scene_buffers->GetSkinningMatricesBuffer()->Upload();
-} 
+}
 
 void Game::update(float dt)
 {

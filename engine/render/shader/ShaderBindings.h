@@ -27,7 +27,7 @@ namespace Device {
 
 		struct TextureResourceBinding : public Base
 		{
-			const Texture* texture = nullptr;
+			vk::ImageView image_view;
 		};
 
 		struct BufferResourceBinding : public Base
@@ -42,9 +42,11 @@ namespace Device {
 			ConstantBuffer* constant_buffer = nullptr;
 		};
 		
+		void AddImageViewBinding(const std::string& name, vk::ImageView image_view);
+		void AddImageViewBinding(uint32_t name_hash, vk::ImageView image_view);
 		void AddTextureBinding(const std::string& name, const Texture* texture);
 		void AddTextureBinding(uint32_t name_hash, const Texture* texture);
-		const Texture* GetTextureBinding(uint32_t name_hash) const;
+		const vk::ImageView GetTextureBinding(uint32_t name_hash) const;
 
 		void AddBufferBinding(const std::string& name, const VulkanBuffer* buffer, uint32_t size, uint32_t dynamic_offset = 0);
 		void AddBufferBinding(uint32_t name_hash, const VulkanBuffer* buffer, uint32_t size, uint32_t dynamic_offset = 0);
@@ -146,7 +148,7 @@ namespace Device {
 		struct TextureBinding
 		{
 			unsigned char index;
-			const Texture* texture;
+			const vk::ImageView image_view;
 		};
 
 		struct BufferBinding
@@ -179,9 +181,9 @@ namespace Device {
 		const ShaderProgram::DescriptorSetLayout& GetDescriptorSetLayout() const { return descriptor_set_layout; };
 
 	private:
-		void AddTextureBindingSafe(unsigned index, const Texture* texture);
+		void AddTextureBindingSafe(unsigned index, vk::ImageView texture);
 		void AddBufferBindingSafe(unsigned index, size_t offset, size_t size, vk::Buffer buffer);
-		void AddTextureBinding(unsigned index, const Texture* texture);
+		void AddTextureBinding(unsigned index, vk::ImageView texture);
 		void AddBufferBinding(unsigned index, size_t offset, size_t size, vk::Buffer buffer, size_t dynamic_offset = -1);
 		void AddDynamicBufferBinding(unsigned index, uint32_t name_hash, size_t size, const ShaderProgram::BindingData* binding_data, ConstantBuffer* constant_buffer);
 		int GetBindingIndex(uint32_t index, ShaderProgram::BindingType type);

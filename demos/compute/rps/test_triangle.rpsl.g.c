@@ -416,17 +416,17 @@ struct l_struct____rpsl_pipeline_res_binding_info_struct {
 #ifdef _MSC_VER
 #pragma pack(pop)
 #endif
-struct l_array_71_uint8_t {
-  uint8_t array[71];
+struct l_array_116_uint8_t {
+  uint8_t array[116];
 };
-struct l_array_3_struct_AC_l_struct____rpsl_node_info_struct {
-  struct l_struct____rpsl_node_info_struct array[3];
+struct l_array_4_struct_AC_l_struct____rpsl_node_info_struct {
+  struct l_struct____rpsl_node_info_struct array[4];
 };
-struct l_array_3_struct_AC_l_struct____rpsl_type_info_struct {
-  struct l_struct____rpsl_type_info_struct array[3];
+struct l_array_4_struct_AC_l_struct____rpsl_type_info_struct {
+  struct l_struct____rpsl_type_info_struct array[4];
 };
-struct l_array_5_struct_AC_l_struct____rpsl_params_info_struct {
-  struct l_struct____rpsl_params_info_struct array[5];
+struct l_array_8_struct_AC_l_struct____rpsl_params_info_struct {
+  struct l_struct____rpsl_params_info_struct array[8];
 };
 struct l_array_2_struct_AC_l_struct____rpsl_entry_desc_struct {
   struct l_struct____rpsl_entry_desc_struct array[2];
@@ -460,10 +460,10 @@ struct l_struct____rpsl_module_info_struct {
   uint32_t field10;
   uint32_t field11;
   uint32_t field12;
-  struct l_array_71_uint8_t* field13;
-  struct l_array_3_struct_AC_l_struct____rpsl_node_info_struct* field14;
-  struct l_array_3_struct_AC_l_struct____rpsl_type_info_struct* field15;
-  struct l_array_5_struct_AC_l_struct____rpsl_params_info_struct* field16;
+  struct l_array_116_uint8_t* field13;
+  struct l_array_4_struct_AC_l_struct____rpsl_node_info_struct* field14;
+  struct l_array_4_struct_AC_l_struct____rpsl_type_info_struct* field15;
+  struct l_array_8_struct_AC_l_struct____rpsl_params_info_struct* field16;
   struct l_array_2_struct_AC_l_struct____rpsl_entry_desc_struct* field17;
   struct l_array_1_struct_AC_l_struct____rpsl_shader_ref_struct* field18;
   struct l_array_1_struct_AC_l_struct____rpsl_pipeline_info_struct* field19;
@@ -520,17 +520,26 @@ struct l_array_13_uint8_t {
 struct l_array_1_struct_AC_l_struct_struct_OC_RpsParameterDesc {
   struct l_struct_struct_OC_RpsParameterDesc array[1];
 };
-struct l_array_2_struct_AC_l_struct_struct_OC_RpsNodeDesc {
-  struct l_struct_struct_OC_RpsNodeDesc array[2];
-};
 struct l_array_11_uint8_t {
   uint8_t array[11];
+};
+struct l_array_6_uint8_t {
+  uint8_t array[6];
+};
+struct l_array_3_struct_AC_l_struct_struct_OC_RpsParameterDesc {
+  struct l_struct_struct_OC_RpsParameterDesc array[3];
+};
+struct l_array_3_struct_AC_l_struct_struct_OC_RpsNodeDesc {
+  struct l_struct_struct_OC_RpsNodeDesc array[3];
 };
 struct l_vector_4_float {
   float vector[4];
 } __attribute__((aligned(4)));
 struct l_array_2_uint8_t_KC_ {
   uint8_t* array[2];
+};
+struct l_array_3_uint8_t_KC_ {
+  uint8_t* array[3];
 };
 
 /* External Global Variable Declarations */
@@ -541,41 +550,62 @@ void rpsl_M_test_triangle_Fn_main(struct texture*) __ATTRIBUTELIST__((nothrow));
 void ___rpsl_abort(uint32_t);
 uint32_t ___rpsl_node_call(uint32_t, uint32_t, uint8_t**, uint32_t, uint32_t);
 void ___rpsl_block_marker(uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t);
+void ___rpsl_describe_handle(uint8_t*, uint32_t, uint32_t*, uint32_t);
+uint32_t ___rpsl_create_resource(uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t);
+void ___rpsl_name_resource(uint32_t, uint8_t*, uint32_t);
+uint32_t ___rpsl_dxop_binary_i32(uint32_t, uint32_t, uint32_t);
 void rpsl_M_test_triangle_Fn_main_wrapper(uint32_t, uint8_t**, uint32_t) __ATTRIBUTELIST__((noinline, nothrow));
 
 
 /* Global Variable Definitions and Initialization */
-static __MSALIGN__(4) struct l_array_3_struct_AC_l_struct____rpsl_node_info_struct ___rpsl_nodedefs_test_triangle __attribute__((aligned(4))) = { { { 0, 34, 0, 2, 1 }, { 1, 46, 2, 1, 1 }, { 0, 0, 0, 0, 0 } } };
-static __MSALIGN__(4) struct l_array_2_struct_AC_l_struct____rpsl_entry_desc_struct ___rpsl_entries_test_triangle __attribute__((aligned(4))) = { { { 0, 55, 3, 1, ((uint8_t*)rpsl_M_test_triangle_Fn_main), ((uint8_t*)rpsl_M_test_triangle_Fn_main_wrapper) }, { 0, 0, 0, 0, ((uint8_t*)/*NULL*/0), ((uint8_t*)/*NULL*/0) } } };
-static __MSALIGN__(4) struct l_array_3_struct_AC_l_struct____rpsl_type_info_struct ___rpsl_types_metadata_test_triangle __attribute__((aligned(4))) = { { { 6, 0, 0, 0, 0, 36, 4 }, { 4, 32, 0, 4, 0, 16, 4 }, { 0, 0, 0, 0, 0, 0, 0 } } };
-static __MSALIGN__(4) struct l_array_5_struct_AC_l_struct____rpsl_params_info_struct ___rpsl_params_metadata_test_triangle __attribute__((aligned(4))) = { { { 14, 0, 272629888, -1, 0, 36, 0 }, { 16, 1, 0, -1, 0, 16, 36 }, { 21, 0, 128, -1, 0, 36, 0 }, { 60, 0, 524288, -1, 0, 36, 0 }, { 0, 0, 0, 0, 0, 0, 0 } } };
+static struct l_array_12_uint8_t _AE__AE_rps_Str0 = { "offscreenRT" };
+static __MSALIGN__(4) struct l_array_4_struct_AC_l_struct____rpsl_node_info_struct ___rpsl_nodedefs_test_triangle __attribute__((aligned(4))) = { { { 0, 74, 0, 2, 1 }, { 1, 86, 2, 1, 1 }, { 2, 95, 3, 3, 1 }, { 0, 0, 0, 0, 0 } } };
+static __MSALIGN__(4) struct l_array_2_struct_AC_l_struct____rpsl_entry_desc_struct ___rpsl_entries_test_triangle __attribute__((aligned(4))) = { { { 0, 100, 6, 1, ((uint8_t*)rpsl_M_test_triangle_Fn_main), ((uint8_t*)rpsl_M_test_triangle_Fn_main_wrapper) }, { 0, 0, 0, 0, ((uint8_t*)/*NULL*/0), ((uint8_t*)/*NULL*/0) } } };
+static __MSALIGN__(4) struct l_array_4_struct_AC_l_struct____rpsl_type_info_struct ___rpsl_types_metadata_test_triangle __attribute__((aligned(4))) = { { { 6, 0, 0, 0, 0, 36, 4 }, { 4, 32, 0, 4, 0, 16, 4 }, { 4, 32, 0, 0, 0, 4, 4 }, { 0, 0, 0, 0, 0, 0, 0 } } };
+static __MSALIGN__(4) struct l_array_8_struct_AC_l_struct____rpsl_params_info_struct ___rpsl_params_metadata_test_triangle __attribute__((aligned(4))) = { { { 26, 0, 272629888, -1, 0, 36, 0 }, { 28, 1, 0, -1, 0, 16, 36 }, { 33, 0, 128, -1, 0, 36, 0 }, { 46, 0, 128, -1, 0, 36, 0 }, { 57, 2, 0, -1, 0, 4, 36 }, { 63, 0, 16, -1, 0, 36, 40 }, { 105, 0, 524288, -1, 0, 36, 0 }, { 0, 0, 0, 0, 0, 0, 0 } } };
 static __MSALIGN__(4) struct l_array_1_struct_AC_l_struct____rpsl_shader_ref_struct ___rpsl_shader_refs_test_triangle __attribute__((aligned(4)));
 static __MSALIGN__(4) struct l_array_1_struct_AC_l_struct____rpsl_pipeline_info_struct ___rpsl_pipelines_test_triangle __attribute__((aligned(4)));
 static __MSALIGN__(4) struct l_array_1_struct_AC_l_struct____rpsl_pipeline_field_info_struct ___rpsl_pipeline_fields_test_triangle __attribute__((aligned(4)));
 static __MSALIGN__(4) struct l_array_1_struct_AC_l_struct____rpsl_pipeline_res_binding_info_struct ___rpsl_pipeline_res_bindings_test_triangle __attribute__((aligned(4)));
-__MSALIGN__(4) struct l_array_71_uint8_t ___rpsl_string_table_test_triangle __attribute__((aligned(4))) = { { 116u, 101u, 115u, 116u, 95u, 116u, 114u, 105u, 97u, 110u, 103u, 108u, 101u, 0, 116u, 0, 100u, 97u, 116u, 97u, 0, 114u, 101u, 110u, 100u, 101u, 114u, 84u, 97u, 114u, 103u, 101u, 116u, 0, 99u, 108u, 101u, 97u, 114u, 95u, 99u, 111u, 108u, 111u, 114u, 0, 84u, 114u, 105u, 97u, 110u, 103u, 108u, 101u, 0, 109u, 97u, 105u, 110u, 0, 98u, 97u, 99u, 107u, 98u, 117u, 102u, 102u, 101u, 114u, 0 } };
-__CBE_DLLEXPORT__ __MSALIGN__(4) struct l_struct____rpsl_module_info_struct ___rpsl_module_info_test_triangle __attribute__((aligned(4))) = { 1297305682u, 3, 9, 0, 71, 2, 2, 4, 1, 0, 0, 0, 0, (&___rpsl_string_table_test_triangle), (&___rpsl_nodedefs_test_triangle), (&___rpsl_types_metadata_test_triangle), (&___rpsl_params_metadata_test_triangle), (&___rpsl_entries_test_triangle), (&___rpsl_shader_refs_test_triangle), (&___rpsl_pipelines_test_triangle), (&___rpsl_pipeline_fields_test_triangle), (&___rpsl_pipeline_res_bindings_test_triangle), 1297305682u };
-static struct l_array_12_uint8_t _AE__AE_rps_Str0 = { "clear_color" };
-static struct l_array_2_uint8_t _AE__AE_rps_Str1 = { "t" };
-static struct l_unnamed_1 _AE__AE_rps_ParamAttr2 = { 272629888, 0, 0, 0 };
-static struct l_array_5_uint8_t _AE__AE_rps_Str3 = { "data" };
-static struct l_unnamed_1 _AE__AE_rps_ParamAttr4 = { 0, 0, 27, 0 };
-static struct l_array_2_struct_AC_l_struct_struct_OC_RpsParameterDesc _AE__AE_rps_ParamDescArray5 = { { { { 36, 64 }, 0, (&_AE__AE_rps_ParamAttr2), ((&_AE__AE_rps_Str1.array[((int32_t)0)])), 4 }, { { 16, 0 }, 0, (&_AE__AE_rps_ParamAttr4), ((&_AE__AE_rps_Str3.array[((int32_t)0)])), 0 } } };
-static struct l_array_9_uint8_t _AE__AE_rps_Str6 = { "Triangle" };
-static struct l_array_13_uint8_t _AE__AE_rps_Str7 = { "renderTarget" };
-static struct l_unnamed_1 _AE__AE_rps_ParamAttr8 = { 128, 0, 35, 0 };
-static struct l_array_1_struct_AC_l_struct_struct_OC_RpsParameterDesc _AE__AE_rps_ParamDescArray9 = { { { { 36, 64 }, 0, (&_AE__AE_rps_ParamAttr8), ((&_AE__AE_rps_Str7.array[((int32_t)0)])), 4 } } };
-__CBE_DLLEXPORT__ struct l_array_2_struct_AC_l_struct_struct_OC_RpsNodeDesc NodeDecls_test_triangle = { { { 1, 2, ((&_AE__AE_rps_ParamDescArray5.array[((int32_t)0)])), ((&_AE__AE_rps_Str0.array[((int32_t)0)])) }, { 1, 1, ((&_AE__AE_rps_ParamDescArray9.array[((int32_t)0)])), ((&_AE__AE_rps_Str6.array[((int32_t)0)])) } } };
-static struct l_array_5_uint8_t _AE__AE_rps_Str10 = { "main" };
-static struct l_array_11_uint8_t _AE__AE_rps_Str11 = { "backbuffer" };
-static struct l_unnamed_1 _AE__AE_rps_ParamAttr12 = { 524288, 0, 0, 0 };
-static struct l_array_1_struct_AC_l_struct_struct_OC_RpsParameterDesc _AE__AE_rps_ParamDescArray13 = { { { { 36, 64 }, 0, (&_AE__AE_rps_ParamAttr12), ((&_AE__AE_rps_Str11.array[((int32_t)0)])), 4 } } };
-struct l_struct_struct_OC_RpslEntry rpsl_M_test_triangle_E_main_AE_value = { ((&_AE__AE_rps_Str10.array[((int32_t)0)])), rpsl_M_test_triangle_Fn_main_wrapper, ((&_AE__AE_rps_ParamDescArray13.array[((int32_t)0)])), ((&NodeDecls_test_triangle.array[((int32_t)0)])), 1, 2 };
+__MSALIGN__(4) struct l_array_116_uint8_t ___rpsl_string_table_test_triangle __attribute__((aligned(4))) = { { 111u, 102u, 102u, 115u, 99u, 114u, 101u, 101u, 110u, 82u, 84u, 0, 116u, 101u, 115u, 116u, 95u, 116u, 114u, 105u, 97u, 110u, 103u, 108u, 101u, 0, 116u, 0, 100u, 97u, 116u, 97u, 0, 114u, 101u, 110u, 100u, 101u, 114u, 84u, 97u, 114u, 103u, 101u, 116u, 0, 98u, 97u, 99u, 107u, 66u, 117u, 102u, 102u, 101u, 114u, 0, 115u, 105u, 103u, 109u, 97u, 0, 115u, 114u, 99u, 84u, 101u, 120u, 116u, 117u, 114u, 101u, 0, 99u, 108u, 101u, 97u, 114u, 95u, 99u, 111u, 108u, 111u, 114u, 0, 84u, 114u, 105u, 97u, 110u, 103u, 108u, 101u, 0, 66u, 108u, 117u, 114u, 0, 109u, 97u, 105u, 110u, 0, 98u, 97u, 99u, 107u, 98u, 117u, 102u, 102u, 101u, 114u, 0 } };
+__CBE_DLLEXPORT__ __MSALIGN__(4) struct l_struct____rpsl_module_info_struct ___rpsl_module_info_test_triangle __attribute__((aligned(4))) = { 1297305682u, 3, 9, 12, 116, 3, 3, 7, 1, 0, 0, 0, 0, (&___rpsl_string_table_test_triangle), (&___rpsl_nodedefs_test_triangle), (&___rpsl_types_metadata_test_triangle), (&___rpsl_params_metadata_test_triangle), (&___rpsl_entries_test_triangle), (&___rpsl_shader_refs_test_triangle), (&___rpsl_pipelines_test_triangle), (&___rpsl_pipeline_fields_test_triangle), (&___rpsl_pipeline_res_bindings_test_triangle), 1297305682u };
+static struct l_array_12_uint8_t _AE__AE_rps_Str1 = { "clear_color" };
+static struct l_array_2_uint8_t _AE__AE_rps_Str2 = { "t" };
+static struct l_unnamed_1 _AE__AE_rps_ParamAttr3 = { 272629888, 0, 0, 0 };
+static struct l_array_5_uint8_t _AE__AE_rps_Str4 = { "data" };
+static struct l_unnamed_1 _AE__AE_rps_ParamAttr5 = { 0, 0, 27, 0 };
+static struct l_array_2_struct_AC_l_struct_struct_OC_RpsParameterDesc _AE__AE_rps_ParamDescArray6 = { { { { 36, 64 }, 0, (&_AE__AE_rps_ParamAttr3), ((&_AE__AE_rps_Str2.array[((int32_t)0)])), 4 }, { { 16, 0 }, 0, (&_AE__AE_rps_ParamAttr5), ((&_AE__AE_rps_Str4.array[((int32_t)0)])), 0 } } };
+static struct l_array_9_uint8_t _AE__AE_rps_Str7 = { "Triangle" };
+static struct l_array_13_uint8_t _AE__AE_rps_Str8 = { "renderTarget" };
+static struct l_unnamed_1 _AE__AE_rps_ParamAttr9 = { 128, 0, 35, 0 };
+static struct l_array_1_struct_AC_l_struct_struct_OC_RpsParameterDesc _AE__AE_rps_ParamDescArray10 = { { { { 36, 64 }, 0, (&_AE__AE_rps_ParamAttr9), ((&_AE__AE_rps_Str8.array[((int32_t)0)])), 4 } } };
+static struct l_array_5_uint8_t _AE__AE_rps_Str11 = { "Blur" };
+static struct l_array_11_uint8_t _AE__AE_rps_Str12 = { "backBuffer" };
+static struct l_unnamed_1 _AE__AE_rps_ParamAttr13 = { 128, 0, 35, 0 };
+static struct l_array_6_uint8_t _AE__AE_rps_Str14 = { "sigma" };
+static struct l_unnamed_1 _AE__AE_rps_ParamAttr15;
+static struct l_array_11_uint8_t _AE__AE_rps_Str16 = { "srcTexture" };
+static struct l_unnamed_1 _AE__AE_rps_ParamAttr17 = { 16, 10, 0, 0 };
+static struct l_array_3_struct_AC_l_struct_struct_OC_RpsParameterDesc _AE__AE_rps_ParamDescArray18 = { { { { 36, 64 }, 0, (&_AE__AE_rps_ParamAttr13), ((&_AE__AE_rps_Str12.array[((int32_t)0)])), 4 }, { { 4, 0 }, 0, (&_AE__AE_rps_ParamAttr15), ((&_AE__AE_rps_Str14.array[((int32_t)0)])), 0 }, { { 36, 64 }, 0, (&_AE__AE_rps_ParamAttr17), ((&_AE__AE_rps_Str16.array[((int32_t)0)])), 4 } } };
+__CBE_DLLEXPORT__ struct l_array_3_struct_AC_l_struct_struct_OC_RpsNodeDesc NodeDecls_test_triangle = { { { 1, 2, ((&_AE__AE_rps_ParamDescArray6.array[((int32_t)0)])), ((&_AE__AE_rps_Str1.array[((int32_t)0)])) }, { 1, 1, ((&_AE__AE_rps_ParamDescArray10.array[((int32_t)0)])), ((&_AE__AE_rps_Str7.array[((int32_t)0)])) }, { 1, 3, ((&_AE__AE_rps_ParamDescArray18.array[((int32_t)0)])), ((&_AE__AE_rps_Str11.array[((int32_t)0)])) } } };
+static struct l_array_5_uint8_t _AE__AE_rps_Str19 = { "main" };
+static struct l_array_11_uint8_t _AE__AE_rps_Str20 = { "backbuffer" };
+static struct l_unnamed_1 _AE__AE_rps_ParamAttr21 = { 524288, 0, 0, 0 };
+static struct l_array_1_struct_AC_l_struct_struct_OC_RpsParameterDesc _AE__AE_rps_ParamDescArray22 = { { { { 36, 64 }, 0, (&_AE__AE_rps_ParamAttr21), ((&_AE__AE_rps_Str20.array[((int32_t)0)])), 4 } } };
+struct l_struct_struct_OC_RpslEntry rpsl_M_test_triangle_E_main_AE_value = { ((&_AE__AE_rps_Str19.array[((int32_t)0)])), rpsl_M_test_triangle_Fn_main_wrapper, ((&_AE__AE_rps_ParamDescArray22.array[((int32_t)0)])), ((&NodeDecls_test_triangle.array[((int32_t)0)])), 1, 3 };
 __CBE_DLLEXPORT__ struct l_struct_struct_OC_RpslEntry* rpsl_M_test_triangle_E_main = (&rpsl_M_test_triangle_E_main_AE_value);
 __CBE_DLLEXPORT__ struct l_struct_struct_OC_RpslEntry** rpsl_M_test_triangle_E_main_pp = (&rpsl_M_test_triangle_E_main);
 
 
 /* LLVM Intrinsic Builtin Function Bodies */
+static __forceinline uint32_t llvm_add_u32(uint32_t a, uint32_t b) {
+  uint32_t r = a + b;
+  return r;
+}
+static __forceinline uint32_t llvm_lshr_u32(uint32_t a, uint32_t b) {
+  uint32_t r = a >> b;
+  return r;
+}
 static __forceinline struct l_vector_4_float llvm_ctor_f32x4(float x0, float x1, float x2, float x3) {
   __MSALIGN__(4) struct l_vector_4_float r;
   r.vector[0] = x0;
@@ -659,109 +689,318 @@ cond_2e_end:
 }
 
 
-#line 10 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
+#line 11 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
 void rpsl_M_test_triangle_Fn_main(struct texture* backbuffer) {
+    struct ResourceDesc backbufferDesc;    /* Address-exposed local */
+    struct texture offscreenRT;    /* Address-exposed local */
 
   struct {
-    struct l_array_2_uint8_t_KC_ _4;    /* Address-exposed local */
-    uint8_t** _2e_sub;
-    __MSALIGN__(4) struct l_vector_4_float _5;    /* Address-exposed local */
+    __MSALIGN__(8) struct texture _4 __attribute__((aligned(8)));    /* Address-exposed local */
+    uint32_t* _5;
     uint32_t _6;
-    uint8_t* _7;    /* Address-exposed local */
+    uint32_t _7;
     uint32_t _8;
+    uint32_t _9;
+    uint16_t _10;
+    uint16_t _11;
+    uint32_t _12;
+    uint32_t _13;
+    float _14;
+    uint32_t _15;
+    uint32_t _16;
+    uint32_t _17;
+    uint32_t _18;
+    uint32_t inc_2e_i_2e_i;
+    uint32_t shr_2e_i_2e_i;
+    uint32_t shr12_2e_i_2e_i;
+    uint32_t shr13_2e_i_2e_i;
+    uint32_t UMin;
+    uint32_t call1_2e_i;
+    struct l_array_2_uint8_t_KC_* _19;
+    uint8_t** _2e_sub;
+    __MSALIGN__(4) struct l_vector_4_float* _20;
+    uint32_t _21;
+    uint8_t** _22;
+    uint32_t _23;
+    struct l_array_3_uint8_t_KC_* _24;
+    uint8_t** _2e_sub_2e_8;
+    float* _25;
+    uint32_t _26;
   } _llvm_cbe_tmps;
 
   struct {
-    char _placeholder;
+    uint32_t mips_2e_i_2e_i_2e_013;
+    uint32_t mips_2e_i_2e_i_2e_013__PHI_TEMPORARY;
+    uint32_t d_2e_i_2e_i_2e_012;
+    uint32_t d_2e_i_2e_i_2e_012__PHI_TEMPORARY;
+    uint32_t h_2e_i_2e_i_2e_011;
+    uint32_t h_2e_i_2e_i_2e_011__PHI_TEMPORARY;
+    uint32_t w_2e_i_2e_i_2e_010;
+    uint32_t w_2e_i_2e_i_2e_010__PHI_TEMPORARY;
+    uint32_t mips_2e_i_2e_i_2e_0_2e_lcssa;
+    uint32_t mips_2e_i_2e_i_2e_0_2e_lcssa__PHI_TEMPORARY;
   } _llvm_cbe_phi_tmps = {0};
 
-(void)_llvm_cbe_phi_tmps;
+#line 11 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
+  ___rpsl_block_marker(0, 0, 1, 3, -1, 0, -1);
+#line 11 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
+  _llvm_cbe_tmps._5 = (&_llvm_cbe_tmps._4.Resource);
+#line 11 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
+  _llvm_cbe_tmps._6 = *((&backbuffer->Resource));
+#line 11 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
+  *_llvm_cbe_tmps._5 = _llvm_cbe_tmps._6;
+#line 11 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
+  _llvm_cbe_tmps._7 = *((&backbuffer->Format));
+#line 11 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
+  *((&_llvm_cbe_tmps._4.Format)) = _llvm_cbe_tmps._7;
+#line 11 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
+  _llvm_cbe_tmps._8 = *((&backbuffer->TemporalLayer));
+#line 11 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
+  *((&_llvm_cbe_tmps._4.TemporalLayer)) = _llvm_cbe_tmps._8;
+#line 11 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
+  _llvm_cbe_tmps._9 = *((&backbuffer->Flags));
+#line 11 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
+  *((&_llvm_cbe_tmps._4.Flags)) = _llvm_cbe_tmps._9;
+#line 11 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
+  _llvm_cbe_tmps._10 = *((&backbuffer->SubresourceRange.base_mip_level));
+#line 11 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
+  *((&_llvm_cbe_tmps._4.SubresourceRange.base_mip_level)) = _llvm_cbe_tmps._10;
+#line 11 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
+  _llvm_cbe_tmps._11 = *((&backbuffer->SubresourceRange.mip_level_count));
+#line 11 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
+  *((&_llvm_cbe_tmps._4.SubresourceRange.mip_level_count)) = _llvm_cbe_tmps._11;
+#line 11 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
+  _llvm_cbe_tmps._12 = *((&backbuffer->SubresourceRange.base_array_layer));
+#line 11 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
+  *((&_llvm_cbe_tmps._4.SubresourceRange.base_array_layer)) = _llvm_cbe_tmps._12;
+#line 11 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
+  _llvm_cbe_tmps._13 = *((&backbuffer->SubresourceRange.array_layer_count));
+#line 11 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
+  *((&_llvm_cbe_tmps._4.SubresourceRange.array_layer_count)) = _llvm_cbe_tmps._13;
+#line 11 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
+  _llvm_cbe_tmps._14 = *((&backbuffer->MinLodClamp));
+#line 11 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
+  *((&_llvm_cbe_tmps._4.MinLodClamp)) = _llvm_cbe_tmps._14;
+#line 11 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
+  _llvm_cbe_tmps._15 = *((&backbuffer->ComponentMapping));
+#line 11 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
+  *((&_llvm_cbe_tmps._4.ComponentMapping)) = _llvm_cbe_tmps._15;
+#line 13 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
+  ___rpsl_describe_handle((((uint8_t*)(&backbufferDesc))), 36, _llvm_cbe_tmps._5, 1);
+#line 14 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
+  _llvm_cbe_tmps._16 = *((&backbufferDesc.Width));
+  #line 15 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
+  _llvm_cbe_tmps._17 = *((&backbufferDesc.Height));
+  #line 16 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
+  _llvm_cbe_tmps._18 = *((&backbufferDesc.Format));
+  #line 228 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/___rpsl_builtin_header_.rpsl"
+#line 228 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/___rpsl_builtin_header_.rpsl"
+  if ((((((uint32_t)(_llvm_cbe_tmps._17 | _llvm_cbe_tmps._16)) > ((uint32_t)1u))&1))) {
+#line 228 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/___rpsl_builtin_header_.rpsl"
+    goto while_2e_body_2e_i_2e_i_2e_preheader;
+#line 228 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/___rpsl_builtin_header_.rpsl"
+  } else {
+#line 228 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/___rpsl_builtin_header_.rpsl"
+    _llvm_cbe_phi_tmps.mips_2e_i_2e_i_2e_0_2e_lcssa__PHI_TEMPORARY = 1;   /* for PHI node */
+#line 228 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/___rpsl_builtin_header_.rpsl"
+    goto cond_2e_false_2e_i_2e_i;
+#line 228 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/___rpsl_builtin_header_.rpsl"
+  }
 
-#line 10 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
-  ___rpsl_block_marker(0, 0, 0, 2, -1, 0, -1);
-  #line 13 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
-  _llvm_cbe_tmps._2e_sub = (&_llvm_cbe_tmps._4.array[((int32_t)0)]);
-#line 13 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
-  *(((struct texture**)_llvm_cbe_tmps._2e_sub)) = backbuffer;
-#line 13 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
-  _llvm_cbe_tmps._5 = llvm_ctor_f32x4(((float)(0.000000e+00)), ((float)(2.000000e-01)), ((float)(4.000000e-01)), ((float)(1.000000e+00)));
-#line 13 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
-  *(((__MSALIGN__(4) struct l_vector_4_float**)((&_llvm_cbe_tmps._4.array[((int32_t)1)])))) = (&_llvm_cbe_tmps._5);
-#line 13 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
-  _llvm_cbe_tmps._6 = ___rpsl_node_call(0, 2, _llvm_cbe_tmps._2e_sub, 0, 0);
-#line 14 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
-  *(((struct texture**)(&_llvm_cbe_tmps._7))) = backbuffer;
-#line 14 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
-  _llvm_cbe_tmps._8 = ___rpsl_node_call(1, 1, (&_llvm_cbe_tmps._7), 0, 1);
-#line 15 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
+while_2e_body_2e_i_2e_i_2e_preheader:
+#line 228 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/___rpsl_builtin_header_.rpsl"
+  _llvm_cbe_phi_tmps.mips_2e_i_2e_i_2e_013__PHI_TEMPORARY = 1;   /* for PHI node */
+#line 228 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/___rpsl_builtin_header_.rpsl"
+  _llvm_cbe_phi_tmps.d_2e_i_2e_i_2e_012__PHI_TEMPORARY = 1;   /* for PHI node */
+#line 228 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/___rpsl_builtin_header_.rpsl"
+  _llvm_cbe_phi_tmps.h_2e_i_2e_i_2e_011__PHI_TEMPORARY = _llvm_cbe_tmps._17;   /* for PHI node */
+#line 228 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/___rpsl_builtin_header_.rpsl"
+  _llvm_cbe_phi_tmps.w_2e_i_2e_i_2e_010__PHI_TEMPORARY = _llvm_cbe_tmps._16;   /* for PHI node */
+#line 228 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/___rpsl_builtin_header_.rpsl"
+  goto while_2e_body_2e_i_2e_i;
+#line 228 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/___rpsl_builtin_header_.rpsl"
+
+#line 228 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/___rpsl_builtin_header_.rpsl"
+  do {     /* Syntactic loop 'while.body.i.i' to make GCC happy */
+while_2e_body_2e_i_2e_i:
+#line 228 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/___rpsl_builtin_header_.rpsl"
+  _llvm_cbe_phi_tmps.mips_2e_i_2e_i_2e_013 = _llvm_cbe_phi_tmps.mips_2e_i_2e_i_2e_013__PHI_TEMPORARY;
+#line 228 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/___rpsl_builtin_header_.rpsl"
+  _llvm_cbe_phi_tmps.d_2e_i_2e_i_2e_012 = _llvm_cbe_phi_tmps.d_2e_i_2e_i_2e_012__PHI_TEMPORARY;
+#line 228 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/___rpsl_builtin_header_.rpsl"
+  _llvm_cbe_phi_tmps.h_2e_i_2e_i_2e_011 = _llvm_cbe_phi_tmps.h_2e_i_2e_i_2e_011__PHI_TEMPORARY;
+#line 228 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/___rpsl_builtin_header_.rpsl"
+  _llvm_cbe_phi_tmps.w_2e_i_2e_i_2e_010 = _llvm_cbe_phi_tmps.w_2e_i_2e_i_2e_010__PHI_TEMPORARY;
+#line 228 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/___rpsl_builtin_header_.rpsl"
+  _llvm_cbe_tmps.inc_2e_i_2e_i = llvm_add_u32(_llvm_cbe_phi_tmps.mips_2e_i_2e_i_2e_013, 1);
+  #line 228 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/___rpsl_builtin_header_.rpsl"
+  _llvm_cbe_tmps.shr_2e_i_2e_i = llvm_lshr_u32(_llvm_cbe_phi_tmps.w_2e_i_2e_i_2e_010, 1);
+  #line 228 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/___rpsl_builtin_header_.rpsl"
+  _llvm_cbe_tmps.shr12_2e_i_2e_i = llvm_lshr_u32(_llvm_cbe_phi_tmps.h_2e_i_2e_i_2e_011, 1);
+  #line 228 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/___rpsl_builtin_header_.rpsl"
+  _llvm_cbe_tmps.shr13_2e_i_2e_i = llvm_lshr_u32(_llvm_cbe_phi_tmps.d_2e_i_2e_i_2e_012, 1);
+  #line 228 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/___rpsl_builtin_header_.rpsl"
+#line 228 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/___rpsl_builtin_header_.rpsl"
+  if ((((((uint32_t)((_llvm_cbe_tmps.shr12_2e_i_2e_i | _llvm_cbe_tmps.shr_2e_i_2e_i) | _llvm_cbe_tmps.shr13_2e_i_2e_i)) > ((uint32_t)1u))&1))) {
+#line 228 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/___rpsl_builtin_header_.rpsl"
+    _llvm_cbe_phi_tmps.mips_2e_i_2e_i_2e_013__PHI_TEMPORARY = _llvm_cbe_tmps.inc_2e_i_2e_i;   /* for PHI node */
+#line 228 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/___rpsl_builtin_header_.rpsl"
+    _llvm_cbe_phi_tmps.d_2e_i_2e_i_2e_012__PHI_TEMPORARY = _llvm_cbe_tmps.shr13_2e_i_2e_i;   /* for PHI node */
+#line 228 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/___rpsl_builtin_header_.rpsl"
+    _llvm_cbe_phi_tmps.h_2e_i_2e_i_2e_011__PHI_TEMPORARY = _llvm_cbe_tmps.shr12_2e_i_2e_i;   /* for PHI node */
+#line 228 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/___rpsl_builtin_header_.rpsl"
+    _llvm_cbe_phi_tmps.w_2e_i_2e_i_2e_010__PHI_TEMPORARY = _llvm_cbe_tmps.shr_2e_i_2e_i;   /* for PHI node */
+#line 228 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/___rpsl_builtin_header_.rpsl"
+    goto while_2e_body_2e_i_2e_i;
+#line 228 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/___rpsl_builtin_header_.rpsl"
+  } else {
+#line 228 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/___rpsl_builtin_header_.rpsl"
+    goto cond_2e_false_2e_i_2e_i_2e_loopexit;
+#line 228 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/___rpsl_builtin_header_.rpsl"
+  }
+
+  } while (1); /* end of syntactic loop 'while.body.i.i' */
+cond_2e_false_2e_i_2e_i_2e_loopexit:
+#line 228 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/___rpsl_builtin_header_.rpsl"
+  _llvm_cbe_phi_tmps.mips_2e_i_2e_i_2e_0_2e_lcssa__PHI_TEMPORARY = _llvm_cbe_tmps.inc_2e_i_2e_i;   /* for PHI node */
+#line 228 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/___rpsl_builtin_header_.rpsl"
+  goto cond_2e_false_2e_i_2e_i;
+#line 228 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/___rpsl_builtin_header_.rpsl"
+
+cond_2e_false_2e_i_2e_i:
+#line 228 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/___rpsl_builtin_header_.rpsl"
+  _llvm_cbe_phi_tmps.mips_2e_i_2e_i_2e_0_2e_lcssa = _llvm_cbe_phi_tmps.mips_2e_i_2e_i_2e_0_2e_lcssa__PHI_TEMPORARY;
+#line 228 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/___rpsl_builtin_header_.rpsl"
+  _llvm_cbe_tmps.UMin = ___rpsl_dxop_binary_i32(40, 1, _llvm_cbe_phi_tmps.mips_2e_i_2e_i_2e_0_2e_lcssa);
+  #line 18 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
+  _llvm_cbe_tmps.call1_2e_i = ___rpsl_create_resource(3, 0, _llvm_cbe_tmps._18, _llvm_cbe_tmps._16, _llvm_cbe_tmps._17, 1, _llvm_cbe_tmps.UMin, 1, 0, 1, 0);
+  #line 232 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/___rpsl_builtin_header_.rpsl"
+  ___rpsl_name_resource(_llvm_cbe_tmps.call1_2e_i, ((&_AE__AE_rps_Str0.array[((int32_t)0)])), 11);
+#line 18 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
+  *((&offscreenRT.Resource)) = _llvm_cbe_tmps.call1_2e_i;
+#line 18 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
+  *((&offscreenRT.Format)) = 0;
+#line 18 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
+  *((&offscreenRT.TemporalLayer)) = 0;
+#line 18 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
+  *((&offscreenRT.Flags)) = 0;
+#line 18 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
+  *((&offscreenRT.SubresourceRange.base_mip_level)) = 0;
+#line 18 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
+  *((&offscreenRT.SubresourceRange.mip_level_count)) = (((uint16_t)_llvm_cbe_tmps.UMin));
+#line 18 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
+  *((&offscreenRT.SubresourceRange.base_array_layer)) = 0;
+#line 18 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
+  *((&offscreenRT.SubresourceRange.array_layer_count)) = 1;
+#line 18 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
+  *((&offscreenRT.MinLodClamp)) = ((float)(0.000000e+00));
+#line 18 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
+  *((&offscreenRT.ComponentMapping)) = 50462976;
+  #line 20 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
+  _llvm_cbe_tmps._19 = (struct l_array_2_uint8_t_KC_*) alloca(sizeof(struct l_array_2_uint8_t_KC_));
+#line 20 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
+  _llvm_cbe_tmps._2e_sub = (&(*_llvm_cbe_tmps._19).array[((int32_t)0)]);
+#line 20 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
+  *(((struct texture**)_llvm_cbe_tmps._2e_sub)) = (&offscreenRT);
+#line 20 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
+  _llvm_cbe_tmps._20 = (__MSALIGN__(4) struct l_vector_4_float*) alloca(sizeof(__MSALIGN__(4) struct l_vector_4_float));
+#line 20 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
+  *_llvm_cbe_tmps._20 = llvm_ctor_f32x4(((float)(0.000000e+00)), ((float)(2.000000e-01)), ((float)(4.000000e-01)), ((float)(1.000000e+00)));
+#line 20 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
+  *(((__MSALIGN__(4) struct l_vector_4_float**)((&(*_llvm_cbe_tmps._19).array[((int32_t)1)])))) = _llvm_cbe_tmps._20;
+#line 20 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
+  _llvm_cbe_tmps._21 = ___rpsl_node_call(0, 2, _llvm_cbe_tmps._2e_sub, 0, 0);
+#line 21 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
+  _llvm_cbe_tmps._22 = (uint8_t**) alloca(sizeof(uint8_t*));
+#line 21 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
+  *(((struct texture**)_llvm_cbe_tmps._22)) = (&offscreenRT);
+#line 21 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
+  _llvm_cbe_tmps._23 = ___rpsl_node_call(1, 1, _llvm_cbe_tmps._22, 0, 1);
+#line 22 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
+  _llvm_cbe_tmps._24 = (struct l_array_3_uint8_t_KC_*) alloca(sizeof(struct l_array_3_uint8_t_KC_));
+#line 22 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
+  _llvm_cbe_tmps._2e_sub_2e_8 = (&(*_llvm_cbe_tmps._24).array[((int32_t)0)]);
+#line 22 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
+  *(((struct texture**)_llvm_cbe_tmps._2e_sub_2e_8)) = (&_llvm_cbe_tmps._4);
+#line 22 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
+  _llvm_cbe_tmps._25 = (float*) alloca(sizeof(float));
+#line 22 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
+  *_llvm_cbe_tmps._25 = ((float)(8.000000e+00));
+#line 22 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
+  *(((float**)((&(*_llvm_cbe_tmps._24).array[((int32_t)1)])))) = _llvm_cbe_tmps._25;
+#line 22 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
+  *(((struct texture**)((&(*_llvm_cbe_tmps._24).array[((int32_t)2)])))) = (&offscreenRT);
+#line 22 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
+  _llvm_cbe_tmps._26 = ___rpsl_node_call(2, 3, _llvm_cbe_tmps._2e_sub_2e_8, 0, 2);
+#line 23 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
 }
 
 
-#line 10 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
-void rpsl_M_test_triangle_Fn_main_wrapper(uint32_t llvm_cbe_temp__9, uint8_t** llvm_cbe_temp__10, uint32_t llvm_cbe_temp__11) {
+#line 11 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
+void rpsl_M_test_triangle_Fn_main_wrapper(uint32_t llvm_cbe_temp__27, uint8_t** llvm_cbe_temp__28, uint32_t llvm_cbe_temp__29) {
 
   struct {
-    uint8_t* _12;
-    struct texture* _13;
-    struct texture* _14;
+    uint8_t* _30;
+    struct texture* _31;
+    struct texture* _32;
   } _llvm_cbe_tmps;
 
   struct {
-    struct texture* _15;
-    struct texture* _15__PHI_TEMPORARY;
+    struct texture* _33;
+    struct texture* _33__PHI_TEMPORARY;
   } _llvm_cbe_phi_tmps = {0};
 
-#line 10 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
-#line 10 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
-  if ((((llvm_cbe_temp__9 == 1u)&1))) {
-#line 10 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
+#line 11 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
+#line 11 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
+  if ((((llvm_cbe_temp__27 == 1u)&1))) {
+#line 11 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
     goto trunk;
-#line 10 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
+#line 11 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
   } else {
-#line 10 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
+#line 11 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
     goto err;
-#line 10 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
+#line 11 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
   }
 
 trunk:
-#line 10 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
-  _llvm_cbe_tmps._12 = *llvm_cbe_temp__10;
-#line 10 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
-  _llvm_cbe_tmps._13 = (struct texture*) alloca(sizeof(struct texture));
-#line 10 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
-  _llvm_cbe_tmps._14 = ((struct texture*)_llvm_cbe_tmps._12);
-#line 10 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
-  if (((((llvm_cbe_temp__11 & 1) == 0u)&1))) {
-#line 10 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
+#line 11 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
+  _llvm_cbe_tmps._30 = *llvm_cbe_temp__28;
+#line 11 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
+  _llvm_cbe_tmps._31 = (struct texture*) alloca(sizeof(struct texture));
+#line 11 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
+  _llvm_cbe_tmps._32 = ((struct texture*)_llvm_cbe_tmps._30);
+#line 11 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
+  if (((((llvm_cbe_temp__29 & 1) == 0u)&1))) {
+#line 11 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
     goto _2e_preheader;
-#line 10 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
+#line 11 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
   } else {
-#line 10 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
-    _llvm_cbe_phi_tmps._15__PHI_TEMPORARY = _llvm_cbe_tmps._14;   /* for PHI node */
-#line 10 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
+#line 11 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
+    _llvm_cbe_phi_tmps._33__PHI_TEMPORARY = _llvm_cbe_tmps._32;   /* for PHI node */
+#line 11 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
     goto _2e_loopexit;
-#line 10 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
+#line 11 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
   }
 
 err:
-#line 10 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
+#line 11 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
   ___rpsl_abort(-3);
-#line 10 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
+#line 11 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
   return;
 _2e_preheader:
-#line 10 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
-  *(_llvm_cbe_tmps._13) = _BA__PD_make_default_texture_view_from_desc_AE__AE_YA_PD_AUtexture_AE__AE_IUResourceDesc_AE__AE__AE_Z(0, (((struct ResourceDesc*)_llvm_cbe_tmps._12)));
-#line 10 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
-  _llvm_cbe_phi_tmps._15__PHI_TEMPORARY = _llvm_cbe_tmps._13;   /* for PHI node */
-#line 10 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
+#line 11 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
+  *(_llvm_cbe_tmps._31) = _BA__PD_make_default_texture_view_from_desc_AE__AE_YA_PD_AUtexture_AE__AE_IUResourceDesc_AE__AE__AE_Z(0, (((struct ResourceDesc*)_llvm_cbe_tmps._30)));
+#line 11 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
+  _llvm_cbe_phi_tmps._33__PHI_TEMPORARY = _llvm_cbe_tmps._31;   /* for PHI node */
+#line 11 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
   goto _2e_loopexit;
-#line 10 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
+#line 11 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
 
 _2e_loopexit:
-#line 10 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
-  _llvm_cbe_phi_tmps._15 = _llvm_cbe_phi_tmps._15__PHI_TEMPORARY;
-#line 10 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
-  rpsl_M_test_triangle_Fn_main(_llvm_cbe_phi_tmps._15);
-#line 10 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
+#line 11 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
+  _llvm_cbe_phi_tmps._33 = _llvm_cbe_phi_tmps._33__PHI_TEMPORARY;
+#line 11 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
+  rpsl_M_test_triangle_Fn_main(_llvm_cbe_phi_tmps._33);
+#line 11 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
 }
 

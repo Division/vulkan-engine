@@ -1,15 +1,16 @@
-// Copyright (c) 2023 Advanced Micro Devices, Inc. All rights reserved.
-//
-// This file is part of the AMD Render Pipeline Shaders SDK which is
-// released under the AMD INTERNAL EVALUATION LICENSE.
-//
-// See file LICENSE.txt for full license details.
 
-graphics node Triangle([readwrite(rendertarget)] texture renderTarget : SV_Target0);
+graphics node RenderBlur(rtv backBuffer : SV_Target0, uint2 viewport, float2 sigma, srv offscreenRenderTarget);
 
-export void blur([readonly(present)] texture backbuffer)
+export void blur(rtv backbuffer : SV_Target0, float sigma, srv srcTexture)
 {
-    // clear and then render geometry to backbuffer
-    clear(backbuffer, float4(0.0, 0.2, 0.4, 1.0));
-    Triangle(backbuffer);
+    ResourceDesc backbufferDesc = backbuffer.desc();
+    uint32_t width = (uint32_t)backbufferDesc.Width;
+    uint32_t height = (uint32_t)backbufferDesc.Height;
+    RPS_FORMAT backbufferFormat = backbufferDesc.Format;
+    uint2 viewport = uint2(width, height);
+
+    texture offscreenRT = create_tex2d(backbufferFormat, width, height);
+
+    RenderBlur(offscreenRT, viewport, float2(sigma, 0), srcTexture);
+	RenderBlur(backbuffer, viewport, float2(0, sigma), offscreenRT); 
 }

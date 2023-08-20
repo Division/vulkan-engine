@@ -68,6 +68,7 @@ namespace Device {
 		uint32_t GetQueueFamilyIndex(PipelineBindPoint);
 
 		size_t GetCurrentFrame() const { return currentFrame; }
+		size_t GetCurrentFrameRollOver() const { return currentFrame % caps::MAX_FRAMES_IN_FLIGHT; }
 		uint32_t GetSwapchainImageIndex() const { return swapchainImageIndex; }
 		uint32_t GetSwapchainImageCount() const;
 		VkFence GetInFlightFence() const { return inFlightFences[currentFrame % caps::MAX_FRAMES_IN_FLIGHT]; }

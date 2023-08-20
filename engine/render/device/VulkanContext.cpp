@@ -71,6 +71,7 @@ namespace Device {
 	VulkanContext::~VulkanContext()
 	{
 		profiler::Deinitialize();
+		descriptor_cache = nullptr;
 		vmaDestroyAllocator(allocator);
 	}
 
@@ -501,6 +502,7 @@ namespace Device {
 		vk::Fence current_fence = GetInFlightFence(); 
 		GetDevice().waitForFences(1, &current_fence, VK_TRUE, std::numeric_limits<uint64_t>::max());
 		GetDevice().resetFences(1, &current_fence);
+		descriptor_cache->ResetFrameDescriptors();
 	}
 
 	void VulkanContext::Present()

@@ -1,5 +1,4 @@
 function(include_rpsl targetName rpsl)
-	set(ALL_MODULE_RPSL ${ALL_MODULE_RPSL} ${rpsl} PARENT_SCOPE)
 	set(rpsl_hlslc_exe "${CMAKE_CURRENT_LIST_DIR}/../../bin/rps/rps-hlslc.exe")
 
 	foreach(src_file ${rpsl})
@@ -11,6 +10,7 @@ function(include_rpsl targetName rpsl)
 			OUTPUT ${file_g_c}
 			COMMAND ${rpsl_hlslc_exe} ${src_file} -O3 -od ${src_directory}
 			COMMAND ${CMAKE_COMMAND} -E remove -f "${src_directory}/${src_no_ext}.tmp.rps.ll"
+			DEPENDS ${src_file}
 			WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 		)
 

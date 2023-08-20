@@ -9,12 +9,12 @@
 
 namespace Device {
 
-	void ResourceBindings::AddTextureBinding(const std::string& name, const Texture* texture)
+	void ResourceBindings::AddImageViewBinding(const std::string& name, vk::ImageView image_view)
 	{
-		AddTextureBinding(ShaderProgram::GetParameterNameHash(name), texture);
+		AddImageViewBinding(ShaderProgram::GetParameterNameHash(name), image_view);
 	}
 
-	void ResourceBindings::AddTextureBinding(uint32_t name_hash, const Texture* texture)
+	void ResourceBindings::AddImageViewBinding(uint32_t name_hash, vk::ImageView image_view)
 	{
 		auto index = GetTextureBindingIndex(name_hash);
 		if (index == (uint32_t)-1)
@@ -24,13 +24,23 @@ namespace Device {
 		}
 
 		texture_bindings[index].name_hash = name_hash;
-		texture_bindings[index].texture = texture;
+		texture_bindings[index].image_view = image_view;
 	}
 
-	const Texture* ResourceBindings::GetTextureBinding(uint32_t name_hash) const
+	void ResourceBindings::AddTextureBinding(const std::string& name, const Texture* texture)
+	{
+		AddTextureBinding(ShaderProgram::GetParameterNameHash(name), texture);
+	}
+
+	void ResourceBindings::AddTextureBinding(uint32_t name_hash, const Texture* texture)
+	{
+		AddImageViewBinding(name_hash, texture->GetImageView());
+	}
+
+	const vk::ImageView ResourceBindings::GetTextureBinding(uint32_t name_hash) const
 	{
 		auto index = GetTextureBindingIndex(name_hash);
-		return index < texture_bindings.size() ? texture_bindings[index].texture : nullptr;
+		return index < texture_bindings.size() ? texture_bindings[index].image_view : nullptr;
 	}
 
 	uint32_t ResourceBindings::GetTextureBindingIndex(uint32_t name_hash) const
@@ -120,7 +130,7 @@ namespace Device {
 	{
 		OPTICK_EVENT();
 		for (auto& texture_binding : other.texture_bindings)
-			AddTextureBinding(texture_binding.name_hash, texture_binding.texture);
+			AddImageViewBinding(texture_binding.name_hash, texture_binding.image_view);
 
 		for (auto& buffer_binding : other.buffer_bindings)
 			AddBufferBinding(buffer_binding.name_hash, buffer_binding.buffer, buffer_binding.size);
@@ -142,9 +152,9 @@ namespace Device {
 			case ShaderProgram::BindingType::CombinedImageSampler:
 			case ShaderProgram::BindingType::SampledImage:
 			{
-				auto* texture = resource_bindings.GetTextureBinding(binding.name_hash);
+				auto texture = resource_bindings.GetTextureBinding(binding.name_hash);
 				if (!texture)
-					texture = Engine::Get()->GetSceneRenderer()->GetBlankTexture();
+					texture = Engine::Get()->GetSceneRenderer()->GetBlankTexture()->GetImageView();
 
 				AddTextureBinding(address.binding, texture);
 				break;
@@ -199,7 +209,7 @@ namespace Device {
 		std::sort(buffer_bindings.begin(), buffer_bindings.end());
 	}
 
-	void DescriptorSetBindings::AddTextureBindingSafe(unsigned index, const Texture* texture)
+	void DescriptorSetBindings::AddTextureBindingSafe(unsigned index, vk::ImageView texture)
 	{
 		if (index == -1)
 			return;
@@ -215,7 +225,7 @@ namespace Device {
 		AddBufferBinding(index, offset, size, buffer);
 	}
 
-	void DescriptorSetBindings::AddTextureBinding(unsigned index, const Texture* texture)
+	void DescriptorSetBindings::AddTextureBinding(unsigned index, vk::ImageView texture)
 	{
 		texture_bindings.push_back(TextureBinding{ (unsigned char)index, texture });
 	}

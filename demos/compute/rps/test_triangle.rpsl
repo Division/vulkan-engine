@@ -5,11 +5,19 @@
 //
 // See file LICENSE.txt for full license details.
 
-graphics node Triangle([readwrite(rendertarget)] texture renderTarget : SV_Target0);
+graphics node Triangle(rtv renderTarget : SV_Target0);
+graphics node Blur(rtv backBuffer : SV_Target0, float sigma, srv srcTexture);
 
 export void main([readonly(present)] texture backbuffer)
 {
-    // clear and then render geometry to backbuffer
-    clear(backbuffer, float4(0.0, 0.2, 0.4, 1.0));
-    Triangle(backbuffer);
+    ResourceDesc backbufferDesc = backbuffer.desc();
+    uint32_t width = (uint32_t)backbufferDesc.Width;
+    uint32_t height = (uint32_t)backbufferDesc.Height;
+    RPS_FORMAT backbufferFormat = backbufferDesc.Format;
+
+    texture offscreenRT = create_tex2d(backbufferFormat, width, height);
+
+    clear(offscreenRT, float4(0.0, 0.2, 0.4, 1.0));
+    Triangle(offscreenRT);
+	Blur(backbuffer, 8, offscreenRT); 
 }
