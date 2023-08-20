@@ -47,6 +47,50 @@ namespace render {
 		RendererResources();
 	};
 
+
+	class RpsGraphHandle
+	{
+	public:
+		RpsGraphHandle() = default;
+		RpsGraphHandle(const RpsRenderGraphCreateInfo& info);
+		RpsGraphHandle(RpsGraphHandle&& other);
+		RpsGraphHandle& operator=(RpsGraphHandle&& other);
+
+		RpsGraphHandle(const RpsGraphHandle&) = delete;
+		RpsGraphHandle& operator=(const RpsGraphHandle&) = delete;
+
+		RpsRenderGraph operator*() const { return handle; }
+
+		RpsSubprogram GetMainEntry() const;
+
+		~RpsGraphHandle();
+
+	private:
+
+		RpsRenderGraph handle = RPS_NULL_HANDLE;
+	};
+
+
+	class RpsSubprogramHandle
+	{
+	public:
+		RpsSubprogramHandle() = default;
+		RpsSubprogramHandle(const RpsProgramCreateInfo& info);
+		RpsSubprogramHandle(RpsSubprogramHandle&& other);
+		RpsSubprogramHandle& operator=(RpsSubprogramHandle&& other);
+
+		RpsSubprogramHandle(const RpsSubprogramHandle&) = delete;
+		RpsSubprogramHandle& operator=(const RpsSubprogramHandle&) = delete;
+		~RpsSubprogramHandle();
+
+		RpsSubprogram operator*() const { return handle; }
+
+	private:
+
+		RpsSubprogram handle = RPS_NULL_HANDLE;
+	};
+
+
 	class SceneRenderer : IRenderer
 	{
 	public:

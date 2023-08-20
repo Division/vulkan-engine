@@ -2,7 +2,6 @@
 
 #include "CommonIncludes.h"
 #include "render/shader/Shader.h"
-#include "render/renderer/SceneRenderer.h"
 #include "render/device/Device.h"
 #include "render/texture/Texture.h"
 #include "render/mesh/Mesh.h"
@@ -34,9 +33,8 @@ namespace Modules
         RpsProgramCreateInfo programCreateInfo = {};
         programCreateInfo.hRpslEntryPoint      = RPS_ENTRY_REF(blur, blur);
 
-        RpsResult result = rpsProgramCreate(Engine::GetVulkanContext()->GetRpsDevice(), &programCreateInfo, &program);
-		assert(result == RPS_OK);
-		result = rpsProgramBindNode(program, "RenderBlur", &Blur::Render, this);
+		program = render::RpsSubprogramHandle(programCreateInfo);
+		auto result = rpsProgramBindNode(*program, "RenderBlur", &Blur::Render, this);
 		assert(result == RPS_OK);
 	}
 

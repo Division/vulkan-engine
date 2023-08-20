@@ -685,6 +685,7 @@ cond_2e_end:
 #line 4 "C:/Users/pmuji/Documents/sources/vulkan-engine/engine/modules/blur/blur.rpsl"
 void rpsl_M_blur_Fn_blur(struct texture* backbuffer, float sigma, struct texture* srcTexture) {
     struct ResourceDesc backbufferDesc;    /* Address-exposed local */
+    struct texture offscreenRT;    /* Address-exposed local */
 
   struct {
     __MSALIGN__(8) struct texture _4 __attribute__((aligned(8)));    /* Address-exposed local */
@@ -711,28 +712,35 @@ void rpsl_M_blur_Fn_blur(struct texture* backbuffer, float sigma, struct texture
     uint32_t UMin;
     uint32_t call1_2e_i;
     __MSALIGN__(4) struct l_vector_2_float _21;
-    struct l_array_4_uint8_t_KC_* _22;
+    __MSALIGN__(4) struct l_vector_2_float _22;
+    struct l_array_4_uint8_t_KC_* _23;
     uint8_t** _2e_sub;
-    __MSALIGN__(4) struct l_vector_2_uint32_t* _23;
-    __MSALIGN__(4) struct l_vector_2_float* _24;
-    uint32_t _25;
+    __MSALIGN__(4) struct l_vector_2_uint32_t* _24;
+    __MSALIGN__(4) struct l_vector_2_float* _25;
+    uint32_t _26;
+    __MSALIGN__(4) struct l_vector_2_float _27;
+    struct l_array_4_uint8_t_KC_* _28;
+    uint8_t** _2e_sub_2e_7;
+    __MSALIGN__(4) struct l_vector_2_uint32_t* _29;
+    __MSALIGN__(4) struct l_vector_2_float* _30;
+    uint32_t _31;
   } _llvm_cbe_tmps;
 
   struct {
-    uint32_t mips_2e_i_2e_i_2e_014;
-    uint32_t mips_2e_i_2e_i_2e_014__PHI_TEMPORARY;
-    uint32_t d_2e_i_2e_i_2e_013;
-    uint32_t d_2e_i_2e_i_2e_013__PHI_TEMPORARY;
-    uint32_t h_2e_i_2e_i_2e_012;
-    uint32_t h_2e_i_2e_i_2e_012__PHI_TEMPORARY;
-    uint32_t w_2e_i_2e_i_2e_011;
-    uint32_t w_2e_i_2e_i_2e_011__PHI_TEMPORARY;
+    uint32_t mips_2e_i_2e_i_2e_012;
+    uint32_t mips_2e_i_2e_i_2e_012__PHI_TEMPORARY;
+    uint32_t d_2e_i_2e_i_2e_011;
+    uint32_t d_2e_i_2e_i_2e_011__PHI_TEMPORARY;
+    uint32_t h_2e_i_2e_i_2e_010;
+    uint32_t h_2e_i_2e_i_2e_010__PHI_TEMPORARY;
+    uint32_t w_2e_i_2e_i_2e_09;
+    uint32_t w_2e_i_2e_i_2e_09__PHI_TEMPORARY;
     uint32_t mips_2e_i_2e_i_2e_0_2e_lcssa;
     uint32_t mips_2e_i_2e_i_2e_0_2e_lcssa__PHI_TEMPORARY;
   } _llvm_cbe_phi_tmps = {0};
 
 #line 4 "C:/Users/pmuji/Documents/sources/vulkan-engine/engine/modules/blur/blur.rpsl"
-  ___rpsl_block_marker(0, 0, 1, 1, -1, 0, -1);
+  ___rpsl_block_marker(0, 0, 1, 2, -1, 0, -1);
 #line 4 "C:/Users/pmuji/Documents/sources/vulkan-engine/engine/modules/blur/blur.rpsl"
   _llvm_cbe_tmps._5 = (&_llvm_cbe_tmps._4.Resource);
 #line 4 "C:/Users/pmuji/Documents/sources/vulkan-engine/engine/modules/blur/blur.rpsl"
@@ -807,13 +815,13 @@ void rpsl_M_blur_Fn_blur(struct texture* backbuffer, float sigma, struct texture
 
 while_2e_body_2e_i_2e_i_2e_preheader:
 #line 228 "C:/Users/pmuji/Documents/sources/vulkan-engine/engine/modules/blur/___rpsl_builtin_header_.rpsl"
-  _llvm_cbe_phi_tmps.mips_2e_i_2e_i_2e_014__PHI_TEMPORARY = 1;   /* for PHI node */
+  _llvm_cbe_phi_tmps.mips_2e_i_2e_i_2e_012__PHI_TEMPORARY = 1;   /* for PHI node */
 #line 228 "C:/Users/pmuji/Documents/sources/vulkan-engine/engine/modules/blur/___rpsl_builtin_header_.rpsl"
-  _llvm_cbe_phi_tmps.d_2e_i_2e_i_2e_013__PHI_TEMPORARY = 1;   /* for PHI node */
+  _llvm_cbe_phi_tmps.d_2e_i_2e_i_2e_011__PHI_TEMPORARY = 1;   /* for PHI node */
 #line 228 "C:/Users/pmuji/Documents/sources/vulkan-engine/engine/modules/blur/___rpsl_builtin_header_.rpsl"
-  _llvm_cbe_phi_tmps.h_2e_i_2e_i_2e_012__PHI_TEMPORARY = _llvm_cbe_tmps._17;   /* for PHI node */
+  _llvm_cbe_phi_tmps.h_2e_i_2e_i_2e_010__PHI_TEMPORARY = _llvm_cbe_tmps._17;   /* for PHI node */
 #line 228 "C:/Users/pmuji/Documents/sources/vulkan-engine/engine/modules/blur/___rpsl_builtin_header_.rpsl"
-  _llvm_cbe_phi_tmps.w_2e_i_2e_i_2e_011__PHI_TEMPORARY = _llvm_cbe_tmps._16;   /* for PHI node */
+  _llvm_cbe_phi_tmps.w_2e_i_2e_i_2e_09__PHI_TEMPORARY = _llvm_cbe_tmps._16;   /* for PHI node */
 #line 228 "C:/Users/pmuji/Documents/sources/vulkan-engine/engine/modules/blur/___rpsl_builtin_header_.rpsl"
   goto while_2e_body_2e_i_2e_i;
 #line 228 "C:/Users/pmuji/Documents/sources/vulkan-engine/engine/modules/blur/___rpsl_builtin_header_.rpsl"
@@ -822,32 +830,32 @@ while_2e_body_2e_i_2e_i_2e_preheader:
   do {     /* Syntactic loop 'while.body.i.i' to make GCC happy */
 while_2e_body_2e_i_2e_i:
 #line 228 "C:/Users/pmuji/Documents/sources/vulkan-engine/engine/modules/blur/___rpsl_builtin_header_.rpsl"
-  _llvm_cbe_phi_tmps.mips_2e_i_2e_i_2e_014 = _llvm_cbe_phi_tmps.mips_2e_i_2e_i_2e_014__PHI_TEMPORARY;
+  _llvm_cbe_phi_tmps.mips_2e_i_2e_i_2e_012 = _llvm_cbe_phi_tmps.mips_2e_i_2e_i_2e_012__PHI_TEMPORARY;
 #line 228 "C:/Users/pmuji/Documents/sources/vulkan-engine/engine/modules/blur/___rpsl_builtin_header_.rpsl"
-  _llvm_cbe_phi_tmps.d_2e_i_2e_i_2e_013 = _llvm_cbe_phi_tmps.d_2e_i_2e_i_2e_013__PHI_TEMPORARY;
+  _llvm_cbe_phi_tmps.d_2e_i_2e_i_2e_011 = _llvm_cbe_phi_tmps.d_2e_i_2e_i_2e_011__PHI_TEMPORARY;
 #line 228 "C:/Users/pmuji/Documents/sources/vulkan-engine/engine/modules/blur/___rpsl_builtin_header_.rpsl"
-  _llvm_cbe_phi_tmps.h_2e_i_2e_i_2e_012 = _llvm_cbe_phi_tmps.h_2e_i_2e_i_2e_012__PHI_TEMPORARY;
+  _llvm_cbe_phi_tmps.h_2e_i_2e_i_2e_010 = _llvm_cbe_phi_tmps.h_2e_i_2e_i_2e_010__PHI_TEMPORARY;
 #line 228 "C:/Users/pmuji/Documents/sources/vulkan-engine/engine/modules/blur/___rpsl_builtin_header_.rpsl"
-  _llvm_cbe_phi_tmps.w_2e_i_2e_i_2e_011 = _llvm_cbe_phi_tmps.w_2e_i_2e_i_2e_011__PHI_TEMPORARY;
+  _llvm_cbe_phi_tmps.w_2e_i_2e_i_2e_09 = _llvm_cbe_phi_tmps.w_2e_i_2e_i_2e_09__PHI_TEMPORARY;
 #line 228 "C:/Users/pmuji/Documents/sources/vulkan-engine/engine/modules/blur/___rpsl_builtin_header_.rpsl"
-  _llvm_cbe_tmps.inc_2e_i_2e_i = llvm_add_u32(_llvm_cbe_phi_tmps.mips_2e_i_2e_i_2e_014, 1);
+  _llvm_cbe_tmps.inc_2e_i_2e_i = llvm_add_u32(_llvm_cbe_phi_tmps.mips_2e_i_2e_i_2e_012, 1);
   #line 228 "C:/Users/pmuji/Documents/sources/vulkan-engine/engine/modules/blur/___rpsl_builtin_header_.rpsl"
-  _llvm_cbe_tmps.shr_2e_i_2e_i = llvm_lshr_u32(_llvm_cbe_phi_tmps.w_2e_i_2e_i_2e_011, 1);
+  _llvm_cbe_tmps.shr_2e_i_2e_i = llvm_lshr_u32(_llvm_cbe_phi_tmps.w_2e_i_2e_i_2e_09, 1);
   #line 228 "C:/Users/pmuji/Documents/sources/vulkan-engine/engine/modules/blur/___rpsl_builtin_header_.rpsl"
-  _llvm_cbe_tmps.shr12_2e_i_2e_i = llvm_lshr_u32(_llvm_cbe_phi_tmps.h_2e_i_2e_i_2e_012, 1);
+  _llvm_cbe_tmps.shr12_2e_i_2e_i = llvm_lshr_u32(_llvm_cbe_phi_tmps.h_2e_i_2e_i_2e_010, 1);
   #line 228 "C:/Users/pmuji/Documents/sources/vulkan-engine/engine/modules/blur/___rpsl_builtin_header_.rpsl"
-  _llvm_cbe_tmps.shr13_2e_i_2e_i = llvm_lshr_u32(_llvm_cbe_phi_tmps.d_2e_i_2e_i_2e_013, 1);
+  _llvm_cbe_tmps.shr13_2e_i_2e_i = llvm_lshr_u32(_llvm_cbe_phi_tmps.d_2e_i_2e_i_2e_011, 1);
   #line 228 "C:/Users/pmuji/Documents/sources/vulkan-engine/engine/modules/blur/___rpsl_builtin_header_.rpsl"
 #line 228 "C:/Users/pmuji/Documents/sources/vulkan-engine/engine/modules/blur/___rpsl_builtin_header_.rpsl"
   if ((((((uint32_t)((_llvm_cbe_tmps.shr12_2e_i_2e_i | _llvm_cbe_tmps.shr_2e_i_2e_i) | _llvm_cbe_tmps.shr13_2e_i_2e_i)) > ((uint32_t)1u))&1))) {
 #line 228 "C:/Users/pmuji/Documents/sources/vulkan-engine/engine/modules/blur/___rpsl_builtin_header_.rpsl"
-    _llvm_cbe_phi_tmps.mips_2e_i_2e_i_2e_014__PHI_TEMPORARY = _llvm_cbe_tmps.inc_2e_i_2e_i;   /* for PHI node */
+    _llvm_cbe_phi_tmps.mips_2e_i_2e_i_2e_012__PHI_TEMPORARY = _llvm_cbe_tmps.inc_2e_i_2e_i;   /* for PHI node */
 #line 228 "C:/Users/pmuji/Documents/sources/vulkan-engine/engine/modules/blur/___rpsl_builtin_header_.rpsl"
-    _llvm_cbe_phi_tmps.d_2e_i_2e_i_2e_013__PHI_TEMPORARY = _llvm_cbe_tmps.shr13_2e_i_2e_i;   /* for PHI node */
+    _llvm_cbe_phi_tmps.d_2e_i_2e_i_2e_011__PHI_TEMPORARY = _llvm_cbe_tmps.shr13_2e_i_2e_i;   /* for PHI node */
 #line 228 "C:/Users/pmuji/Documents/sources/vulkan-engine/engine/modules/blur/___rpsl_builtin_header_.rpsl"
-    _llvm_cbe_phi_tmps.h_2e_i_2e_i_2e_012__PHI_TEMPORARY = _llvm_cbe_tmps.shr12_2e_i_2e_i;   /* for PHI node */
+    _llvm_cbe_phi_tmps.h_2e_i_2e_i_2e_010__PHI_TEMPORARY = _llvm_cbe_tmps.shr12_2e_i_2e_i;   /* for PHI node */
 #line 228 "C:/Users/pmuji/Documents/sources/vulkan-engine/engine/modules/blur/___rpsl_builtin_header_.rpsl"
-    _llvm_cbe_phi_tmps.w_2e_i_2e_i_2e_011__PHI_TEMPORARY = _llvm_cbe_tmps.shr_2e_i_2e_i;   /* for PHI node */
+    _llvm_cbe_phi_tmps.w_2e_i_2e_i_2e_09__PHI_TEMPORARY = _llvm_cbe_tmps.shr_2e_i_2e_i;   /* for PHI node */
 #line 228 "C:/Users/pmuji/Documents/sources/vulkan-engine/engine/modules/blur/___rpsl_builtin_header_.rpsl"
     goto while_2e_body_2e_i_2e_i;
 #line 228 "C:/Users/pmuji/Documents/sources/vulkan-engine/engine/modules/blur/___rpsl_builtin_header_.rpsl"
@@ -872,62 +880,112 @@ cond_2e_false_2e_i_2e_i:
   _llvm_cbe_tmps.UMin = ___rpsl_dxop_binary_i32(40, 1, _llvm_cbe_phi_tmps.mips_2e_i_2e_i_2e_0_2e_lcssa);
   #line 12 "C:/Users/pmuji/Documents/sources/vulkan-engine/engine/modules/blur/blur.rpsl"
   _llvm_cbe_tmps.call1_2e_i = ___rpsl_create_resource(3, 0, _llvm_cbe_tmps._18, _llvm_cbe_tmps._16, _llvm_cbe_tmps._17, 1, _llvm_cbe_tmps.UMin, 1, 0, 1, 0);
-  #line 12 "C:/Users/pmuji/Documents/sources/vulkan-engine/engine/modules/blur/blur.rpsl"
+  #line 232 "C:/Users/pmuji/Documents/sources/vulkan-engine/engine/modules/blur/___rpsl_builtin_header_.rpsl"
   ___rpsl_name_resource(_llvm_cbe_tmps.call1_2e_i, ((&_AE__AE_rps_Str0.array[((int32_t)0)])), 11);
+#line 12 "C:/Users/pmuji/Documents/sources/vulkan-engine/engine/modules/blur/blur.rpsl"
+  *((&offscreenRT.Resource)) = _llvm_cbe_tmps.call1_2e_i;
+#line 12 "C:/Users/pmuji/Documents/sources/vulkan-engine/engine/modules/blur/blur.rpsl"
+  *((&offscreenRT.Format)) = 0;
+#line 12 "C:/Users/pmuji/Documents/sources/vulkan-engine/engine/modules/blur/blur.rpsl"
+  *((&offscreenRT.TemporalLayer)) = 0;
+#line 12 "C:/Users/pmuji/Documents/sources/vulkan-engine/engine/modules/blur/blur.rpsl"
+  *((&offscreenRT.Flags)) = 0;
+#line 12 "C:/Users/pmuji/Documents/sources/vulkan-engine/engine/modules/blur/blur.rpsl"
+  *((&offscreenRT.SubresourceRange.base_mip_level)) = 0;
+#line 12 "C:/Users/pmuji/Documents/sources/vulkan-engine/engine/modules/blur/blur.rpsl"
+  *((&offscreenRT.SubresourceRange.mip_level_count)) = (((uint16_t)_llvm_cbe_tmps.UMin));
+#line 12 "C:/Users/pmuji/Documents/sources/vulkan-engine/engine/modules/blur/blur.rpsl"
+  *((&offscreenRT.SubresourceRange.base_array_layer)) = 0;
+#line 12 "C:/Users/pmuji/Documents/sources/vulkan-engine/engine/modules/blur/blur.rpsl"
+  *((&offscreenRT.SubresourceRange.array_layer_count)) = 1;
+#line 12 "C:/Users/pmuji/Documents/sources/vulkan-engine/engine/modules/blur/blur.rpsl"
+  *((&offscreenRT.MinLodClamp)) = ((float)(0.000000e+00));
+#line 12 "C:/Users/pmuji/Documents/sources/vulkan-engine/engine/modules/blur/blur.rpsl"
+  *((&offscreenRT.ComponentMapping)) = 50462976;
+#line 14 "C:/Users/pmuji/Documents/sources/vulkan-engine/engine/modules/blur/blur.rpsl"
+  _llvm_cbe_tmps._21 = /*undef*/llvm_ctor_f32x2(((float)(0.000000e+00)), ((float)(0.000000e+00)));
+#line 14 "C:/Users/pmuji/Documents/sources/vulkan-engine/engine/modules/blur/blur.rpsl"
+  _llvm_cbe_tmps._21.vector[UINT64_C(0)] = sigma;
+#line 14 "C:/Users/pmuji/Documents/sources/vulkan-engine/engine/modules/blur/blur.rpsl"
+  _llvm_cbe_tmps._22 = _llvm_cbe_tmps._21;
+#line 14 "C:/Users/pmuji/Documents/sources/vulkan-engine/engine/modules/blur/blur.rpsl"
+  _llvm_cbe_tmps._22.vector[UINT64_C(1)] = ((float)(0.000000e+00));
+#line 14 "C:/Users/pmuji/Documents/sources/vulkan-engine/engine/modules/blur/blur.rpsl"
+  _llvm_cbe_tmps._23 = (struct l_array_4_uint8_t_KC_*) alloca(sizeof(struct l_array_4_uint8_t_KC_));
+#line 14 "C:/Users/pmuji/Documents/sources/vulkan-engine/engine/modules/blur/blur.rpsl"
+  _llvm_cbe_tmps._2e_sub = (&(*_llvm_cbe_tmps._23).array[((int32_t)0)]);
+#line 14 "C:/Users/pmuji/Documents/sources/vulkan-engine/engine/modules/blur/blur.rpsl"
+  *(((struct texture**)_llvm_cbe_tmps._2e_sub)) = (&offscreenRT);
+#line 14 "C:/Users/pmuji/Documents/sources/vulkan-engine/engine/modules/blur/blur.rpsl"
+  _llvm_cbe_tmps._24 = (__MSALIGN__(4) struct l_vector_2_uint32_t*) alloca(sizeof(__MSALIGN__(4) struct l_vector_2_uint32_t));
+#line 14 "C:/Users/pmuji/Documents/sources/vulkan-engine/engine/modules/blur/blur.rpsl"
+  *_llvm_cbe_tmps._24 = _llvm_cbe_tmps._20;
+#line 14 "C:/Users/pmuji/Documents/sources/vulkan-engine/engine/modules/blur/blur.rpsl"
+  *(((__MSALIGN__(4) struct l_vector_2_uint32_t**)((&(*_llvm_cbe_tmps._23).array[((int32_t)1)])))) = _llvm_cbe_tmps._24;
+#line 14 "C:/Users/pmuji/Documents/sources/vulkan-engine/engine/modules/blur/blur.rpsl"
+  _llvm_cbe_tmps._25 = (__MSALIGN__(4) struct l_vector_2_float*) alloca(sizeof(__MSALIGN__(4) struct l_vector_2_float));
+#line 14 "C:/Users/pmuji/Documents/sources/vulkan-engine/engine/modules/blur/blur.rpsl"
+  *_llvm_cbe_tmps._25 = _llvm_cbe_tmps._22;
+#line 14 "C:/Users/pmuji/Documents/sources/vulkan-engine/engine/modules/blur/blur.rpsl"
+  *(((__MSALIGN__(4) struct l_vector_2_float**)((&(*_llvm_cbe_tmps._23).array[((int32_t)2)])))) = _llvm_cbe_tmps._25;
+#line 14 "C:/Users/pmuji/Documents/sources/vulkan-engine/engine/modules/blur/blur.rpsl"
+  *(((struct texture**)((&(*_llvm_cbe_tmps._23).array[((int32_t)3)])))) = srcTexture;
+#line 14 "C:/Users/pmuji/Documents/sources/vulkan-engine/engine/modules/blur/blur.rpsl"
+  _llvm_cbe_tmps._26 = ___rpsl_node_call(0, 4, _llvm_cbe_tmps._2e_sub, 0, 0);
+#line 15 "C:/Users/pmuji/Documents/sources/vulkan-engine/engine/modules/blur/blur.rpsl"
+  _llvm_cbe_tmps._27 = llvm_ctor_f32x2(((float)(0.000000e+00)), /*UNDEF*/((float)(0.000000e+00)));
+#line 15 "C:/Users/pmuji/Documents/sources/vulkan-engine/engine/modules/blur/blur.rpsl"
+  _llvm_cbe_tmps._27.vector[UINT64_C(1)] = sigma;
+#line 15 "C:/Users/pmuji/Documents/sources/vulkan-engine/engine/modules/blur/blur.rpsl"
+  _llvm_cbe_tmps._28 = (struct l_array_4_uint8_t_KC_*) alloca(sizeof(struct l_array_4_uint8_t_KC_));
+#line 15 "C:/Users/pmuji/Documents/sources/vulkan-engine/engine/modules/blur/blur.rpsl"
+  _llvm_cbe_tmps._2e_sub_2e_7 = (&(*_llvm_cbe_tmps._28).array[((int32_t)0)]);
+#line 15 "C:/Users/pmuji/Documents/sources/vulkan-engine/engine/modules/blur/blur.rpsl"
+  *(((struct texture**)_llvm_cbe_tmps._2e_sub_2e_7)) = (&_llvm_cbe_tmps._4);
+#line 15 "C:/Users/pmuji/Documents/sources/vulkan-engine/engine/modules/blur/blur.rpsl"
+  _llvm_cbe_tmps._29 = (__MSALIGN__(4) struct l_vector_2_uint32_t*) alloca(sizeof(__MSALIGN__(4) struct l_vector_2_uint32_t));
+#line 15 "C:/Users/pmuji/Documents/sources/vulkan-engine/engine/modules/blur/blur.rpsl"
+  *_llvm_cbe_tmps._29 = _llvm_cbe_tmps._20;
+#line 15 "C:/Users/pmuji/Documents/sources/vulkan-engine/engine/modules/blur/blur.rpsl"
+  *(((__MSALIGN__(4) struct l_vector_2_uint32_t**)((&(*_llvm_cbe_tmps._28).array[((int32_t)1)])))) = _llvm_cbe_tmps._29;
+#line 15 "C:/Users/pmuji/Documents/sources/vulkan-engine/engine/modules/blur/blur.rpsl"
+  _llvm_cbe_tmps._30 = (__MSALIGN__(4) struct l_vector_2_float*) alloca(sizeof(__MSALIGN__(4) struct l_vector_2_float));
+#line 15 "C:/Users/pmuji/Documents/sources/vulkan-engine/engine/modules/blur/blur.rpsl"
+  *_llvm_cbe_tmps._30 = _llvm_cbe_tmps._27;
+#line 15 "C:/Users/pmuji/Documents/sources/vulkan-engine/engine/modules/blur/blur.rpsl"
+  *(((__MSALIGN__(4) struct l_vector_2_float**)((&(*_llvm_cbe_tmps._28).array[((int32_t)2)])))) = _llvm_cbe_tmps._30;
+#line 15 "C:/Users/pmuji/Documents/sources/vulkan-engine/engine/modules/blur/blur.rpsl"
+  *(((struct texture**)((&(*_llvm_cbe_tmps._28).array[((int32_t)3)])))) = (&offscreenRT);
+#line 15 "C:/Users/pmuji/Documents/sources/vulkan-engine/engine/modules/blur/blur.rpsl"
+  _llvm_cbe_tmps._31 = ___rpsl_node_call(0, 4, _llvm_cbe_tmps._2e_sub_2e_7, 0, 1);
 #line 16 "C:/Users/pmuji/Documents/sources/vulkan-engine/engine/modules/blur/blur.rpsl"
-  _llvm_cbe_tmps._21 = llvm_ctor_f32x2(((float)(0.000000e+00)), /*UNDEF*/((float)(0.000000e+00)));
-#line 16 "C:/Users/pmuji/Documents/sources/vulkan-engine/engine/modules/blur/blur.rpsl"
-  _llvm_cbe_tmps._21.vector[UINT64_C(1)] = sigma;
-#line 16 "C:/Users/pmuji/Documents/sources/vulkan-engine/engine/modules/blur/blur.rpsl"
-  _llvm_cbe_tmps._22 = (struct l_array_4_uint8_t_KC_*) alloca(sizeof(struct l_array_4_uint8_t_KC_));
-#line 16 "C:/Users/pmuji/Documents/sources/vulkan-engine/engine/modules/blur/blur.rpsl"
-  _llvm_cbe_tmps._2e_sub = (&(*_llvm_cbe_tmps._22).array[((int32_t)0)]);
-#line 16 "C:/Users/pmuji/Documents/sources/vulkan-engine/engine/modules/blur/blur.rpsl"
-  *(((struct texture**)_llvm_cbe_tmps._2e_sub)) = (&_llvm_cbe_tmps._4);
-#line 16 "C:/Users/pmuji/Documents/sources/vulkan-engine/engine/modules/blur/blur.rpsl"
-  _llvm_cbe_tmps._23 = (__MSALIGN__(4) struct l_vector_2_uint32_t*) alloca(sizeof(__MSALIGN__(4) struct l_vector_2_uint32_t));
-#line 16 "C:/Users/pmuji/Documents/sources/vulkan-engine/engine/modules/blur/blur.rpsl"
-  *_llvm_cbe_tmps._23 = _llvm_cbe_tmps._20;
-#line 16 "C:/Users/pmuji/Documents/sources/vulkan-engine/engine/modules/blur/blur.rpsl"
-  *(((__MSALIGN__(4) struct l_vector_2_uint32_t**)((&(*_llvm_cbe_tmps._22).array[((int32_t)1)])))) = _llvm_cbe_tmps._23;
-#line 16 "C:/Users/pmuji/Documents/sources/vulkan-engine/engine/modules/blur/blur.rpsl"
-  _llvm_cbe_tmps._24 = (__MSALIGN__(4) struct l_vector_2_float*) alloca(sizeof(__MSALIGN__(4) struct l_vector_2_float));
-#line 16 "C:/Users/pmuji/Documents/sources/vulkan-engine/engine/modules/blur/blur.rpsl"
-  *_llvm_cbe_tmps._24 = _llvm_cbe_tmps._21;
-#line 16 "C:/Users/pmuji/Documents/sources/vulkan-engine/engine/modules/blur/blur.rpsl"
-  *(((__MSALIGN__(4) struct l_vector_2_float**)((&(*_llvm_cbe_tmps._22).array[((int32_t)2)])))) = _llvm_cbe_tmps._24;
-#line 16 "C:/Users/pmuji/Documents/sources/vulkan-engine/engine/modules/blur/blur.rpsl"
-  *(((struct texture**)((&(*_llvm_cbe_tmps._22).array[((int32_t)3)])))) = srcTexture;
-#line 16 "C:/Users/pmuji/Documents/sources/vulkan-engine/engine/modules/blur/blur.rpsl"
-  _llvm_cbe_tmps._25 = ___rpsl_node_call(0, 4, _llvm_cbe_tmps._2e_sub, 0, 0);
-#line 17 "C:/Users/pmuji/Documents/sources/vulkan-engine/engine/modules/blur/blur.rpsl"
 }
 
 
 #line 4 "C:/Users/pmuji/Documents/sources/vulkan-engine/engine/modules/blur/blur.rpsl"
-void rpsl_M_blur_Fn_blur_wrapper(uint32_t llvm_cbe_temp__26, uint8_t** llvm_cbe_temp__27, uint32_t llvm_cbe_temp__28) {
+void rpsl_M_blur_Fn_blur_wrapper(uint32_t llvm_cbe_temp__32, uint8_t** llvm_cbe_temp__33, uint32_t llvm_cbe_temp__34) {
 
   struct {
-    uint8_t* _29;
-    struct texture* _30;
-    struct texture* _31;
-    uint8_t* _32;
-    float _33;
-    uint8_t* _34;
-    struct texture* _35;
+    uint8_t* _35;
     struct texture* _36;
+    struct texture* _37;
+    uint8_t* _38;
+    float _39;
+    uint8_t* _40;
+    struct texture* _41;
+    struct texture* _42;
   } _llvm_cbe_tmps;
 
   struct {
-    struct texture* _37;
-    struct texture* _37__PHI_TEMPORARY;
-    struct texture* _38;
-    struct texture* _38__PHI_TEMPORARY;
+    struct texture* _43;
+    struct texture* _43__PHI_TEMPORARY;
+    struct texture* _44;
+    struct texture* _44__PHI_TEMPORARY;
   } _llvm_cbe_phi_tmps = {0};
 
 #line 4 "C:/Users/pmuji/Documents/sources/vulkan-engine/engine/modules/blur/blur.rpsl"
 #line 4 "C:/Users/pmuji/Documents/sources/vulkan-engine/engine/modules/blur/blur.rpsl"
-  if ((((llvm_cbe_temp__26 == 3u)&1))) {
+  if ((((llvm_cbe_temp__32 == 3u)&1))) {
 #line 4 "C:/Users/pmuji/Documents/sources/vulkan-engine/engine/modules/blur/blur.rpsl"
     goto trunk;
 #line 4 "C:/Users/pmuji/Documents/sources/vulkan-engine/engine/modules/blur/blur.rpsl"
@@ -939,19 +997,19 @@ void rpsl_M_blur_Fn_blur_wrapper(uint32_t llvm_cbe_temp__26, uint8_t** llvm_cbe_
 
 trunk:
 #line 4 "C:/Users/pmuji/Documents/sources/vulkan-engine/engine/modules/blur/blur.rpsl"
-  _llvm_cbe_tmps._29 = *llvm_cbe_temp__27;
+  _llvm_cbe_tmps._35 = *llvm_cbe_temp__33;
 #line 4 "C:/Users/pmuji/Documents/sources/vulkan-engine/engine/modules/blur/blur.rpsl"
-  _llvm_cbe_tmps._30 = (struct texture*) alloca(sizeof(struct texture));
+  _llvm_cbe_tmps._36 = (struct texture*) alloca(sizeof(struct texture));
 #line 4 "C:/Users/pmuji/Documents/sources/vulkan-engine/engine/modules/blur/blur.rpsl"
-  _llvm_cbe_tmps._31 = ((struct texture*)_llvm_cbe_tmps._29);
+  _llvm_cbe_tmps._37 = ((struct texture*)_llvm_cbe_tmps._35);
 #line 4 "C:/Users/pmuji/Documents/sources/vulkan-engine/engine/modules/blur/blur.rpsl"
-  if (((((llvm_cbe_temp__28 & 1) == 0u)&1))) {
+  if (((((llvm_cbe_temp__34 & 1) == 0u)&1))) {
 #line 4 "C:/Users/pmuji/Documents/sources/vulkan-engine/engine/modules/blur/blur.rpsl"
     goto _2e_preheader_2e_1;
 #line 4 "C:/Users/pmuji/Documents/sources/vulkan-engine/engine/modules/blur/blur.rpsl"
   } else {
 #line 4 "C:/Users/pmuji/Documents/sources/vulkan-engine/engine/modules/blur/blur.rpsl"
-    _llvm_cbe_phi_tmps._37__PHI_TEMPORARY = _llvm_cbe_tmps._31;   /* for PHI node */
+    _llvm_cbe_phi_tmps._43__PHI_TEMPORARY = _llvm_cbe_tmps._37;   /* for PHI node */
 #line 4 "C:/Users/pmuji/Documents/sources/vulkan-engine/engine/modules/blur/blur.rpsl"
     goto _2e_loopexit_2e_2;
 #line 4 "C:/Users/pmuji/Documents/sources/vulkan-engine/engine/modules/blur/blur.rpsl"
@@ -964,34 +1022,34 @@ err:
   return;
 _2e_preheader_2e_1:
 #line 4 "C:/Users/pmuji/Documents/sources/vulkan-engine/engine/modules/blur/blur.rpsl"
-  *(_llvm_cbe_tmps._30) = _BA__PD_make_default_texture_view_from_desc_AE__AE_YA_PD_AUtexture_AE__AE_IUResourceDesc_AE__AE__AE_Z(0, (((struct ResourceDesc*)_llvm_cbe_tmps._29)));
+  *(_llvm_cbe_tmps._36) = _BA__PD_make_default_texture_view_from_desc_AE__AE_YA_PD_AUtexture_AE__AE_IUResourceDesc_AE__AE__AE_Z(0, (((struct ResourceDesc*)_llvm_cbe_tmps._35)));
 #line 4 "C:/Users/pmuji/Documents/sources/vulkan-engine/engine/modules/blur/blur.rpsl"
-  _llvm_cbe_phi_tmps._37__PHI_TEMPORARY = _llvm_cbe_tmps._30;   /* for PHI node */
+  _llvm_cbe_phi_tmps._43__PHI_TEMPORARY = _llvm_cbe_tmps._36;   /* for PHI node */
 #line 4 "C:/Users/pmuji/Documents/sources/vulkan-engine/engine/modules/blur/blur.rpsl"
   goto _2e_loopexit_2e_2;
 #line 4 "C:/Users/pmuji/Documents/sources/vulkan-engine/engine/modules/blur/blur.rpsl"
 
 _2e_loopexit_2e_2:
 #line 4 "C:/Users/pmuji/Documents/sources/vulkan-engine/engine/modules/blur/blur.rpsl"
-  _llvm_cbe_phi_tmps._37 = _llvm_cbe_phi_tmps._37__PHI_TEMPORARY;
+  _llvm_cbe_phi_tmps._43 = _llvm_cbe_phi_tmps._43__PHI_TEMPORARY;
 #line 4 "C:/Users/pmuji/Documents/sources/vulkan-engine/engine/modules/blur/blur.rpsl"
-  _llvm_cbe_tmps._32 = *((&llvm_cbe_temp__27[((int32_t)1)]));
+  _llvm_cbe_tmps._38 = *((&llvm_cbe_temp__33[((int32_t)1)]));
 #line 4 "C:/Users/pmuji/Documents/sources/vulkan-engine/engine/modules/blur/blur.rpsl"
-  _llvm_cbe_tmps._33 = *(((float*)_llvm_cbe_tmps._32));
+  _llvm_cbe_tmps._39 = *(((float*)_llvm_cbe_tmps._38));
 #line 4 "C:/Users/pmuji/Documents/sources/vulkan-engine/engine/modules/blur/blur.rpsl"
-  _llvm_cbe_tmps._34 = *((&llvm_cbe_temp__27[((int32_t)2)]));
+  _llvm_cbe_tmps._40 = *((&llvm_cbe_temp__33[((int32_t)2)]));
 #line 4 "C:/Users/pmuji/Documents/sources/vulkan-engine/engine/modules/blur/blur.rpsl"
-  _llvm_cbe_tmps._35 = (struct texture*) alloca(sizeof(struct texture));
+  _llvm_cbe_tmps._41 = (struct texture*) alloca(sizeof(struct texture));
 #line 4 "C:/Users/pmuji/Documents/sources/vulkan-engine/engine/modules/blur/blur.rpsl"
-  _llvm_cbe_tmps._36 = ((struct texture*)_llvm_cbe_tmps._34);
+  _llvm_cbe_tmps._42 = ((struct texture*)_llvm_cbe_tmps._40);
 #line 4 "C:/Users/pmuji/Documents/sources/vulkan-engine/engine/modules/blur/blur.rpsl"
-  if (((((llvm_cbe_temp__28 & 1) == 0u)&1))) {
+  if (((((llvm_cbe_temp__34 & 1) == 0u)&1))) {
 #line 4 "C:/Users/pmuji/Documents/sources/vulkan-engine/engine/modules/blur/blur.rpsl"
     goto _2e_preheader;
 #line 4 "C:/Users/pmuji/Documents/sources/vulkan-engine/engine/modules/blur/blur.rpsl"
   } else {
 #line 4 "C:/Users/pmuji/Documents/sources/vulkan-engine/engine/modules/blur/blur.rpsl"
-    _llvm_cbe_phi_tmps._38__PHI_TEMPORARY = _llvm_cbe_tmps._36;   /* for PHI node */
+    _llvm_cbe_phi_tmps._44__PHI_TEMPORARY = _llvm_cbe_tmps._42;   /* for PHI node */
 #line 4 "C:/Users/pmuji/Documents/sources/vulkan-engine/engine/modules/blur/blur.rpsl"
     goto _2e_loopexit;
 #line 4 "C:/Users/pmuji/Documents/sources/vulkan-engine/engine/modules/blur/blur.rpsl"
@@ -999,18 +1057,18 @@ _2e_loopexit_2e_2:
 
 _2e_preheader:
 #line 4 "C:/Users/pmuji/Documents/sources/vulkan-engine/engine/modules/blur/blur.rpsl"
-  *(_llvm_cbe_tmps._35) = _BA__PD_make_default_texture_view_from_desc_AE__AE_YA_PD_AUtexture_AE__AE_IUResourceDesc_AE__AE__AE_Z(1, (((struct ResourceDesc*)_llvm_cbe_tmps._34)));
+  *(_llvm_cbe_tmps._41) = _BA__PD_make_default_texture_view_from_desc_AE__AE_YA_PD_AUtexture_AE__AE_IUResourceDesc_AE__AE__AE_Z(1, (((struct ResourceDesc*)_llvm_cbe_tmps._40)));
 #line 4 "C:/Users/pmuji/Documents/sources/vulkan-engine/engine/modules/blur/blur.rpsl"
-  _llvm_cbe_phi_tmps._38__PHI_TEMPORARY = _llvm_cbe_tmps._35;   /* for PHI node */
+  _llvm_cbe_phi_tmps._44__PHI_TEMPORARY = _llvm_cbe_tmps._41;   /* for PHI node */
 #line 4 "C:/Users/pmuji/Documents/sources/vulkan-engine/engine/modules/blur/blur.rpsl"
   goto _2e_loopexit;
 #line 4 "C:/Users/pmuji/Documents/sources/vulkan-engine/engine/modules/blur/blur.rpsl"
 
 _2e_loopexit:
 #line 4 "C:/Users/pmuji/Documents/sources/vulkan-engine/engine/modules/blur/blur.rpsl"
-  _llvm_cbe_phi_tmps._38 = _llvm_cbe_phi_tmps._38__PHI_TEMPORARY;
+  _llvm_cbe_phi_tmps._44 = _llvm_cbe_phi_tmps._44__PHI_TEMPORARY;
 #line 4 "C:/Users/pmuji/Documents/sources/vulkan-engine/engine/modules/blur/blur.rpsl"
-  rpsl_M_blur_Fn_blur(_llvm_cbe_phi_tmps._37, _llvm_cbe_tmps._33, _llvm_cbe_phi_tmps._38);
+  rpsl_M_blur_Fn_blur(_llvm_cbe_phi_tmps._43, _llvm_cbe_tmps._39, _llvm_cbe_phi_tmps._44);
 #line 4 "C:/Users/pmuji/Documents/sources/vulkan-engine/engine/modules/blur/blur.rpsl"
 }
 

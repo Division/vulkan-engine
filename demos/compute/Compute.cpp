@@ -37,7 +37,7 @@ using namespace Device;
 
 struct Game::Data
 {
-	RpsRenderGraph rpsRenderGraph = {};
+	render::RpsGraphHandle rpsRenderGraph;
 	std::unique_ptr<Modules::Blur> blur;
 };
 
@@ -49,7 +49,6 @@ namespace
 Game::Game() = default;
 Game::~Game()
 {
-	rpsRenderGraphDestroy(data->rpsRenderGraph);
 }
   
 void Game::init()
@@ -67,10 +66,11 @@ void Game::init()
 
 	RpsRenderGraphCreateInfo renderGraphInfo            = {};
 	renderGraphInfo.mainEntryCreateInfo.hRpslEntryPoint = RPS_ENTRY_REF(test_triangle, main);
-	rpsRenderGraphCreate(Engine::GetVulkanContext()->GetRpsDevice(), &renderGraphInfo, &data->rpsRenderGraph);
 
-	rpsProgramBindNode(rpsRenderGraphGetMainEntry(data->rpsRenderGraph), "Triangle", &Game::DrawTriangle, this);
-	rpsProgramBindNodeSubprogram(rpsRenderGraphGetMainEntry(data->rpsRenderGraph), "Blur", data->blur->GetSubprogram());
+	data->rpsRenderGraph = render::RpsGraphHandle(renderGraphInfo);
+
+	rpsProgramBindNode(data->rpsRenderGraph.GetMainEntry(), "Triangle", &Game::DrawTriangle, this);
+	rpsProgramBindNodeSubprogram(data->rpsRenderGraph.GetMainEntry(), "Blur", data->blur->GetSubprogram());
 }
 
 void Game::DrawTriangle(const RpsCmdCallbackContext* pContext)
@@ -144,6 +144,6 @@ void Game::render()
 
 	const RpsConstant argData[] = { &backBufferDesc };
 
-	Engine::Get()->GetSceneRenderer()->RenderSceneGraph(data->rpsRenderGraph, argData, argResources);
+	Engine::Get()->GetSceneRenderer()->RenderSceneGraph(*data->rpsRenderGraph, argData, argResources);
 }
 

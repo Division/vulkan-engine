@@ -925,7 +925,7 @@ cond_2e_false_2e_i_2e_i:
 #line 22 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
   _llvm_cbe_tmps._25 = (float*) alloca(sizeof(float));
 #line 22 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
-  *_llvm_cbe_tmps._25 = ((float)(8.000000e+00));
+  *_llvm_cbe_tmps._25 = ((float)(1.600000e+01));
 #line 22 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
   *(((float**)((&(*_llvm_cbe_tmps._24).array[((int32_t)1)])))) = _llvm_cbe_tmps._25;
 #line 22 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"

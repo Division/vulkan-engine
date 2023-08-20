@@ -19,5 +19,5 @@ export void main([readonly(present)] texture backbuffer)
 
     clear(offscreenRT, float4(0.0, 0.2, 0.4, 1.0));
     Triangle(offscreenRT);
-	Blur(backbuffer, 8, offscreenRT); 
+	Blur(backbuffer, 16, offscreenRT); 
 }

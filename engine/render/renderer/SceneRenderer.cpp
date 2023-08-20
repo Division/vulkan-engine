@@ -71,6 +71,66 @@ vk::Extent3D(4, 4, 1)
 		particle_quad_mesh->createBuffer();
 	}
 
+
+	RpsGraphHandle& RpsGraphHandle::operator=(RpsGraphHandle&& other)
+	{
+		if (this != &other)
+		{
+			rpsRenderGraphDestroy(handle);
+			handle = other.handle;
+			other.handle = RPS_NULL_HANDLE;
+		}
+
+		return *this;
+	}
+
+	RpsGraphHandle::RpsGraphHandle(RpsGraphHandle&& other)
+	{
+		*this = std::move(other);
+	}
+
+	RpsGraphHandle::RpsGraphHandle(const RpsRenderGraphCreateInfo& info)
+	{
+		rpsRenderGraphCreate(Engine::GetVulkanContext()->GetRpsDevice(), &info, &handle);
+	}
+
+	RpsGraphHandle::~RpsGraphHandle()
+	{
+		rpsRenderGraphDestroy(handle);
+	}
+
+	RpsSubprogram RpsGraphHandle::GetMainEntry() const
+	{
+		return rpsRenderGraphGetMainEntry(handle);
+	}
+
+	RpsSubprogramHandle& RpsSubprogramHandle::operator=(RpsSubprogramHandle&& other)
+	{
+		if (this != &other)
+		{
+			rpsProgramDestroy(handle);
+			handle = other.handle;
+			other.handle = RPS_NULL_HANDLE;
+		}
+
+		return *this;
+	}
+
+	RpsSubprogramHandle::RpsSubprogramHandle(RpsSubprogramHandle&& other)
+	{
+		*this = std::move(other);
+	}
+
+	RpsSubprogramHandle::RpsSubprogramHandle(const RpsProgramCreateInfo& info)
+	{
+		rpsProgramCreate(Engine::GetVulkanContext()->GetRpsDevice(), &info, &handle);
+	}
+
+	RpsSubprogramHandle::~RpsSubprogramHandle()
+	{
+		rpsProgramDestroy(handle);
+	}
+
 	void SceneRenderer::SetRadianceCubemap(Resources::Handle<Resources::TextureResource> cubemap)
 	{
 		renderer_resources->radiance_cubemap = cubemap;

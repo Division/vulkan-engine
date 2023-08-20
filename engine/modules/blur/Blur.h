@@ -1,6 +1,7 @@
 #pragma once
 
 #include <rps/rps.h>
+#include "render/renderer/SceneRenderer.h"
 
 namespace Device
 {
@@ -23,11 +24,11 @@ namespace Modules
 		// To be passed into rpsProgramBindNodeSubprogram.
 		// Add this node to your rpsl:
 		// graphics node Blur(rtv backBuffer : SV_Target0, float sigma, srv srcTexture);
-		RpsSubprogram GetSubprogram() const { return program; }
+		RpsSubprogram GetSubprogram() const { return *program; }
 
 	private:
 		void Render(const RpsCmdCallbackContext* pContext);
-		RpsSubprogram program;
+		render::RpsSubprogramHandle program;
 		Mesh* full_screen_quad_mesh;
 		Device::ShaderProgram* shader_blur;
 	};
