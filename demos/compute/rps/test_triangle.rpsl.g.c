@@ -425,8 +425,8 @@ struct l_array_4_struct_AC_l_struct____rpsl_node_info_struct {
 struct l_array_4_struct_AC_l_struct____rpsl_type_info_struct {
   struct l_struct____rpsl_type_info_struct array[4];
 };
-struct l_array_8_struct_AC_l_struct____rpsl_params_info_struct {
-  struct l_struct____rpsl_params_info_struct array[8];
+struct l_array_9_struct_AC_l_struct____rpsl_params_info_struct {
+  struct l_struct____rpsl_params_info_struct array[9];
 };
 struct l_array_2_struct_AC_l_struct____rpsl_entry_desc_struct {
   struct l_struct____rpsl_entry_desc_struct array[2];
@@ -463,7 +463,7 @@ struct l_struct____rpsl_module_info_struct {
   struct l_array_116_uint8_t* field13;
   struct l_array_4_struct_AC_l_struct____rpsl_node_info_struct* field14;
   struct l_array_4_struct_AC_l_struct____rpsl_type_info_struct* field15;
-  struct l_array_8_struct_AC_l_struct____rpsl_params_info_struct* field16;
+  struct l_array_9_struct_AC_l_struct____rpsl_params_info_struct* field16;
   struct l_array_2_struct_AC_l_struct____rpsl_entry_desc_struct* field17;
   struct l_array_1_struct_AC_l_struct____rpsl_shader_ref_struct* field18;
   struct l_array_1_struct_AC_l_struct____rpsl_pipeline_info_struct* field19;
@@ -523,11 +523,11 @@ struct l_array_1_struct_AC_l_struct_struct_OC_RpsParameterDesc {
 struct l_array_11_uint8_t {
   uint8_t array[11];
 };
-struct l_array_6_uint8_t {
-  uint8_t array[6];
-};
 struct l_array_3_struct_AC_l_struct_struct_OC_RpsParameterDesc {
   struct l_struct_struct_OC_RpsParameterDesc array[3];
+};
+struct l_array_6_uint8_t {
+  uint8_t array[6];
 };
 struct l_array_3_struct_AC_l_struct_struct_OC_RpsNodeDesc {
   struct l_struct_struct_OC_RpsNodeDesc array[3];
@@ -546,7 +546,7 @@ struct l_array_3_uint8_t_KC_ {
 
 /* Function Declarations */
 static struct texture _BA__PD_make_default_texture_view_from_desc_AE__AE_YA_PD_AUtexture_AE__AE_IUResourceDesc_AE__AE__AE_Z(uint32_t, struct ResourceDesc*) __ATTRIBUTELIST__((nothrow)) __asm__ ("?make_default_texture_view_from_desc@@YA?AUtexture@@IUResourceDesc@@@Z");
-void rpsl_M_test_triangle_Fn_main(struct texture*) __ATTRIBUTELIST__((nothrow));
+void rpsl_M_test_triangle_Fn_main(struct texture*, float) __ATTRIBUTELIST__((nothrow));
 void ___rpsl_abort(uint32_t);
 uint32_t ___rpsl_node_call(uint32_t, uint32_t, uint8_t**, uint32_t, uint32_t);
 void ___rpsl_block_marker(uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t);
@@ -560,15 +560,15 @@ void rpsl_M_test_triangle_Fn_main_wrapper(uint32_t, uint8_t**, uint32_t) __ATTRI
 /* Global Variable Definitions and Initialization */
 static struct l_array_12_uint8_t _AE__AE_rps_Str0 = { "offscreenRT" };
 static __MSALIGN__(4) struct l_array_4_struct_AC_l_struct____rpsl_node_info_struct ___rpsl_nodedefs_test_triangle __attribute__((aligned(4))) = { { { 0, 74, 0, 2, 1 }, { 1, 86, 2, 1, 1 }, { 2, 95, 3, 3, 1 }, { 0, 0, 0, 0, 0 } } };
-static __MSALIGN__(4) struct l_array_2_struct_AC_l_struct____rpsl_entry_desc_struct ___rpsl_entries_test_triangle __attribute__((aligned(4))) = { { { 0, 100, 6, 1, ((uint8_t*)rpsl_M_test_triangle_Fn_main), ((uint8_t*)rpsl_M_test_triangle_Fn_main_wrapper) }, { 0, 0, 0, 0, ((uint8_t*)/*NULL*/0), ((uint8_t*)/*NULL*/0) } } };
+static __MSALIGN__(4) struct l_array_2_struct_AC_l_struct____rpsl_entry_desc_struct ___rpsl_entries_test_triangle __attribute__((aligned(4))) = { { { 0, 100, 6, 2, ((uint8_t*)rpsl_M_test_triangle_Fn_main), ((uint8_t*)rpsl_M_test_triangle_Fn_main_wrapper) }, { 0, 0, 0, 0, ((uint8_t*)/*NULL*/0), ((uint8_t*)/*NULL*/0) } } };
 static __MSALIGN__(4) struct l_array_4_struct_AC_l_struct____rpsl_type_info_struct ___rpsl_types_metadata_test_triangle __attribute__((aligned(4))) = { { { 6, 0, 0, 0, 0, 36, 4 }, { 4, 32, 0, 4, 0, 16, 4 }, { 4, 32, 0, 0, 0, 4, 4 }, { 0, 0, 0, 0, 0, 0, 0 } } };
-static __MSALIGN__(4) struct l_array_8_struct_AC_l_struct____rpsl_params_info_struct ___rpsl_params_metadata_test_triangle __attribute__((aligned(4))) = { { { 26, 0, 272629888, -1, 0, 36, 0 }, { 28, 1, 0, -1, 0, 16, 36 }, { 33, 0, 128, -1, 0, 36, 0 }, { 46, 0, 128, -1, 0, 36, 0 }, { 57, 2, 0, -1, 0, 4, 36 }, { 63, 0, 16, -1, 0, 36, 40 }, { 105, 0, 524288, -1, 0, 36, 0 }, { 0, 0, 0, 0, 0, 0, 0 } } };
+static __MSALIGN__(4) struct l_array_9_struct_AC_l_struct____rpsl_params_info_struct ___rpsl_params_metadata_test_triangle __attribute__((aligned(4))) = { { { 26, 0, 272629888, -1, 0, 36, 0 }, { 28, 1, 0, -1, 0, 16, 36 }, { 33, 0, 128, -1, 0, 36, 0 }, { 46, 0, 128, -1, 0, 36, 0 }, { 57, 2, 0, -1, 0, 4, 36 }, { 63, 0, 16, -1, 0, 36, 40 }, { 105, 0, 524288, -1, 0, 36, 0 }, { 57, 2, 0, -1, 0, 4, 36 }, { 0, 0, 0, 0, 0, 0, 0 } } };
 static __MSALIGN__(4) struct l_array_1_struct_AC_l_struct____rpsl_shader_ref_struct ___rpsl_shader_refs_test_triangle __attribute__((aligned(4)));
 static __MSALIGN__(4) struct l_array_1_struct_AC_l_struct____rpsl_pipeline_info_struct ___rpsl_pipelines_test_triangle __attribute__((aligned(4)));
 static __MSALIGN__(4) struct l_array_1_struct_AC_l_struct____rpsl_pipeline_field_info_struct ___rpsl_pipeline_fields_test_triangle __attribute__((aligned(4)));
 static __MSALIGN__(4) struct l_array_1_struct_AC_l_struct____rpsl_pipeline_res_binding_info_struct ___rpsl_pipeline_res_bindings_test_triangle __attribute__((aligned(4)));
 __MSALIGN__(4) struct l_array_116_uint8_t ___rpsl_string_table_test_triangle __attribute__((aligned(4))) = { { 111u, 102u, 102u, 115u, 99u, 114u, 101u, 101u, 110u, 82u, 84u, 0, 116u, 101u, 115u, 116u, 95u, 116u, 114u, 105u, 97u, 110u, 103u, 108u, 101u, 0, 116u, 0, 100u, 97u, 116u, 97u, 0, 114u, 101u, 110u, 100u, 101u, 114u, 84u, 97u, 114u, 103u, 101u, 116u, 0, 98u, 97u, 99u, 107u, 66u, 117u, 102u, 102u, 101u, 114u, 0, 115u, 105u, 103u, 109u, 97u, 0, 115u, 114u, 99u, 84u, 101u, 120u, 116u, 117u, 114u, 101u, 0, 99u, 108u, 101u, 97u, 114u, 95u, 99u, 111u, 108u, 111u, 114u, 0, 84u, 114u, 105u, 97u, 110u, 103u, 108u, 101u, 0, 66u, 108u, 117u, 114u, 0, 109u, 97u, 105u, 110u, 0, 98u, 97u, 99u, 107u, 98u, 117u, 102u, 102u, 101u, 114u, 0 } };
-__CBE_DLLEXPORT__ __MSALIGN__(4) struct l_struct____rpsl_module_info_struct ___rpsl_module_info_test_triangle __attribute__((aligned(4))) = { 1297305682u, 3, 9, 12, 116, 3, 3, 7, 1, 0, 0, 0, 0, (&___rpsl_string_table_test_triangle), (&___rpsl_nodedefs_test_triangle), (&___rpsl_types_metadata_test_triangle), (&___rpsl_params_metadata_test_triangle), (&___rpsl_entries_test_triangle), (&___rpsl_shader_refs_test_triangle), (&___rpsl_pipelines_test_triangle), (&___rpsl_pipeline_fields_test_triangle), (&___rpsl_pipeline_res_bindings_test_triangle), 1297305682u };
+__CBE_DLLEXPORT__ __MSALIGN__(4) struct l_struct____rpsl_module_info_struct ___rpsl_module_info_test_triangle __attribute__((aligned(4))) = { 1297305682u, 3, 9, 12, 116, 3, 3, 8, 1, 0, 0, 0, 0, (&___rpsl_string_table_test_triangle), (&___rpsl_nodedefs_test_triangle), (&___rpsl_types_metadata_test_triangle), (&___rpsl_params_metadata_test_triangle), (&___rpsl_entries_test_triangle), (&___rpsl_shader_refs_test_triangle), (&___rpsl_pipelines_test_triangle), (&___rpsl_pipeline_fields_test_triangle), (&___rpsl_pipeline_res_bindings_test_triangle), 1297305682u };
 static struct l_array_12_uint8_t _AE__AE_rps_Str1 = { "clear_color" };
 static struct l_array_2_uint8_t _AE__AE_rps_Str2 = { "t" };
 static struct l_unnamed_1 _AE__AE_rps_ParamAttr3 = { 272629888, 0, 0, 0 };
@@ -582,17 +582,18 @@ static struct l_array_1_struct_AC_l_struct_struct_OC_RpsParameterDesc _AE__AE_rp
 static struct l_array_5_uint8_t _AE__AE_rps_Str11 = { "Blur" };
 static struct l_array_11_uint8_t _AE__AE_rps_Str12 = { "backBuffer" };
 static struct l_unnamed_1 _AE__AE_rps_ParamAttr13 = { 128, 0, 35, 0 };
-static struct l_array_6_uint8_t _AE__AE_rps_Str14 = { "sigma" };
 static struct l_unnamed_1 _AE__AE_rps_ParamAttr15;
 static struct l_array_11_uint8_t _AE__AE_rps_Str16 = { "srcTexture" };
 static struct l_unnamed_1 _AE__AE_rps_ParamAttr17 = { 16, 10, 0, 0 };
-static struct l_array_3_struct_AC_l_struct_struct_OC_RpsParameterDesc _AE__AE_rps_ParamDescArray18 = { { { { 36, 64 }, 0, (&_AE__AE_rps_ParamAttr13), ((&_AE__AE_rps_Str12.array[((int32_t)0)])), 4 }, { { 4, 0 }, 0, (&_AE__AE_rps_ParamAttr15), ((&_AE__AE_rps_Str14.array[((int32_t)0)])), 0 }, { { 36, 64 }, 0, (&_AE__AE_rps_ParamAttr17), ((&_AE__AE_rps_Str16.array[((int32_t)0)])), 4 } } };
-__CBE_DLLEXPORT__ struct l_array_3_struct_AC_l_struct_struct_OC_RpsNodeDesc NodeDecls_test_triangle = { { { 1, 2, ((&_AE__AE_rps_ParamDescArray6.array[((int32_t)0)])), ((&_AE__AE_rps_Str1.array[((int32_t)0)])) }, { 1, 1, ((&_AE__AE_rps_ParamDescArray10.array[((int32_t)0)])), ((&_AE__AE_rps_Str7.array[((int32_t)0)])) }, { 1, 3, ((&_AE__AE_rps_ParamDescArray18.array[((int32_t)0)])), ((&_AE__AE_rps_Str11.array[((int32_t)0)])) } } };
 static struct l_array_5_uint8_t _AE__AE_rps_Str19 = { "main" };
 static struct l_array_11_uint8_t _AE__AE_rps_Str20 = { "backbuffer" };
 static struct l_unnamed_1 _AE__AE_rps_ParamAttr21 = { 524288, 0, 0, 0 };
-static struct l_array_1_struct_AC_l_struct_struct_OC_RpsParameterDesc _AE__AE_rps_ParamDescArray22 = { { { { 36, 64 }, 0, (&_AE__AE_rps_ParamAttr21), ((&_AE__AE_rps_Str20.array[((int32_t)0)])), 4 } } };
-struct l_struct_struct_OC_RpslEntry rpsl_M_test_triangle_E_main_AE_value = { ((&_AE__AE_rps_Str19.array[((int32_t)0)])), rpsl_M_test_triangle_Fn_main_wrapper, ((&_AE__AE_rps_ParamDescArray22.array[((int32_t)0)])), ((&NodeDecls_test_triangle.array[((int32_t)0)])), 1, 3 };
+static struct l_array_6_uint8_t _AE__AE_rps_Str22 = { "sigma" };
+static struct l_array_3_struct_AC_l_struct_struct_OC_RpsParameterDesc _AE__AE_rps_ParamDescArray18 = { { { { 36, 64 }, 0, (&_AE__AE_rps_ParamAttr13), ((&_AE__AE_rps_Str12.array[((int32_t)0)])), 4 }, { { 4, 0 }, 0, (&_AE__AE_rps_ParamAttr15), ((&_AE__AE_rps_Str22.array[((int32_t)0)])), 0 }, { { 36, 64 }, 0, (&_AE__AE_rps_ParamAttr17), ((&_AE__AE_rps_Str16.array[((int32_t)0)])), 4 } } };
+__CBE_DLLEXPORT__ struct l_array_3_struct_AC_l_struct_struct_OC_RpsNodeDesc NodeDecls_test_triangle = { { { 1, 2, ((&_AE__AE_rps_ParamDescArray6.array[((int32_t)0)])), ((&_AE__AE_rps_Str1.array[((int32_t)0)])) }, { 1, 1, ((&_AE__AE_rps_ParamDescArray10.array[((int32_t)0)])), ((&_AE__AE_rps_Str7.array[((int32_t)0)])) }, { 1, 3, ((&_AE__AE_rps_ParamDescArray18.array[((int32_t)0)])), ((&_AE__AE_rps_Str11.array[((int32_t)0)])) } } };
+static struct l_unnamed_1 _AE__AE_rps_ParamAttr23;
+static struct l_array_2_struct_AC_l_struct_struct_OC_RpsParameterDesc _AE__AE_rps_ParamDescArray24 = { { { { 36, 64 }, 0, (&_AE__AE_rps_ParamAttr21), ((&_AE__AE_rps_Str20.array[((int32_t)0)])), 4 }, { { 4, 0 }, 0, (&_AE__AE_rps_ParamAttr23), ((&_AE__AE_rps_Str22.array[((int32_t)0)])), 0 } } };
+struct l_struct_struct_OC_RpslEntry rpsl_M_test_triangle_E_main_AE_value = { ((&_AE__AE_rps_Str19.array[((int32_t)0)])), rpsl_M_test_triangle_Fn_main_wrapper, ((&_AE__AE_rps_ParamDescArray24.array[((int32_t)0)])), ((&NodeDecls_test_triangle.array[((int32_t)0)])), 2, 3 };
 __CBE_DLLEXPORT__ struct l_struct_struct_OC_RpslEntry* rpsl_M_test_triangle_E_main = (&rpsl_M_test_triangle_E_main_AE_value);
 __CBE_DLLEXPORT__ struct l_struct_struct_OC_RpslEntry** rpsl_M_test_triangle_E_main_pp = (&rpsl_M_test_triangle_E_main);
 
@@ -690,7 +691,7 @@ cond_2e_end:
 
 
 #line 11 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
-void rpsl_M_test_triangle_Fn_main(struct texture* backbuffer) {
+void rpsl_M_test_triangle_Fn_main(struct texture* backbuffer, float sigma) {
     struct ResourceDesc backbufferDesc;    /* Address-exposed local */
     struct texture offscreenRT;    /* Address-exposed local */
 
@@ -785,7 +786,7 @@ void rpsl_M_test_triangle_Fn_main(struct texture* backbuffer) {
   _llvm_cbe_tmps._15 = *((&backbuffer->ComponentMapping));
 #line 11 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
   *((&_llvm_cbe_tmps._4.ComponentMapping)) = _llvm_cbe_tmps._15;
-#line 13 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
+  #line 13 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
   ___rpsl_describe_handle((((uint8_t*)(&backbufferDesc))), 36, _llvm_cbe_tmps._5, 1);
 #line 14 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
   _llvm_cbe_tmps._16 = *((&backbufferDesc.Width));
@@ -925,7 +926,7 @@ cond_2e_false_2e_i_2e_i:
 #line 22 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
   _llvm_cbe_tmps._25 = (float*) alloca(sizeof(float));
 #line 22 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
-  *_llvm_cbe_tmps._25 = ((float)(1.600000e+01));
+  *_llvm_cbe_tmps._25 = sigma;
 #line 22 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
   *(((float**)((&(*_llvm_cbe_tmps._24).array[((int32_t)1)])))) = _llvm_cbe_tmps._25;
 #line 22 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
@@ -943,16 +944,18 @@ void rpsl_M_test_triangle_Fn_main_wrapper(uint32_t llvm_cbe_temp__27, uint8_t** 
     uint8_t* _30;
     struct texture* _31;
     struct texture* _32;
+    uint8_t* _33;
+    float _34;
   } _llvm_cbe_tmps;
 
   struct {
-    struct texture* _33;
-    struct texture* _33__PHI_TEMPORARY;
+    struct texture* _35;
+    struct texture* _35__PHI_TEMPORARY;
   } _llvm_cbe_phi_tmps = {0};
 
 #line 11 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
 #line 11 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
-  if ((((llvm_cbe_temp__27 == 1u)&1))) {
+  if ((((llvm_cbe_temp__27 == 2u)&1))) {
 #line 11 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
     goto trunk;
 #line 11 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
@@ -976,7 +979,7 @@ trunk:
 #line 11 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
   } else {
 #line 11 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
-    _llvm_cbe_phi_tmps._33__PHI_TEMPORARY = _llvm_cbe_tmps._32;   /* for PHI node */
+    _llvm_cbe_phi_tmps._35__PHI_TEMPORARY = _llvm_cbe_tmps._32;   /* for PHI node */
 #line 11 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
     goto _2e_loopexit;
 #line 11 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
@@ -991,16 +994,20 @@ _2e_preheader:
 #line 11 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
   *(_llvm_cbe_tmps._31) = _BA__PD_make_default_texture_view_from_desc_AE__AE_YA_PD_AUtexture_AE__AE_IUResourceDesc_AE__AE__AE_Z(0, (((struct ResourceDesc*)_llvm_cbe_tmps._30)));
 #line 11 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
-  _llvm_cbe_phi_tmps._33__PHI_TEMPORARY = _llvm_cbe_tmps._31;   /* for PHI node */
+  _llvm_cbe_phi_tmps._35__PHI_TEMPORARY = _llvm_cbe_tmps._31;   /* for PHI node */
 #line 11 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
   goto _2e_loopexit;
 #line 11 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
 
 _2e_loopexit:
 #line 11 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
-  _llvm_cbe_phi_tmps._33 = _llvm_cbe_phi_tmps._33__PHI_TEMPORARY;
+  _llvm_cbe_phi_tmps._35 = _llvm_cbe_phi_tmps._35__PHI_TEMPORARY;
 #line 11 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
-  rpsl_M_test_triangle_Fn_main(_llvm_cbe_phi_tmps._33);
+  _llvm_cbe_tmps._33 = *((&llvm_cbe_temp__28[((int32_t)1)]));
+#line 11 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
+  _llvm_cbe_tmps._34 = *(((float*)_llvm_cbe_tmps._33));
+#line 11 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
+  rpsl_M_test_triangle_Fn_main(_llvm_cbe_phi_tmps._35, _llvm_cbe_tmps._34);
 #line 11 "C:/Users/pmuji/Documents/sources/vulkan-engine/demos/compute/rps/test_triangle.rpsl"
 }
 

@@ -268,10 +268,8 @@ vk::Extent3D(4, 4, 1)
 
         if (graph != RPS_NULL_HANDLE)
         {
-			assert(args.size() == resources.size());
-
 			RpsRenderGraphUpdateInfo updateInfo = {};
-			updateInfo.numArgs = std::min(args.size(), resources.size());
+			updateInfo.numArgs = args.size();
 			updateInfo.ppArgs = args.data();
 			updateInfo.ppArgResources = resources.data();
 			updateInfo.frameIndex = Engine::GetVulkanContext()->GetCurrentFrame();

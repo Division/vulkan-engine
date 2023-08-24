@@ -142,7 +142,8 @@ void Game::render()
 	backBufferDesc.image.height = swapchain->GetHeight();
 	backBufferDesc.image.sampleCount = 1;
 
-	const RpsConstant argData[] = { &backBufferDesc };
+	const float sigma = 4;
+	const RpsConstant argData[] = { &backBufferDesc, &sigma };
 
 	Engine::Get()->GetSceneRenderer()->RenderSceneGraph(*data->rpsRenderGraph, argData, argResources);
 }

@@ -8,7 +8,7 @@
 graphics node Triangle(rtv renderTarget : SV_Target0);
 graphics node Blur(rtv backBuffer : SV_Target0, float sigma, srv srcTexture);
 
-export void main([readonly(present)] texture backbuffer)
+export void main([readonly(present)] texture backbuffer, float sigma)
 {
     ResourceDesc backbufferDesc = backbuffer.desc();
     uint32_t width = (uint32_t)backbufferDesc.Width;
@@ -19,5 +19,5 @@ export void main([readonly(present)] texture backbuffer)
 
     clear(offscreenRT, float4(0.0, 0.2, 0.4, 1.0));
     Triangle(offscreenRT);
-	Blur(backbuffer, 16, offscreenRT); 
+	Blur(backbuffer, sigma, offscreenRT); 
 }
