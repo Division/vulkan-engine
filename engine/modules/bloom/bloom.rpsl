@@ -1,0 +1,46 @@
+graphics node RenderPrefilter(rtv backBuffer : SV_Target0, srv srcTexture, uint2 viewport, float bloomThreshold, float bloomStrength, float scatter);
+graphics node RenderBlurH(rtv backBuffer : SV_Target0, srv srcTexture, uint2 viewport, float bloomThreshold, float bloomStrength, float scatter);
+graphics node RenderBlurV(rtv backBuffer : SV_Target0, srv srcTexture, uint2 viewport, float bloomThreshold, float bloomStrength, float scatter);
+graphics node RenderUpsample(rtv backBuffer : SV_Target0, srv srcTexture, uint2 viewport, float bloomThreshold, float bloomStrength, float scatter);
+
+
+uint32_t getMipCount(uint32_t width, uint32_t height)
+{
+    uint32_t count = 1;
+
+    while (width > 1 && height > 1)
+    {
+        width /= 2;
+        height /= 2;
+        count++;
+    }
+
+    return count;
+}
+
+export void main(rtv backbuffer : SV_Target0, srv srcTexture, float bloomThreshold, float bloomStrength, float scatter, float clampMax)
+{
+    ResourceDesc backbufferDesc = backbuffer.desc();
+    uint32_t width = (uint32_t)backbufferDesc.Width;
+    uint32_t height = backbufferDesc.Height;
+    RPS_FORMAT format = backbufferDesc.Format;
+
+    const uint32_t mip0Width = width / 2;
+    const uint32_t mip0Height = height / 2;
+    const uint32_t mipCount = getMipCount(mip0Width, mip0Height);
+    texture mips_downsample = create_tex2d(format, mip0Width, mip0Height, mipCount);
+    texture mips_upsample = create_tex2d(format, mip0Width, mip0Height, mipCount);
+
+    RenderPrefilter(mips_downsample.mips(0).array(0), srcTexture, bloomThreshold, bloomStrength, scatter, clampMax);
+    texture blurOutput = mips_downsample.mips(0).array(0);
+    for (uint32_t i = 1; i < mipCount; i++)
+    {
+		texture temp = create_tex2d(format, mip0Width, mip0Height);
+        RenderBlurH(temp, blurOutput, bloomThreshold, bloomStrength, scatter, clampMax);
+        RenderBlurV(mips_downsample.mips(i).array(0), temp, bloomThreshold, bloomStrength, scatter, clampMax);
+    }
+
+	RenderUpsample(mips_upsample.mips(mipCount - 1).array(0), mips_downsample.mips(mipCount - 1).array(0), bloomThreshold, bloomStrength, scatter, clampMax);
+
+
+}

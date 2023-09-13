@@ -26,6 +26,7 @@
 
 #include "render/device/Device.h"
 #include "modules/blur/Blur.h"
+#include "modules/bloom/Bloom.h"
 
 RPS_DECLARE_RPSL_ENTRY(test_triangle, main);
    
@@ -39,6 +40,8 @@ struct Game::Data
 {
 	render::RpsGraphHandle rpsRenderGraph;
 	std::unique_ptr<Modules::Blur> blur;
+	std::unique_ptr<Modules::Bloom> bloom;
+	Modules::BloomSettings bloomSettings;
 };
 
 namespace
@@ -60,6 +63,7 @@ void Game::init()
      
 	data = std::make_unique<Data>();
 	data->blur = std::make_unique<Modules::Blur>("resources/compute/");
+	data->bloom = std::make_unique<Modules::Bloom>("resources/compute/", &data->bloomSettings);
 
 	camera = std::make_unique<ViewerCamera>();
 	Engine::Get()->GetScene()->GetCamera()->Transform().position = vec3(0, 2, -4);
@@ -69,8 +73,13 @@ void Game::init()
 
 	data->rpsRenderGraph = render::RpsGraphHandle(renderGraphInfo);
 
-	rpsProgramBindNode(data->rpsRenderGraph.GetMainEntry(), "Triangle", &Game::DrawTriangle, this);
-	rpsProgramBindNodeSubprogram(data->rpsRenderGraph.GetMainEntry(), "Blur", data->blur->GetSubprogram());
+	RpsResult result;
+	result = rpsProgramBindNode(data->rpsRenderGraph.GetMainEntry(), "Triangle", &Game::DrawTriangle, this);
+	assert(result == RPS_OK);
+	result = rpsProgramBindNodeSubprogram(data->rpsRenderGraph.GetMainEntry(), "Blur", data->blur->GetSubprogram());
+	assert(result == RPS_OK);
+	result = rpsProgramBindNodeSubprogram(data->rpsRenderGraph.GetMainEntry(), "Bloom", data->bloom->GetSubprogram());
+	assert(result == RPS_OK);
 }
 
 void Game::DrawTriangle(const RpsCmdCallbackContext* pContext)

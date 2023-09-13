@@ -31,6 +31,7 @@ namespace Device {
 
 	VulkanPipeline::VulkanPipeline(VulkanPipelineInitializer initializer)
 		: is_compute(initializer.is_compute)
+		, shader_program(initializer.shader_program)
 	{
 		auto* shader_program = initializer.shader_program;
 		auto* render_pass = initializer.render_pass;

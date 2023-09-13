@@ -1,6 +1,5 @@
 #pragma once
 
-#include <rps/rps.h>
 #include "render/renderer/SceneRenderer.h"
 
 namespace Device

@@ -22,6 +22,7 @@ add_executable(compute ${GAME_SOURCES})
 
 include("Modules")
 include_module(compute blur ${RESOURCES_DIRECTORY})
+include_module(compute bloom ${RESOURCES_DIRECTORY})
 include_rpsl(compute "${RPSL}")
 
 target_link_libraries(compute vk_engine)

@@ -35,9 +35,11 @@ namespace Device {
 
 		vk::Pipeline GetPipeline() const { return pipeline.get(); }
 		vk::PipelineLayout GetPipelineLayout() const { return pipeline_layout.get(); }
+		const ShaderProgram* GetShaderProgram() const { return shader_program; }
 
 	private:
 		bool is_compute;
+		const ShaderProgram* shader_program;
 		vk::UniquePipelineLayout pipeline_layout;
 		vk::UniquePipeline pipeline;
 	};
